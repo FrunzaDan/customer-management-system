@@ -2,7 +2,6 @@ import {
   provideHttpClient,
   withFetch,
   withInterceptors,
-  withInterceptorsFromDi,
 } from '@angular/common/http';
 import {
   ApplicationConfig,
@@ -37,7 +36,6 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
     provideHttpClient(
       withFetch(),
-      withInterceptorsFromDi(),
       withInterceptors([apiLoggerInterceptor, authErrorInterceptor]),
     ),
     provideZonelessChangeDetection(),

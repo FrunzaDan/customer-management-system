@@ -1,4 +1,9 @@
 @if (!isLoading()) {
+@if (errorMessage(); as error) {
+<div class="container">
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+</div>
+} @else {
 <div class="container">
   <div class="row">
     <div class="col">
@@ -150,4 +155,5 @@
     </div>
   </div>
 </div>
+}
 }

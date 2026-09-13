@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
@@ -13,6 +14,21 @@ import { Address, Customer } from '../../interfaces/customer-response';
 import { environment } from '../../../environments/environment';
 import { NgClass } from '@angular/common';
 
+type AddCustomerForm = FormGroup<{
+  firstName: FormControl<string>;
+  lastName: FormControl<string>;
+  email: FormControl<string>;
+  msisdn: FormControl<string>;
+  gender: FormControl<string>;
+  birthdate: FormControl<string>;
+  country: FormControl<string>;
+  county: FormControl<string>;
+  town: FormControl<string>;
+  street: FormControl<string>;
+  number: FormControl<string>;
+  zip: FormControl<string>;
+}>;
+
 @Component({
   selector: 'app-add-customer',
   templateUrl: './add-customer.component.html',
@@ -20,7 +36,7 @@ import { NgClass } from '@angular/common';
   imports: [NgClass, ReactiveFormsModule, RouterLink],
 })
 export class AddCustomerComponent implements OnInit {
-  form!: FormGroup;
+  form!: AddCustomerForm;
   readonly loading = signal(false);
   readonly submitted = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -39,7 +55,7 @@ export class AddCustomerComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.form = this.fb.group({
+    this.form = this.fb.nonNullable.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: [
@@ -72,19 +88,21 @@ export class AddCustomerComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.customer.firstName = this.form.value.firstName;
-    this.customer.lastName = this.form.value.lastName;
-    this.customer.email = this.form.value.email;
-    this.customer.msisdn = this.form.value.msisdn;
-    this.customer.gender = this.form.value.gender;
-    this.customer.birthdate = this.form.value.birthdate;
+    const formValue = this.form.getRawValue();
 
-    this.customerAddress.country = this.form.value.country;
-    this.customerAddress.county = this.form.value.county;
-    this.customerAddress.town = this.form.value.town;
-    this.customerAddress.street = this.form.value.street;
-    this.customerAddress.number = this.form.value.number;
-    this.customerAddress.zip = this.form.value.zip;
+    this.customer.firstName = formValue.firstName;
+    this.customer.lastName = formValue.lastName;
+    this.customer.email = formValue.email;
+    this.customer.msisdn = formValue.msisdn;
+    this.customer.gender = Number(formValue.gender);
+    this.customer.birthdate = formValue.birthdate;
+
+    this.customerAddress.country = formValue.country;
+    this.customerAddress.county = formValue.county;
+    this.customerAddress.town = formValue.town;
+    this.customerAddress.street = formValue.street;
+    this.customerAddress.number = formValue.number;
+    this.customerAddress.zip = formValue.zip;
 
     this.customer.address = this.customerAddress;
 

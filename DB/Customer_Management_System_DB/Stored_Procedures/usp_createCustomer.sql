@@ -4,7 +4,7 @@ CREATE PROCEDURE [dbo].[usp_createCustomer]
     @var_LastName NVARCHAR(50),
     @var_Email NVARCHAR(50),
     @var_MSISDN NVARCHAR(50),
-    @var_Gender NVARCHAR(50),
+    @var_Gender INT,
     @var_Birthdate NVARCHAR(50),
     @var_Country NVARCHAR(100),
     @var_County NVARCHAR(100),

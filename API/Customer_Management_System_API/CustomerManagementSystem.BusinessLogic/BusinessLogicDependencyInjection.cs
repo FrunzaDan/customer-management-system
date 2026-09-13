@@ -1,4 +1,5 @@
-﻿using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
+﻿using CustomerManagementSystem.BusinessLogic.AuthFunctions;
+using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 using CustomerManagementSystem.BusinessLogic.Services;
 using CustomerManagementSystem.BusinessLogic.Services.Implementation;
 using CustomerManagementSystem.DataAccess.DBConnection;
@@ -15,6 +16,7 @@ public static class BusinessLogicDependencyInjection
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddSingleton<IDbUtils, DbUtils>();
         services.AddSingleton<IAppSettingsConfig, AppSettingsConfig>();
+        services.AddSingleton<JwtCreation>();
 
         services.AddScoped<ICustomerAuditLogger, CustomerAuditLogger>();
         services.AddScoped<CustomerRegistration>();

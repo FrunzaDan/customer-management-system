@@ -4,7 +4,7 @@ import {
   HttpParams,
 } from '@angular/common/http';
 import { computed, Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GlobalAuditLogEntry } from '../interfaces/global-audit-log-entry';
@@ -40,40 +40,58 @@ export class GlobalAuditLogService {
   public readonly pageNumberSignal = computed(() => this.state().pageNumber);
   public readonly totalItemsSignal = computed(() => this.state().totalItems);
 
+  // Routed through switchMap so a new loadAllAuditLog() call cancels whatever request is
+  // still in flight — without this, a slower earlier response can land after a faster
+  // later one and overwrite it with stale data (same fix as GetCustomerService.loadCustomers).
+  private readonly loadParams$ = new Subject<LoadAllAuditLogParams>();
+
   constructor(
     private http: HttpClient,
     private httpHeaderService: HttpHeaderService,
     private notificationService: NotificationService,
-  ) {}
+  ) {
+    this.loadParams$
+      .pipe(
+        switchMap((params) => {
+          const headers = this.httpHeaderService.getHeadersWithTokenSet();
+          const httpParams = new HttpParams()
+            .set('pageNumber', params.pageNumber)
+            .set('pageSize', params.pageSize);
+
+          return this.http
+            .get<GenericResponse<PagedResponse<GlobalAuditLogEntry>>>(
+              this.API_URL,
+              { headers, params: httpParams },
+            )
+            .pipe(
+              map((response) => ({ response, requestedParams: params })),
+              catchError((error: HttpErrorResponse) => {
+                this.handleError(error);
+                return of(null);
+              }),
+            );
+        }),
+      )
+      .subscribe((result) => {
+        if (!result) return;
+
+        const { response, requestedParams } = result;
+        const paged = response?.data;
+        this.state.update((state) => ({
+          ...state,
+          entries: paged?.items ?? [],
+          pageNumber: paged?.pageNumber ?? requestedParams.pageNumber,
+          pageSize: paged?.pageSize ?? requestedParams.pageSize,
+          totalItems: paged?.totalItems ?? 0,
+          loading: false,
+          error: null,
+        }));
+      });
+  }
 
   loadAllAuditLog(params: LoadAllAuditLogParams): void {
     this.state.update((state) => ({ ...state, loading: true, error: null }));
-
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const httpParams = new HttpParams()
-      .set('pageNumber', params.pageNumber)
-      .set('pageSize', params.pageSize);
-
-    this.http
-      .get<GenericResponse<PagedResponse<GlobalAuditLogEntry>>>(
-        this.API_URL,
-        { headers, params: httpParams },
-      )
-      .subscribe({
-        next: (response) => {
-          const paged = response?.data;
-          this.state.update((state) => ({
-            ...state,
-            entries: paged?.items ?? [],
-            pageNumber: paged?.pageNumber ?? params.pageNumber,
-            pageSize: paged?.pageSize ?? params.pageSize,
-            totalItems: paged?.totalItems ?? 0,
-            loading: false,
-            error: null,
-          }));
-        },
-        error: (error: HttpErrorResponse) => this.handleError(error),
-      });
+    this.loadParams$.next(params);
   }
 
   deleteAllAuditLog(): Observable<GenericResponse<object>> {

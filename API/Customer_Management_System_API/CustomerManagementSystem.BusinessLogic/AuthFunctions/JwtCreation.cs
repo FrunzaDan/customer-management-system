@@ -43,7 +43,7 @@ public class JwtCreation
                 return new ResponseModel<object>(500, "Invalid AccessTokenTimeout configuration.");
 
             // Generate token
-            var token = GenerateJwtToken(merchantCredentials.MerchantId, credentialsCheck.Data);
+            var token = GenerateJwtToken(merchantCredentials.MerchantId, credentialsCheck.Data, timeoutMinutes);
 
             return new ResponseModel<object>
             {
@@ -70,15 +70,15 @@ public class JwtCreation
         }
     }
 
-    private string GenerateJwtToken(string merchantId, int? merchantRole)
+    private string GenerateJwtToken(string merchantId, int? merchantRole, double timeoutMinutes)
     {
-        var tokenDescriptor = BuildTokenDescriptor(merchantId, merchantRole);
+        var tokenDescriptor = BuildTokenDescriptor(merchantId, merchantRole, timeoutMinutes);
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
 
-    private SecurityTokenDescriptor BuildTokenDescriptor(string merchantId, int? merchantRole)
+    private SecurityTokenDescriptor BuildTokenDescriptor(string merchantId, int? merchantRole, double timeoutMinutes)
     {
         return new SecurityTokenDescriptor
         {
@@ -91,7 +91,7 @@ public class JwtCreation
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString("o"))
             ]),
-            Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration.AccessTokenTimeout)),
+            Expires = DateTime.UtcNow.AddMinutes(timeoutMinutes),
             SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256Signature),
             Issuer = _configuration.JwtIssuer,
             Audience = _configuration.JwtAudience

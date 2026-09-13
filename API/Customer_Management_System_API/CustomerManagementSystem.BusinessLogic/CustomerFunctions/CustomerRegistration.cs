@@ -1,4 +1,5 @@
-﻿using CustomerManagementSystem.BusinessLogic.Validations;
+﻿using CustomerManagementSystem.BusinessLogic.Constants;
+using CustomerManagementSystem.BusinessLogic.Validations;
 using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Models;
 
@@ -22,20 +23,40 @@ public class CustomerRegistration
         // this check a request that omits them would silently create a nameless customer.
         if (string.IsNullOrWhiteSpace(request.FirstName))
             return new ResponseModel<object>(400, "First name is required.");
+        if (request.FirstName.Length > FieldLengthConstants.FirstName)
+            return new ResponseModel<object>(400, "First name is too long.");
 
         if (string.IsNullOrWhiteSpace(request.LastName))
             return new ResponseModel<object>(400, "Last name is required.");
+        if (request.LastName.Length > FieldLengthConstants.LastName)
+            return new ResponseModel<object>(400, "Last name is too long.");
 
         if (string.IsNullOrEmpty(request.Email) || EmailValidation.ValidateEmail(request.Email) == false)
             return new ResponseModel<object>(400, "Invalid or empty Email.");
+        if (request.Email.Length > FieldLengthConstants.Email)
+            return new ResponseModel<object>(400, "Email is too long.");
 
         if (string.IsNullOrEmpty(request.Msisdn) || MsisdnValidation.ValidateMsisdn(request.Msisdn) == false)
             return new ResponseModel<object>(400, "Invalid or empty MSISDN.");
+
+        if (request.Birthdate is not null)
+        {
+            if (request.Birthdate.Length > FieldLengthConstants.Birthdate
+                || !DateOnly.TryParse(request.Birthdate, out _))
+                return new ResponseModel<object>(400, "Invalid Birthdate format.");
+        }
+
+        if (request.Gender is not null && request.Gender is not (0 or 1 or 2))
+            return new ResponseModel<object>(400, "Invalid Gender value.");
 
         // usp_createCustomer's address parameters have no SQL-side defaults, so a missing
         // Address would otherwise surface as an opaque 500 instead of a validation error.
         if (request.Address is null)
             return new ResponseModel<object>(400, "Address is required.");
+
+        var addressLengthError = AddressValidation.ValidateLengths(request.Address);
+        if (addressLengthError is not null)
+            return new ResponseModel<object>(400, addressLengthError);
 
         // A new customer's identifier is always generated server-side; a client-supplied GUID is never trusted.
         request.Guid = Guid.NewGuid().ToString();

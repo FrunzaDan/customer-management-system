@@ -1,27 +1,29 @@
-# CustomerManagementSystem
+# Customer Management System — Angular UI
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.1.8.
+Angular 22 frontend for the Customer Management System: zoneless change detection (no `zone.js`), signals for all component state, standalone components, and SSR via `@angular/ssr` (Express server, hydrated client-side).
+
+This isn't usually run standalone in dev — use `./run.sh` from the repo root, which starts the DB, API, and this app together (and wires up TLS trust for SSR's Node-side `fetch()` calls). See the repo root `README.md` and `ai_docs/build-and-run.md` for the full flow.
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+`npm start` (equivalent to `ng serve`) runs this app alone against whatever `CustomerManagementSystemAPI` URL is set in `src/environments/environment.ts` — the API must already be running separately. Navigate to `http://localhost:4200/`.
 
 ## Code scaffolding
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+`ng generate component component-name` (or `directive|service|guard|interface`). New components should be standalone and use `inject()` + signals, matching the rest of the app — see `ai_docs/angular-frontend.md` in the repo root.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+`ng build` (or `npm run build`, used by the repo root `build.sh`). Output goes to `dist/`.
 
 ## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+`ng test` runs the unit tests via **Vitest** (`@angular/build:unit-test`), not Karma — this project was scaffolded straight onto Vitest, so there's nothing to migrate away from. `describe`/`it`/`expect`/`vi` are globally available, no imports needed. Add `--watch=false` for a single non-interactive run.
 
 ## Running end-to-end tests
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+No e2e test runner is currently configured.
 
 ## Further help
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+`ng help` or the [Angular CLI reference](https://angular.dev/cli). For how this specific app is wired (routing, auth guard, zoneless state, services), see `ai_docs/` in the repo root.

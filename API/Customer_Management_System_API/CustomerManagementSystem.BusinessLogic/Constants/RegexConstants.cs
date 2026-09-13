@@ -6,5 +6,5 @@ public static class RegexConstants
     // \n, which would let e.g. "user@test.com\n" pass validation and get stored as-is.
     public const string GuidRegex = @"^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?\z";
     public const string MsisdnRegex = @"^[0-9]{9,12}\z";
-    public const string EmailRegex = @"^\S+@\S+\.\S+\z";
+    public const string EmailRegex = @"^[^\s@]+@[^\s@]+\.[^\s@]+\z";
 }

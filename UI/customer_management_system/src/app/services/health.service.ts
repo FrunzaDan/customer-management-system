@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { catchError, map, Observable, of, switchMap, timer } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -39,13 +39,12 @@ export class HealthService {
   }
 
   /** Logs health check errors in a consistent format */
-  private logHealthError(error: any) {
+  private logHealthError(error: unknown) {
+    const name = error instanceof Error ? error.name : 'Unknown';
+    const message = error instanceof Error ? error.message : 'No message';
+    const status = error instanceof HttpErrorResponse ? ` | Status: ${error.status}` : '';
     console.error(
-      `API health check failed! | URL: ${this.healthUrl} | Error: ${
-        error.name ?? 'Unknown'
-      } | Message: ${error.message ?? 'No message'}${
-        error.status ? ` | Status: ${error.status}` : ''
-      }`,
+      `API health check failed! | URL: ${this.healthUrl} | Error: ${name} | Message: ${message}${status}`,
     );
   }
 }

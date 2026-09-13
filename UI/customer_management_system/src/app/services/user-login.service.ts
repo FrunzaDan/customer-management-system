@@ -7,12 +7,16 @@ import {
   LoginDataResponse,
 } from '../../../src/app/interfaces/user-login-response';
 import { UserLoginRequest } from '../../../src/app/interfaces/user-login-request';
-import { BehaviorSubject, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { SessionStorageService } from './session-storage.service';
 import { HttpHeaderService } from './http-header-service';
 import { GenericResponse } from '../interfaces/generic-response';
 import { NotificationService } from './notification.service';
+
+export interface CredentialsCheckResult {
+  success: boolean;
+  message: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -22,10 +26,6 @@ export class UserLoginService {
     environment.CustomerManagementSystemAPI +
     '/api/Authentication/access-token';
 
-  userSubject = new BehaviorSubject<any>(null);
-  errorSubject = new BehaviorSubject<any>(null);
-  errorMessage = this.errorSubject.asObservable();
-
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -33,9 +33,6 @@ export class UserLoginService {
     private httpHeaderService: HttpHeaderService,
     private notificationService: NotificationService,
   ) {}
-
-  userLoginResponse!: LoginDataResponse;
-  accessToken!: string;
 
   login(userLoginRequest: UserLoginRequest): Observable<LoginDataResponse> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
@@ -48,14 +45,18 @@ export class UserLoginService {
     );
   }
 
-  checkCredentials(response: LoginDataResponse): string {
-    if (response.data?.accessToken != null && response.status == 200) {
+  // Keys off response.status, not the response message text — comparing against a
+  // literal success string ("Success!") would silently break if that wording ever
+  // changed on either side of the API/UI boundary.
+  checkCredentials(response: LoginDataResponse): CredentialsCheckResult {
+    const success = response.data?.accessToken != null && response.status === 200;
+    if (success) {
       this.sessionStorageService.setSessionAccessToken(
-        response.data.accessToken,
+        response.data!.accessToken,
       );
       this.notificationService.show('Login successful.');
       this.router.navigateByUrl('customers');
     }
-    return response.responseMessage;
+    return { success, message: response.responseMessage };
   }
 }

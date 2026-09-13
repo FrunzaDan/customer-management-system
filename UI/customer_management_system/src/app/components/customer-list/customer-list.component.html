@@ -1,4 +1,7 @@
 @if (!isLoading(); ) {
+@if (errorMessage(); as error) {
+<div class="alert alert-danger mt-2">{{ error }}</div>
+}
 @if (activationError(); as error) {
 <div class="alert alert-danger mt-2">{{ error }}</div>
 } @if (deleteError(); as error) {

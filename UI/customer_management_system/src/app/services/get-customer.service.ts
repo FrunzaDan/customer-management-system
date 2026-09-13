@@ -5,6 +5,7 @@ import {
   HttpParams,
 } from '@angular/common/http';
 import { computed, Injectable, Signal, signal } from '@angular/core';
+import { catchError, map, of, Subject, switchMap } from 'rxjs';
 import { Customer } from '../interfaces/customer-response';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
@@ -49,48 +50,66 @@ export class GetCustomerService {
   public readonly pageSizeSignal = computed(() => this.state().pageSize);
   public readonly totalItemsSignal = computed(() => this.state().totalItems);
 
+  // Routed through switchMap so a new loadCustomers() call cancels whatever request is
+  // still in flight — without this, a slower earlier response (e.g. a stale page/search)
+  // can land after a faster later one and overwrite it with stale data.
+  private readonly loadCustomersParams$ = new Subject<LoadCustomersParams>();
+
   constructor(
     private http: HttpClient,
     private httpHeaderService: HttpHeaderService,
-  ) {}
+  ) {
+    this.loadCustomersParams$
+      .pipe(
+        switchMap((params) => {
+          const headers = this.httpHeaderService.getHeadersWithTokenSet();
+          let httpParams = new HttpParams()
+            .set('pageNumber', params.pageNumber)
+            .set('pageSize', params.pageSize)
+            .set('sortColumn', params.sortColumn ?? 'name')
+            .set('sortDirection', params.sortDirection ?? 'asc');
+
+          if (params.searchTerm) {
+            httpParams = httpParams.set('searchTerm', params.searchTerm);
+          }
+
+          return this.http
+            .get<GenericResponse<PagedResponse<Customer>>>(
+              this.API_URL_GET_ALL,
+              { headers, params: httpParams },
+            )
+            .pipe(
+              map((response) => ({ response, requestedParams: params })),
+              catchError((error: HttpErrorResponse) => {
+                this.handleError(error);
+                return of(null);
+              }),
+            );
+        }),
+      )
+      .subscribe((result) => {
+        if (!result || !result.response) return;
+
+        const { response, requestedParams } = result;
+        const paged = response.data;
+        this.state.update((state) => ({
+          ...state,
+          customers: paged?.items ?? [],
+          pageNumber: paged?.pageNumber ?? requestedParams.pageNumber,
+          pageSize: paged?.pageSize ?? requestedParams.pageSize,
+          totalItems: paged?.totalItems ?? 0,
+          loading: false,
+          error: null,
+        }));
+      });
+  }
 
   // Pagination, search, and sorting are all server-side: each call re-fetches
   // just the requested page from the API rather than filtering/sorting an
   // already-loaded full list in memory.
   public loadCustomers(params: LoadCustomersParams): void {
     this.setLoading(true);
-
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    let httpParams = new HttpParams()
-      .set('pageNumber', params.pageNumber)
-      .set('pageSize', params.pageSize)
-      .set('sortColumn', params.sortColumn ?? 'name')
-      .set('sortDirection', params.sortDirection ?? 'asc');
-
-    if (params.searchTerm) {
-      httpParams = httpParams.set('searchTerm', params.searchTerm);
-    }
-
-    this.http
-      .get<GenericResponse<PagedResponse<Customer>>>(this.API_URL_GET_ALL, {
-        headers,
-        params: httpParams,
-      })
-      .subscribe({
-        next: (response) => {
-          const paged = response?.data;
-          this.state.update((state) => ({
-            ...state,
-            customers: paged?.items ?? [],
-            pageNumber: paged?.pageNumber ?? params.pageNumber,
-            pageSize: paged?.pageSize ?? params.pageSize,
-            totalItems: paged?.totalItems ?? 0,
-            loading: false,
-            error: null,
-          }));
-        },
-        error: (error: HttpErrorResponse) => this.handleError(error),
-      });
+    this.loadCustomersParams$.next(params);
   }
 
   getCustomer(queryString: string): void {

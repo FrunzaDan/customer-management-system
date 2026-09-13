@@ -127,6 +127,10 @@ This is a learning project, so a few rough edges are intentional rather than unf
 - Only one merchant role exists right now, though the plumbing (JWT role claim, `[Authorize(Roles = ...)]`) is already there for a second one.
 - Bulk delete on the customer list is a client-side loop over the existing single-customer endpoints, not a dedicated bulk API — same rules apply, just batched with one confirmation prompt.
 
+## More documentation
+
+The `ai_docs/` folder has denser, more technical write-ups of each layer — start at [`ai_docs/index.md`](ai_docs/index.md), or go straight to [`api.md`](ai_docs/api.md), [`database.md`](ai_docs/database.md), [`angular-frontend.md`](ai_docs/angular-frontend.md), or [`build-and-run.md`](ai_docs/build-and-run.md).
+
 ## License
 
 Personal project, no license file yet — ask if you want to use any of this.

@@ -22,6 +22,18 @@ function redact(body: unknown): unknown {
   return clone;
 }
 
+// Response bodies carry the live bearer JWT on a successful login (data.accessToken) —
+// just as sensitive as the password redacted above, and logging defaults to on.
+function redactResponse(body: unknown): unknown {
+  if (!body || typeof body !== 'object') return body;
+  const clone: Record<string, unknown> = { ...(body as Record<string, unknown>) };
+  const data = clone['data'];
+  if (data && typeof data === 'object' && 'accessToken' in data) {
+    clone['data'] = { ...(data as Record<string, unknown>), accessToken: '••••••••' };
+  }
+  return clone;
+}
+
 export const apiLoggerInterceptor: HttpInterceptorFn = (req, next) => {
   if (
     !isPlatformBrowser(inject(PLATFORM_ID)) ||
@@ -42,7 +54,7 @@ export const apiLoggerInterceptor: HttpInterceptorFn = (req, next) => {
         console.log(
           `%c← ${req.method} ${req.urlWithParams} ${event.status} (${durationMs}ms)`,
           'color:#30d158;font-weight:bold',
-          { body: event.body },
+          { body: redactResponse(event.body) },
         );
       }
     }),

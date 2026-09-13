@@ -4,7 +4,7 @@
 
 When asked anything about this codebase, **always read `/workspace/ai_docs/index.md` first**.
 
-Then check `/workspace/ai_docs/todo.md` and any relevant concept doc before exploring source.
+Then check the relevant concept doc (`api.md`, `database.md`, `angular-frontend.md`, or `build-and-run.md`) before exploring source.
 
 ## Project context
 

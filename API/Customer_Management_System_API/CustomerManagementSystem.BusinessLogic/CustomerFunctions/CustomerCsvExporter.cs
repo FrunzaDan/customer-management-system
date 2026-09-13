@@ -59,7 +59,7 @@ public static class CustomerCsvExporter
         _ => string.Empty
     };
 
-    // tbl_customers.customer_Status codes — see customer-data-model-and-lifecycle.md.
+    // tbl_customers.customer_Status codes — see ai_docs/database.md.
     private static string StatusLabel(int? status) => status switch
     {
         1901 => "Active",

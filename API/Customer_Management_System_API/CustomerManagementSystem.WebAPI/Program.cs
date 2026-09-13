@@ -105,8 +105,6 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-builder.Services.AddHttpClient();
-
 builder.Services.AddHttpsRedirection(options =>
 {
     options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;

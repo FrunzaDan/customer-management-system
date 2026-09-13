@@ -8,6 +8,13 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- % and _ are LIKE wildcards; a literal search for either would otherwise match far
+    -- more than the user typed (e.g. a search for "_" matching almost every customer).
+    -- Still fully parameterized (no string concatenation of SQL) — this only escapes the
+    -- pattern characters inside the parameter's own value.
+    DECLARE @EscapedSearchTerm NVARCHAR(200) =
+        REPLACE(REPLACE(REPLACE(@SearchTerm, '\', '\\'), '%', '\%'), '_', '\_');
+
     SELECT
         c.PK_customer_guid,
         c.first_name,
@@ -33,10 +40,10 @@ BEGIN
         ON c.PK_customer_guid = a.FK_customer_guid
     WHERE
         @SearchTerm IS NULL
-        OR c.first_name LIKE '%' + @SearchTerm + '%'
-        OR c.last_name LIKE '%' + @SearchTerm + '%'
-        OR c.email LIKE '%' + @SearchTerm + '%'
-        OR c.msisdn LIKE '%' + @SearchTerm + '%'
+        OR c.first_name LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR c.last_name LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR c.email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR c.msisdn LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
     ORDER BY
         -- Parameterized sorting without dynamic SQL: for a given
         -- @SortColumn/@SortDirection, exactly one pair of CASE expressions

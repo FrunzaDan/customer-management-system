@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators,
@@ -21,6 +22,21 @@ import { GetCustomerService } from '../../../../src/app/services/get-customer.se
 import { environment } from '../../../environments/environment';
 import { EditCustomerService } from '../../services/edit-customer.service';
 
+type EditCustomerForm = FormGroup<{
+  firstName: FormControl<string>;
+  lastName: FormControl<string>;
+  email: FormControl<string>;
+  msisdn: FormControl<string>;
+  gender: FormControl<string>;
+  birthdate: FormControl<string>;
+  country: FormControl<string>;
+  county: FormControl<string>;
+  town: FormControl<string>;
+  street: FormControl<string>;
+  number: FormControl<string>;
+  zip: FormControl<string>;
+}>;
+
 @Component({
   selector: 'app-edit-customer',
   templateUrl: './edit-customer.component.html',
@@ -28,7 +44,7 @@ import { EditCustomerService } from '../../services/edit-customer.service';
   imports: [NgClass, ReactiveFormsModule, RouterLink],
 })
 export class EditCustomerComponent implements OnInit {
-  form: FormGroup;
+  form: EditCustomerForm;
   paramId: string = '';
   readonly submitted = signal(false);
 
@@ -93,8 +109,8 @@ export class EditCustomerComponent implements OnInit {
     return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   }
 
-  private createForm(): FormGroup {
-    return this.fb.group({
+  private createForm(): EditCustomerForm {
+    return this.fb.nonNullable.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: [
@@ -134,21 +150,23 @@ export class EditCustomerComponent implements OnInit {
       return;
     }
 
+    const formValue = this.form.getRawValue();
+
     const updatedCustomer: Customer = {
       ...this.customer()!,
-      firstName: this.form.value.firstName,
-      lastName: this.form.value.lastName,
-      email: this.form.value.email,
-      msisdn: this.form.value.msisdn,
-      gender: this.form.value.gender,
-      birthdate: this.form.value.birthdate,
+      firstName: formValue.firstName,
+      lastName: formValue.lastName,
+      email: formValue.email,
+      msisdn: formValue.msisdn,
+      gender: Number(formValue.gender),
+      birthdate: formValue.birthdate,
       address: {
-        country: this.form.value.country,
-        county: this.form.value.county,
-        town: this.form.value.town,
-        street: this.form.value.street,
-        number: this.form.value.number,
-        zip: this.form.value.zip,
+        country: formValue.country,
+        county: formValue.county,
+        town: formValue.town,
+        street: formValue.street,
+        number: formValue.number,
+        zip: formValue.zip,
       },
     };
 

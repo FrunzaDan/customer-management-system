@@ -33,7 +33,7 @@ export class AuthGuardService {
     this.sessionStorageService.removeSessionStorage();
   }
 
-  private handleError(error: any): Observable<boolean> {
+  private handleError(error: unknown): Observable<boolean> {
     console.error('Error verifying token:', error);
     this.redirectToLogin();
     return of(false);

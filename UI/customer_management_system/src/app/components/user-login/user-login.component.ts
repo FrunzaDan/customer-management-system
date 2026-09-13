@@ -68,12 +68,8 @@ export class UserLoginComponent implements OnInit, OnDestroy {
 
       this.userLoginService.login(loginRequest).subscribe({
         next: (response) => {
-          let test = this.userLoginService.checkCredentials(response);
-          if (test == 'Success!') {
-            this.errorMessage.set(null);
-          } else {
-            this.errorMessage.set(test);
-          }
+          const result = this.userLoginService.checkCredentials(response);
+          this.errorMessage.set(result.success ? null : result.message);
         },
         error: (error) => {
           this.handleLoginError(error.status);
@@ -103,7 +99,6 @@ export class UserLoginComponent implements OnInit, OnDestroy {
       default:
         this.errorMessage.set(`Server error (${statusCode}). Please try again later.`);
     }
-    this.userLoginService.errorSubject.next(this.errorMessage());
   }
 
   ngOnDestroy(): void {

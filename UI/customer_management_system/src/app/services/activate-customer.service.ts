@@ -10,7 +10,7 @@ import { GenericResponse } from '../interfaces/generic-response';
 import { GetCustomerService } from './get-customer.service';
 import { HttpHeaderService } from './http-header-service';
 import { CustomerActivationStatus } from '../interfaces/customer-response';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/internal/operators/retry';
 import { catchError } from 'rxjs/internal/operators/catchError';
 import { NotificationService } from './notification.service';
@@ -19,6 +19,18 @@ interface ActivationState {
   loading: boolean;
   error: string | null;
 }
+
+// Only retry transient failures (no response reached the browser, or a 5xx from the
+// server) — a definitive 4xx (expired session, already-deactivated, unknown GUID) will
+// never succeed on retry, so retrying it just re-triggers side effects (e.g. the 401
+// interceptor's logout/redirect) 3 extra times for nothing. Backed off, not immediate.
+const TRANSIENT_ERROR_RETRY_CONFIG = {
+  count: 3,
+  delay: (error: unknown, retryCount: number) =>
+    error instanceof HttpErrorResponse && (error.status === 0 || error.status >= 500)
+      ? timer(retryCount * 500)
+      : throwError(() => error),
+};
 
 @Injectable({
   providedIn: 'root',
@@ -56,7 +68,7 @@ export class ActivateCustomerService {
         params,
       })
       .pipe(
-        retry(3),
+        retry(TRANSIENT_ERROR_RETRY_CONFIG),
         catchError((error: HttpErrorResponse) => {
           this.handleError(error);
           throw error;
@@ -104,7 +116,7 @@ export class ActivateCustomerService {
         params,
       })
       .pipe(
-        retry(3),
+        retry(TRANSIENT_ERROR_RETRY_CONFIG),
         catchError((error: HttpErrorResponse) => {
           this.handleError(error);
           throw error;

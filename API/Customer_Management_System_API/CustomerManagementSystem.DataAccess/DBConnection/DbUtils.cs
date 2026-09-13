@@ -7,6 +7,10 @@ namespace CustomerManagementSystem.DataAccess.DBConnection;
 
 public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
 {
+    // DbUtils is registered as a singleton, so this cache is shared across every concurrent
+    // request for the app's lifetime — the lock stops concurrent cold-start (or sustained
+    // DB-unavailability) requests from redundantly re-running connection-string resolution.
+    private readonly SemaphoreSlim _connectionStringLock = new(1, 1);
     private string? CurrentConnectionString { get; set; }
 
     public async Task<ResponseModel<object>> RegisterCustomer(CustomerModel customer,
@@ -27,7 +31,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             "dbo.usp_getCustomer",
             command =>
             {
-                command.Parameters.AddWithValue("@var_SearchOption", request.SearchOption);
+                command.Parameters.Add("@var_SearchOption", SqlDbType.Int).Value = request.SearchOption;
                 command.Parameters.AddWithValue("@var_SearchVariable", request.SearchVariable ?? (object)DBNull.Value);
             },
             reader => DbHelper.HandleResponseWithCustomerMapping(reader, "Customer found.",
@@ -175,8 +179,19 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     private async Task CheckConnectionStringAsync(CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(CurrentConnectionString)) return;
-        CurrentConnectionString = await new CurrentSqlConnection(configuration)
-            .GetCorrectSqlConnectionStringAsync(cancellationToken).ConfigureAwait(false);
+
+        await _connectionStringLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (!string.IsNullOrEmpty(CurrentConnectionString)) return; // re-check after acquiring the lock
+
+            CurrentConnectionString = await new CurrentSqlConnection(configuration)
+                .GetCorrectSqlConnectionStringAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _connectionStringLock.Release();
+        }
     }
 
     private async Task<T> ExecuteStoredProcedureAsync<T>(

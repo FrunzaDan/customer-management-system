@@ -18,7 +18,7 @@
 							"script": {
 								"exec": [
 									"pm.sendRequest({",
-									"    url: \"https://localhost:7145/Authentication/GetAccessToken\",",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
 									"    method: 'POST',",
 									"    header: {'Content-Type': 'application/json',},",
 									"    body: {",
@@ -29,8 +29,8 @@
 									"}, ",
 									"function (err, response) {",
 									"    var responseJson = response.json();",
-									"    pm.environment.set('ACCESS_TOKEN', responseJson['accessToken']);",
-									"    console.log('Inserted Token: ' + responseJson['accessToken']);",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -52,7 +52,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Marian2\",\n    \"lastName\": \"Solomon2\",\n    \"msisdn\": \"077300507\",\n    \"email\": \"mariansolomon5@gmail.com\",\n    \"gender\": \"1\",\n    \"birthdate\": \"qwdefsdvbg\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"Marian2\",\n    \"lastName\": \"Solomon2\",\n    \"msisdn\": \"077300507\",\n    \"email\": \"mariansolomon5@gmail.com\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -60,15 +60,16 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Customer/RegisterCustomer",
+							"raw": "https://localhost:7145/api/Customer/register",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Customer",
-								"RegisterCustomer"
+								"register"
 							]
 						}
 					},
@@ -82,7 +83,7 @@
 							"script": {
 								"exec": [
 									"pm.sendRequest({",
-									"    url: \"https://localhost:7145/Authentication/GetAccessToken\",",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
 									"    method: 'POST',",
 									"    header: {'Content-Type': 'application/json',},",
 									"    body: {",
@@ -93,8 +94,8 @@
 									"}, ",
 									"function (err, response) {",
 									"    var responseJson = response.json();",
-									"    pm.environment.set('ACCESS_TOKEN', responseJson['accessToken']);",
-									"    console.log('Inserted Token: ' + responseJson['accessToken']);",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -124,15 +125,16 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Customer/EditCustomer",
+							"raw": "https://localhost:7145/api/Customer/edit",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Customer",
-								"EditCustomer"
+								"edit"
 							]
 						}
 					},
@@ -146,7 +148,7 @@
 							"script": {
 								"exec": [
 									"pm.sendRequest({",
-									"    url: \"https://localhost:7145/Authentication/GetAccessToken\",",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
 									"    method: 'POST',",
 									"    header: {'Content-Type': 'application/json',},",
 									"    body: {",
@@ -157,8 +159,8 @@
 									"}, ",
 									"function (err, response) {",
 									"    var responseJson = response.json();",
-									"    pm.environment.set('ACCESS_TOKEN', responseJson['accessToken']);",
-									"    console.log('Inserted Token: ' + responseJson['accessToken']);",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -188,19 +190,91 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Customer/DeactivateCustomer?customerGUID=3eaa296a-88ad-4a68-a9b7-a14aa93dd2be",
+							"raw": "https://localhost:7145/api/Customer/deactivate?customerGuid=3eaa296a-88ad-4a68-a9b7-a14aa93dd2be",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Customer",
-								"DeactivateCustomer"
+								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGUID",
+									"key": "customerGuid",
+									"value": "3eaa296a-88ad-4a68-a9b7-a14aa93dd2be"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ReactivateCustomer",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
+									"    method: 'POST',",
+									"    header: {'Content-Type': 'application/json',},",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({\"merchantID\":\"TestMerchantID\",",
+									"                             \"merchantPassword\":\"Merchant123\"})",
+									"                            }",
+									"}, ",
+									"function (err, response) {",
+									"    var responseJson = response.json();",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7145/api/Customer/reactivate?customerGuid=3eaa296a-88ad-4a68-a9b7-a14aa93dd2be",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7145",
+							"path": [
+								"api",
+								"Customer",
+								"reactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
 									"value": "3eaa296a-88ad-4a68-a9b7-a14aa93dd2be"
 								}
 							]
@@ -216,7 +290,7 @@
 							"script": {
 								"exec": [
 									"pm.sendRequest({",
-									"    url: \"https://localhost:7145/Authentication/GetAccessToken\",",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
 									"    method: 'POST',",
 									"    header: {'Content-Type': 'application/json',},",
 									"    body: {",
@@ -227,8 +301,8 @@
 									"}, ",
 									"function (err, response) {",
 									"    var responseJson = response.json();",
-									"    pm.environment.set('ACCESS_TOKEN', responseJson['accessToken']);",
-									"    console.log('Inserted Token: ' + responseJson['accessToken']);",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -250,7 +324,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Maria\",\n    \"lastName\": \"Solomon\",\n    \"msisdn\": \"0773000007\",\n    \"email\": \"mariasolomon20@gmail.com\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -258,15 +332,22 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Customer/DeleteCustomer",
+							"raw": "https://localhost:7145/api/Customer/delete?customerGuid=3eaa296a-88ad-4a68-a9b7-a14aa93dd2be",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Customer",
-								"DeleteCustomer"
+								"delete"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "3eaa296a-88ad-4a68-a9b7-a14aa93dd2be"
+								}
 							]
 						}
 					},
@@ -280,7 +361,7 @@
 							"script": {
 								"exec": [
 									"pm.sendRequest({",
-									"    url: \"https://localhost:7145/Authentication/GetAccessToken\",",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
 									"    method: 'POST',",
 									"    header: {'Content-Type': 'application/json',},",
 									"    body: {",
@@ -291,8 +372,8 @@
 									"}, ",
 									"function (err, response) {",
 									"    var responseJson = response.json();",
-									"    pm.environment.set('ACCESS_TOKEN', responseJson['accessToken']);",
-									"    console.log('Inserted Token: ' + responseJson['accessToken']);",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -325,15 +406,16 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Customer/GetCustomer?searchVariable=ef0e8818-3e0c-4c5f-acb1-66ecf7bfc4be",
+							"raw": "https://localhost:7145/api/Customer/get?searchVariable=ef0e8818-3e0c-4c5f-acb1-66ecf7bfc4be",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Customer",
-								"GetCustomer"
+								"get"
 							],
 							"query": [
 								{
@@ -353,7 +435,7 @@
 							"script": {
 								"exec": [
 									"pm.sendRequest({",
-									"    url: \"https://localhost:7145/Authentication/GetAccessToken\",",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
 									"    method: 'POST',",
 									"    header: {'Content-Type': 'application/json',},",
 									"    body: {",
@@ -364,8 +446,8 @@
 									"}, ",
 									"function (err, response) {",
 									"    var responseJson = response.json();",
-									"    pm.environment.set('ACCESS_TOKEN', responseJson['accessToken']);",
-									"    console.log('Inserted Token: ' + responseJson['accessToken']);",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -399,17 +481,334 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Customer/GetCustomers",
+							"raw": "https://localhost:7145/api/Customer/all?pageNumber=1&pageSize=20&sortColumn=name&sortDirection=asc",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Customer",
-								"GetCustomers"
+								"all"
+							],
+							"query": [
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "sortColumn",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "asc"
+								}
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "ExportCustomers",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
+									"    method: 'POST',",
+									"    header: {'Content-Type': 'application/json',},",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({\"merchantID\":\"TestMerchantID\",",
+									"                             \"merchantPassword\":\"Merchant123\"})",
+									"                            }",
+									"}, ",
+									"function (err, response) {",
+									"    var responseJson = response.json();",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7145/api/Customer/export?sortColumn=name&sortDirection=asc",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7145",
+							"path": [
+								"api",
+								"Customer",
+								"export"
+							],
+							"query": [
+								{
+									"key": "sortColumn",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetCustomerAuditLog",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
+									"    method: 'POST',",
+									"    header: {'Content-Type': 'application/json',},",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({\"merchantID\":\"TestMerchantID\",",
+									"                             \"merchantPassword\":\"Merchant123\"})",
+									"                            }",
+									"}, ",
+									"function (err, response) {",
+									"    var responseJson = response.json();",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7145/api/Customer/auditLog?customerGuid=ef0e8818-3e0c-4c5f-acb1-66ecf7bfc4be",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7145",
+							"path": [
+								"api",
+								"Customer",
+								"auditLog"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "ef0e8818-3e0c-4c5f-acb1-66ecf7bfc4be"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllCustomerAuditLog",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
+									"    method: 'POST',",
+									"    header: {'Content-Type': 'application/json',},",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({\"merchantID\":\"TestMerchantID\",",
+									"                             \"merchantPassword\":\"Merchant123\"})",
+									"                            }",
+									"}, ",
+									"function (err, response) {",
+									"    var responseJson = response.json();",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7145/api/Customer/auditLog/all?pageNumber=1&pageSize=20",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7145",
+							"path": [
+								"api",
+								"Customer",
+								"auditLog",
+								"all"
+							],
+							"query": [
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteAllCustomerAuditLog",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({",
+									"    url: \"https://localhost:7145/api/Authentication/access-token\",",
+									"    method: 'POST',",
+									"    header: {'Content-Type': 'application/json',},",
+									"    body: {",
+									"        mode: 'raw',",
+									"        raw: JSON.stringify({\"merchantID\":\"TestMerchantID\",",
+									"                             \"merchantPassword\":\"Merchant123\"})",
+									"                            }",
+									"}, ",
+									"function (err, response) {",
+									"    var responseJson = response.json();",
+									"    pm.environment.set('ACCESS_TOKEN', responseJson.data['accessToken']);",
+									"    console.log('Inserted Token: ' + responseJson.data['accessToken']);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7145/api/Customer/auditLog/all",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7145",
+							"path": [
+								"api",
+								"Customer",
+								"auditLog",
+								"all"
+							]
+						},
+						"description": "Permanently wipes every audit-log row for every customer. Destructive, no soft-delete. Gated by [Authorize(Roles = \"1801\")] in addition to the class-level [Authorize] — see ai_docs/api.md."
 					},
 					"response": []
 				}
@@ -433,15 +832,16 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Authentication/GetAccessToken",
+							"raw": "https://localhost:7145/api/Authentication/access-token",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Authentication",
-								"GetAccessToken"
+								"access-token"
 							]
 						}
 					},
@@ -453,6 +853,16 @@
 						"disableBodyPruning": true
 					},
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"body": {
@@ -465,23 +875,43 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7145/Authentication/VerifyToken?searchVariable=cb6bbfa9-ca27-461b-b510-72971ea65bbc",
+							"raw": "https://localhost:7145/api/Authentication/verify-token",
 							"protocol": "https",
 							"host": [
 								"localhost"
 							],
 							"port": "7145",
 							"path": [
+								"api",
 								"Authentication",
-								"VerifyToken"
-							],
-							"query": [
-								{
-									"key": "searchVariable",
-									"value": "cb6bbfa9-ca27-461b-b510-72971ea65bbc"
-								}
+								"verify-token"
 							]
 						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "GetHealth",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:7145/health",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7145",
+							"path": [
+								"health"
+							]
+						},
+						"description": "Bare, unauthenticated liveness check — not gated by [Authorize], doesn't return the ResponseModel envelope, just a 200."
 					},
 					"response": []
 				}

@@ -18,8 +18,15 @@ SQL_IMAGE="${SQL_IMAGE:-mcr.microsoft.com/azure-sql-edge}"
 SQL_CONTAINER_NAME="${SQL_CONTAINER_NAME:-sqlserver}"
 SQL_SA_PASSWORD="${SQL_SA_PASSWORD:-MyStrongPassw0rd?}"
 SQL_PORT="${SQL_PORT:-1433}"
-SQL_PLATFORM="${SQL_PLATFORM:-linux/arm64}"
-SQL_DATABASE="Customer_Management_System_DB"
+# linux/arm64 only matches Apple Silicon; everything else (Linux amd64, Intel Mac) needs
+# linux/amd64, or the container either fails outright or silently falls back to slow QEMU
+# emulation with no explanation. SQL_PLATFORM still overrides either default if set.
+if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]]; then
+  SQL_PLATFORM="${SQL_PLATFORM:-linux/arm64}"
+else
+  SQL_PLATFORM="${SQL_PLATFORM:-linux/amd64}"
+fi
+SQL_DATABASE="${SQL_DATABASE:-Customer_Management_System_DB}"
 
 # Default falls back to the "https" launch profile's applicationUrl (stripped of the
 # trailing ";" ASP.NET appends when multiple URLs are configured) so the script doesn't
@@ -197,9 +204,11 @@ API_PID=$!
 echo "    API starting in background (pid $API_PID), logs: $API_LOG"
 
 echo -n "    Waiting for API to come up"
+api_ready=0
 for _ in $(seq 1 30); do
   if curl -sk "$API_URL/swagger/index.html" >/dev/null 2>&1; then
     echo
+    api_ready=1
     break
   fi
   echo -n "."
@@ -208,6 +217,12 @@ done
 
 if ! kill -0 "$API_PID" 2>/dev/null; then
   echo "API process exited early, check $API_LOG" >&2
+  exit 1
+fi
+
+if [[ "$api_ready" -ne 1 ]]; then
+  echo
+  echo "API did not become reachable at $API_URL within 60s, check $API_LOG" >&2
   exit 1
 fi
 
@@ -222,7 +237,7 @@ echo "    API is up at $API_URL"
 # renders client-side after hydration, but with noisy "AbortError" output).
 DEV_CERT_PEM="$RUN_DIR/dev-cert.pem"
 if command -v openssl >/dev/null 2>&1 &&
-  echo | openssl s_client -connect localhost:"${API_URL##*:}" -servername localhost 2>/dev/null |
+  echo | openssl s_client -connect localhost:"$API_PORT" -servername localhost 2>/dev/null |
     openssl x509 -outform PEM >"$DEV_CERT_PEM" 2>/dev/null &&
   [[ -s "$DEV_CERT_PEM" ]]; then
   export NODE_EXTRA_CA_CERTS="$DEV_CERT_PEM"

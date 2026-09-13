@@ -1,3 +1,4 @@
+using System.Data;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
 
@@ -30,7 +31,7 @@ public static class DbHelper
         command.Parameters.AddWithValue("@var_LastName", customer.LastName);
         command.Parameters.AddWithValue("@var_Email", customer.Email);
         command.Parameters.AddWithValue("@var_MSISDN", customer.Msisdn);
-        command.Parameters.AddWithValue("@var_Gender", customer.Gender);
+        command.Parameters.Add("@var_Gender", SqlDbType.Int).Value = (object?)customer.Gender ?? DBNull.Value;
         command.Parameters.AddWithValue("@var_Birthdate", customer.Birthdate);
     }
 
@@ -127,26 +128,31 @@ public static class DbHelper
         );
     }
 
+    // A real DB NULL must come back as a C# null, not "" — reader["col"].ToString() would
+    // call DBNull.Value.ToString(), silently turning "never set" into "set to empty string".
+    private static string? GetNullableString(SqlDataReader reader, string columnName) =>
+        reader[columnName] as string;
+
     private static CustomerModel MapCustomerFromReader(SqlDataReader reader)
     {
         var customer = new CustomerModel
         {
-            Guid = reader["PK_customer_guid"].ToString(),
-            FirstName = reader["first_name"].ToString(),
-            LastName = reader["last_name"].ToString(),
-            Email = reader["email"].ToString(),
-            Msisdn = reader["msisdn"].ToString(),
-            CreationDate = reader["creation_Date"].ToString(),
-            InteractionDate = reader["interaction_Date"].ToString(),
-            Birthdate = reader["birthDate"].ToString(),
+            Guid = GetNullableString(reader, "PK_customer_guid"),
+            FirstName = GetNullableString(reader, "first_name"),
+            LastName = GetNullableString(reader, "last_name"),
+            Email = GetNullableString(reader, "email"),
+            Msisdn = GetNullableString(reader, "msisdn"),
+            CreationDate = GetNullableString(reader, "creation_Date"),
+            InteractionDate = GetNullableString(reader, "interaction_Date"),
+            Birthdate = GetNullableString(reader, "birthDate"),
             Address = new AddressModel
             {
-                Country = reader["country"].ToString(),
-                County = reader["county"].ToString(),
-                Town = reader["town"].ToString(),
-                Zip = reader["zip_code"].ToString(),
-                Street = reader["street"].ToString(),
-                Number = reader["number"].ToString()
+                Country = GetNullableString(reader, "country"),
+                County = GetNullableString(reader, "county"),
+                Town = GetNullableString(reader, "town"),
+                Zip = GetNullableString(reader, "zip_code"),
+                Street = GetNullableString(reader, "street"),
+                Number = GetNullableString(reader, "number")
             },
             Gender = int.TryParse(reader["gender"].ToString(), out var gender) ? gender : null,
             CustomerStatus = int.TryParse(reader["customer_Status"].ToString(), out var status) ? status : null
@@ -160,10 +166,10 @@ public static class DbHelper
         return new AuditLogEntry
         {
             AuditId = Convert.ToInt32(reader["audit_id"]),
-            CustomerGuid = reader["customer_guid"].ToString(),
-            MerchantId = reader["merchant_id"].ToString(),
-            Action = reader["action"].ToString(),
-            Details = reader["details"].ToString(),
+            CustomerGuid = GetNullableString(reader, "customer_guid"),
+            MerchantId = GetNullableString(reader, "merchant_id"),
+            Action = GetNullableString(reader, "action"),
+            Details = GetNullableString(reader, "details"),
             ActionDate = (DateTime)reader["action_Date"]
         };
     }
@@ -173,15 +179,14 @@ public static class DbHelper
         return new GlobalAuditLogEntry
         {
             AuditId = Convert.ToInt32(reader["audit_id"]),
-            CustomerGuid = reader["customer_guid"].ToString(),
-            // `as string`, not `.ToString()`: a DBNull (deleted customer, via the
-            // proc's LEFT JOIN) must come back as a real null, not the empty
-            // string DBNull.Value.ToString() would produce.
-            CustomerFirstName = reader["first_name"] as string,
-            CustomerLastName = reader["last_name"] as string,
-            MerchantId = reader["merchant_id"].ToString(),
-            Action = reader["action"].ToString(),
-            Details = reader["details"].ToString(),
+            CustomerGuid = GetNullableString(reader, "customer_guid"),
+            // A DBNull here (deleted customer, via the proc's LEFT JOIN) must come back
+            // as a real null — see GetNullableString above.
+            CustomerFirstName = GetNullableString(reader, "first_name"),
+            CustomerLastName = GetNullableString(reader, "last_name"),
+            MerchantId = GetNullableString(reader, "merchant_id"),
+            Action = GetNullableString(reader, "action"),
+            Details = GetNullableString(reader, "details"),
             ActionDate = (DateTime)reader["action_Date"]
         };
     }
