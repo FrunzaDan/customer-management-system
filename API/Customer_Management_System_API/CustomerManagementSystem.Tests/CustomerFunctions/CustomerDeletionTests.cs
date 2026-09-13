@@ -16,14 +16,14 @@ public class CustomerDeletionTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(200, "Customer deleted successfully.");
-        dbUtils.Setup(d => d.DeleteCustomer(guid)).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var deletion = new CustomerDeletion(dbUtils.Object, auditLogger.Object);
 
         var result = await deletion.DeleteCustomer(guid, MerchantId);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.DeleteCustomer(guid), Times.Once);
-        auditLogger.Verify(a => a.Log(guid, MerchantId, "Deleted", null), Times.Once);
+        dbUtils.Verify(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>()), Times.Once);
+        auditLogger.Verify(a => a.Log(guid, MerchantId, "Deleted", null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -34,14 +34,14 @@ public class CustomerDeletionTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(409, "Customer must be deactivated before it can be deleted.");
-        dbUtils.Setup(d => d.DeleteCustomer(guid)).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var deletion = new CustomerDeletion(dbUtils.Object, auditLogger.Object);
 
         var result = await deletion.DeleteCustomer(guid, MerchantId);
 
         Assert.Equal(409, result.Status);
         Assert.Equal(expected.ResponseMessage, result.ResponseMessage);
-        auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()),
+        auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

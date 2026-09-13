@@ -16,14 +16,16 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
     private string MerchantId => User.Identity!.Name!;
 
     [HttpPost("register")]
-    public async Task<IActionResult> RegisterCustomer([FromBody] CustomerModel customerRqst)
+    public async Task<IActionResult> RegisterCustomer([FromBody] CustomerModel customerRqst,
+        CancellationToken cancellationToken)
     {
-        var response = await customerService.RegisterCustomer(customerRqst, MerchantId);
+        var response = await customerService.RegisterCustomer(customerRqst, MerchantId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetCustomer([FromQuery] string searchVariable)
+    public async Task<IActionResult> GetCustomer([FromQuery] string searchVariable,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(searchVariable))
             return BadRequest(new { Message = "Search variable cannot be null or empty." });
@@ -32,21 +34,23 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
         {
             SearchVariable = searchVariable
         };
-        var response = await customerService.GetCustomer(getCustomerRqst);
+        var response = await customerService.GetCustomer(getCustomerRqst, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("all")]
-    public async Task<IActionResult> GetCustomers([FromQuery] GetCustomersRequest request)
+    public async Task<IActionResult> GetCustomers([FromQuery] GetCustomersRequest request,
+        CancellationToken cancellationToken)
     {
-        var response = await customerService.GetCustomers(request);
+        var response = await customerService.GetCustomers(request, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("export")]
-    public async Task<IActionResult> ExportCustomers([FromQuery] ExportCustomersRequest request)
+    public async Task<IActionResult> ExportCustomers([FromQuery] ExportCustomersRequest request,
+        CancellationToken cancellationToken)
     {
-        var response = await customerService.GetCustomersForExport(request);
+        var response = await customerService.GetCustomersForExport(request, cancellationToken);
         if (response.Status != 200 || response.Data is not string csv)
             return StatusCode(response.Status ?? 200, response);
 
@@ -55,56 +59,62 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
     }
 
     [HttpGet("auditLog")]
-    public async Task<IActionResult> GetCustomerAuditLog([FromQuery] string customerGuid)
+    public async Task<IActionResult> GetCustomerAuditLog([FromQuery] string customerGuid,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(customerGuid))
             return BadRequest(new { Message = "Customer GUID cannot be null or empty." });
 
-        var response = await customerService.GetCustomerAuditLog(customerGuid);
+        var response = await customerService.GetCustomerAuditLog(customerGuid, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpGet("auditLog/all")]
-    public async Task<IActionResult> GetAllCustomerAuditLog([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetAllCustomerAuditLog([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var response = await customerService.GetAllCustomerAuditLog(pageNumber, pageSize);
+        var response = await customerService.GetAllCustomerAuditLog(pageNumber, pageSize, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpPatch("edit")]
-    public async Task<IActionResult> EditCustomer([FromBody] CustomerModel editCustomerRqst)
+    public async Task<IActionResult> EditCustomer([FromBody] CustomerModel editCustomerRqst,
+        CancellationToken cancellationToken)
     {
-        var response = await customerService.EditCustomer(editCustomerRqst, MerchantId);
+        var response = await customerService.EditCustomer(editCustomerRqst, MerchantId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpPatch("deactivate")]
-    public async Task<IActionResult> DeactivateCustomer([FromQuery] string customerGuid)
+    public async Task<IActionResult> DeactivateCustomer([FromQuery] string customerGuid,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(customerGuid))
             return BadRequest(new { Message = "Customer GUID cannot be null or empty." });
 
-        var response = await customerService.DeactivateCustomer(customerGuid, MerchantId);
+        var response = await customerService.DeactivateCustomer(customerGuid, MerchantId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpPatch("reactivate")]
-    public async Task<IActionResult> ReactivateCustomer([FromQuery] string customerGuid)
+    public async Task<IActionResult> ReactivateCustomer([FromQuery] string customerGuid,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(customerGuid))
             return BadRequest(new { Message = "Customer GUID cannot be null or empty." });
 
-        var response = await customerService.ReactivateCustomer(customerGuid, MerchantId);
+        var response = await customerService.ReactivateCustomer(customerGuid, MerchantId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 
     [HttpDelete("delete")]
-    public async Task<IActionResult> DeleteCustomer([FromQuery] string customerGuid)
+    public async Task<IActionResult> DeleteCustomer([FromQuery] string customerGuid,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(customerGuid))
             return BadRequest(new { Message = "Customer GUID cannot be null or empty." });
 
-        var response = await customerService.DeleteCustomer(customerGuid, MerchantId);
+        var response = await customerService.DeleteCustomer(customerGuid, MerchantId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
 }

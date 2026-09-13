@@ -21,7 +21,8 @@ public class JwtCreation
         _signingKey = JwtSigningKey.Create(_configuration.SecureJwtKey);
     }
 
-    public async Task<ResponseModel<object>> GenerateBearerJwt(MerchantCredentials merchantCredentials)
+    public async Task<ResponseModel<object>> GenerateBearerJwt(MerchantCredentials merchantCredentials,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(merchantCredentials.MerchantId))
             return new ResponseModel<object>(403, "Invalid or empty merchant ID.");
@@ -29,17 +30,20 @@ public class JwtCreation
         try
         {
             // Validate merchant credentials
-            var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDb(merchantCredentials);
+            var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDb(merchantCredentials, cancellationToken);
 
             if (credentialsCheck.Status != 200)
                 return new ResponseModel<object>(403,
                     credentialsCheck.ResponseMessage);
 
-            // Generate token
-            var token = GenerateJwtToken(merchantCredentials.MerchantId, credentialsCheck.Data);
-
+            // Validate config before doing any signing work: BuildTokenDescriptor() would
+            // otherwise call double.Parse(AccessTokenTimeout) directly and throw on a bad
+            // value, making this check unreachable and wasting a signed token in the process.
             if (!double.TryParse(_configuration.AccessTokenTimeout, out var timeoutMinutes))
                 return new ResponseModel<object>(500, "Invalid AccessTokenTimeout configuration.");
+
+            // Generate token
+            var token = GenerateJwtToken(merchantCredentials.MerchantId, credentialsCheck.Data);
 
             return new ResponseModel<object>
             {
@@ -52,9 +56,17 @@ public class JwtCreation
                 }
             };
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            return new ResponseModel<object>(500, $"An error occurred: {ex.Message}");
+            throw;
+        }
+        catch (Exception)
+        {
+            // Unlike the rest of the app, this endpoint is unauthenticated, and any exception
+            // here is caught locally rather than bubbling to the global exception handler (whose
+            // Details-only-in-Development guard wouldn't apply to this method's own response
+            // anyway) — so ex.Message must never be echoed back to an anonymous caller.
+            return new ResponseModel<object>(500, "An error occurred while generating the access token.");
         }
     }
 

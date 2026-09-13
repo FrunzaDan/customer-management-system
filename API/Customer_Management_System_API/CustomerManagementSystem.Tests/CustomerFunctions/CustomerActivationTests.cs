@@ -16,15 +16,15 @@ public class CustomerActivationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(200, "Customer deactivated successfully.");
-        dbUtils.Setup(d => d.DeactivateCustomer(Guid)).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.DeactivateCustomer(Guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 
         var result = await activation.DeactivateCustomer(Guid, MerchantId);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.DeactivateCustomer(Guid), Times.Once);
-        dbUtils.Verify(d => d.ReactivateCustomer(It.IsAny<string>()), Times.Never);
-        auditLogger.Verify(a => a.Log(Guid, MerchantId, "Deactivated", null), Times.Once);
+        dbUtils.Verify(d => d.DeactivateCustomer(Guid, It.IsAny<CancellationToken>()), Times.Once);
+        dbUtils.Verify(d => d.ReactivateCustomer(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        auditLogger.Verify(a => a.Log(Guid, MerchantId, "Deactivated", null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -33,13 +33,13 @@ public class CustomerActivationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(409, "Customer already deactivated or update failed.");
-        dbUtils.Setup(d => d.DeactivateCustomer(Guid)).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.DeactivateCustomer(Guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 
         var result = await activation.DeactivateCustomer(Guid, MerchantId);
 
         Assert.Same(expected, result);
-        auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()),
+        auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -49,14 +49,14 @@ public class CustomerActivationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(200, "Customer reactivated successfully.");
-        dbUtils.Setup(d => d.ReactivateCustomer(Guid)).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.ReactivateCustomer(Guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 
         var result = await activation.ReactivateCustomer(Guid, MerchantId);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.ReactivateCustomer(Guid), Times.Once);
-        dbUtils.Verify(d => d.DeactivateCustomer(It.IsAny<string>()), Times.Never);
-        auditLogger.Verify(a => a.Log(Guid, MerchantId, "Reactivated", null), Times.Once);
+        dbUtils.Verify(d => d.ReactivateCustomer(Guid, It.IsAny<CancellationToken>()), Times.Once);
+        dbUtils.Verify(d => d.DeactivateCustomer(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        auditLogger.Verify(a => a.Log(Guid, MerchantId, "Reactivated", null, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

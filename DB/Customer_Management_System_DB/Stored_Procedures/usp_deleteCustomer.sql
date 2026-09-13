@@ -30,26 +30,33 @@ BEGIN
     END
     ELSE
     BEGIN
-        DELETE FROM tbl_addresses
-        WHERE FK_customer_guid = @var_Guid;
+        -- Both deletes must succeed together: usp_getCustomer/usp_getCustomers
+        -- INNER JOIN to tbl_addresses, so a tbl_customers row left behind without
+        -- its tbl_addresses row (e.g. the second DELETE fails after the first
+        -- already committed) would silently disappear from every read despite
+        -- still existing — mirrors usp_createCustomer's TRY/CATCH for the same
+        -- two-table-consistency reason.
+        BEGIN TRY
+            BEGIN TRANSACTION;
 
-        DELETE FROM tbl_customers
-        WHERE PK_customer_guid = @var_Guid;
+            DELETE FROM tbl_addresses
+            WHERE FK_customer_guid = @var_Guid;
 
-        IF NOT EXISTS (
-            SELECT 1
-            FROM tbl_customers
-            WHERE PK_customer_guid = @var_Guid
-        )
-        BEGIN
+            DELETE FROM tbl_customers
+            WHERE PK_customer_guid = @var_Guid;
+
+            COMMIT TRANSACTION;
+
             SET @result = 0;
             SET @message = 'Customer deleted successfully.';
-        END
-        ELSE
-        BEGIN
-            SET @result = 409;
-            SET @message = 'Failed to delete customer. Deletion may not have been successful.';
-        END
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0
+                ROLLBACK TRANSACTION;
+
+            SET @result = 500;
+            SET @message = CONCAT('Failed to delete customer: ', ERROR_MESSAGE());
+        END CATCH
     END
 
     SELECT @result AS result, @message AS message;

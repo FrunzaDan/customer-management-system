@@ -6,7 +6,8 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
 public class CustomerEditing(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> EditCustomerFunction(CustomerModel request, string merchantId)
+    public async Task<ResponseModel<object>> EditCustomerFunction(CustomerModel request, string merchantId,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(request.Guid) || GuidValidation.ValidateGuid(request.Guid) == false)
             return new ResponseModel<object>(400, "Invalid or empty Guid.");
@@ -17,8 +18,10 @@ public class CustomerEditing(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
         if (!string.IsNullOrEmpty(request.Msisdn) && MsisdnValidation.ValidateMsisdn(request.Msisdn) == false)
             return new ResponseModel<object>(400, "Invalid MSISDN.");
 
-        var response = await dbUtils.EditCustomer(request);
+        var response = await dbUtils.EditCustomer(request, cancellationToken);
 
+        // Not forwarding cancellationToken: the edit already succeeded, so the audit write
+        // should still be attempted even if the client has since disconnected.
         if (response.Status == 200)
             await auditLogger.Log(request.Guid, merchantId, "Edited", DescribeChangedFields(request));
 

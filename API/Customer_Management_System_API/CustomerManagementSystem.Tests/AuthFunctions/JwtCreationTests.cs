@@ -29,7 +29,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwt_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
@@ -45,7 +45,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwt_ReturnsForbidden_WhenCredentialsAreRejectedByTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<int?>(403, "Invalid merchant credentials."));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
@@ -68,25 +68,41 @@ public class JwtCreationTests
         var result = await jwtCreation.GenerateBearerJwt(credentials);
 
         Assert.Equal(403, result.Status);
-        dbUtils.Verify(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>()), Times.Never);
+        dbUtils.Verify(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task GenerateBearerJwt_ReturnsServerError_WhenAccessTokenTimeoutIsNotConfiguredAsANumber()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
         var jwtCreation = new JwtCreation(CreateConfig(accessTokenTimeout: "not-a-number").Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials);
 
-        // BuildTokenDescriptor() calls double.Parse(AccessTokenTimeout) directly (not TryParse) while
-        // building the token, which runs before GenerateBearerJwt's own double.TryParse check further
-        // down — so an unparseable value throws here and is caught by the method's generic catch block,
-        // never reaching the dedicated "Invalid AccessTokenTimeout configuration." message. Both paths
-        // return 500, so behavior is still correct, but only the generic message is actually reachable.
+        // AccessTokenTimeout is validated via double.TryParse before any token is built/signed,
+        // so a bad config value returns this dedicated message rather than falling through to
+        // BuildTokenDescriptor()'s double.Parse and being caught by the generic catch block.
         Assert.Equal(500, result.Status);
-        Assert.StartsWith("An error occurred", result.ResponseMessage);
+        Assert.Equal("Invalid AccessTokenTimeout configuration.", result.ResponseMessage);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwt_DoesNotLeakExceptionDetails_WhenTokenGenerationFails()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Connection string 'CustomerManagementSystemDB_Docker' is unreachable."));
+        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwt(Credentials);
+
+        // This endpoint is unauthenticated, unlike the rest of the API, and any exception here
+        // is caught locally rather than reaching the global exception handler's Details-only-in-
+        // Development guard — so the raw exception message must never reach the response.
+        Assert.Equal(500, result.Status);
+        Assert.DoesNotContain("Connection string", result.ResponseMessage);
+        Assert.DoesNotContain("unreachable", result.ResponseMessage);
     }
 }

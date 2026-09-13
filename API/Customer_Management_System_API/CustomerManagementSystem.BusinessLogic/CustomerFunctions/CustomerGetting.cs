@@ -23,7 +23,8 @@ public class CustomerGetting
         _dbUtils = dbUtils;
     }
 
-    public async Task<ResponseModel<object>> GetCustomerFunction(GetCustomerRequest request)
+    public async Task<ResponseModel<object>> GetCustomerFunction(GetCustomerRequest request,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.SearchVariable))
             return new ResponseModel<object>(404, "Search variable is required.");
@@ -34,10 +35,11 @@ public class CustomerGetting
             return new ResponseModel<object>(404,
                 "No valid search variable was provided! It must be a GUID, MSISDN, or Email.");
 
-        return await _dbUtils.GetCustomer(request);
+        return await _dbUtils.GetCustomer(request, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetCustomersFunction(GetCustomersRequest request)
+    public async Task<ResponseModel<object>> GetCustomersFunction(GetCustomersRequest request,
+        CancellationToken cancellationToken = default)
     {
         if (request.PageNumber < 1)
             return new ResponseModel<object>(400, "Page number must be 1 or greater.");
@@ -49,14 +51,15 @@ public class CustomerGetting
         if (validationError != null)
             return validationError;
 
-        return await _dbUtils.GetCustomers(request);
+        return await _dbUtils.GetCustomers(request, cancellationToken);
     }
 
     // Exports the full search/sort result (capped at MaxExportRows), not just one
     // page — it reuses usp_getCustomers via the same _dbUtils.GetCustomers call the
     // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
     // filtering/sorting SQL stays in exactly one place.
-    public async Task<ResponseModel<object>> GetCustomersForExportFunction(ExportCustomersRequest request)
+    public async Task<ResponseModel<object>> GetCustomersForExportFunction(ExportCustomersRequest request,
+        CancellationToken cancellationToken = default)
     {
         var pagedRequest = new GetCustomersRequest
         {
@@ -71,7 +74,7 @@ public class CustomerGetting
         if (validationError != null)
             return validationError;
 
-        var response = await _dbUtils.GetCustomers(pagedRequest);
+        var response = await _dbUtils.GetCustomers(pagedRequest, cancellationToken);
         if (response.Status != 200 || response.Data is not PagedResponse<CustomerModel> paged)
             return response;
 
@@ -98,15 +101,17 @@ public class CustomerGetting
         return null;
     }
 
-    public async Task<ResponseModel<object>> GetCustomerAuditLogFunction(string customerGuid)
+    public async Task<ResponseModel<object>> GetCustomerAuditLogFunction(string customerGuid,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(customerGuid) || !GuidValidation.ValidateGuid(customerGuid))
             return new ResponseModel<object>(400, "A valid customer GUID is required.");
 
-        return await _dbUtils.GetCustomerAuditLog(customerGuid);
+        return await _dbUtils.GetCustomerAuditLog(customerGuid, cancellationToken);
     }
 
-    public async Task<ResponseModel<object>> GetAllAuditLogFunction(int pageNumber, int pageSize)
+    public async Task<ResponseModel<object>> GetAllAuditLogFunction(int pageNumber, int pageSize,
+        CancellationToken cancellationToken = default)
     {
         if (pageNumber < 1)
             return new ResponseModel<object>(400, "Page number must be 1 or greater.");
@@ -114,7 +119,7 @@ public class CustomerGetting
         if (pageSize < 1 || pageSize > MaxPageSize)
             return new ResponseModel<object>(400, $"Page size must be between 1 and {MaxPageSize}.");
 
-        return await _dbUtils.GetAllCustomerAuditLog(pageNumber, pageSize);
+        return await _dbUtils.GetAllCustomerAuditLog(pageNumber, pageSize, cancellationToken);
     }
 
     private static int DetermineSearchOption(string searchVariable)

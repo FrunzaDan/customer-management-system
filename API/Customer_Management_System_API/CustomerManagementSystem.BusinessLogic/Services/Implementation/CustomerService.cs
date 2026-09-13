@@ -11,33 +11,43 @@ public class CustomerService(
     CustomerDeletion customerDeletion)
     : ICustomerService
 {
-    public async Task<ResponseModel<object>> DeactivateCustomer(string customerGuid, string merchantId) =>
-        await customerActivation.DeactivateCustomer(customerGuid, merchantId);
+    public async Task<ResponseModel<object>> DeactivateCustomer(string customerGuid, string merchantId,
+        CancellationToken cancellationToken = default) =>
+        await customerActivation.DeactivateCustomer(customerGuid, merchantId, cancellationToken);
 
-    public async Task<ResponseModel<object>> ReactivateCustomer(string customerGuid, string merchantId) =>
-        await customerActivation.ReactivateCustomer(customerGuid, merchantId);
+    public async Task<ResponseModel<object>> ReactivateCustomer(string customerGuid, string merchantId,
+        CancellationToken cancellationToken = default) =>
+        await customerActivation.ReactivateCustomer(customerGuid, merchantId, cancellationToken);
 
-    public async Task<ResponseModel<object>> DeleteCustomer(string customerGuid, string merchantId) =>
-        await customerDeletion.DeleteCustomer(customerGuid, merchantId);
+    public async Task<ResponseModel<object>> DeleteCustomer(string customerGuid, string merchantId,
+        CancellationToken cancellationToken = default) =>
+        await customerDeletion.DeleteCustomer(customerGuid, merchantId, cancellationToken);
 
-    public async Task<ResponseModel<object>> EditCustomer(CustomerModel editCustomerRequest, string merchantId) =>
-        await customerEditing.EditCustomerFunction(editCustomerRequest, merchantId);
+    public async Task<ResponseModel<object>> EditCustomer(CustomerModel editCustomerRequest, string merchantId,
+        CancellationToken cancellationToken = default) =>
+        await customerEditing.EditCustomerFunction(editCustomerRequest, merchantId, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCustomer(GetCustomerRequest getCustomerRqst) =>
-        await customerGetting.GetCustomerFunction(getCustomerRqst);
+    public async Task<ResponseModel<object>> GetCustomer(GetCustomerRequest getCustomerRqst,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetCustomerFunction(getCustomerRqst, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCustomerAuditLog(string customerGuid) =>
-        await customerGetting.GetCustomerAuditLogFunction(customerGuid);
+    public async Task<ResponseModel<object>> GetCustomerAuditLog(string customerGuid,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetCustomerAuditLogFunction(customerGuid, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize) =>
-        await customerGetting.GetAllAuditLogFunction(pageNumber, pageSize);
+    public async Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetAllAuditLogFunction(pageNumber, pageSize, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCustomers(GetCustomersRequest request) =>
-        await customerGetting.GetCustomersFunction(request);
+    public async Task<ResponseModel<object>> GetCustomers(GetCustomersRequest request,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetCustomersFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> GetCustomersForExport(ExportCustomersRequest request) =>
-        await customerGetting.GetCustomersForExportFunction(request);
+    public async Task<ResponseModel<object>> GetCustomersForExport(ExportCustomersRequest request,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetCustomersForExportFunction(request, cancellationToken);
 
-    public async Task<ResponseModel<object>> RegisterCustomer(CustomerModel customerRqst, string merchantId) =>
-        await customerRegistration.RegisterCustomerFunction(customerRqst, merchantId);
+    public async Task<ResponseModel<object>> RegisterCustomer(CustomerModel customerRqst, string merchantId,
+        CancellationToken cancellationToken = default) =>
+        await customerRegistration.RegisterCustomerFunction(customerRqst, merchantId, cancellationToken);
 }

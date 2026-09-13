@@ -20,7 +20,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomerFunction(request);
 
         Assert.Equal(404, result.Status);
-        dbUtils.Verify(d => d.GetCustomer(It.IsAny<GetCustomerRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomer(It.IsAny<GetCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomerFunction(request);
 
         Assert.Equal(404, result.Status);
-        dbUtils.Verify(d => d.GetCustomer(It.IsAny<GetCustomerRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomer(It.IsAny<GetCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -44,8 +44,8 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         GetCustomerRequest? capturedRequest = null;
-        dbUtils.Setup(d => d.GetCustomer(It.IsAny<GetCustomerRequest>()))
-            .Callback<GetCustomerRequest>(r => capturedRequest = r)
+        dbUtils.Setup(d => d.GetCustomer(It.IsAny<GetCustomerRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<GetCustomerRequest, CancellationToken>((r, _) => capturedRequest = r)
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomerRequest { SearchVariable = searchVariable };
@@ -67,7 +67,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomersFunction(request);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -83,7 +83,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomersFunction(request);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomersFunction(request);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomersFunction(request);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -120,8 +120,8 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         GetCustomersRequest? captured = null;
-        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()))
-            .Callback<GetCustomersRequest>(r => captured = r)
+        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<GetCustomersRequest, CancellationToken>((r, _) => captured = r)
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { SortColumn = sortColumn, SortDirection = sortDirection };
@@ -140,8 +140,8 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         GetCustomersRequest? captured = null;
-        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()))
-            .Callback<GetCustomersRequest>(r => captured = r)
+        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<GetCustomersRequest, CancellationToken>((r, _) => captured = r)
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { SearchTerm = searchTerm };
@@ -158,13 +158,13 @@ public class CustomerGettingTests
         var expected = new ResponseModel<object>(200, "Success!",
             new PagedResponse<CustomerModel>(new List<CustomerModel>(), 0, 1, 10));
         var request = new GetCustomersRequest { PageNumber = 1, PageSize = 10 };
-        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>())).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
         var result = await getting.GetCustomersFunction(request);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Once);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomersForExportFunction(request);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public class CustomerGettingTests
         var result = await getting.GetCustomersForExportFunction(request);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()), Times.Never);
+        dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -198,8 +198,8 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         GetCustomersRequest? captured = null;
-        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()))
-            .Callback<GetCustomersRequest>(r => captured = r)
+        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
+            .Callback<GetCustomersRequest, CancellationToken>((r, _) => captured = r)
             .ReturnsAsync(new ResponseModel<object>(200, "Success!",
                 new PagedResponse<CustomerModel>(new List<CustomerModel>(), 0, 1, 5000)));
         var getting = new CustomerGetting(dbUtils.Object);
@@ -219,7 +219,7 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var customer = new CustomerModel { Guid = "g1", FirstName = "Dan", LastName = "Frunza" };
-        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>()))
+        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!",
                 new PagedResponse<CustomerModel>([customer], 1, 1, 5000)));
         var getting = new CustomerGetting(dbUtils.Object);
@@ -237,7 +237,7 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var expected = new ResponseModel<object>(500, "Something went wrong.");
-        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>())).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
         var result = await getting.GetCustomersForExportFunction(new ExportCustomersRequest());
@@ -256,7 +256,7 @@ public class CustomerGettingTests
         var result = await getting.GetAllAuditLogFunction(pageNumber, 10);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -271,7 +271,7 @@ public class CustomerGettingTests
         var result = await getting.GetAllAuditLogFunction(1, pageSize);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+        dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -280,12 +280,12 @@ public class CustomerGettingTests
         var dbUtils = new Mock<IDbUtils>();
         var expected = new ResponseModel<object>(200, "Success!",
             new PagedResponse<GlobalAuditLogEntry>(new List<GlobalAuditLogEntry>(), 0, 1, 10));
-        dbUtils.Setup(d => d.GetAllCustomerAuditLog(1, 10)).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.GetAllCustomerAuditLog(1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
         var result = await getting.GetAllAuditLogFunction(1, 10);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.GetAllCustomerAuditLog(1, 10), Times.Once);
+        dbUtils.Verify(d => d.GetAllCustomerAuditLog(1, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

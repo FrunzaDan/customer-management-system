@@ -9,34 +9,42 @@ public class CurrentSqlConnection(IAppSettingsConfig configuration)
     private readonly IAppSettingsConfig _configuration =
         configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-    public string? GetCorrectSqlConnectionString()
+    public async Task<string?> GetCorrectSqlConnectionStringAsync(CancellationToken cancellationToken = default)
     {
-        return GetValidConnectionString(
+        return await GetValidConnectionStringAsync(cancellationToken,
             _configuration.CustomerManagementSystemDbDocker,
             _configuration.CustomerManagementSystemDbWindows);
     }
 
-    private static string? GetValidConnectionString(params string?[] connectionStrings)
+    private static async Task<string?> GetValidConnectionStringAsync(CancellationToken cancellationToken,
+        params string?[] connectionStrings)
     {
-        return connectionStrings.FirstOrDefault(IsConnectionValid);
+        foreach (var connectionString in connectionStrings)
+        {
+            if (await IsConnectionValidAsync(connectionString, cancellationToken).ConfigureAwait(false))
+                return connectionString;
+        }
+
+        return null;
     }
 
-    private static bool IsConnectionValid(string? connectionString)
+    private static async Task<bool> IsConnectionValidAsync(string? connectionString,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
             return false;
 
         try
         {
-            using var sqlConnection = new SqlConnection(connectionString);
-            sqlConnection.Open();
+            await using var sqlConnection = new SqlConnection(connectionString);
+            await sqlConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
             return sqlConnection.State == ConnectionState.Open;
         }
         catch (SqlException)
         {
             return false;
         }
-        catch
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
             return false;
         }

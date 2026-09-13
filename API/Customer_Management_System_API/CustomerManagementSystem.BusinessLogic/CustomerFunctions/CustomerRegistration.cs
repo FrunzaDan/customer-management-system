@@ -15,7 +15,8 @@ public class CustomerRegistration
         _auditLogger = auditLogger;
     }
 
-    public async Task<ResponseModel<object>> RegisterCustomerFunction(CustomerModel request, string merchantId)
+    public async Task<ResponseModel<object>> RegisterCustomerFunction(CustomerModel request, string merchantId,
+        CancellationToken cancellationToken = default)
     {
         // first_name/last_name are nullable columns with no SQL-side requirement, so without
         // this check a request that omits them would silently create a nameless customer.
@@ -50,8 +51,12 @@ public class CustomerRegistration
 
         request.CustomerStatus ??= CustomerStatusCodes.Active;
 
-        var response = await _dbUtils.RegisterCustomer(request);
+        var response = await _dbUtils.RegisterCustomer(request, cancellationToken);
 
+        // Deliberately not forwarding cancellationToken here: the customer was already created
+        // successfully, so the audit write should still be attempted even if the client that
+        // triggered it has since disconnected — same best-effort guarantee CustomerAuditLogger
+        // already gives on write failures, just not conditional on the caller still being there.
         if (response.Status == 200)
             await _auditLogger.Log(request.Guid, merchantId, "Created",
                 $"Email: {request.Email}, MSISDN: {request.Msisdn}");

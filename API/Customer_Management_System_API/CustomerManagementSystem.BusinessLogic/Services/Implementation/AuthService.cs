@@ -10,13 +10,14 @@ public class AuthService(
     IDbUtils dbUtils)
     : IAuthService
 {
-    public async Task<ResponseModel<object>> GetAccessToken(MerchantCredentials merchantCredentials)
+    public async Task<ResponseModel<object>> GetAccessToken(MerchantCredentials merchantCredentials,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(merchantCredentials.MerchantId) ||
             string.IsNullOrWhiteSpace(merchantCredentials.MerchantPassword))
             return new ResponseModel<object>(403, "Invalid or empty merchant credentials.");
 
         var jwtCreation = new JwtCreation(appSettingsConfig, dbUtils);
-        return await jwtCreation.GenerateBearerJwt(merchantCredentials);
+        return await jwtCreation.GenerateBearerJwt(merchantCredentials, cancellationToken);
     }
 }

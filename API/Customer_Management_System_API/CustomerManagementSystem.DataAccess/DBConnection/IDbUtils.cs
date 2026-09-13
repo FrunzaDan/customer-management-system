@@ -4,15 +4,15 @@ namespace CustomerManagementSystem.DataAccess.DBConnection;
 
 public interface IDbUtils
 {
-    public Task<ResponseModel<object>> RegisterCustomer(CustomerModel customer);
-    public Task<ResponseModel<object>> GetCustomer(GetCustomerRequest getCustomerRqst);
-    public Task<ResponseModel<object>> GetCustomers(GetCustomersRequest request);
-    public Task<ResponseModel<object>> EditCustomer(CustomerModel editCustomerRqst);
-    public Task<ResponseModel<object>> DeactivateCustomer(string customerGuid);
-    public Task<ResponseModel<object>> ReactivateCustomer(string customerGuid);
-    public Task<ResponseModel<object>> DeleteCustomer(string customerGuid);
-    public Task<ResponseModel<int?>> CheckMerchantCredentialsFromDb(MerchantCredentials merchantCredentials);
-    public Task<ResponseModel<object>> LogCustomerAudit(string customerGuid, string merchantId, string action, string? details);
-    public Task<ResponseModel<object>> GetCustomerAuditLog(string customerGuid);
-    public Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize);
+    public Task<ResponseModel<object>> RegisterCustomer(CustomerModel customer, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetCustomer(GetCustomerRequest getCustomerRqst, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetCustomers(GetCustomersRequest request, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> EditCustomer(CustomerModel editCustomerRqst, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> DeactivateCustomer(string customerGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> ReactivateCustomer(string customerGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> DeleteCustomer(string customerGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<int?>> CheckMerchantCredentialsFromDb(MerchantCredentials merchantCredentials, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> LogCustomerAudit(string customerGuid, string merchantId, string action, string? details, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetCustomerAuditLog(string customerGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }

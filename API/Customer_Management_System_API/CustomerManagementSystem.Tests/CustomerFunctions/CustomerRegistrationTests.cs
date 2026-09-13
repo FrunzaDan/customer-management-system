@@ -29,7 +29,7 @@ public class CustomerRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("name", result.ResponseMessage, StringComparison.OrdinalIgnoreCase);
-        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Never);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -47,7 +47,7 @@ public class CustomerRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Email", result.ResponseMessage);
-        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Never);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -65,7 +65,7 @@ public class CustomerRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("MSISDN", result.ResponseMessage);
-        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Never);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class CustomerRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Address", result.ResponseMessage);
-        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Never);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -94,8 +94,8 @@ public class CustomerRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         CustomerModel? capturedRequest = null;
-        dbUtils.Setup(d => d.RegisterCustomer(It.IsAny<CustomerModel>()))
-            .Callback<CustomerModel>(c => capturedRequest = c)
+        dbUtils.Setup(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()))
+            .Callback<CustomerModel, CancellationToken>((c, _) => capturedRequest = c)
             .ReturnsAsync(new ResponseModel<object>(200, "Customer created successfully."));
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel
@@ -120,8 +120,8 @@ public class CustomerRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         CustomerModel? capturedRequest = null;
-        dbUtils.Setup(d => d.RegisterCustomer(It.IsAny<CustomerModel>()))
-            .Callback<CustomerModel>(c => capturedRequest = c)
+        dbUtils.Setup(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()))
+            .Callback<CustomerModel, CancellationToken>((c, _) => capturedRequest = c)
             .ReturnsAsync(new ResponseModel<object>(200, "Customer created successfully."));
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel
@@ -159,7 +159,7 @@ public class CustomerRegistrationTests
         var result = await registration.RegisterCustomerFunction(request, MerchantId);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Never);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -168,8 +168,8 @@ public class CustomerRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         CustomerModel? capturedRequest = null;
-        dbUtils.Setup(d => d.RegisterCustomer(It.IsAny<CustomerModel>()))
-            .Callback<CustomerModel>(c => capturedRequest = c)
+        dbUtils.Setup(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()))
+            .Callback<CustomerModel, CancellationToken>((c, _) => capturedRequest = c)
             .ReturnsAsync(new ResponseModel<object>(200, "Customer created successfully."));
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         const string clientSuppliedGuid = "11111111-1111-1111-1111-111111111111";
@@ -186,12 +186,13 @@ public class CustomerRegistrationTests
         var result = await registration.RegisterCustomerFunction(request, MerchantId);
 
         Assert.Equal(200, result.Status);
-        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Once);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Once);
         Assert.NotNull(capturedRequest!.Guid);
         Assert.NotEqual(clientSuppliedGuid, capturedRequest.Guid);
         Assert.True(Guid.TryParse(capturedRequest.Guid, out _));
         auditLogger.Verify(
-            a => a.Log(capturedRequest.Guid!, MerchantId, "Created", "Email: dan@example.com, MSISDN: 123456789"),
+            a => a.Log(capturedRequest.Guid!, MerchantId, "Created", "Email: dan@example.com, MSISDN: 123456789",
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }
