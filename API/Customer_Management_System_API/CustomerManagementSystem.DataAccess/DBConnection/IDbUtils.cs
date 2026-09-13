@@ -15,4 +15,5 @@ public interface IDbUtils
     public Task<ResponseModel<object>> LogCustomerAudit(string customerGuid, string merchantId, string action, string? details, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> GetCustomerAuditLog(string customerGuid, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default);
 }

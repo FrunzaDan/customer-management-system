@@ -39,6 +39,10 @@ public class CustomerService(
         CancellationToken cancellationToken = default) =>
         await customerGetting.GetAllAuditLogFunction(pageNumber, pageSize, cancellationToken);
 
+    public async Task<ResponseModel<object>> DeleteAllCustomerAuditLog(
+        CancellationToken cancellationToken = default) =>
+        await customerDeletion.DeleteAllAuditLogFunction(cancellationToken);
+
     public async Task<ResponseModel<object>> GetCustomers(GetCustomersRequest request,
         CancellationToken cancellationToken = default) =>
         await customerGetting.GetCustomersFunction(request, cancellationToken);

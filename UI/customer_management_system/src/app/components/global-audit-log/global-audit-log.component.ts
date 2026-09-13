@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { GlobalAuditLogService } from '../../services/global-audit-log.service';
 import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
@@ -27,6 +28,9 @@ export class GlobalAuditLogComponent implements OnInit {
 
   readonly pageSize = 20;
   readonly currentPage = signal(1);
+
+  readonly clearing = signal(false);
+  readonly clearError = signal<string | null>(null);
 
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
@@ -61,6 +65,41 @@ export class GlobalAuditLogComponent implements OnInit {
 
   trackByAuditId(_: number, entry: GlobalAuditLogEntry): number {
     return entry.auditId;
+  }
+
+  clearAuditLog(): void {
+    if (
+      !confirm(
+        'Are you sure you want to permanently delete the entire audit log? This cannot be undone.',
+      )
+    ) {
+      return;
+    }
+
+    this.clearing.set(true);
+    this.clearError.set(null);
+
+    this.globalAuditLogService.deleteAllAuditLog().subscribe({
+      next: () => {
+        this.clearing.set(false);
+        this.currentPage.set(1);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.clearing.set(false);
+        this.clearError.set(this.extractErrorMessage(error));
+      },
+    });
+  }
+
+  private extractErrorMessage(error: HttpErrorResponse): string {
+    if (error.status === 0) {
+      return 'Could not reach the server. It may be offline, or your browser does not trust its security certificate.';
+    }
+    return (
+      error.error?.responseMessage ??
+      error.error?.message ??
+      `Request failed (${error.status}). Please try again.`
+    );
   }
 
   private fetchAuditLog(): void {

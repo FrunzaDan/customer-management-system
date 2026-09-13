@@ -117,4 +117,11 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
         var response = await customerService.DeleteCustomer(customerGuid, MerchantId, cancellationToken);
         return StatusCode(response.Status ?? 200, response);
     }
+
+    [HttpDelete("auditLog/all")]
+    public async Task<IActionResult> DeleteAllCustomerAuditLog(CancellationToken cancellationToken)
+    {
+        var response = await customerService.DeleteAllCustomerAuditLog(cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
 }

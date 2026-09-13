@@ -162,6 +162,16 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         );
     }
 
+    public async Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default)
+    {
+        return await ExecuteStoredProcedureAsync(
+            "dbo.usp_deleteAllCustomerAuditLog",
+            null,
+            DbHelper.HandleResponseWithMessage,
+            cancellationToken
+        );
+    }
+
     private async Task CheckConnectionStringAsync(CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(CurrentConnectionString)) return;

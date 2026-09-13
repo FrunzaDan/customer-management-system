@@ -1,4 +1,19 @@
-<h3 class="container-fluid">Audit Log:</h3>
+<div
+  class="container-fluid d-flex justify-content-between align-items-center"
+>
+  <h3>Audit Log:</h3>
+  <button
+    type="button"
+    class="btn btn-danger shadow-none"
+    (click)="clearAuditLog()"
+    [disabled]="isLoading() || clearing() || entries().length === 0"
+  >
+    Clear Audit Log
+  </button>
+</div>
+@if (clearError(); as error) {
+<div class="alert alert-danger mx-3">{{ error }}</div>
+}
 @if (isLoading()) {
 <p class="container-fluid">Loading audit log…</p>
 } @else if (errorMessage(); as error) {

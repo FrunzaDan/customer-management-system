@@ -4,11 +4,13 @@ import {
   HttpParams,
 } from '@angular/common/http';
 import { computed, Injectable, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GlobalAuditLogEntry } from '../interfaces/global-audit-log-entry';
 import { PagedResponse } from '../interfaces/paged-response';
 import { HttpHeaderService } from './http-header-service';
+import { NotificationService } from './notification.service';
 
 export interface LoadAllAuditLogParams {
   pageNumber: number;
@@ -41,6 +43,7 @@ export class GlobalAuditLogService {
   constructor(
     private http: HttpClient,
     private httpHeaderService: HttpHeaderService,
+    private notificationService: NotificationService,
   ) {}
 
   loadAllAuditLog(params: LoadAllAuditLogParams): void {
@@ -71,6 +74,24 @@ export class GlobalAuditLogService {
         },
         error: (error: HttpErrorResponse) => this.handleError(error),
       });
+  }
+
+  deleteAllAuditLog(): Observable<GenericResponse<object>> {
+    const headers = this.httpHeaderService.getHeadersWithTokenSet();
+
+    return this.http
+      .delete<GenericResponse<object>>(this.API_URL, { headers })
+      .pipe(
+        tap(() => {
+          this.state.update((state) => ({
+            ...state,
+            entries: [],
+            pageNumber: 1,
+            totalItems: 0,
+          }));
+          this.notificationService.show('Audit log cleared successfully.');
+        }),
+      );
   }
 
   private handleError(error: HttpErrorResponse): void {

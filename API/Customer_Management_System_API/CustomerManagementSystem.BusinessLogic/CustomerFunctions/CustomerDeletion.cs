@@ -23,4 +23,10 @@ public class CustomerDeletion(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
 
         return response;
     }
+
+    // Mirrors GetAllAuditLogFunction living in CustomerGetting: grouped by verb, not
+    // by entity, alongside the per-customer delete above. Not audit-logged itself —
+    // there's no customer_guid to attach the entry to once the table is wiped.
+    public async Task<ResponseModel<object>> DeleteAllAuditLogFunction(CancellationToken cancellationToken = default) =>
+        await dbUtils.DeleteAllCustomerAuditLog(cancellationToken);
 }
