@@ -7,7 +7,23 @@ public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, 
 
 public static class DbHelper
 {
-    public static void AddCustomerParameters(SqlCommand command, CustomerModel customer)
+    // usp_createCustomer takes @var_CustomerStatus; usp_editCustomer does not (status is
+    // only ever changed via deactivate/reactivate) — so create and edit need separate
+    // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
+    public static void AddCustomerParametersForCreate(SqlCommand command, CustomerModel customer)
+    {
+        AddCustomerCoreParameters(command, customer);
+        command.Parameters.AddWithValue("@var_CustomerStatus", customer.CustomerStatus ?? CustomerStatusCodes.Active);
+        AddAddressParameters(command, customer.Address);
+    }
+
+    public static void AddCustomerParametersForEdit(SqlCommand command, CustomerModel customer)
+    {
+        AddCustomerCoreParameters(command, customer);
+        AddAddressParameters(command, customer.Address);
+    }
+
+    private static void AddCustomerCoreParameters(SqlCommand command, CustomerModel customer)
     {
         command.Parameters.AddWithValue("@var_Guid", customer.Guid);
         command.Parameters.AddWithValue("@var_FirstName", customer.FirstName);
@@ -16,8 +32,6 @@ public static class DbHelper
         command.Parameters.AddWithValue("@var_MSISDN", customer.Msisdn);
         command.Parameters.AddWithValue("@var_Gender", customer.Gender);
         command.Parameters.AddWithValue("@var_Birthdate", customer.Birthdate);
-        command.Parameters.AddWithValue("@var_CustomerStatus", customer.CustomerStatus ?? CustomerStatusCodes.Active);
-        AddAddressParameters(command, customer.Address);
     }
 
     public static async Task<ResponseModel<object>> HandleResponseWithCustomerMapping(SqlDataReader reader,

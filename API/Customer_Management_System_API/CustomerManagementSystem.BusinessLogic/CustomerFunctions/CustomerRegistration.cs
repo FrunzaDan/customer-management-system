@@ -17,6 +17,14 @@ public class CustomerRegistration
 
     public async Task<ResponseModel<object>> RegisterCustomerFunction(CustomerModel request, string merchantId)
     {
+        // first_name/last_name are nullable columns with no SQL-side requirement, so without
+        // this check a request that omits them would silently create a nameless customer.
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+            return new ResponseModel<object>(400, "First name is required.");
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+            return new ResponseModel<object>(400, "Last name is required.");
+
         if (string.IsNullOrEmpty(request.Email) || EmailValidation.ValidateEmail(request.Email) == false)
             return new ResponseModel<object>(400, "Invalid or empty Email.");
 

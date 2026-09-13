@@ -13,7 +13,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     {
         return await ExecuteStoredProcedureAsync(
             "dbo.usp_createCustomer",
-            command => DbHelper.AddCustomerParameters(command, customer),
+            command => DbHelper.AddCustomerParametersForCreate(command, customer),
             DbHelper.HandleResponseWithMessage
         );
     }
@@ -52,7 +52,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     {
         return await ExecuteStoredProcedureAsync(
             "dbo.usp_editCustomer",
-            command => DbHelper.AddCustomerParameters(command, customer),
+            command => DbHelper.AddCustomerParametersForEdit(command, customer),
             DbHelper.HandleResponseWithMessage
         );
     }

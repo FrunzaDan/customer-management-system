@@ -10,6 +10,29 @@ public class CustomerRegistrationTests
     private const string MerchantId = "TestMerchantID";
 
     [Theory]
+    [InlineData(null, "Frunza")]
+    [InlineData("", "Frunza")]
+    [InlineData("Dan", null)]
+    [InlineData("Dan", "")]
+    public async Task RegisterCustomerFunction_RejectsMissingName_WithoutTouchingTheDb(string? firstName,
+        string? lastName)
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var auditLogger = new Mock<ICustomerAuditLogger>();
+        var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
+        var request = new CustomerModel
+        {
+            FirstName = firstName, LastName = lastName, Email = "dan@example.com", Msisdn = "123456789"
+        };
+
+        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+
+        Assert.Equal(400, result.Status);
+        Assert.Contains("name", result.ResponseMessage, StringComparison.OrdinalIgnoreCase);
+        dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>()), Times.Never);
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("not-an-email")]
@@ -18,7 +41,7 @@ public class CustomerRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Email = email, Msisdn = "123456789" };
+        var request = new CustomerModel { FirstName = "Dan", LastName = "Frunza", Email = email, Msisdn = "123456789" };
 
         var result = await registration.RegisterCustomerFunction(request, MerchantId);
 
@@ -36,7 +59,7 @@ public class CustomerRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Email = "dan@example.com", Msisdn = msisdn };
+        var request = new CustomerModel { FirstName = "Dan", LastName = "Frunza", Email = "dan@example.com", Msisdn = msisdn };
 
         var result = await registration.RegisterCustomerFunction(request, MerchantId);
 
@@ -53,7 +76,10 @@ public class CustomerRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Email = "dan@example.com", Msisdn = "123456789", Address = null };
+        var request = new CustomerModel
+        {
+            FirstName = "Dan", LastName = "Frunza", Email = "dan@example.com", Msisdn = "123456789", Address = null
+        };
 
         var result = await registration.RegisterCustomerFunction(request, MerchantId);
 
@@ -74,6 +100,8 @@ public class CustomerRegistrationTests
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel
         {
+            FirstName = "Dan",
+            LastName = "Frunza",
             Email = "dan@example.com",
             Msisdn = "123456789",
             Address = new AddressModel { Country = "Romania" },
@@ -98,6 +126,8 @@ public class CustomerRegistrationTests
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel
         {
+            FirstName = "Dan",
+            LastName = "Frunza",
             Email = "dan@example.com",
             Msisdn = "123456789",
             Address = new AddressModel { Country = "Romania" },
@@ -146,6 +176,8 @@ public class CustomerRegistrationTests
         var request = new CustomerModel
         {
             Guid = clientSuppliedGuid,
+            FirstName = "Dan",
+            LastName = "Frunza",
             Email = "dan@example.com",
             Msisdn = "123456789",
             Address = new AddressModel { Country = "Romania" },
