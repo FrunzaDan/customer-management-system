@@ -35,10 +35,26 @@ Customer_Management_System/
 ```
 
 - Three independently-runnable layers; nothing shares process or memory — they only talk over HTTP(S)/TCP.
-- Data flows: Angular UI → HTTPS → ASP.NET Core API → ADO.NET (parameterized `SqlCommand`s, stored procedures only, no ORM) → SQL Server.
 - Local dev DB runs as a **Docker container** (Azure SQL Edge — the only Microsoft SQL Server image with a working Apple Silicon/arm64 build). See [build-and-run](build-and-run.md).
-- Legacy diagrams and a `.pages` doc from the original design live in `Documentation/Diagrams/` and `Documentation/PDF/` — still broadly accurate for the JWT/login flow, but written before the .NET 10 / Angular 22 modernization these docs describe. Prefer the concept docs below when they disagree.
 - This is a learning project: some rough edges are deliberately left as-is rather than "fixed" — each doc below has a "Known gaps" section for its layer; don't treat those as an unclaimed TODO list.
+
+**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`.
+
+## Architecture at a glance
+
+**Connection 1 — UI → API.** The Angular app calls the API over HTTPS as plain JSON REST (`GET`/`POST`/`PATCH`/`DELETE`); every call after login carries `Authorization: Bearer <jwt>`. Each `CustomerController` endpoint group has a matching Angular service (`get-customer.service.ts`, `add-customer.service.ts`, ...) that wraps the `HttpClient` call, types the response via an interface, and exposes it as an `Observable` (or a signal derived from one) to its component. See [angular-frontend](angular-frontend.md).
+
+**Connection 2 — API → DB.** Inside the API, `WebAPI` (controllers — the thin presentation layer) calls `BusinessLogic` (validation, JWT issuing, the customer/merchant logic), which calls `DataAccess` (`DbUtils.cs`/`DbHelper.cs` — plain ADO.NET `SqlConnection`/`SqlCommand`/`SqlDataReader`, no ORM), which calls SQL Server through **stored procedures only** — no inline SQL. `Domain` sits underneath all of it holding the models and config interfaces the other three layers share. Every mutating stored proc follows one convention — a `(result INT, message NVARCHAR)` row that `DbHelper` turns directly into the HTTP status and message returned to the client — so controllers never contain branching status-code logic themselves. See [api](api.md) and [database](database.md).
+
+**Auth.** Login (`POST /api/Authentication/access-token`) checks credentials against `tbl_merchants` (PBKDF2 hash comparison, not stored SQL logic) and mints an HMAC-SHA256 JWT with the merchant's ID and role as claims. There is exactly **one** validation path for every later request: ASP.NET Core's `AddJwtBearer` middleware, run once per request before any controller code executes. On the Angular side this is backed by two independent, deliberately-not-merged checks — a route `canActivate` guard that calls `GET /verify-token` before allowing navigation to a protected route, and a global HTTP interceptor that catches a 401 from *any* call, at any time, and bounces to `/login`. See [api](api.md) (issuing/validating) and [angular-frontend](angular-frontend.md) (guard/interceptor).
+
+## Diagrams (`Documentation/Diagrams/`)
+
+Three hand-drawn sketches from the original pre-.NET-10/Angular-22 design. The overall shape they draw — UI → API → DB, stored procedures only, one JWT validation path — still holds, and they're a faster way to get oriented on that shape than prose. But they're pictures of an earlier snapshot of the code, not living docs, so treat the concept docs below as authoritative wherever the two disagree. Specific things that have since moved on:
+
+- **`CMS_General_Flow.PNG`** — UI↔API↔DB call chain, the API solution's internal layering (`Controllers` → `CMS Library`'s Business Logic/Data Access → `DbUtils.cs`), and the Angular component/service/interface/`Observable` shape. Still accurate. Lists `GET/POST/PUT/DELETE` as the verb set; the API now actually uses `GET/POST/PATCH/DELETE` (`PATCH` for edit/deactivate/reactivate, since those are partial updates, not full replacements).
+- **`CMS_Security_JWT.PNG`** — token issuing (`JwtCreation.cs` → claims → `header.payload.signature`) and a separate `JwtValidation.cs` step for checking incoming requests. The issuing side is still accurate. The separate `JwtValidation.cs` is **dead code that was later deleted** — validation was consolidated into the single `AddJwtBearer` middleware path described above; if you see `JwtValidation.cs` referenced anywhere else (old comments, this diagram), it's stale. The `tbl_merchants` password column is drawn as a plain `SHA2_256` hash — that was superseded by salted PBKDF2 (see [api](api.md)).
+- **`CMS_Login_Process.PNG`** — the login POST → JWT → session storage → subsequent routing through an auth guard that injects a verify-token service. Still accurate at the sequence level. It shows an `app-routing.module` with `canActivate`; Angular has since moved to standalone components, so this is `app.routes.ts` with a functional `authGuardFn` now, and component state along the way is signals rather than `zone.js`-watched fields.
 
 ## Documented Concepts
 
@@ -48,6 +64,12 @@ Customer_Management_System/
 - [build-and-run](build-and-run.md) — Docker SQL Server, `build.sh`/`run.sh`, test login, TLS-trust gotchas.
 
 Before exploring source directly, read the relevant doc above.
+
+**Starting points for common tasks:**
+- Changing a customer field, a validation rule, or the status lifecycle → [database](database.md) for the schema/proc rules, then [api](api.md) for where C# validates before the DB is touched.
+- Changing login, tokens, or roles → [api](api.md)'s JWT section, then [angular-frontend](angular-frontend.md)'s auth guard/interceptor section.
+- Changing a list/table page (search, sort, paging, bulk actions) → [angular-frontend](angular-frontend.md)'s component notes, cross-referenced with [database](database.md)'s `usp_getCustomers` pagination convention.
+- Something won't start locally (Docker, TLS, ports) → [build-and-run](build-and-run.md).
 
 ## Glossary
 
@@ -69,5 +91,6 @@ Domain terms and magic numbers used across this codebase — check here before a
 
 ## Other references in this repo
 
-- `Documentation/Diagrams/` and `Documentation/PDF/` — legacy diagrams, see above.
+- `README.md` (repo root) — the human-facing overview; covers the same architecture at a lighter level and is the place to send someone who isn't going to read `ai_docs/`.
+- `Documentation/Diagrams/` — the three sketches described above. `Documentation/PDF/Customer_Management_System_Documentation.pages` is further legacy design material from the same original pass; not re-verified against the current code, so treat it the same way — background context, not a source of truth.
 - `API/Postman/` — a Postman collection for manual API testing.

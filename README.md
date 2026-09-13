@@ -4,6 +4,10 @@ A small CRUD app for a merchant to manage their customer records — names, cont
 
 It's not trying to be a product. It's the project I keep coming back to whenever I want to try out something new — it went from Angular with NgModules and zone.js to a fully zoneless, signals-based app, and from an unsalted password hash to PBKDF2 with rate limiting on the login endpoint, all as separate learning passes over time.
 
+### Contents
+
+[Stack](#stack) · [What it does](#what-it-does) · [Architecture](#architecture) · [Project layout](#project-layout) · [Running it locally](#running-it-locally) · [Building and testing](#building-and-testing) · [API](#api) · [Things left alone](#things-ive-deliberately-left-alone) · [More documentation](#more-documentation)
+
 ## Stack
 
 | Layer | Tech | Where |
@@ -27,6 +31,8 @@ Nothing shares process or memory — the three layers only ever talk over HTTP(S
 
 ## Architecture
 
+Two hops, one direction: **Angular UI → ASP.NET Core Web API → SQL Server**, over HTTPS then ADO.NET. Inside the API solution it's layered the same way — `WebAPI` (controllers, the thin presentation layer) calls into `BusinessLogic` (validation, JWT issuing, the actual customer/merchant logic), which calls `DataAccess` (`DbUtils.cs`, plain ADO.NET `SqlCommand`/`SqlDataReader`), which calls SQL Server **stored procedures only** — no ORM, no inline SQL anywhere. `Domain` sits underneath all of it holding the models and config interfaces the other three share.
+
 Three sketches from the original design, still a decent map of how the pieces connect:
 
 **Overall flow** — how the UI, API, and DB talk to each other, and what sits inside the API solution (controllers → business logic → data access → stored procedures).
@@ -41,7 +47,12 @@ Three sketches from the original design, still a decent map of how the pieces co
 
 ![Login process](Documentation/Diagrams/CMS_Login_Process.PNG)
 
-These are hand-drawn from before the .NET 10 / Angular 22 rewrite, so a few labels (module names, mostly) are dated, but the shape of the system — UI → API → DB, stored procedures only, one JWT validation path — hasn't changed.
+These are hand-drawn from before the .NET 10 / Angular 22 rewrite, so the overall shape — UI → API → DB, stored procedures only, one JWT validation path — still holds, but a few specifics have since moved on:
+- The JWT diagram shows a separate `JwtValidation.cs` doing its own checks — that class was dead code and has been deleted; validation now happens in exactly one place, the `AddJwtBearer` middleware.
+- The merchant password hash shown as plain `SHA2_256` predates the later switch to salted PBKDF2 (see [API](#api) below).
+- The login diagram's `app-routing.module` predates Angular going standalone/zoneless — routing is now `app.routes.ts` and component state is signals, not fields watched by `zone.js`, but the guard → verify-token → endpoint sequence it draws is otherwise still accurate.
+
+`ai_docs/index.md` has the same architecture summary kept current as the code changes — prefer it over these pictures where the two disagree.
 
 ## Project layout
 
