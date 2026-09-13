@@ -1,19 +1,132 @@
-A Customer Management System to keep track of customers of a certain merchant. 
-The customers can be viewed online using Angular, the data is stored in a MSSQL database, and the two are connected via a API written in C#.
+# Customer Management System
 
-This system has three main layers: the UI, the API and the DB:
-* The UI: written in Angular, consumes the .NET Web API.
-* API: Written in .NET's C#, it makes the connection with the MSSQL DB, where the merchant's and customers informations are being stored. The API calls can be tested with Postman.
-* DB: I'm using a Microsoft SQL (MSSQL) database, which on Mac runs via a docker container (from a Azure SQL Edge image).
+A small CRUD app for a merchant to manage their customer records — names, contact details, addresses, the usual. I built it to actually learn a full stack end to end rather than follow a tutorial: Angular on the front, a .NET Web API in the middle, SQL Server on the back, with a real JWT login instead of a fake one.
 
-General Flow of the Customer Management System:
+It's not trying to be a product. It's the project I keep coming back to whenever I want to try out something new — it went from Angular with NgModules and zone.js to a fully zoneless, signals-based app, and from an unsalted password hash to PBKDF2 with rate limiting on the login endpoint, all as separate learning passes over time.
 
-![General_Flow](https://github.com/FrunzaDan/Customer_Management_System/blob/master/Documentation/Diagrams/CMS_General_Flow.PNG)
+## Stack
 
-The System is secured by a JWT, which works the following way:
+| Layer | Tech | Where |
+|---|---|---|
+| UI | Angular 22, signals, zoneless change detection, SSR via `@angular/ssr` | `UI/customer_management_system` |
+| API | ASP.NET Core Web API on .NET 10, C# | `API/Customer_Management_System_API` |
+| DB | SQL Server (SSDT project, built to a `.dacpac` and published with `sqlpackage`) | `DB/Customer_Management_System_DB` |
 
-![Secutiry_JWT](https://github.com/FrunzaDan/Customer_Management_System/blob/master/Documentation/Diagrams/CMS_Security_JWT.PNG)
+Nothing shares process or memory — the three layers only ever talk over HTTP(S)/TCP, so each one can be run, tested, and reasoned about on its own.
 
-As an example, let us take the login process. This works as follows:
+## What it does
 
-![Login_Process](https://github.com/FrunzaDan/Customer_Management_System/blob/master/Documentation/Diagrams/CMS_Login_Process.PNG)
+- Merchant login, JWT-secured — every API call after login carries a bearer token.
+- Register, view, edit, deactivate/reactivate, and delete customers, with a proper lifecycle (a customer has to be deactivated before it can be deleted — no skipping straight to delete on an active record).
+- Server-side search, sort, and pagination on the customer list — the DB does the filtering, not the browser.
+- Bulk actions from the customer list: select a batch of rows and the app splits them by status, deactivating the active ones and deleting the rest, in one confirmation.
+- Per-customer and global audit log (created/edited/deactivated/reactivated/deleted, who did it, when).
+- CSV export of the current filtered/sorted list.
+- A "test customer" mode (seeded from the About page) for generating throwaway demo data that's exempt from the usual deactivate-before-delete rule.
+- A live "API is not running" banner in the UI, backed by a `/health` endpoint the app polls.
+
+## Architecture
+
+Three sketches from the original design, still a decent map of how the pieces connect:
+
+**Overall flow** — how the UI, API, and DB talk to each other, and what sits inside the API solution (controllers → business logic → data access → stored procedures).
+
+![General flow](Documentation/Diagrams/CMS_General_Flow.PNG)
+
+**JWT security** — how a login turns into a signed token, and how every later request gets validated against it.
+
+![JWT security](Documentation/Diagrams/CMS_Security_JWT.PNG)
+
+**Login walkthrough** — the concrete request/response sequence for signing in and landing on an authenticated page.
+
+![Login process](Documentation/Diagrams/CMS_Login_Process.PNG)
+
+These are hand-drawn from before the .NET 10 / Angular 22 rewrite, so a few labels (module names, mostly) are dated, but the shape of the system — UI → API → DB, stored procedures only, one JWT validation path — hasn't changed.
+
+## Project layout
+
+```
+Customer_Management_System/
+├── build.sh              # restore + build + test everything, no live services
+├── run.sh                # start the DB container, deploy schema, run API + Angular
+├── API/
+│   ├── Postman/                                     # collection for manual API testing
+│   └── Customer_Management_System_API/
+│       ├── CustomerManagementSystem.WebAPI/         # ASP.NET Core host, controllers, appsettings
+│       ├── CustomerManagementSystem.BusinessLogic/  # services, JWT, validation rules
+│       ├── CustomerManagementSystem.DataAccess/     # ADO.NET, stored-proc calls, password hashing
+│       ├── CustomerManagementSystem.Domain/         # models, config interfaces
+│       └── CustomerManagementSystem.Tests/          # xUnit v3 unit tests
+├── DB/Customer_Management_System_DB/
+│   ├── Tables/                    # tbl_customers, tbl_addresses, tbl_merchants, tbl_customer_audit_log
+│   ├── Stored_Procedures/         # usp_* — all data access goes through these, no ORM, no inline SQL
+│   └── Post_Deployment_Scripts/   # seeds a test merchant login
+└── UI/customer_management_system/
+    └── src/app/
+        ├── components/            # one folder per route/view
+        └── services/              # HTTP calls, auth guard, session storage
+```
+
+## Running it locally
+
+You'll need Docker, the .NET 10 SDK, and Node (with npm). Everything else — the SQL Server instance, schema, API, and Angular dev server — is handled by the scripts.
+
+```bash
+./run.sh
+```
+
+That will:
+1. Start Docker Desktop if it isn't already running, and bring up a SQL Server container (Azure SQL Edge — the only Microsoft SQL image that has a working arm64 build, which matters on Apple Silicon).
+2. Build and publish the DB schema to it.
+3. Start the API in the background (`https://localhost:7145`) and wait for it to come up.
+4. Trust the API's dev TLS cert for Node, so Angular's server-side rendering can actually call it.
+5. Start the Angular dev server in the foreground (`http://localhost:4200`).
+
+`Ctrl+C` stops both the API and Angular; the DB container keeps running so the next `./run.sh` is fast.
+
+Log in with the seeded test merchant:
+
+```
+Merchant ID: TestMerchantID
+Password:    Merchant123
+```
+
+One bit of one-time setup `run.sh` doesn't do for you: trusting the local ASP.NET Core dev certificate at the OS level —
+
+```bash
+dotnet dev-certs https --trust
+```
+
+If you hit `ERR_CERT_AUTHORITY_INVALID` in the browser after that, don't re-run `--export-path` to "refresh" the cert — it actually regenerates a new one and makes things worse. Run `dotnet dev-certs https --clean && dotnet dev-certs https --trust` instead.
+
+## Building and testing
+
+```bash
+./build.sh
+```
+
+Restores and builds the .NET solution, runs the xUnit test suite, builds the SQL project, then does `npm ci` + `npm run build` + `ng test` for the Angular app. No Docker or live services involved — it's the "does everything still compile and pass" check, meant to run before committing.
+
+A couple of things worth knowing if you poke at the tests directly:
+- The API tests run on xUnit v3 against the .NET 10 SDK, which needs the Microsoft Testing Platform runner rather than the older VSTest pipeline — that's what the root `global.json` is for.
+- The Angular tests run on Vitest (`ng test`), not Karma — the project was set up that way from the start.
+- The .NET tests only cover business logic and password hashing; none of it touches a live database.
+
+## API
+
+All customer/merchant data access goes through stored procedures — no ORM, no inline SQL. Swagger is available in Development mode with a bearer-token scheme wired in, so you can paste a token in and try endpoints by hand. There's also a Postman collection in `API/Postman/` if you'd rather test that way.
+
+Auth is a straightforward username/password → JWT exchange: HMAC-SHA256 signed, 15-minute expiry, validated in exactly one place in the middleware pipeline. Passwords are hashed with PBKDF2 (SHA-256, 100k iterations, per-user salt) and compared in constant time. The login endpoint is rate-limited per IP.
+
+## Things I've deliberately left alone
+
+This is a learning project, so a few rough edges are intentional rather than unfinished:
+
+- The JWT signing key in `appsettings.json` is a placeholder — fine for local use, not something to reuse as-is anywhere real.
+- There's no server-side token revocation. A token is valid until it naturally expires; logging out just clears it from the browser's session storage.
+- Only one merchant role exists right now, though the plumbing (JWT role claim, `[Authorize(Roles = ...)]`) is already there for a second one.
+- Bulk delete on the customer list is a client-side loop over the existing single-customer endpoints, not a dedicated bulk API — same rules apply, just batched with one confirmation prompt.
+
+## License
+
+Personal project, no license file yet — ask if you want to use any of this.
