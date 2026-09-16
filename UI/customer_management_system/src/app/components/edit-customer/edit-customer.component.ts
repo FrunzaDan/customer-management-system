@@ -1,13 +1,5 @@
 import { NgClass } from '@angular/common';
-import {
-  Component,
-  effect,
-  inject,
-  Injector,
-  OnInit,
-  runInInjectionContext,
-  signal,
-} from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -18,9 +10,10 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Customer } from '../../interfaces/customer-response';
-import { GetCustomerService } from '../../../../src/app/services/get-customer.service';
+import { GetCustomerService } from '../../services/get-customer.service';
 import { environment } from '../../../environments/environment';
 import { EditCustomerService } from '../../services/edit-customer.service';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 
 type EditCustomerForm = FormGroup<{
   firstName: FormControl<string>;
@@ -44,58 +37,47 @@ type EditCustomerForm = FormGroup<{
   imports: [NgClass, ReactiveFormsModule, RouterLink],
 })
 export class EditCustomerComponent implements OnInit {
-  form: EditCustomerForm;
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly getCustomerService = inject(GetCustomerService);
+  private readonly editCustomerService = inject(EditCustomerService);
+
+  form: EditCustomerForm = this.createForm();
   paramId: string = '';
   readonly submitted = signal(false);
 
-  readonly customer;
-  readonly isLoading;
-  readonly errorMessage;
+  readonly customer = this.getCustomerService.selectedCustomerSignal;
+  readonly isLoading = this.getCustomerService.loadingSignal;
+  readonly errorMessage = this.getCustomerService.errorSignal;
 
   // Distinct from isLoading/errorMessage above, which reflect fetching the
   // customer being edited — this tracks the save (PATCH) request itself.
   readonly saving = signal(false);
   readonly saveError = signal<string | null>(null);
 
-  private injector = inject(Injector);
-
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private getCustomerService: GetCustomerService,
-    private editCustomerService: EditCustomerService,
-  ) {
-    this.form = this.createForm();
-
-    this.customer = this.getCustomerService.selectedCustomerSignal;
-    this.isLoading = this.getCustomerService.loadingSignal;
-    this.errorMessage = this.getCustomerService.errorSignal;
-
-    // Create effect in constructor using injector
-    runInInjectionContext(this.injector, () => {
-      effect(() => {
-        const customerData = this.customer();
-        if (customerData) {
-          this.form.patchValue(
-            {
-              firstName: customerData.firstName,
-              lastName: customerData.lastName,
-              email: customerData.email,
-              msisdn: customerData.msisdn,
-              gender: customerData.gender?.toString() ?? '',
-              birthdate: this.toDateInputValue(customerData.birthdate),
-              country: customerData.address.country,
-              county: customerData.address.county,
-              town: customerData.address.town,
-              street: customerData.address.street,
-              number: customerData.address.number,
-              zip: customerData.address.zip,
-            },
-            { emitEvent: false },
-          );
-        }
-      });
+  constructor() {
+    effect(() => {
+      const customerData = this.customer();
+      if (customerData) {
+        this.form.patchValue(
+          {
+            firstName: customerData.firstName,
+            lastName: customerData.lastName,
+            email: customerData.email,
+            msisdn: customerData.msisdn,
+            gender: customerData.gender?.toString() ?? '',
+            birthdate: this.toDateInputValue(customerData.birthdate),
+            country: customerData.address.country,
+            county: customerData.address.county,
+            town: customerData.address.town,
+            street: customerData.address.street,
+            number: customerData.address.number,
+            zip: customerData.address.zip,
+          },
+          { emitEvent: false },
+        );
+      }
     });
   }
 
@@ -179,19 +161,8 @@ export class EditCustomerComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.saving.set(false);
-        this.saveError.set(this.extractErrorMessage(error));
+        this.saveError.set(extractErrorMessage(error, 'Failed to save changes'));
       },
     });
-  }
-
-  private extractErrorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return 'Could not reach the server. It may be offline, or your browser does not trust its security certificate.';
-    }
-    return (
-      error.error?.responseMessage ??
-      error.error?.message ??
-      `Failed to save changes (${error.status}). Please try again.`
-    );
   }
 }

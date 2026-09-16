@@ -1,10 +1,18 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { ActivateCustomerService } from '../../services/activate-customer.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { DeleteCustomerService } from '../../services/delete-customer.service';
 import { ExportCustomerService } from '../../services/export-customer.service';
 import { GetCustomerService } from '../../services/get-customer.service';
+import { NotificationService } from '../../services/notification.service';
+import {
+  Customer,
+  CustomerActivationStatus,
+} from '../../interfaces/customer-response';
 import { CustomerListComponent } from './customer-list.component';
 
 describe('CustomerListComponent', () => {
@@ -12,14 +20,52 @@ describe('CustomerListComponent', () => {
   let loadCustomers: ReturnType<typeof vi.fn>;
   let exportCustomers: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
+  let customersSignal: ReturnType<typeof signal<Customer[]>>;
+  let deleteCustomer: ReturnType<typeof vi.fn>;
+  let deleteCustomerSilently: ReturnType<typeof vi.fn>;
+  let deactivateCustomerSilently: ReturnType<typeof vi.fn>;
+  let confirm: ReturnType<typeof vi.fn>;
+  let notificationShow: ReturnType<typeof vi.fn>;
+
+  const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
+    guid: 'guid-1',
+    firstName: 'Dan',
+    lastName: 'Frunza',
+    msisdn: '123456789',
+    email: 'dan@example.com',
+    gender: 1,
+    customerStatus: CustomerActivationStatus.Active,
+    creationDate: '2026-01-01',
+    interactionDate: '2026-01-01',
+    birthdate: '1990-01-01',
+    address: {
+      country: 'Romania',
+      county: 'Cluj',
+      town: 'Cluj-Napoca',
+      zip: '400000',
+      street: 'Main',
+      number: '1',
+    },
+    ...overrides,
+  });
 
   beforeEach(() => {
     loadCustomers = vi.fn();
     exportCustomers = vi.fn();
     totalItems = signal(0);
+    customersSignal = signal<Customer[]>([]);
+    deleteCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    deleteCustomerSilently = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    deactivateCustomerSilently = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    confirm = vi.fn().mockResolvedValue(true);
+    notificationShow = vi.fn();
 
     const getCustomerServiceStub = {
-      customersSignal: signal([]),
+      customersSignal,
       loadingSignal: signal(false),
       errorSignal: signal<string | null>(null),
       totalItemsSignal: totalItems,
@@ -39,11 +85,12 @@ describe('CustomerListComponent', () => {
           useValue: {
             loadingSignal: signal(false),
             errorSignal: signal<string | null>(null),
+            deactivateCustomerSilently,
           },
         },
         {
           provide: DeleteCustomerService,
-          useValue: { deleteCustomer: vi.fn() },
+          useValue: { deleteCustomer, deleteCustomerSilently },
         },
         {
           provide: ExportCustomerService,
@@ -53,6 +100,8 @@ describe('CustomerListComponent', () => {
             exportCustomers,
           },
         },
+        { provide: ConfirmDialogService, useValue: { confirm } },
+        { provide: NotificationService, useValue: { show: notificationShow } },
         { provide: Router, useValue: { navigate: vi.fn() } },
       ],
     });
@@ -196,6 +245,166 @@ describe('CustomerListComponent', () => {
         sortColumn: 'name',
         sortDirection: 'asc',
       });
+    });
+  });
+
+  describe('toggleSelection / toggleSelectAllOnPage', () => {
+    it('adds a guid to selectedGuids when checked, and removes it when unchecked', () => {
+      component.toggleSelection('guid-1', true);
+      expect(component.isSelected('guid-1')).toBe(true);
+
+      component.toggleSelection('guid-1', false);
+      expect(component.isSelected('guid-1')).toBe(false);
+    });
+
+    it('allOnPageSelected is false when the page is empty', () => {
+      customersSignal.set([]);
+      expect(component.allOnPageSelected()).toBe(false);
+    });
+
+    it('toggleSelectAllOnPage(true) selects every customer on the current page', () => {
+      customersSignal.set([buildCustomer({ guid: 'g1' }), buildCustomer({ guid: 'g2' })]);
+
+      component.toggleSelectAllOnPage(true);
+
+      expect(component.isSelected('g1')).toBe(true);
+      expect(component.isSelected('g2')).toBe(true);
+      expect(component.allOnPageSelected()).toBe(true);
+    });
+
+    it('toggleSelectAllOnPage(false) clears the selection for every customer on the current page', () => {
+      customersSignal.set([buildCustomer({ guid: 'g1' }), buildCustomer({ guid: 'g2' })]);
+      component.toggleSelectAllOnPage(true);
+
+      component.toggleSelectAllOnPage(false);
+
+      expect(component.isSelected('g1')).toBe(false);
+      expect(component.isSelected('g2')).toBe(false);
+      expect(component.allOnPageSelected()).toBe(false);
+    });
+  });
+
+  describe('duplicateGuids effect', () => {
+    it('warns when the current page contains duplicate GUIDs', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      customersSignal.set([
+        buildCustomer({ guid: 'dup' }),
+        buildCustomer({ guid: 'dup' }),
+      ]);
+      TestBed.flushEffects();
+
+      expect(warnSpy).toHaveBeenCalledWith('Duplicate GUIDs found:', ['dup']);
+      warnSpy.mockRestore();
+    });
+
+    it('does not warn when every GUID on the page is unique', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      customersSignal.set([buildCustomer({ guid: 'g1' }), buildCustomer({ guid: 'g2' })]);
+      TestBed.flushEffects();
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('deleteCustomer', () => {
+    it('does nothing when the user cancels the confirmation', async () => {
+      confirm.mockResolvedValue(false);
+
+      await component.deleteCustomer('guid-1');
+
+      expect(deleteCustomer).not.toHaveBeenCalled();
+    });
+
+    it('deletes the customer and refetches the current page on success', async () => {
+      loadCustomers.mockClear();
+
+      await component.deleteCustomer('guid-1');
+
+      expect(deleteCustomer).toHaveBeenCalledWith('guid-1');
+      expect(component.deleting()).toBe(false);
+      expect(component.deleteError()).toBeNull();
+      // removeCustomerLocally only drops the row locally; the component still
+      // re-fetches so totalItems/page count don't go stale.
+      expect(loadCustomers).toHaveBeenCalledTimes(1);
+    });
+
+    it('surfaces the error and stops loading when the delete request fails', async () => {
+      deleteCustomer.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: { responseMessage: 'Customer must be deactivated first.' },
+            }),
+        ),
+      );
+
+      await component.deleteCustomer('guid-1');
+
+      expect(component.deleting()).toBe(false);
+      expect(component.deleteError()).toBe('Customer must be deactivated first.');
+    });
+  });
+
+  describe('bulkDeleteSelected', () => {
+    it('does nothing when no rows are selected', async () => {
+      await component.bulkDeleteSelected();
+
+      expect(confirm).not.toHaveBeenCalled();
+    });
+
+    it('does not call any API when the user cancels the confirmation', async () => {
+      customersSignal.set([buildCustomer({ guid: 'g1' })]);
+      component.toggleSelection('g1', true);
+      confirm.mockResolvedValue(false);
+
+      await component.bulkDeleteSelected();
+
+      expect(deactivateCustomerSilently).not.toHaveBeenCalled();
+      expect(deleteCustomerSilently).not.toHaveBeenCalled();
+    });
+
+    it('deactivates Active customers and deletes non-Active ones, then shows a success summary and refetches', async () => {
+      customersSignal.set([
+        buildCustomer({ guid: 'active-1', customerStatus: CustomerActivationStatus.Active }),
+        buildCustomer({ guid: 'deactivated-1', customerStatus: CustomerActivationStatus.Deactivated }),
+        buildCustomer({ guid: 'test-1', customerStatus: CustomerActivationStatus.Test }),
+      ]);
+      component.toggleSelectAllOnPage(true);
+      loadCustomers.mockClear();
+
+      await component.bulkDeleteSelected();
+
+      expect(confirm).toHaveBeenCalledWith(expect.stringContaining('1 is active'));
+      expect(deactivateCustomerSilently).toHaveBeenCalledWith('active-1');
+      expect(deleteCustomerSilently).toHaveBeenCalledWith('deactivated-1');
+      expect(deleteCustomerSilently).toHaveBeenCalledWith('test-1');
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Bulk action completed: 1 deactivated, 2 deleted.',
+        'success',
+      );
+      expect(component.bulkActionInProgress()).toBe(false);
+      expect(loadCustomers).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a failure count and does not stop the batch when one operation fails', async () => {
+      customersSignal.set([
+        buildCustomer({ guid: 'active-1', customerStatus: CustomerActivationStatus.Active }),
+        buildCustomer({ guid: 'deactivated-1', customerStatus: CustomerActivationStatus.Deactivated }),
+      ]);
+      component.toggleSelectAllOnPage(true);
+      deactivateCustomerSilently.mockReturnValue(throwError(() => new Error('boom')));
+
+      await component.bulkDeleteSelected();
+
+      expect(deleteCustomerSilently).toHaveBeenCalledWith('deactivated-1');
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Bulk action completed with 1 failure(s) (1 succeeded).',
+        'error',
+      );
     });
   });
 });

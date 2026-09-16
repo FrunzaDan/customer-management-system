@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import {
   FormBuilder,
@@ -9,10 +9,11 @@ import {
 } from '@angular/forms';
 import { first } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AddCustomerService } from '../../../../src/app/services/add-customer.service';
+import { AddCustomerService } from '../../services/add-customer.service';
 import { Address, Customer } from '../../interfaces/customer-response';
 import { environment } from '../../../environments/environment';
 import { NgClass } from '@angular/common';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 
 type AddCustomerForm = FormGroup<{
   firstName: FormControl<string>;
@@ -36,6 +37,11 @@ type AddCustomerForm = FormGroup<{
   imports: [NgClass, ReactiveFormsModule, RouterLink],
 })
 export class AddCustomerComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly addCustomerService = inject(AddCustomerService);
+
   form!: AddCustomerForm;
   readonly loading = signal(false);
   readonly submitted = signal(false);
@@ -46,13 +52,6 @@ export class AddCustomerComponent implements OnInit {
   get f() {
     return this.form.controls;
   }
-
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private addCustomerService: AddCustomerService,
-  ) {}
 
   ngOnInit() {
     this.form = this.fb.nonNullable.group({
@@ -117,19 +116,8 @@ export class AddCustomerComponent implements OnInit {
           this.loading.set(false);
           // A 401 here (session expired while filling out this form) is handled
           // globally by authErrorInterceptor, which redirects to login.
-          this.errorMessage.set(this.extractErrorMessage(error));
+          this.errorMessage.set(extractErrorMessage(error, 'Failed to add customer'));
         },
       });
-  }
-
-  private extractErrorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return 'Could not reach the server. It may be offline, or your browser does not trust its security certificate.';
-    }
-    return (
-      error.error?.responseMessage ??
-      error.error?.message ??
-      `Failed to add customer (${error.status}). Please try again.`
-    );
   }
 }

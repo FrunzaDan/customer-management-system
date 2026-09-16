@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { GlobalAuditLogService } from '../../services/global-audit-log.service';
 import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
   selector: 'app-global-audit-log',
@@ -85,20 +86,9 @@ export class GlobalAuditLogComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.clearing.set(false);
-        this.clearError.set(this.extractErrorMessage(error));
+        this.clearError.set(extractErrorMessage(error));
       },
     });
-  }
-
-  private extractErrorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return 'Could not reach the server. It may be offline, or your browser does not trust its security certificate.';
-    }
-    return (
-      error.error?.responseMessage ??
-      error.error?.message ??
-      `Request failed (${error.status}). Please try again.`
-    );
   }
 
   private fetchAuditLog(): void {

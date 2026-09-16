@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import { AuditLogEntry } from '../interfaces/audit-log-entry';
 import { GenericResponse } from '../interfaces/generic-response';
 import { HttpHeaderService } from './http-header-service';
+import { extractErrorMessage } from '../utils/extract-error-message';
 
 @Injectable({
   providedIn: 'root',
@@ -46,20 +47,9 @@ export class AuditLogService {
           this.state.update((state) => ({
             ...state,
             loading: false,
-            error: this.extractErrorMessage(error),
+            error: extractErrorMessage(error),
           }));
         },
       });
-  }
-
-  private extractErrorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return 'Could not reach the server. It may be offline, or your browser does not trust its security certificate.';
-    }
-    return (
-      error.error?.responseMessage ??
-      error.error?.message ??
-      `Request failed (${error.status}). Please try again.`
-    );
   }
 }

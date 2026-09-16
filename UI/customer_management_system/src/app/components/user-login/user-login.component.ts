@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -6,12 +6,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { UserLoginService } from '../../../../src/app/services/user-login.service';
-import { NavbarService } from '../../../../src/app/services/navbar.service';
-import { FooterService } from '../../../../src/app/services/footer.service';
-import { UserLoginRequest } from '../../../../src/app/interfaces/user-login-request';
+import { UserLoginService } from '../../services/user-login.service';
+import { NavbarService } from '../../services/navbar.service';
+import { FooterService } from '../../services/footer.service';
+import { UserLoginRequest } from '../../interfaces/user-login-request';
 import { environment } from '../../../environments/environment';
-import { SessionStorageService } from '../../../../src/app/services/session-storage.service';
+import { SessionStorageService } from '../../services/session-storage.service';
 import { NgClass } from '@angular/common';
 
 @Component({
@@ -21,27 +21,23 @@ import { NgClass } from '@angular/common';
   imports: [NgClass, ReactiveFormsModule],
 })
 export class UserLoginComponent implements OnInit, OnDestroy {
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly userLoginService = inject(UserLoginService);
+  private readonly navbarService = inject(NavbarService);
+  private readonly footerService = inject(FooterService);
+  private readonly sessionStorageService = inject(SessionStorageService);
+
   loginForm: FormGroup<{
     username: FormControl<string>;
     password: FormControl<string>;
-  }>;
+  }> = this.formBuilder.nonNullable.group({
+    username: [
+      '',
+      [Validators.required, Validators.pattern(environment.UserName)],
+    ],
+    password: ['', Validators.required],
+  });
   readonly errorMessage = signal<string | null>(null);
-
-  constructor(
-    private formBuilder: FormBuilder,
-    private userLoginService: UserLoginService,
-    private navbarService: NavbarService,
-    private footerService: FooterService,
-    private sessionStorageService: SessionStorageService
-  ) {
-    this.loginForm = this.formBuilder.nonNullable.group({
-      username: [
-        '',
-        [Validators.required, Validators.pattern(environment.UserName)],
-      ],
-      password: ['', Validators.required],
-    });
-  }
 
   ngOnInit(): void {
     // Clear session storage and prepare UI

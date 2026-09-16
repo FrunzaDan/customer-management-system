@@ -13,6 +13,7 @@ import {
   Customer,
   CustomerActivationStatus,
 } from '../../interfaces/customer-response';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
   selector: 'app-customer-list',
@@ -225,7 +226,7 @@ export class CustomerListComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);
-        this.deleteError.set(this.extractErrorMessage(error));
+        this.deleteError.set(extractErrorMessage(error));
       },
     });
   }
@@ -322,16 +323,5 @@ export class CustomerListComponent implements OnInit {
         );
         this.fetchCustomers();
       });
-  }
-
-  private extractErrorMessage(error: HttpErrorResponse): string {
-    if (error.status === 0) {
-      return 'Could not reach the server. It may be offline, or your browser does not trust its security certificate.';
-    }
-    return (
-      error.error?.responseMessage ??
-      error.error?.message ??
-      `Request failed (${error.status}). Please try again.`
-    );
   }
 }
