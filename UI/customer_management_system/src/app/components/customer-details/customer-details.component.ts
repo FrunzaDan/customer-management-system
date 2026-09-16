@@ -11,6 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { GetCustomerService } from '../../../../src/app/services/get-customer.service';
 import { ActivateCustomerService } from '../../services/activate-customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { DeleteCustomerService } from '../../services/delete-customer.service';
 import {
   Customer,
@@ -62,6 +63,7 @@ export class CustomerDetailsComponent implements OnInit {
   constructor(
     private getCustomerService: GetCustomerService,
     private activateCustomerService: ActivateCustomerService,
+    private confirmDialogService: ConfirmDialogService,
     private deleteCustomerService: DeleteCustomerService,
     private auditLogService: AuditLogService,
     private router: Router,
@@ -133,12 +135,13 @@ export class CustomerDetailsComponent implements OnInit {
     this.router.navigate(['/editCustomer'], { queryParams: { id: guid } });
   }
 
-  deactivateCustomer(): void {
+  async deactivateCustomer(): Promise<void> {
     const guid = this.customer()?.guid;
     if (!guid) return;
-    if (!confirm('Are you sure you want to deactivate this customer?')) {
-      return;
-    }
+    const confirmed = await this.confirmDialogService.confirm(
+      'Are you sure you want to deactivate this customer?',
+    );
+    if (!confirmed) return;
     this.activateCustomerService.deactivateCustomer(guid);
   }
 
@@ -148,16 +151,13 @@ export class CustomerDetailsComponent implements OnInit {
     this.activateCustomerService.reactivateCustomer(guid);
   }
 
-  deleteCustomer(): void {
+  async deleteCustomer(): Promise<void> {
     const guid = this.customer()?.guid;
     if (!guid) return;
-    if (
-      !confirm(
-        'Are you sure you want to permanently delete this customer? This cannot be undone.',
-      )
-    ) {
-      return;
-    }
+    const confirmed = await this.confirmDialogService.confirm(
+      'Are you sure you want to permanently delete this customer? This cannot be undone.',
+    );
+    if (!confirmed) return;
 
     this.deleting.set(true);
     this.deleteError.set(null);

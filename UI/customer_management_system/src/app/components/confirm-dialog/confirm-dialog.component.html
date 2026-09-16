@@ -1,0 +1,21 @@
+@if (visible()) {
+<div class="confirm-overlay" [class.closing]="closing()" (click)="respond(false)">
+  <div
+    class="confirm-card"
+    [class.closing]="closing()"
+    role="alertdialog"
+    aria-modal="true"
+    (click)="$event.stopPropagation()"
+  >
+    <p class="confirm-message">{{ message() }}</p>
+    <div class="confirm-actions">
+      <button type="button" class="btn btn-secondary" (click)="respond(false)">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-danger" (click)="respond(true)">
+        OK
+      </button>
+    </div>
+  </div>
+</div>
+}

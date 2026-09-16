@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { GetCustomerService } from '../../services/get-customer.service';
 import { ActivateCustomerService } from '../../services/activate-customer.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { DeleteCustomerService } from '../../services/delete-customer.service';
 import { ExportCustomerService } from '../../services/export-customer.service';
 import { NotificationService } from '../../services/notification.service';
@@ -22,6 +23,7 @@ export class CustomerListComponent implements OnInit {
   // Use dependency injection with inject()
   private readonly getCustomerService = inject(GetCustomerService);
   private readonly activateCustomerService = inject(ActivateCustomerService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly deleteCustomerService = inject(DeleteCustomerService);
   private readonly exportCustomerService = inject(ExportCustomerService);
   private readonly notificationService = inject(NotificationService);
@@ -192,10 +194,11 @@ export class CustomerListComponent implements OnInit {
   }
 
   // Customer action methods
-  deactivateCustomer(guid: string): void {
-    if (!confirm('Are you sure you want to deactivate this customer?')) {
-      return;
-    }
+  async deactivateCustomer(guid: string): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm(
+      'Are you sure you want to deactivate this customer?',
+    );
+    if (!confirmed) return;
     this.activateCustomerService.deactivateCustomer(guid);
   }
 
@@ -203,14 +206,11 @@ export class CustomerListComponent implements OnInit {
     this.activateCustomerService.reactivateCustomer(guid);
   }
 
-  deleteCustomer(guid: string): void {
-    if (
-      !confirm(
-        'Are you sure you want to permanently delete this customer? This cannot be undone.',
-      )
-    ) {
-      return;
-    }
+  async deleteCustomer(guid: string): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm(
+      'Are you sure you want to permanently delete this customer? This cannot be undone.',
+    );
+    if (!confirmed) return;
 
     this.deleting.set(true);
     this.deleteError.set(null);
@@ -260,7 +260,7 @@ export class CustomerListComponent implements OnInit {
   // see usp_deleteCustomer) to be deleted directly; an Active one is only
   // deactivated as part of this action, not deleted, same as the single-row
   // buttons would require.
-  bulkDeleteSelected(): void {
+  async bulkDeleteSelected(): Promise<void> {
     const guids = this.selectedGuids();
     const selected = this.customers().filter((c) => guids.has(c.guid));
     if (selected.length === 0) return;
@@ -285,7 +285,8 @@ export class CustomerListComponent implements OnInit {
     }
     lines.push('Continue?');
 
-    if (!confirm(lines.join('\n'))) return;
+    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'));
+    if (!confirmed) return;
 
     this.bulkActionInProgress.set(true);
 

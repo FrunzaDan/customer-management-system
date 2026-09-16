@@ -1,0 +1,49 @@
+import { Injectable, signal } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class ConfirmDialogService {
+  // Matches confirm-dialog.component.css's zoom-out/fade-out duration — the
+  // dialog stays mounted (playing the close animation) for this long after
+  // respond() before it's actually removed.
+  private static readonly CLOSE_ANIMATION_MS = 1000;
+
+  private readonly _message = signal('');
+  private readonly _visible = signal(false);
+  private readonly _closing = signal(false);
+
+  readonly message = this._message.asReadonly();
+  readonly visible = this._visible.asReadonly();
+  readonly closing = this._closing.asReadonly();
+
+  private resolver: ((result: boolean) => void) | null = null;
+  private closeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Replaces window.confirm(): resolves true/false once the user picks an
+  // option, instead of blocking the browser thread with a native dialog.
+  confirm(message: string): Promise<boolean> {
+    clearTimeout(this.closeTimer);
+    this._message.set(message);
+    this._visible.set(true);
+    this._closing.set(false);
+
+    return new Promise<boolean>((resolve) => {
+      this.resolver = resolve;
+    });
+  }
+
+  respond(result: boolean): void {
+    if (!this.resolver) return;
+    const resolve = this.resolver;
+    this.resolver = null;
+
+    this._closing.set(true);
+    this.closeTimer = setTimeout(() => {
+      this._visible.set(false);
+      this._closing.set(false);
+    }, ConfirmDialogService.CLOSE_ANIMATION_MS);
+
+    resolve(result);
+  }
+}

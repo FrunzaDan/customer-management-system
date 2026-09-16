@@ -1,5 +1,6 @@
 import { Component, PLATFORM_ID, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { NavigationBarComponent } from './components/navigation-bar/navigation-bar.component';
 import { NotificationComponent } from './components/notification/notification.component';
@@ -14,6 +15,7 @@ import { HealthService } from './services/health.service';
   templateUrl: './app.html',
   styleUrls: ['./app.css'],
   imports: [
+    ConfirmDialogComponent,
     FooterComponent,
     NavigationBarComponent,
     NotificationComponent,

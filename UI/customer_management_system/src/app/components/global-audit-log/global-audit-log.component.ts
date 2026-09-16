@@ -8,6 +8,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { GlobalAuditLogService } from '../../services/global-audit-log.service';
 import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
 
@@ -18,6 +19,7 @@ import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
   imports: [DatePipe],
 })
 export class GlobalAuditLogComponent implements OnInit {
+  private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly globalAuditLogService = inject(GlobalAuditLogService);
   private readonly router = inject(Router);
 
@@ -67,14 +69,11 @@ export class GlobalAuditLogComponent implements OnInit {
     return entry.auditId;
   }
 
-  clearAuditLog(): void {
-    if (
-      !confirm(
-        'Are you sure you want to permanently delete the entire audit log? This cannot be undone.',
-      )
-    ) {
-      return;
-    }
+  async clearAuditLog(): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm(
+      'Are you sure you want to permanently delete the entire audit log? This cannot be undone.',
+    );
+    if (!confirmed) return;
 
     this.clearing.set(true);
     this.clearError.set(null);
