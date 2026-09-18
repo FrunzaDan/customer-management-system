@@ -1,0 +1,1705 @@
+{
+	"info": {
+		"_postman_id": "c180bccf-4b03-4a85-a636-97a102c34e31",
+		"name": "Customer Management System",
+		"description": "Full API coverage for the Customer Management System (.NET 10 / ASP.NET Core Web API \u2014 see ai_docs/api.md). Import this collection plus the companion environment file (optional \u2014 sane defaults are baked in as collection variables, so this works immediately after import even with no environment selected).\n\n**How auth works here:** every request auto-authenticates via the collection-level Pre-request Script, which logs in once with the seeded demo merchant (`TestMerchantID` / `Merchant123`) and caches the token in collection variables until shortly before it expires. `POST /access-token` is rate-limited to 5 requests/minute, so requests deliberately do **not** each log in independently \u2014 that was the previous collection's behavior and would 429 itself out partway through a Collection Runner pass.\n\n**Folders:**\n- **Auth** \u2014 login, token verification, and invalid-credential cases.\n- **Customer Lifecycle** \u2014 a numbered, top-to-bottom, self-cleaning walk through register \u2192 get \u2192 edit \u2192 deactivate \u2192 reactivate \u2192 deactivate \u2192 audit log \u2192 delete \u2192 confirm-gone. Safe to run repeatedly (Collection Runner-friendly): each pass creates and then deletes its own randomly-generated customer.\n- **Customer Queries** \u2014 paginated/sortable/searchable listing and CSV export.\n- **Audit Log** \u2014 the global (cross-customer) audit trail, plus the destructive clear-all-logs action.\n- **Negative & Edge Cases** \u2014 validation failures (`400`), not-found (`404`), lifecycle-guardrail conflicts (`409`), and missing-auth (`401`), matching the status-code conventions documented in ai_docs/api.md and ai_docs/database.md. A few of these register their own short-lived helper customers first (same pattern as the Lifecycle folder) and, in two cases, deliberately leave a small amount of harmless demo data behind rather than adding extra cleanup requests \u2014 the same tradeoff the app's own \"add test customers\" bulk generator makes.\n- **Health** \u2014 the unauthenticated `/health` liveness check.\n\nSee `ai_docs/index.md` for the full architecture and `ai_docs/api.md` / `ai_docs/database.md` for the validation rules and status-code conventions this collection exercises.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-authenticates once per token lifetime instead of on every single request:",
+					"// POST /access-token is rate-limited to 5 req/min (see ai_docs/api.md), so logging in",
+					"// per-request (the collection's previous behaviour) would 429 itself out partway",
+					"// through a Collection Runner pass. Cached in collection variables (not the selected",
+					"// environment) so this works immediately after import, with or without one.",
+					"const SKIP_AUTO_LOGIN = [",
+					"    \"Login (Get Access Token)\",",
+					"    \"Login - Invalid Password (expect 403)\",",
+					"    \"Login - Empty Credentials (expect 403)\",",
+					"    \"Unauthorized - No Token (expect 401)\",",
+					"    \"Get API Health\"",
+					"];",
+					"",
+					"if (!SKIP_AUTO_LOGIN.includes(pm.info.requestName)) {",
+					"    const cachedToken = pm.collectionVariables.get(\"accessToken\");",
+					"    const expiresAt = parseInt(pm.collectionVariables.get(\"accessTokenExpiresAt\") || \"0\", 10);",
+					"    const needsLogin = !cachedToken || Date.now() > (expiresAt - 30000); // 30s safety margin",
+					"",
+					"    if (needsLogin) {",
+					"        pm.sendRequest({",
+					"            url: pm.variables.get(\"baseUrl\") + \"/api/Authentication/access-token\",",
+					"            method: \"POST\",",
+					"            header: { \"Content-Type\": \"application/json\" },",
+					"            body: {",
+					"                mode: \"raw\",",
+					"                raw: JSON.stringify({",
+					"                    merchantId: pm.variables.get(\"merchantId\"),",
+					"                    merchantPassword: pm.variables.get(\"merchantPassword\")",
+					"                })",
+					"            }",
+					"        }, (err, res) => {",
+					"            if (err) {",
+					"                console.error(\"[auto-login] request failed:\", err);",
+					"                return;",
+					"            }",
+					"            const resBody = res.json();",
+					"            const token = resBody && resBody.data && resBody.data.accessToken;",
+					"            const validUntil = resBody && resBody.data && resBody.data.validUntil;",
+					"            if (token) {",
+					"                pm.collectionVariables.set(\"accessToken\", token);",
+					"                pm.collectionVariables.set(\"accessTokenExpiresAt\",",
+					"                    String(validUntil ? Date.parse(validUntil) : Date.now() + 14 * 60 * 1000));",
+					"            } else {",
+					"                console.error(\"[auto-login] response had no data.accessToken:\", resBody);",
+					"            }",
+					"        });",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"No unhandled server error (500)\", function () {",
+					"    pm.expect(pm.response.code).to.not.equal(500);",
+					"});",
+					"",
+					"pm.test(\"Response time is reasonable (< 5s)\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://localhost:7145",
+			"type": "string"
+		},
+		{
+			"key": "merchantId",
+			"value": "TestMerchantID",
+			"type": "string"
+		},
+		{
+			"key": "merchantPassword",
+			"value": "Merchant123",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "accessTokenExpiresAt",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "customerGuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customerEmail",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customerMsisdn",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login (Get Access Token)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Authentication/access-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Authentication",
+								"access-token"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchantId\": \"{{merchantId}}\",\n    \"merchantPassword\": \"{{merchantPassword}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"description": "Issues a JWT for the seeded demo merchant (`TestMerchantID` / `Merchant123`, see ai_docs/build-and-run.md). You normally never need to run this manually \u2014 every other request in this collection auto-authenticates via the collection-level pre-request script, which calls this same endpoint once and caches the token in collection variables until it's about to expire. Run it yourself to force an immediate refresh, e.g. after changing `merchantId`/`merchantPassword`.\n\nRate-limited to 5 requests/minute per client IP ([EnableRateLimiting(\"login\")]) \u2014 exceeding it returns `429` with a small hand-written JSON body (not the usual envelope)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"Response contains an access token\", () => {",
+									"    pm.expect(body.data).to.have.property(\"accessToken\").that.is.a(\"string\").and.is.not.empty;",
+									"});",
+									"",
+									"if (body.data && body.data.accessToken) {",
+									"    pm.collectionVariables.set(\"accessToken\", body.data.accessToken);",
+									"    pm.collectionVariables.set(\"accessTokenExpiresAt\",",
+									"        String(body.data.validUntil ? Date.parse(body.data.validUntil) : Date.now() + 14 * 60 * 1000));",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Verify Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Authentication/verify-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Authentication",
+								"verify-token"
+							]
+						},
+						"description": "`[Authorize]`-gated with nothing left to do but return 200 once the JWT middleware has already validated the bearer token \u2014 see ai_docs/api.md."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Envelope reports authorized\", () => {",
+									"    const body = pm.response.json();",
+									"    pm.expect(body.status).to.eql(200);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Login - Invalid Password (expect 403)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Authentication/access-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Authentication",
+								"access-token"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchantId\": \"{{merchantId}}\",\n    \"merchantPassword\": \"definitely-wrong-password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"description": "Wrong password for a real merchant ID. `AuthService`/`JwtCreation` return `403`, not `401` \u2014 see ai_docs/api.md."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 403\", () => pm.response.to.have.status(403));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Login - Empty Credentials (expect 403)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Authentication/access-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Authentication",
+								"access-token"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchantId\": \"\",\n    \"merchantPassword\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"description": "`AuthService.GetAccessToken` rejects empty merchant ID/password before ever touching the DB."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 403\", () => pm.response.to.have.status(403));"
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "Login, token verification, and invalid-credential cases. See ai_docs/api.md's JWT auth flow section."
+		},
+		{
+			"name": "Customer Lifecycle",
+			"item": [
+				{
+					"name": "1. Register Customer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"{{regFirstName}}\",\n    \"lastName\": \"{{regLastName}}\",\n    \"msisdn\": \"{{regMsisdn}}\",\n    \"email\": \"{{regEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Creates a new **active** customer with a fresh, randomly-generated name/email/MSISDN each run (built in the Pre-request Script) so this step \u2014 and the whole folder \u2014 is safe to re-run without colliding with a previous pass. The GUID is always server-generated (`Guid.NewGuid()`), never client-supplied.\n\nRegistration's response carries no `data` (mutating endpoints don't return the created row, see ai_docs/api.md's Known Gaps) \u2014 the next request looks the new customer up by the email just sent, to capture its GUID for every later step."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const rand = Date.now() + Math.floor(Math.random() * 1000);",
+									"pm.collectionVariables.set(\"regFirstName\", \"Test\" + String(rand).slice(-6));",
+									"pm.collectionVariables.set(\"regLastName\", \"Customer\" + String(rand).slice(-4));",
+									"pm.collectionVariables.set(\"regEmail\", \"test.customer.\" + rand + \"@example.com\");",
+									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// one from the same timestamp so it's unique but still matches the format.",
+									"pm.collectionVariables.set(\"regMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"Response envelope reports success\", () => pm.expect(body.status).to.eql(200));",
+									"",
+									"pm.collectionVariables.set(\"customerEmail\", pm.collectionVariables.get(\"regEmail\"));",
+									"pm.collectionVariables.set(\"customerMsisdn\", pm.collectionVariables.get(\"regMsisdn\"));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Get Customer (lookup by email, captures GUID)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{customerEmail}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "{{customerEmail}}"
+								}
+							]
+						},
+						"description": "`GetCustomer` auto-detects the search type \u2014 GUID shape, then MSISDN shape, then email shape (`CustomerGetting.DetermineSearchOption`) \u2014 so searching by the email from step 1 is enough to find the customer and read back its server-generated GUID."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"Customer was found\", () => pm.expect(body.data).to.not.be.null);",
+									"pm.test(\"Email matches the customer just registered\", () => {",
+									"    pm.expect(body.data.email).to.eql(pm.collectionVariables.get(\"customerEmail\"));",
+									"});",
+									"",
+									"if (body.data && body.data.guid) {",
+									"    pm.collectionVariables.set(\"customerGuid\", body.data.guid);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "3. Edit Customer",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"edit"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"guid\": \"{{customerGuid}}\",\n    \"firstName\": \"Updated\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Partial update \u2014 `usp_editCustomer` uses `ISNULL(@param, column)`, so any field left out of the body (like `lastName`/`address` here) is left unchanged, not nulled out."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "4. Get Customer (by GUID, verify edit)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "{{customerGuid}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"firstName reflects the edit\", () => pm.expect(body.data.firstName).to.eql(\"Updated\"));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "5. Deactivate Customer",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"deactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{customerGuid}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "6. Reactivate Customer",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/reactivate?customerGuid={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"reactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{customerGuid}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "7. Deactivate Customer (again, required before delete)",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"deactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{customerGuid}}"
+								}
+							]
+						},
+						"description": "`usp_deleteCustomer` requires status `IN (1903, 1904)` (deactivated or test) \u2014 an active customer must be deactivated first, see ai_docs/database.md. Re-deactivating here (after step 6 reactivated it) sets up step 9's delete."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "8. Get Customer Audit Log",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/auditLog?customerGuid={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"auditLog"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{customerGuid}}"
+								}
+							]
+						},
+						"description": "Newest-first trail of every mutation on this customer: Created, Edited, Deactivated, Reactivated, Deactivated."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"At least 5 audit entries recorded (Created/Edited/Deactivated/Reactivated/Deactivated)\", () => {",
+									"    pm.expect(body.data).to.be.an(\"array\").with.lengthOf.at.least(5);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "9. Delete Customer",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/delete?customerGuid={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{customerGuid}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "10. Get Customer (confirm deleted, expect 404)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{customerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "{{customerGuid}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "Run this folder top-to-bottom (or with Collection Runner) against a fresh instance. Each numbered step chains off the previous one via collection variables and the whole folder is self-cleaning \u2014 it deletes the customer it creates in step 1, so it's safe to run repeatedly."
+		},
+		{
+			"name": "Customer Queries",
+			"item": [
+				{
+					"name": "List Customers (paginated)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/all?pageNumber=1&pageSize=20&sortColumn=name&sortDirection=asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"all"
+							],
+							"query": [
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								},
+								{
+									"key": "sortColumn",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "asc"
+								},
+								{
+									"key": "searchTerm",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "`sortColumn` allow-list: `name`/`email`/`msisdn`. `sortDirection`: `asc`/`desc`. `pageSize` must be 1-100. `searchTerm` (disabled by default \u2014 enable it in the Params tab to try it) does a `LIKE '%...%'` match against first/last name, email and MSISDN. See ai_docs/database.md."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"Response is a paged list\", () => {",
+									"    pm.expect(body.data).to.have.property(\"items\").that.is.an(\"array\");",
+									"    pm.expect(body.data).to.have.property(\"totalItems\");",
+									"    pm.expect(body.data.pageNumber).to.eql(1);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Export Customers (CSV)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/export?sortColumn=name&sortDirection=asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"export"
+							],
+							"query": [
+								{
+									"key": "sortColumn",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "asc"
+								},
+								{
+									"key": "searchTerm",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "The one endpoint that doesn't return the JSON envelope \u2014 on success it's a raw `text/csv` file (RFC 4180, UTF-8 BOM, formula-injection-defanged), capped at 5000 rows and not limited to one page. On failure it falls back to the usual JSON envelope. See ai_docs/database.md. Open the **Save Response** > **Save to a file** option in Postman to inspect the download."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Content-Type is text/csv\", () => {",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/csv\");",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "Ad-hoc, non-destructive reads: paginated/sortable/searchable listing and CSV export."
+		},
+		{
+			"name": "Audit Log",
+			"item": [
+				{
+					"name": "Get Global Audit Log (paginated)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/auditLog/all?pageNumber=1&pageSize=20",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"auditLog",
+								"all"
+							],
+							"query": [
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Newest-first across every customer (separate stored proc from the per-customer trail \u2014 see ai_docs/database.md). Rows for a since-deleted customer still show up, with `customerFirstName`/`customerLastName` as `null` rather than disappearing (no FK from the audit table to `tbl_customers`, by design)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"Response is a paged list\", () => {",
+									"    pm.expect(body.data).to.have.property(\"items\").that.is.an(\"array\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Delete ALL Audit Log Entries (DESTRUCTIVE)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/auditLog/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"auditLog",
+								"all"
+							]
+						},
+						"description": "**Destructive \u2014 permanently wipes every audit-log row for every customer, no soft-delete (`usp_deleteAllCustomerAuditLog`, a plain unconditional `DELETE`).** Carries `[Authorize(Roles = \"1801\")]` on top of the class-level `[Authorize]` \u2014 a no-op today since `1801` is the only role that exists, but it stops a future second role from silently inheriting access. Not wired into any other flow in this collection; run it only when you actually mean to clear the log. See ai_docs/api.md."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "The global (cross-customer) audit trail and its destructive clear-all action. See ai_docs/database.md's Audit trail section."
+		},
+		{
+			"name": "Negative & Edge Cases",
+			"item": [
+				{
+					"name": "Register - Missing First Name (expect 400)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lastName\": \"NoFirstName\",\n    \"email\": \"no.first.name@example.com\",\n    \"msisdn\": \"0771234567\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "`CustomerRegistration.RegisterCustomerFunction` requires `firstName` \u2014 `first_name` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless customer."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register - Invalid Email Format (expect 400)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Bad\",\n    \"lastName\": \"Email\",\n    \"email\": \"not-an-email\",\n    \"msisdn\": \"0771234568\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register - Invalid MSISDN Format (expect 400)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Bad\",\n    \"lastName\": \"Msisdn\",\n    \"email\": \"bad.msisdn@example.com\",\n    \"msisdn\": \"not-a-phone-number\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "MSISDN must be 9-12 digits only (`RegexConstants.MsisdnRegex`) \u2014 no `+`, spaces or letters."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register - Missing Address (expect 400)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"No\",\n    \"lastName\": \"Address\",\n    \"email\": \"no.address@example.com\",\n    \"msisdn\": \"0771234569\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "`usp_createCustomer`'s address parameters have no SQL-side defaults \u2014 without this check, a missing address would surface as an opaque `500` instead of a clean `400`."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register - Duplicate Email, Step 1: Create Helper (expect 200)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"{{dupFirstName}}\",\n    \"lastName\": \"{{dupLastName}}\",\n    \"msisdn\": \"{{dupMsisdn}}\",\n    \"email\": \"{{dupEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Sets up the next request by registering a throwaway customer with a fresh email. Left behind afterwards (not cleaned up) \u2014 harmless demo data, same as the About page's bulk test-customer generator."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const rand = Date.now() + Math.floor(Math.random() * 1000);",
+									"pm.collectionVariables.set(\"dupFirstName\", \"Test\" + String(rand).slice(-6));",
+									"pm.collectionVariables.set(\"dupLastName\", \"Customer\" + String(rand).slice(-4));",
+									"pm.collectionVariables.set(\"dupEmail\", \"test.customer.\" + rand + \"@example.com\");",
+									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// one from the same timestamp so it's unique but still matches the format.",
+									"pm.collectionVariables.set(\"dupMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register - Duplicate Email, Step 2: Retry Same Email (expect 400)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Different\",\n    \"lastName\": \"Person\",\n    \"email\": \"{{dupEmail}}\",\n    \"msisdn\": \"0771234570\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "`usp_createCustomer` rejects a duplicate email up front with a friendly `400`, even though the rest of this request is otherwise valid."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Customer - Empty Search Variable (expect 400)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Unlike every other error in this API, this one short-circuits in the controller itself (`if (string.IsNullOrEmpty(searchVariable)) return BadRequest(...)`) before the usual envelope is built \u2014 the body is a plain `{ message }`, not `{ status, responseMessage, data }`. Enable the `searchVariable` param (currently disabled, empty) to send this."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));",
+									"pm.test(\"Body uses the plain { message } shape, not the usual envelope\", () => {",
+									"    pm.expect(pm.response.json()).to.have.property(\"message\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Customer - Unrecognized Format (expect 404)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get?searchVariable=not-a-guid-msisdn-or-email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "not-a-guid-msisdn-or-email"
+								}
+							]
+						},
+						"description": "Fails all three `DetermineSearchOption` checks (GUID/MSISDN/email shape) \u2014 returns `404` without ever hitting the DB."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Customer - Well-formed GUID, Not Found (expect 404)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get?searchVariable=00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "00000000-0000-0000-0000-000000000000"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Edit Customer - Invalid GUID Format (expect 400)",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/edit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"edit"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"guid\": \"not-a-real-guid\",\n    \"firstName\": \"X\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Deactivate - Unknown GUID (expect 404)",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid=00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"deactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "00000000-0000-0000-0000-000000000000"
+								}
+							]
+						},
+						"description": "Well-formed GUID, but no such row in `tbl_customers` \u2014 `usp_deactivateCustomer` returns `404`, distinct from the `409` used for \"already deactivated\" below."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Deactivate Twice, Step 1: Create Helper (expect 200)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"{{negAFirstName}}\",\n    \"lastName\": \"{{negALastName}}\",\n    \"msisdn\": \"{{negAMsisdn}}\",\n    \"email\": \"{{negAEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Registers a throwaway customer for the next two steps, then looks it up by email to capture its GUID (see step 2 of the Customer Lifecycle folder for why)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const rand = Date.now() + Math.floor(Math.random() * 1000);",
+									"pm.collectionVariables.set(\"negAFirstName\", \"Test\" + String(rand).slice(-6));",
+									"pm.collectionVariables.set(\"negALastName\", \"Customer\" + String(rand).slice(-4));",
+									"pm.collectionVariables.set(\"negAEmail\", \"test.customer.\" + rand + \"@example.com\");",
+									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// one from the same timestamp so it's unique but still matches the format.",
+									"pm.collectionVariables.set(\"negAMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"pm.sendRequest({",
+									"    url: pm.variables.get(\"baseUrl\") + \"/api/Customer/get?searchVariable=\" + encodeURIComponent(pm.collectionVariables.get(\"negAEmail\")),",
+									"    method: \"GET\",",
+									"    header: { \"Authorization\": \"Bearer \" + pm.collectionVariables.get(\"accessToken\") }",
+									"}, (err, res) => {",
+									"    if (err) { console.error(\"[lookup] failed:\", err); return; }",
+									"    const lookupBody = res.json();",
+									"    if (lookupBody && lookupBody.data && lookupBody.data.guid) {",
+									"        pm.collectionVariables.set(\"negHelperGuidA\", lookupBody.data.guid);",
+									"        console.log(\"Captured negHelperGuidA = \" + lookupBody.data.guid);",
+									"    } else {",
+									"        console.error(\"[lookup] customer not found for email:\", lookupBody);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Deactivate Twice, Step 2: Deactivate Helper (expect 200)",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{negHelperGuidA}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"deactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{negHelperGuidA}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Deactivate Twice, Step 3: Deactivate Again (expect 409)",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{negHelperGuidA}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"deactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{negHelperGuidA}}"
+								}
+							]
+						},
+						"description": "`usp_deactivateCustomer` only updates rows where status `<> 1903` \u2014 a second call on an already-deactivated customer updates 0 rows and returns `409`."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 409\", () => pm.response.to.have.status(409));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Delete Without Deactivating, Step 1: Create Helper (expect 200)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"{{negBFirstName}}\",\n    \"lastName\": \"{{negBLastName}}\",\n    \"msisdn\": \"{{negBMsisdn}}\",\n    \"email\": \"{{negBEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Registers a throwaway **active** customer for the next step and captures its GUID."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const rand = Date.now() + Math.floor(Math.random() * 1000);",
+									"pm.collectionVariables.set(\"negBFirstName\", \"Test\" + String(rand).slice(-6));",
+									"pm.collectionVariables.set(\"negBLastName\", \"Customer\" + String(rand).slice(-4));",
+									"pm.collectionVariables.set(\"negBEmail\", \"test.customer.\" + rand + \"@example.com\");",
+									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// one from the same timestamp so it's unique but still matches the format.",
+									"pm.collectionVariables.set(\"negBMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"pm.sendRequest({",
+									"    url: pm.variables.get(\"baseUrl\") + \"/api/Customer/get?searchVariable=\" + encodeURIComponent(pm.collectionVariables.get(\"negBEmail\")),",
+									"    method: \"GET\",",
+									"    header: { \"Authorization\": \"Bearer \" + pm.collectionVariables.get(\"accessToken\") }",
+									"}, (err, res) => {",
+									"    if (err) { console.error(\"[lookup] failed:\", err); return; }",
+									"    const lookupBody = res.json();",
+									"    if (lookupBody && lookupBody.data && lookupBody.data.guid) {",
+									"        pm.collectionVariables.set(\"negHelperGuidB\", lookupBody.data.guid);",
+									"        console.log(\"Captured negHelperGuidB = \" + lookupBody.data.guid);",
+									"    } else {",
+									"        console.error(\"[lookup] customer not found for email:\", lookupBody);",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Delete Without Deactivating, Step 2: Attempt Delete (expect 409)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/delete?customerGuid={{negHelperGuidB}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{negHelperGuidB}}"
+								}
+							]
+						},
+						"description": "`usp_deleteCustomer` requires status `IN (1903, 1904)` \u2014 an active customer must be deactivated first. Left active afterwards (not cleaned up) \u2014 harmless demo data."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 409\", () => pm.response.to.have.status(409));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Unauthorized - No Token (expect 401)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"all"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"description": "`CustomerController` is class-level `[Authorize]` \u2014 every action requires a bearer token, enforced once by `Program.cs`'s `AddJwtBearer` middleware before any controller code runs."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 401\", () => pm.response.to.have.status(401));"
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "Validation failures, not-found, lifecycle-guardrail conflicts, and missing-auth \u2014 the status-code conventions documented in ai_docs/api.md and ai_docs/database.md. Independent of the Customer Lifecycle folder (each scenario sets up its own state), so this folder can be run on its own."
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Get API Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"auth": {
+							"type": "noauth"
+						},
+						"description": "Bare, unauthenticated liveness check \u2014 not gated by `[Authorize]`, doesn't return the `ResponseModel` envelope, just a 200. Backs the Angular UI's \"API is not running\" banner."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "Unauthenticated liveness check backing the Angular UI's API-availability banner."
+		}
+	]
+}

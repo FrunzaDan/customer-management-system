@@ -12,7 +12,7 @@ It's not trying to be a product. It's the project I keep coming back to whenever
 
 | Layer | Tech | Where |
 |---|---|---|
-| UI | Angular 22, signals, zoneless change detection, SSR via `@angular/ssr` | `UI/customer_management_system` |
+| UI | Angular 22, signals, zoneless change detection, SSR via `@angular/ssr` | `UI` |
 | API | ASP.NET Core Web API on .NET 10, C# | `API/Customer_Management_System_API` |
 | DB | SQL Server (SSDT project, built to a `.dacpac` and published with `sqlpackage`) | `DB/Customer_Management_System_DB` |
 
@@ -72,7 +72,7 @@ Customer_Management_System/
 │   ├── Tables/                    # tbl_customers, tbl_addresses, tbl_merchants, tbl_customer_audit_log
 │   ├── Stored_Procedures/         # usp_* — all data access goes through these, no ORM, no inline SQL
 │   └── Post_Deployment_Scripts/   # seeds a test merchant login
-└── UI/customer_management_system/
+└── UI/
     └── src/app/
         ├── components/            # one folder per route/view
         └── services/              # HTTP calls, auth guard, session storage

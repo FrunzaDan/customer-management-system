@@ -8,7 +8,7 @@ A small full-stack CRUD app for a merchant to manage their customers' records (p
 
 | Layer | Folder | Tech |
 |---|---|---|
-| UI | `UI/customer_management_system` | Angular 22 (zoneless, signals, SSR via `@angular/ssr`/Express) |
+| UI | `UI` | Angular 22 (zoneless, signals, SSR via `@angular/ssr`/Express) |
 | API | `API/Customer_Management_System_API` | .NET 10 / ASP.NET Core Web API, C# |
 | DB | `DB/Customer_Management_System_DB` | SQL Server (SSDT `.sqlproj`, deployed via `sqlpackage`) |
 
@@ -28,7 +28,7 @@ Customer_Management_System/
 │   ├── Tables/                                  # tbl_customers, tbl_addresses, tbl_merchants
 │   ├── Stored_Procedures/                       # usp_* — all data access goes through these
 │   └── Post_Deployment_Scripts/                 # seeds the test merchant
-└── UI/customer_management_system/
+└── UI/
     └── src/app/
         ├── components/                          # one folder per route/view
         └── services/                            # HTTP calls, auth guard, session storage

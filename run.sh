@@ -11,7 +11,7 @@ API_LAUNCH_SETTINGS="$API_PROJ_DIR/Properties/launchSettings.json"
 DB_DIR="$ROOT_DIR/DB/Customer_Management_System_DB"
 DB_PROJ="Customer_Management_System_DB.sqlproj"
 DB_DACPAC="$DB_DIR/bin/Debug/Customer_Management_System_DB.dacpac"
-UI_DIR="$ROOT_DIR/UI/customer_management_system"
+UI_DIR="$ROOT_DIR/UI"
 RUN_DIR="$ROOT_DIR/.run"
 
 SQL_IMAGE="${SQL_IMAGE:-mcr.microsoft.com/azure-sql-edge}"

@@ -2,17 +2,17 @@
 
 ## What it is
 
-Global HTTP/router wiring, the auth guard, the login flow, the route/component map, and the services layer — everything under `UI/customer_management_system`.
+Global HTTP/router wiring, the auth guard, the login flow, the route/component map, and the services layer — everything under `UI`.
 
 ## Key files / paths
 
-- `UI/customer_management_system/src/environments/environment.ts`
-- `UI/customer_management_system/src/app/app.config.ts`, `app.routes.ts`
-- `UI/customer_management_system/src/app/services/auth-guard.service.ts`, `verify-token.service.ts`, `auth-error.interceptor.ts`
-- `UI/customer_management_system/src/app/components/user-login/user-login.component.ts`
-- `UI/customer_management_system/src/app/services/user-login.service.ts`, `session-storage.service.ts`
-- `UI/customer_management_system/src/app/components/*`
-- `UI/customer_management_system/src/app/services/*`
+- `UI/src/environments/environment.ts`
+- `UI/src/app/app.config.ts`, `app.routes.ts`
+- `UI/src/app/services/auth-guard.service.ts`, `verify-token.service.ts`, `auth-error.interceptor.ts`
+- `UI/src/app/components/user-login/user-login.component.ts`
+- `UI/src/app/services/user-login.service.ts`, `session-storage.service.ts`
+- `UI/src/app/components/*`
+- `UI/src/app/services/*`
 
 ## How it works
 

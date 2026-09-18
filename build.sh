@@ -8,7 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_SLN="$ROOT_DIR/API/Customer_Management_System_API/CustomerManagementSystem.sln"
 DB_DIR="$ROOT_DIR/DB/Customer_Management_System_DB"
 DB_PROJ="Customer_Management_System_DB.sqlproj"
-UI_DIR="$ROOT_DIR/UI/customer_management_system"
+UI_DIR="$ROOT_DIR/UI"
 
 SKIP_TESTS=0
 for arg in "$@"; do

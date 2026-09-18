@@ -192,15 +192,15 @@ ClientBin/
 orleans.codegen.cs
 
 /node_modules
-/UI/customer_management_system/node_modules/
+/UI/node_modules/
 
 # run.sh runtime artifacts (logs, exported dev TLS cert)
 /.run/
 
-/UI/customer_management_system/dist
-/UI/customer_management_system/tmp
-/UI/customer_management_system/out-tsc
-/UI/customer_management_system/.angular/cache
+/UI/dist
+/UI/tmp
+/UI/out-tsc
+/UI/.angular/cache
 
 # RIA/Silverlight projects
 Generated_Code/
