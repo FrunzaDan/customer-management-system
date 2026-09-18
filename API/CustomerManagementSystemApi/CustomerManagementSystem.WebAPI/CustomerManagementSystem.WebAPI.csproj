@@ -5,14 +5,13 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.12" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-        <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference
-                Include="..\CustomerManagementSystem.BusinessLogic\CustomerManagementSystem.BusinessLogic.csproj"/>
+            Include="..\CustomerManagementSystem.BusinessLogic\CustomerManagementSystem.BusinessLogic.csproj" />
     </ItemGroup>
 </Project>

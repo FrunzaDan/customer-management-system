@@ -33,7 +33,7 @@ public class JwtCreationTests
             .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials);
+        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         var data = Assert.IsType<AccessTokenResponse>(result.Data);
@@ -49,7 +49,7 @@ public class JwtCreationTests
             .ReturnsAsync(new ResponseModel<int?>(403, "Invalid merchant credentials."));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials);
+        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
         Assert.Equal("Invalid merchant credentials.", result.ResponseMessage);
@@ -65,7 +65,7 @@ public class JwtCreationTests
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
         var credentials = new MerchantCredentials { MerchantId = merchantId, MerchantPassword = "Merchant123" };
 
-        var result = await jwtCreation.GenerateBearerJwt(credentials);
+        var result = await jwtCreation.GenerateBearerJwt(credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
         dbUtils.Verify(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -79,7 +79,7 @@ public class JwtCreationTests
             .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
         var jwtCreation = new JwtCreation(CreateConfig(accessTokenTimeout: "not-a-number").Object, dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials);
+        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
         // AccessTokenTimeout is validated via double.TryParse before any token is built/signed,
         // so a bad config value returns this dedicated message rather than falling through to
@@ -96,7 +96,7 @@ public class JwtCreationTests
             .ThrowsAsync(new InvalidOperationException("Connection string 'CustomerManagementSystemDB_Docker' is unreachable."));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials);
+        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
         // This endpoint is unauthenticated, unlike the rest of the API, and any exception here
         // is caught locally rather than reaching the global exception handler's Details-only-in-

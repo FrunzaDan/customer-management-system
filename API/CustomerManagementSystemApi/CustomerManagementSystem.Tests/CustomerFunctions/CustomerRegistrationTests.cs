@@ -25,7 +25,7 @@ public class CustomerRegistrationTests
             FirstName = firstName, LastName = lastName, Email = "dan@example.com", Msisdn = "123456789"
         };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("name", result.ResponseMessage, StringComparison.OrdinalIgnoreCase);
@@ -43,7 +43,7 @@ public class CustomerRegistrationTests
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { FirstName = "Dan", LastName = "Frunza", Email = email, Msisdn = "123456789" };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Email", result.ResponseMessage);
@@ -61,7 +61,7 @@ public class CustomerRegistrationTests
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { FirstName = "Dan", LastName = "Frunza", Email = "dan@example.com", Msisdn = msisdn };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("MSISDN", result.ResponseMessage);
@@ -81,7 +81,7 @@ public class CustomerRegistrationTests
             FirstName = "Dan", LastName = "Frunza", Email = "dan@example.com", Msisdn = "123456789", Address = null
         };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Address", result.ResponseMessage);
@@ -107,7 +107,7 @@ public class CustomerRegistrationTests
             Address = new AddressModel { Country = "Romania" },
         };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.Equal(CustomerStatusCodes.Active, capturedRequest!.CustomerStatus);
@@ -134,7 +134,7 @@ public class CustomerRegistrationTests
             CustomerStatus = CustomerStatusCodes.Test,
         };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.Equal(CustomerStatusCodes.Test, capturedRequest!.CustomerStatus);
@@ -156,7 +156,7 @@ public class CustomerRegistrationTests
             CustomerStatus = status,
         };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -183,7 +183,7 @@ public class CustomerRegistrationTests
             Address = new AddressModel { Country = "Romania" },
         };
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId);
+        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Once);

@@ -19,7 +19,7 @@ public class CustomerDeletionTests
         dbUtils.Setup(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var deletion = new CustomerDeletion(dbUtils.Object, auditLogger.Object);
 
-        var result = await deletion.DeleteCustomer(guid, MerchantId);
+        var result = await deletion.DeleteCustomer(guid, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>()), Times.Once);
@@ -37,7 +37,7 @@ public class CustomerDeletionTests
         dbUtils.Setup(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var deletion = new CustomerDeletion(dbUtils.Object, auditLogger.Object);
 
-        var result = await deletion.DeleteCustomer(guid, MerchantId);
+        var result = await deletion.DeleteCustomer(guid, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(409, result.Status);
         Assert.Equal(expected.ResponseMessage, result.ResponseMessage);

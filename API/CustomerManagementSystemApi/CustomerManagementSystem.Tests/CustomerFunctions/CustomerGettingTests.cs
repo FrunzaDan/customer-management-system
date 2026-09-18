@@ -17,7 +17,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomerRequest { SearchVariable = searchVariable };
 
-        var result = await getting.GetCustomerFunction(request);
+        var result = await getting.GetCustomerFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(404, result.Status);
         dbUtils.Verify(d => d.GetCustomer(It.IsAny<GetCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -30,7 +30,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomerRequest { SearchVariable = "not-a-valid-search-term" };
 
-        var result = await getting.GetCustomerFunction(request);
+        var result = await getting.GetCustomerFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(404, result.Status);
         dbUtils.Verify(d => d.GetCustomer(It.IsAny<GetCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -50,7 +50,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomerRequest { SearchVariable = searchVariable };
 
-        await getting.GetCustomerFunction(request);
+        await getting.GetCustomerFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedSearchOption, capturedRequest!.SearchOption);
     }
@@ -64,7 +64,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { PageNumber = pageNumber, PageSize = 10 };
 
-        var result = await getting.GetCustomersFunction(request);
+        var result = await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -80,7 +80,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { PageNumber = 1, PageSize = pageSize };
 
-        var result = await getting.GetCustomersFunction(request);
+        var result = await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -93,7 +93,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { SortColumn = "not-a-real-column" };
 
-        var result = await getting.GetCustomersFunction(request);
+        var result = await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -106,7 +106,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { SortDirection = "sideways" };
 
-        var result = await getting.GetCustomersFunction(request);
+        var result = await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -126,7 +126,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { SortColumn = sortColumn, SortDirection = sortDirection };
 
-        await getting.GetCustomersFunction(request);
+        await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(expectedColumn, captured!.SortColumn);
         Assert.Equal(expectedDirection, captured.SortDirection);
@@ -146,7 +146,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new GetCustomersRequest { SearchTerm = searchTerm };
 
-        await getting.GetCustomersFunction(request);
+        await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Null(captured!.SearchTerm);
     }
@@ -161,7 +161,7 @@ public class CustomerGettingTests
         dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetCustomersFunction(request);
+        var result = await getting.GetCustomersFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -174,7 +174,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new ExportCustomersRequest { SortColumn = "not-a-real-column" };
 
-        var result = await getting.GetCustomersForExportFunction(request);
+        var result = await getting.GetCustomersForExportFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -187,7 +187,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new ExportCustomersRequest { SortDirection = "sideways" };
 
-        var result = await getting.GetCustomersForExportFunction(request);
+        var result = await getting.GetCustomersForExportFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -205,7 +205,7 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new ExportCustomersRequest { SearchTerm = " dan ", SortColumn = " EMAIL ", SortDirection = " DESC " };
 
-        await getting.GetCustomersForExportFunction(request);
+        await getting.GetCustomersForExportFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(1, captured!.PageNumber);
         Assert.Equal(5000, captured.PageSize);
@@ -224,7 +224,7 @@ public class CustomerGettingTests
                 new PagedResponse<CustomerModel>([customer], 1, 1, 5000)));
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetCustomersForExportFunction(new ExportCustomersRequest());
+        var result = await getting.GetCustomersForExportFunction(new ExportCustomersRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         var csv = Assert.IsType<string>(result.Data);
@@ -240,7 +240,7 @@ public class CustomerGettingTests
         dbUtils.Setup(d => d.GetCustomers(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetCustomersForExportFunction(new ExportCustomersRequest());
+        var result = await getting.GetCustomersForExportFunction(new ExportCustomersRequest(), TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
     }
@@ -253,7 +253,7 @@ public class CustomerGettingTests
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetAllAuditLogFunction(pageNumber, 10);
+        var result = await getting.GetAllAuditLogFunction(pageNumber, 10, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -268,7 +268,7 @@ public class CustomerGettingTests
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetAllAuditLogFunction(1, pageSize);
+        var result = await getting.GetAllAuditLogFunction(1, pageSize, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -283,7 +283,7 @@ public class CustomerGettingTests
         dbUtils.Setup(d => d.GetAllCustomerAuditLog(1, 10, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetAllAuditLogFunction(1, 10);
+        var result = await getting.GetAllAuditLogFunction(1, 10, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.GetAllCustomerAuditLog(1, 10, It.IsAny<CancellationToken>()), Times.Once);

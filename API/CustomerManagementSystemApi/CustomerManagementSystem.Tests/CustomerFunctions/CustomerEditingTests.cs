@@ -21,7 +21,7 @@ public class CustomerEditingTests
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { Guid = guid };
 
-        var result = await editing.EditCustomerFunction(request, MerchantId);
+        var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Guid", result.ResponseMessage);
@@ -36,7 +36,7 @@ public class CustomerEditingTests
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { Guid = ValidGuid, Email = "not-an-email" };
 
-        var result = await editing.EditCustomerFunction(request, MerchantId);
+        var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Email", result.ResponseMessage);
@@ -51,7 +51,7 @@ public class CustomerEditingTests
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { Guid = ValidGuid, Msisdn = "123" };
 
-        var result = await editing.EditCustomerFunction(request, MerchantId);
+        var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("MSISDN", result.ResponseMessage);
@@ -68,7 +68,7 @@ public class CustomerEditingTests
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { Guid = ValidGuid, FirstName = "Dan" };
 
-        var result = await editing.EditCustomerFunction(request, MerchantId);
+        var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         dbUtils.Verify(d => d.EditCustomer(request, It.IsAny<CancellationToken>()), Times.Once);
@@ -85,7 +85,7 @@ public class CustomerEditingTests
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
         var request = new CustomerModel { Guid = ValidGuid, Email = "dan@example.com", Msisdn = "123456789" };
 
-        var result = await editing.EditCustomerFunction(request, MerchantId);
+        var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         dbUtils.Verify(d => d.EditCustomer(request, It.IsAny<CancellationToken>()), Times.Once);

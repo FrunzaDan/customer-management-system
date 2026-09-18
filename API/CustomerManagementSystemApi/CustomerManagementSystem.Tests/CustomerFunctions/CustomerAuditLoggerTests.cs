@@ -20,7 +20,7 @@ public class CustomerAuditLoggerTests
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        await auditLogger.Log(Guid, MerchantId, "Edited", "Updated: email");
+        await auditLogger.Log(Guid, MerchantId, "Edited", "Updated: email", TestContext.Current.CancellationToken);
 
         dbUtils.Verify(
             d => d.LogCustomerAudit(Guid, MerchantId, "Edited", "Updated: email", It.IsAny<CancellationToken>()),
@@ -36,7 +36,7 @@ public class CustomerAuditLoggerTests
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        await auditLogger.Log(Guid, MerchantId, "Deactivated");
+        await auditLogger.Log(Guid, MerchantId, "Deactivated", cancellationToken: TestContext.Current.CancellationToken);
 
         dbUtils.Verify(
             d => d.LogCustomerAudit(Guid, MerchantId, "Deactivated", null, It.IsAny<CancellationToken>()),
@@ -57,7 +57,7 @@ public class CustomerAuditLoggerTests
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        var exception = await Record.ExceptionAsync(() => auditLogger.Log(Guid, MerchantId, "Created"));
+        var exception = await Record.ExceptionAsync(() => auditLogger.Log(Guid, MerchantId, "Created", cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Null(exception);
     }
@@ -71,7 +71,7 @@ public class CustomerAuditLoggerTests
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        await auditLogger.Log(Guid, MerchantId, "Created");
+        await auditLogger.Log(Guid, MerchantId, "Created", cancellationToken: TestContext.Current.CancellationToken);
 
         logger.Verify(
             l => l.Log(

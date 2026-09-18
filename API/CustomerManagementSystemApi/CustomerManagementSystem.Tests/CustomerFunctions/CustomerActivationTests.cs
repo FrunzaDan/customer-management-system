@@ -19,7 +19,7 @@ public class CustomerActivationTests
         dbUtils.Setup(d => d.DeactivateCustomer(Guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 
-        var result = await activation.DeactivateCustomer(Guid, MerchantId);
+        var result = await activation.DeactivateCustomer(Guid, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.DeactivateCustomer(Guid, It.IsAny<CancellationToken>()), Times.Once);
@@ -36,7 +36,7 @@ public class CustomerActivationTests
         dbUtils.Setup(d => d.DeactivateCustomer(Guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 
-        var result = await activation.DeactivateCustomer(Guid, MerchantId);
+        var result = await activation.DeactivateCustomer(Guid, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
@@ -52,7 +52,7 @@ public class CustomerActivationTests
         dbUtils.Setup(d => d.ReactivateCustomer(Guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 
-        var result = await activation.ReactivateCustomer(Guid, MerchantId);
+        var result = await activation.ReactivateCustomer(Guid, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.ReactivateCustomer(Guid, It.IsAny<CancellationToken>()), Times.Once);

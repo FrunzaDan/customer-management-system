@@ -35,7 +35,7 @@ public class AuthServiceTests
         {
             MerchantId = "TestMerchantID",
             MerchantPassword = "Merchant123",
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.IsType<AccessTokenResponse>(result.Data);
@@ -54,7 +54,7 @@ public class AuthServiceTests
         {
             MerchantId = merchantId,
             MerchantPassword = "Merchant123",
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
         dbUtils.Verify(
@@ -77,7 +77,7 @@ public class AuthServiceTests
         {
             MerchantId = "TestMerchantID",
             MerchantPassword = merchantPassword,
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
         Assert.Equal("Invalid or empty merchant credentials.", result.ResponseMessage);
@@ -98,7 +98,7 @@ public class AuthServiceTests
         {
             MerchantId = "TestMerchantID",
             MerchantPassword = "WrongPassword",
-        });
+        }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
         Assert.Equal("Invalid Merchant ID or Password.", result.ResponseMessage);
