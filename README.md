@@ -2,7 +2,7 @@
 
 A small CRUD app for a merchant to manage their customer records — names, contact details, addresses, the usual. I built it to actually learn a full stack end to end rather than follow a tutorial: Angular on the front, a .NET Web API in the middle, SQL Server on the back, with a real JWT login instead of a fake one.
 
-It's not trying to be a product. It's the project I keep coming back to whenever I want to try out something new — it went from Angular with NgModules and zone.js to a fully zoneless, signals-based app, and from an unsalted password hash to PBKDF2 with rate limiting on the login endpoint, all as separate learning passes over time.
+It's not trying to be a product. It's the project I keep coming back to whenever I want to try out something new — it went from Angular with NgModules and zone.js to a fully zoneless, signals-based app, from an unsalted password hash to PBKDF2 with rate limiting on the login endpoint, and from browser-native `confirm()` popups to a custom animated confirmation dialog, all as separate learning passes over time.
 
 ### Contents
 
@@ -121,7 +121,8 @@ Restores and builds the .NET solution, runs the xUnit test suite, builds the SQL
 A couple of things worth knowing if you poke at the tests directly:
 - The API tests run on xUnit v3 against the .NET 10 SDK, which needs the Microsoft Testing Platform runner rather than the older VSTest pipeline — that's what the root `global.json` is for.
 - The Angular tests run on Vitest (`ng test`), not Karma — the project was set up that way from the start.
-- The .NET tests only cover business logic and password hashing; none of it touches a live database.
+- .NET coverage: `BusinessLogic` (validations, JWT creation, auth, customer register/edit/get/activate/delete) and `DataAccess`'s password hasher — all pure logic, no live DB or Docker needed. `DbHelper`'s `SqlDataReader`-based row mapping is the one piece left untested (it takes a concrete reader, not an interface, so exercising it would need a live connection or a structural change); it's covered manually today via Postman/Swagger and the app actually running.
+- Angular coverage leans toward the security/session chain — session storage, the auth HTTP interceptor, the route guard, token verification, login — plus the customer list's sort/paging/search logic and the activate/deactivate/delete services. Forms and a few other components still don't have specs.
 
 ## API
 

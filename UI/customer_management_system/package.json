@@ -1,6 +1,6 @@
 {
   "name": "customer-management-system",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -11,14 +11,14 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/cdk": "^22.1.6",
-    "@angular/common": "^22.1.6",
-    "@angular/compiler": "^22.1.6",
-    "@angular/core": "^22.1.6",
-    "@angular/forms": "^22.1.6",
-    "@angular/platform-browser": "^22.1.6",
-    "@angular/platform-server": "^22.1.6",
-    "@angular/router": "^22.1.6",
+    "@angular/cdk": "^22.1.7",
+    "@angular/common": "^22.1.7",
+    "@angular/compiler": "^22.1.7",
+    "@angular/core": "^22.1.7",
+    "@angular/forms": "^22.1.7",
+    "@angular/platform-browser": "^22.1.7",
+    "@angular/platform-server": "^22.1.7",
+    "@angular/router": "^22.1.7",
     "@angular/ssr": "^22.1.8",
     "bootstrap": "^5.3.8",
     "express": "^5.2.1",
@@ -28,11 +28,11 @@
   "devDependencies": {
     "@angular/build": "^22.1.8",
     "@angular/cli": "^22.1.8",
-    "@angular/compiler-cli": "^22.1.6",
+    "@angular/compiler-cli": "^22.1.7",
     "@types/express": "^5.0.6",
-    "@types/node": "^24.13.4",
-    "jsdom": "^30.0.1",
+    "@types/node": "^25.3.3",
+    "jsdom": "^30.1.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.1.11"
   }
 }
