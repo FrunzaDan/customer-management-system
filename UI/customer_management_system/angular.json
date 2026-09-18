@@ -83,9 +83,7 @@
               "aot": false,
               "optimization": false,
               "extractLicenses": false,
-              "styles": [
-                "src/styles.css"
-              ],
+              "styles": ["src/styles.css"],
               "scripts": [],
               "polyfills": []
             }
@@ -94,6 +92,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4203
+          },
           "configurations": {
             "production": {
               "buildTarget": "customer_management_system:build:production"
