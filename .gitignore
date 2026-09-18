@@ -26,14 +26,14 @@ Bin/
 obj/
 Obj/
 
-/API/Customer_Management_System_API/Customer_Management_System_API/bin
-/API/Customer_Management_System_API/Customer_Management_System_Library/bin
-/API/Customer_Management_System_API/Customer_Management_System_API/obj
-/API/Customer_Management_System_API/Customer_Management_System_Library/obj
-/API/Customer_Management_System_API/Customer_Management_System_API/Bin
-/API/Customer_Management_System_API/Customer_Management_System_Library/Bin
-/API/Customer_Management_System_API/Customer_Management_System_API/Obj
-/API/Customer_Management_System_API/Customer_Management_System_Library/Obj
+/API/CustomerManagementSystemApi/CustomerManagementSystemApi/bin
+/API/CustomerManagementSystemApi/Customer_Management_System_Library/bin
+/API/CustomerManagementSystemApi/CustomerManagementSystemApi/obj
+/API/CustomerManagementSystemApi/Customer_Management_System_Library/obj
+/API/CustomerManagementSystemApi/CustomerManagementSystemApi/Bin
+/API/CustomerManagementSystemApi/Customer_Management_System_Library/Bin
+/API/CustomerManagementSystemApi/CustomerManagementSystemApi/Obj
+/API/CustomerManagementSystemApi/Customer_Management_System_Library/Obj
 
 
 # Visual Studio 2015 cache/options directory

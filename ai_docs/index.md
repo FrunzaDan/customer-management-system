@@ -6,11 +6,11 @@
 
 A small full-stack CRUD app for a merchant to manage their customers' records (personal info + address); one of the author's first full-stack projects, built to learn the stack rather than to run in production.
 
-| Layer | Folder | Tech |
-|---|---|---|
-| UI | `UI` | Angular 22 (zoneless, signals, SSR via `@angular/ssr`/Express) |
-| API | `API/Customer_Management_System_API` | .NET 10 / ASP.NET Core Web API, C# |
-| DB | `DB/Customer_Management_System_DB` | SQL Server (SSDT `.sqlproj`, deployed via `sqlpackage`) |
+| Layer | Folder                             | Tech                                                           |
+| ----- | ---------------------------------- | -------------------------------------------------------------- |
+| UI    | `UI`                               | Angular 22 (zoneless, signals, SSR via `@angular/ssr`/Express) |
+| API   | `API/CustomerManagementSystemApi`  | .NET 10 / ASP.NET Core Web API, C#                             |
+| DB    | `DB/Customer_Management_System_DB` | SQL Server (SSDT `.sqlproj`, deployed via `sqlpackage`)        |
 
 ```
 Customer_Management_System/
@@ -18,7 +18,7 @@ Customer_Management_System/
 ├── run.sh                # start Docker DB, deploy schema, start API + Angular dev server
 ├── API/
 │   ├── Postman/                                     # Postman collection for manual API testing
-│   └── Customer_Management_System_API/
+│   └── CustomerManagementSystemApi/
 │       ├── CustomerManagementSystem.WebAPI/         # ASP.NET Core host: Program.cs, Controllers, appsettings.json
 │       ├── CustomerManagementSystem.BusinessLogic/  # services, JWT creation, validation rules
 │       ├── CustomerManagementSystem.DataAccess/     # ADO.NET, stored-proc calls, password hashing
@@ -46,7 +46,7 @@ Customer_Management_System/
 
 **Connection 2 — API → DB.** Inside the API, `WebAPI` (controllers — the thin presentation layer) calls `BusinessLogic` (validation, JWT issuing, the customer/merchant logic), which calls `DataAccess` (`DbUtils.cs`/`DbHelper.cs` — plain ADO.NET `SqlConnection`/`SqlCommand`/`SqlDataReader`, no ORM), which calls SQL Server through **stored procedures only** — no inline SQL. `Domain` sits underneath all of it holding the models and config interfaces the other three layers share. Every mutating stored proc follows one convention — a `(result INT, message NVARCHAR)` row that `DbHelper` turns directly into the HTTP status and message returned to the client — so controllers never contain branching status-code logic themselves. See [api](api.md) and [database](database.md).
 
-**Auth.** Login (`POST /api/Authentication/access-token`) checks credentials against `tbl_merchants` (PBKDF2 hash comparison, not stored SQL logic) and mints an HMAC-SHA256 JWT with the merchant's ID and role as claims. There is exactly **one** validation path for every later request: ASP.NET Core's `AddJwtBearer` middleware, run once per request before any controller code executes. On the Angular side this is backed by two independent, deliberately-not-merged checks — a route `canActivate` guard that calls `GET /verify-token` before allowing navigation to a protected route, and a global HTTP interceptor that catches a 401 from *any* call, at any time, and bounces to `/login`. See [api](api.md) (issuing/validating) and [angular-frontend](angular-frontend.md) (guard/interceptor).
+**Auth.** Login (`POST /api/Authentication/access-token`) checks credentials against `tbl_merchants` (PBKDF2 hash comparison, not stored SQL logic) and mints an HMAC-SHA256 JWT with the merchant's ID and role as claims. There is exactly **one** validation path for every later request: ASP.NET Core's `AddJwtBearer` middleware, run once per request before any controller code executes. On the Angular side this is backed by two independent, deliberately-not-merged checks — a route `canActivate` guard that calls `GET /verify-token` before allowing navigation to a protected route, and a global HTTP interceptor that catches a 401 from _any_ call, at any time, and bounces to `/login`. See [api](api.md) (issuing/validating) and [angular-frontend](angular-frontend.md) (guard/interceptor).
 
 ## Diagrams (`Documentation/Diagrams/`)
 
@@ -66,6 +66,7 @@ Three hand-drawn sketches from the original pre-.NET-10/Angular-22 design. The o
 Before exploring source directly, read the relevant doc above.
 
 **Starting points for common tasks:**
+
 - Changing a customer field, a validation rule, or the status lifecycle → [database](database.md) for the schema/proc rules, then [api](api.md) for where C# validates before the DB is touched.
 - Changing login, tokens, or roles → [api](api.md)'s JWT section, then [angular-frontend](angular-frontend.md)'s auth guard/interceptor section.
 - Changing a list/table page (search, sort, paging, bulk actions) → [angular-frontend](angular-frontend.md)'s component notes, cross-referenced with [database](database.md)'s `usp_getCustomers` pagination convention.

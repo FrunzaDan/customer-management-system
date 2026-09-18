@@ -1,0 +1,32 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CustomerManagementSystem.BusinessLogic/CustomerManagementSystem.BusinessLogic.csproj" />
+  <Project Path="CustomerManagementSystem.DataAccess/CustomerManagementSystem.DataAccess.csproj" />
+  <Project Path="CustomerManagementSystem.Domain/CustomerManagementSystem.Domain.csproj" />
+  <Project Path="CustomerManagementSystem.Tests/CustomerManagementSystem.Tests.csproj" />
+  <Project Path="CustomerManagementSystem.WebAPI/CustomerManagementSystem.WebAPI.csproj" />
+  <Properties Name="MonoDevelopProperties">
+    <Property Name="$0.CSharpFormattingPolicy" Value="$6" />
+    <Property Name="$0.DotNetNamingPolicy" Value="$1" />
+    <Property Name="$0.TextStylePolicy" Value="$5" />
+    <Property Name="$1.DirectoryNamespaceAssociation" Value="PrefixedHierarchical" />
+    <Property Name="$2.FileWidth" Value="80" />
+    <Property Name="$2.scope" Value="text/plain" />
+    <Property Name="$2.TabsToSpaces" Value="True" />
+    <Property Name="$3.FileWidth" Value="80" />
+    <Property Name="$3.scope" Value="text/x-web" />
+    <Property Name="$3.TabsToSpaces" Value="True" />
+    <Property Name="$4.FileWidth" Value="80" />
+    <Property Name="$4.scope" Value="text/x-vs" />
+    <Property Name="$4.TabsToSpaces" Value="True" />
+    <Property Name="$5.FileWidth" Value="80" />
+    <Property Name="$5.scope" Value="text/x-csharp" />
+    <Property Name="$5.TabsToSpaces" Value="True" />
+    <Property Name="$6.scope" Value="text/x-csharp" />
+    <Property Name="Policies" Value="$0" />
+  </Properties>
+</Solution>

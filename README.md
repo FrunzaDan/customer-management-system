@@ -10,11 +10,11 @@ It's not trying to be a product. It's the project I keep coming back to whenever
 
 ## Stack
 
-| Layer | Tech | Where |
-|---|---|---|
-| UI | Angular 22, signals, zoneless change detection, SSR via `@angular/ssr` | `UI` |
-| API | ASP.NET Core Web API on .NET 10, C# | `API/Customer_Management_System_API` |
-| DB | SQL Server (SSDT project, built to a `.dacpac` and published with `sqlpackage`) | `DB/Customer_Management_System_DB` |
+| Layer | Tech                                                                            | Where                              |
+| ----- | ------------------------------------------------------------------------------- | ---------------------------------- |
+| UI    | Angular 22, signals, zoneless change detection, SSR via `@angular/ssr`          | `UI`                               |
+| API   | ASP.NET Core Web API on .NET 10, C#                                             | `API/CustomerManagementSystemApi`  |
+| DB    | SQL Server (SSDT project, built to a `.dacpac` and published with `sqlpackage`) | `DB/Customer_Management_System_DB` |
 
 Nothing shares process or memory — the three layers only ever talk over HTTP(S)/TCP, so each one can be run, tested, and reasoned about on its own.
 
@@ -48,6 +48,7 @@ Three sketches from the original design, still a decent map of how the pieces co
 ![Login process](Documentation/Diagrams/CMS_Login_Process.PNG)
 
 These are hand-drawn from before the .NET 10 / Angular 22 rewrite, so the overall shape — UI → API → DB, stored procedures only, one JWT validation path — still holds, but a few specifics have since moved on:
+
 - The JWT diagram shows a separate `JwtValidation.cs` doing its own checks — that class was dead code and has been deleted; validation now happens in exactly one place, the `AddJwtBearer` middleware.
 - The merchant password hash shown as plain `SHA2_256` predates the later switch to salted PBKDF2 (see [API](#api) below).
 - The login diagram's `app-routing.module` predates Angular going standalone/zoneless — routing is now `app.routes.ts` and component state is signals, not fields watched by `zone.js`, but the guard → verify-token → endpoint sequence it draws is otherwise still accurate.
@@ -62,7 +63,7 @@ Customer_Management_System/
 ├── run.sh                # start the DB container, deploy schema, run API + Angular
 ├── API/
 │   ├── Postman/                                     # collection for manual API testing
-│   └── Customer_Management_System_API/
+│   └── CustomerManagementSystemApi/
 │       ├── CustomerManagementSystem.WebAPI/         # ASP.NET Core host, controllers, appsettings
 │       ├── CustomerManagementSystem.BusinessLogic/  # services, JWT, validation rules
 │       ├── CustomerManagementSystem.DataAccess/     # ADO.NET, stored-proc calls, password hashing
@@ -87,6 +88,7 @@ You'll need Docker, the .NET 10 SDK, and Node (with npm). Everything else — th
 ```
 
 That will:
+
 1. Start Docker Desktop if it isn't already running, and bring up a SQL Server container (Azure SQL Edge — the only Microsoft SQL image that has a working arm64 build, which matters on Apple Silicon).
 2. Build and publish the DB schema to it.
 3. Start the API in the background (`https://localhost:7145`) and wait for it to come up.
@@ -119,6 +121,7 @@ If you hit `ERR_CERT_AUTHORITY_INVALID` in the browser after that, don't re-run 
 Restores and builds the .NET solution, runs the xUnit test suite, builds the SQL project, then does `npm ci` + `npm run build` + `ng test` for the Angular app. No Docker or live services involved — it's the "does everything still compile and pass" check, meant to run before committing.
 
 A couple of things worth knowing if you poke at the tests directly:
+
 - The API tests run on xUnit v3 against the .NET 10 SDK, which needs the Microsoft Testing Platform runner rather than the older VSTest pipeline — that's what the root `global.json` is for.
 - The Angular tests run on Vitest (`ng test`), not Karma — the project was set up that way from the start.
 - .NET coverage: `BusinessLogic` (validations, JWT creation, auth, customer register/edit/get/activate/delete) and `DataAccess`'s password hasher — all pure logic, no live DB or Docker needed. `DbHelper`'s `SqlDataReader`-based row mapping is the one piece left untested (it takes a concrete reader, not an interface, so exercising it would need a live connection or a structural change); it's covered manually today via Postman/Swagger and the app actually running.

@@ -6,18 +6,11 @@
     "configurations": [
 
         {
-            "name": "Launch Chrome",
-            "request": "launch",
-            "type": "chrome",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}"
-        },
-        {
             "name": ".NET Core Launch (web)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/CustomerManagementSystem.WebAPI/bin/Debug/net8.0/CustomerManagementSystem.WebAPI.dll",
+            "program": "${workspaceFolder}/CustomerManagementSystem.WebAPI/bin/Debug/net10.0/CustomerManagementSystem.WebAPI.dll",
             "args": [],
             "cwd": "${workspaceFolder}/CustomerManagementSystem.WebAPI",
             "stopAtEntry": false,
@@ -27,9 +20,6 @@
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Views"
             }
         },
         {
