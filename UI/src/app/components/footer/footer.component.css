@@ -1,0 +1,19 @@
+.app-footer {
+  margin-top: 2rem;
+  padding: 1.25rem 0;
+  background-color: var(--spectrumColor1);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.footer-tagline {
+  color: var(--spectrumColor4);
+}

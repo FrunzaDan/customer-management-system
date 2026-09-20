@@ -1,13 +1,19 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-6">
-        <div class="card m-5">
-          <h4 class="card-header">Basic Information:</h4>
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Register customer</h1>
+        <p class="page-subtitle">Enter the customer's personal details and address.</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      <div class="col-12 col-lg-6">
+        <div class="card app-card">
           <div class="card-body">
+            <h5 class="card-title">Basic information</h5>
             <div class="mb-3">
-              <label class="form-label">First Name</label>
-              <input
+              <label class="form-label" for="firstName">First Name</label>
+              <input id="firstName"
                 type="text"
                 formControlName="firstName"
                 class="form-control"
@@ -22,8 +28,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Last Name</label>
-              <input
+              <label class="form-label" for="lastName">Last Name</label>
+              <input id="lastName"
                 type="text"
                 formControlName="lastName"
                 class="form-control"
@@ -38,8 +44,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input
+              <label class="form-label" for="email">Email</label>
+              <input id="email"
                 type="text"
                 formControlName="email"
                 class="form-control"
@@ -56,8 +62,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Phone</label>
-              <input
+              <label class="form-label" for="msisdn">Phone</label>
+              <input id="msisdn"
                 type="text"
                 formControlName="msisdn"
                 class="form-control"
@@ -74,14 +80,14 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Gender</label>
-              <select
+              <label class="form-label" for="gender">Gender</label>
+              <select id="gender"
                 formControlName="gender"
                 class="form-select"
                 aria-label="Select gender"
                 [ngClass]="{ 'is-invalid': submitted() && f['gender'].errors }"
               >
-                <option value="" selected>Select a gender:</option>
+                <option value="" selected>Select a gender</option>
                 <option value="0">Not declared</option>
                 <option value="1">Male</option>
                 <option value="2">Female</option>
@@ -95,8 +101,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Birthdate</label>
-              <input
+              <label class="form-label" for="birthdate">Birthdate</label>
+              <input id="birthdate"
                 type="date"
                 formControlName="birthdate"
                 class="form-control"
@@ -113,13 +119,13 @@
           </div>
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="card m-5">
-          <h4 class="card-header">Address:</h4>
+      <div class="col-12 col-lg-6">
+        <div class="card app-card">
           <div class="card-body">
+            <h5 class="card-title">Address</h5>
             <div class="mb-3">
-              <label class="form-label">Country</label>
-              <input
+              <label class="form-label" for="country">Country</label>
+              <input id="country"
                 type="text"
                 formControlName="country"
                 class="form-control"
@@ -134,8 +140,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">County</label>
-              <input
+              <label class="form-label" for="county">County</label>
+              <input id="county"
                 type="text"
                 formControlName="county"
                 class="form-control"
@@ -150,8 +156,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Town</label>
-              <input
+              <label class="form-label" for="town">Town</label>
+              <input id="town"
                 type="text"
                 formControlName="town"
                 class="form-control"
@@ -166,8 +172,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Street</label>
-              <input
+              <label class="form-label" for="street">Street</label>
+              <input id="street"
                 type="text"
                 formControlName="street"
                 class="form-control"
@@ -182,8 +188,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Number</label>
-              <input
+              <label class="form-label" for="number">Number</label>
+              <input id="number"
                 type="text"
                 formControlName="number"
                 class="form-control"
@@ -198,8 +204,8 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label">Zip</label>
-              <input
+              <label class="form-label" for="zip">Zip</label>
+              <input id="zip"
                 type="text"
                 formControlName="zip"
                 class="form-control"
@@ -213,21 +219,20 @@
               </div>
               }
             </div>
-            <div>
-              <button [disabled]="loading()" class="btn btn-primary">
-                @if (loading()) {
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                } Add Customer
-              </button>
-              <a routerLink="/customers" class="btn btn-link">Cancel</a>
-            </div>
-
-            @if (errorMessage()) {
-            <div class="alert alert-danger mt-3">{{ errorMessage() }}</div>
-            }
           </div>
         </div>
       </div>
     </div>
+    <div class="form-actions mt-4">
+      <button [disabled]="loading()" class="btn btn-primary">
+        @if (loading()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        } Add Customer
+      </button>
+      <a routerLink="/customers" class="btn btn-link">Cancel</a>
+    </div>
+    @if (errorMessage()) {
+    <div class="alert alert-danger mt-3">{{ errorMessage() }}</div>
+    }
   </div>
 </form>

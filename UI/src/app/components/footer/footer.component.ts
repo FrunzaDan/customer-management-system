@@ -10,4 +10,5 @@ import { FooterService } from '../../services/footer.service';
 export class FooterComponent {
   private readonly footerService = inject(FooterService);
   readonly showFooter = this.footerService.showFooter;
+  readonly year = new Date().getFullYear();
 }

@@ -1,14 +1,12 @@
-@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
-
-.pageNotFoundMain {
-  font-size: 100px;
-  font-weight: 800;
-  outline: none;
-  text-transform: uppercase;
+.not-found {
+  padding-top: 4rem;
+  text-align: center;
 }
 
-@keyframes animate {
-  to {
-    background-position: 400%;
-  }
+.not-found-code {
+  margin: 0;
+  color: var(--spectrumColor3);
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
 }

@@ -1,54 +1,17 @@
 .gradient-custom {
-  /* Chrome 10-25, Safari 5.1-6 */
-  background: -webkit-linear-gradient(
-    to right,
-    var(--spectrumColor1),
-    var(--spectrumColor2),
-    var(--spectrumColor3),
-    var(--spectrumColor4)
-  );
-
-  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
   background: linear-gradient(
     to right,
     var(--spectrumColor1),
     var(--spectrumColor2),
-    var(--spectrumColor3),
-    var(--spectrumColor4)
+    var(--spectrumColor3)
   );
+  box-shadow: 0 2px 10px rgba(19, 59, 54, 0.25);
 }
 
-/* LARGE SCREENS: */
-@media only screen and (min-width: 768px) {
-  .nav-link {
-    font-size: 30px;
-    margin-left: 10px;
-    margin-right: 10px;
-  }
-
-  #navbarBrand {
-    width: 60px;
-  }
-}
-
-/* SMALL SCREENS: */
-@media only screen and (max-width: 768px) and (min-width: 576px) {
-  .nav-link {
-    font-size: 25px;
-    margin-left: 5px;
-    margin-right: 5px;
-  }
-
-  #navbarBrand {
-    width: 60px;
-  }
-}
-
-/* VERY SMALL SCREENS: */
-@media only screen and (max-width: 576px) {
-  #navbarBrand {
-    width: 60px;
-  }
+#navbarBrand {
+  width: 48px;
+  /* The logo is a black glyph; flip it to white so it reads on the dark gradient. */
+  filter: brightness(0) invert(1);
 }
 
 .hoverBrand {
@@ -58,28 +21,37 @@
 }
 
 .hoverBrand:hover {
-  transform: scale(1.2);
+  transform: scale(1.12);
 }
 
 .nav-link {
-  font-size: 20px;
+  position: relative;
+  margin: 0 0.25rem;
   font-family: var(--regularFont);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.2s;
 }
 
-.hoveritem {
-  display: inline-block;
-  transition: transform 0.2s;
-  transform-origin: 50% 50%;
+.nav-link:hover,
+.nav-link.active {
+  color: #fff;
 }
 
-.hoveritem:hover {
-  transform: scale(1.2);
+/* Active-page underline; hidden on the collapsed (stacked) mobile menu. */
+@media (min-width: 576px) {
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.15rem;
+    left: 0.5rem;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--spectrumColor4);
+  }
 }
 
-.nav-link-brand {
-  font-size: 25px;
-  margin-left: 2px !important;
-  margin-right: 2px !important;
-  padding-left: 2px !important;
-  padding-right: 20px !important;
+.nav-logout {
+  cursor: pointer;
 }

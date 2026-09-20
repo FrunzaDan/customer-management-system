@@ -1,0 +1,8 @@
+.code-block {
+  background-color: var(--spectrumColor1);
+  color: #fff;
+}
+
+.code-block code {
+  color: inherit;
+}

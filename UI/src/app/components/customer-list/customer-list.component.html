@@ -1,60 +1,64 @@
-@if (!isLoading(); ) {
 @if (errorMessage(); as error) {
-<div class="alert alert-danger mt-2">{{ error }}</div>
-}
-@if (activationError(); as error) {
-<div class="alert alert-danger mt-2">{{ error }}</div>
+<div class="alert alert-danger">{{ error }}</div>
+} @if (activationError(); as error) {
+<div class="alert alert-danger">{{ error }}</div>
 } @if (deleteError(); as error) {
-<div class="alert alert-danger mt-2">{{ error }}</div>
+<div class="alert alert-danger">{{ error }}</div>
 } @if (exportError(); as error) {
-<div class="alert alert-danger mt-2">{{ error }}</div>
+<div class="alert alert-danger">{{ error }}</div>
 }
-<div class="container-fluid mb-2 d-flex flex-wrap gap-2 align-items-start">
+<div class="list-toolbar">
   <input
     type="search"
-    class="form-control"
-    style="max-width: 320px"
+    class="form-control list-search"
     placeholder="Search by name, email, or phone..."
     [value]="searchTerm()"
     (input)="onSearchInput($any($event.target).value)"
     aria-label="Search customers"
   />
-  <button
-    type="button"
-    class="btn btn-primary shadow-none"
-    [disabled]="exportLoading()"
-    (click)="exportCsv()"
-  >
-    {{ exportLoading() ? 'Exporting…' : 'Export CSV' }}
-  </button>
-  <button
-    (click)="addCustomer()"
-    type="button"
-    class="btn btn-primary shadow-none"
-  >
-    Register customer
-  </button>
-  <button
-    type="button"
-    class="btn btn-danger"
-    [disabled]="selectedGuids().size === 0 || bulkActionInProgress() || activationLoading() || deleting()"
-    (click)="bulkDeleteSelected()"
-  >
-    {{ bulkActionInProgress() ? 'Processing…' : 'Bulk delete selected (' + selectedGuids().size + ')' }}
-  </button>
+  <div class="list-toolbar-actions">
+    <button
+      type="button"
+      class="btn btn-primary shadow-none"
+      [disabled]="exportLoading()"
+      (click)="exportCsv()"
+    >
+      {{ exportLoading() ? 'Exporting…' : 'Export CSV' }}
+    </button>
+    <button
+      (click)="addCustomer()"
+      type="button"
+      class="btn btn-primary shadow-none"
+    >
+      Register customer
+    </button>
+    <button
+      type="button"
+      class="btn btn-danger"
+      [disabled]="selectedGuids().size === 0 || bulkActionInProgress() || activationLoading() || deleting()"
+      (click)="bulkDeleteSelected()"
+    >
+      {{ bulkActionInProgress() ? 'Processing…' : 'Bulk delete selected (' + selectedGuids().size + ')' }}
+    </button>
+  </div>
 </div>
-@if (customers().length === 0) {
-<p class="container-fluid">
+@if (isLoading() && customers().length === 0) {
+<div class="app-card loading-state">
+  <span class="spinner-border spinner-border-sm me-2"></span>Loading customers…
+</div>
+} @else if (customers().length === 0) {
+<div class="app-card empty-state">
   @if (searchTerm()) { No customers match "{{ searchTerm() }}". } @else { No
   customers yet. }
-</p>
+</div>
 } @else {
+<div class="app-card table-card" [class.is-refreshing]="isLoading()">
 <div class="table-responsive">
-  <table class="table table-striped table-hover">
-    <caption class="container-fluid">
+  <table class="table table-themed table-striped table-hover">
+    <caption>
       This table gets real-time API data.
     </caption>
-    <thead class="table-dark">
+    <thead>
       <tr>
         <th scope="col" class="text-center">
           <input
@@ -124,7 +128,7 @@
         <td class="align-middle text-center">{{ customer.msisdn }}</td>
         <td class="align-middle text-center">
           <span
-            class="badge"
+            class="badge rounded-pill"
             [class.bg-success]="customer.customerStatus === CustomerStatus.Active"
             [class.bg-secondary]="customer.customerStatus === CustomerStatus.Deactivated"
             [class.bg-warning]="customer.customerStatus === CustomerStatus.Test"
@@ -138,7 +142,7 @@
             <button
               (click)="navigateToEdit(customer.guid)"
               type="button"
-              class="btn btn-primary shadow-none"
+              class="btn btn-primary btn-sm shadow-none"
               [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
             >
               Edit
@@ -148,7 +152,7 @@
             <button
               (click)="deactivateCustomer(customer.guid)"
               type="button"
-              class="btn btn-danger"
+              class="btn btn-danger btn-sm"
               [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
             >
               Deactivate
@@ -157,7 +161,7 @@
             <button
               (click)="reactivateCustomer(customer.guid)"
               type="button"
-              class="btn btn-primary shadow-none"
+              class="btn btn-primary btn-sm shadow-none"
               [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
             >
               Reactivate
@@ -166,7 +170,7 @@
             <button
               (click)="deleteCustomer(customer.guid)"
               type="button"
-              class="btn btn-danger shadow-none"
+              class="btn btn-danger btn-sm shadow-none"
               [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
             >
               Delete
@@ -179,8 +183,9 @@
     </tbody>
   </table>
 </div>
+</div>
 @if (totalPages() > 1) {
-<nav class="container-fluid d-flex justify-content-center align-items-center gap-2 my-3" aria-label="Customer list pages">
+<nav class="d-flex justify-content-center align-items-center gap-2 mt-4" aria-label="Customer list pages">
   <button
     type="button"
     class="btn btn-primary btn-sm shadow-none"
@@ -199,6 +204,5 @@
     Next
   </button>
 </nav>
-}
 }
 }

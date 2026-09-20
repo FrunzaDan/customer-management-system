@@ -1,11 +1,31 @@
-.table-striped > tbody > tr:nth-child(odd) > td,
-.table-striped > tbody > tr:nth-child(odd) > th {
-  background-color: var(--spectrumColor4);
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
-.plain-Links {
-  text-decoration: none;
-  color: black;
+.list-search {
+  flex: 1 1 260px;
+  max-width: 360px;
+}
+
+.list-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Previous page stays visible (dimmed) while the next one loads, instead of
+   the whole table blinking out on every search keystroke or sort click. */
+.table-card {
+  transition: opacity 0.2s;
+}
+
+.table-card.is-refreshing {
+  opacity: 0.55;
 }
 
 .sortable-header {

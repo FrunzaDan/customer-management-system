@@ -1,9 +1,0 @@
-.table-striped > tbody > tr:nth-child(odd) > td,
-.table-striped > tbody > tr:nth-child(odd) > th {
-  background-color: var(--spectrumColor4);
-}
-
-.plain-Links {
-  text-decoration: none;
-  color: black;
-}

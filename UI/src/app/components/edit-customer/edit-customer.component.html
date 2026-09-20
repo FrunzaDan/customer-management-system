@@ -1,21 +1,27 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div class="container">
+  <div class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Edit customer</h1>
+        <p class="page-subtitle">Update the customer's details and address.</p>
+      </div>
+    </div>
     @if (isLoading()) {
-    <div class="text-center my-3">
-      <span class="spinner-border spinner-border-sm me-1"></span> Loading
-      customer...
+    <div class="app-card loading-state mb-4">
+      <span class="spinner-border spinner-border-sm me-2"></span>Loading
+      customer…
     </div>
     } @if (errorMessage() && !isLoading()) {
-    <div class="alert alert-danger mt-3">{{ errorMessage() }}</div>
+    <div class="alert alert-danger">{{ errorMessage() }}</div>
     }
-    <div class="row">
-      <div class="col-md-6">
-        <div class="card m-5">
-          <h4 class="card-header">Basic Information:</h4>
+    <div class="row g-4">
+      <div class="col-12 col-lg-6">
+        <div class="card app-card">
           <div class="card-body">
+            <h5 class="card-title">Basic information</h5>
             <div class="mb-3">
-              <label class="form-label">First Name</label>
-              <input
+              <label class="form-label" for="firstName">First Name</label>
+              <input id="firstName"
                 type="text"
                 formControlName="firstName"
                 class="form-control"
@@ -31,8 +37,8 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Last Name</label>
-              <input
+              <label class="form-label" for="lastName">Last Name</label>
+              <input id="lastName"
                 type="text"
                 formControlName="lastName"
                 class="form-control"
@@ -48,8 +54,8 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input
+              <label class="form-label" for="email">Email</label>
+              <input id="email"
                 type="text"
                 formControlName="email"
                 class="form-control"
@@ -67,8 +73,8 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Phone</label>
-              <input
+              <label class="form-label" for="msisdn">Phone</label>
+              <input id="msisdn"
                 type="text"
                 formControlName="msisdn"
                 class="form-control"
@@ -86,8 +92,8 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Gender</label>
-              <select
+              <label class="form-label" for="gender">Gender</label>
+              <select id="gender"
                 formControlName="gender"
                 class="form-select"
                 [ngClass]="{ 'is-invalid': submitted() && f['gender'].errors }"
@@ -107,8 +113,8 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Birthdate</label>
-              <input
+              <label class="form-label" for="birthdate">Birthdate</label>
+              <input id="birthdate"
                 type="date"
                 formControlName="birthdate"
                 class="form-control"
@@ -125,68 +131,126 @@
           </div>
         </div>
       </div>
-      <div class="col-md-6">
-        <div class="card m-5">
-          <h4 class="card-header">Address:</h4>
+      <div class="col-12 col-lg-6">
+        <div class="card app-card">
           <div class="card-body">
+            <h5 class="card-title">Address</h5>
             <div class="mb-3">
-              <label class="form-label">Country</label>
+              <label class="form-label" for="country">Country</label>
               <input
                 type="text"
+                id="country"
                 formControlName="country"
                 class="form-control"
+                [ngClass]="{ 'is-invalid': submitted() && f['country'].errors }"
               />
+              @if (submitted() && f['country'].errors) {
+              <div class="invalid-feedback">
+                @if (f['country'].errors['required']) {
+                <div>Country is required</div>
+                }
+              </div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label">County</label>
+              <label class="form-label" for="county">County</label>
               <input
                 type="text"
+                id="county"
                 formControlName="county"
                 class="form-control"
+                [ngClass]="{ 'is-invalid': submitted() && f['county'].errors }"
               />
+              @if (submitted() && f['county'].errors) {
+              <div class="invalid-feedback">
+                @if (f['county'].errors['required']) {
+                <div>County is required</div>
+                }
+              </div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label">Town</label>
-              <input type="text" formControlName="town" class="form-control" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Street</label>
+              <label class="form-label" for="town">Town</label>
               <input
                 type="text"
+                id="town"
+                formControlName="town"
+                class="form-control"
+                [ngClass]="{ 'is-invalid': submitted() && f['town'].errors }"
+              />
+              @if (submitted() && f['town'].errors) {
+              <div class="invalid-feedback">
+                @if (f['town'].errors['required']) {
+                <div>Town is required</div>
+                }
+              </div>
+              }
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="street">Street</label>
+              <input
+                type="text"
+                id="street"
                 formControlName="street"
                 class="form-control"
+                [ngClass]="{ 'is-invalid': submitted() && f['street'].errors }"
               />
+              @if (submitted() && f['street'].errors) {
+              <div class="invalid-feedback">
+                @if (f['street'].errors['required']) {
+                <div>Street is required</div>
+                }
+              </div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label">Number</label>
+              <label class="form-label" for="number">Number</label>
               <input
                 type="text"
+                id="number"
                 formControlName="number"
                 class="form-control"
+                [ngClass]="{ 'is-invalid': submitted() && f['number'].errors }"
               />
+              @if (submitted() && f['number'].errors) {
+              <div class="invalid-feedback">
+                @if (f['number'].errors['required']) {
+                <div>Street number is required</div>
+                }
+              </div>
+              }
             </div>
             <div class="mb-3">
-              <label class="form-label">Zip</label>
-              <input type="text" formControlName="zip" class="form-control" />
+              <label class="form-label" for="zip">Zip</label>
+              <input
+                type="text"
+                id="zip"
+                formControlName="zip"
+                class="form-control"
+                [ngClass]="{ 'is-invalid': submitted() && f['zip'].errors }"
+              />
+              @if (submitted() && f['zip'].errors) {
+              <div class="invalid-feedback">
+                @if (f['zip'].errors['required']) {
+                <div>Zip code is required</div>
+                }
+              </div>
+              }
             </div>
-
-            <div>
-              <button [disabled]="saving()" class="btn btn-primary">
-                @if (saving()) {
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                } Edit Customer
-              </button>
-              <a routerLink="/customers" class="btn btn-link">Cancel</a>
-            </div>
-
-            @if (saveError()) {
-            <div class="alert alert-danger mt-3">
-              {{ saveError() }}
-            </div>
-            }
           </div>
         </div>
       </div>
     </div>
+    <div class="form-actions mt-4">
+      <button [disabled]="saving()" class="btn btn-primary">
+        @if (saving()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+        } Save changes
+      </button>
+      <a routerLink="/customers" class="btn btn-link">Cancel</a>
+    </div>
+    @if (saveError()) {
+    <div class="alert alert-danger mt-3">{{ saveError() }}</div>
+    }
   </div>
 </form>

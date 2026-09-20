@@ -18,14 +18,14 @@ import {
   Customer,
   CustomerActivationStatus,
 } from '../../interfaces/customer-response';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
   selector: 'app-customer-details',
   templateUrl: './customer-details.component.html',
   styleUrls: ['./customer-details.component.css'],
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
 })
 export class CustomerDetailsComponent implements OnInit {
   private readonly getCustomerService = inject(GetCustomerService);

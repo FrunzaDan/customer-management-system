@@ -107,3 +107,162 @@ a {
 .card-header {
   background-color: var(--spectrumColor4);
 }
+
+/* ---------------------------------------------------------------------
+   Shared design language — used by every routed page so they read as one
+   app: page shell, page header, cards, tables, empty states, form bits.
+   --------------------------------------------------------------------- */
+
+/* Page shell: navbar on top, footer pinned to the bottom of short pages. */
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+app-footer {
+  display: block;
+  margin-top: auto;
+}
+
+.page {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.page-narrow {
+  max-width: 960px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--spectrumColor1);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  color: #6c757d;
+}
+
+/* Cards */
+.app-card {
+  background-color: #fff;
+  border: 1px solid rgba(19, 59, 54, 0.1);
+  border-radius: 0.875rem;
+  box-shadow: 0 2px 10px rgba(19, 59, 54, 0.06);
+}
+
+.app-card > .card-body {
+  padding: 1.5rem 1.75rem;
+}
+
+.app-card .card-title {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--spectrumColor4);
+  color: var(--spectrumColor1);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 575.98px) {
+  .app-card > .card-body {
+    padding: 1.25rem;
+  }
+}
+
+/* Tables (customer list, global audit log) */
+.table-card {
+  overflow: hidden;
+}
+
+.table-themed {
+  --bs-table-striped-bg: rgba(165, 240, 197, 0.3);
+  --bs-table-hover-bg: rgba(165, 240, 197, 0.55);
+  margin-bottom: 0;
+}
+
+.table-themed > thead > tr > th {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 0;
+  background-color: var(--spectrumColor1);
+  color: #fff;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.table-themed > tbody > tr > td {
+  padding: 0.75rem;
+}
+
+.table-themed > caption {
+  padding: 0.75rem 1rem;
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.plain-Links {
+  text-decoration: none;
+  color: var(--spectrumColor1);
+  cursor: pointer;
+}
+
+.empty-state {
+  padding: 3rem 1rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+.loading-state {
+  padding: 3rem 1rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+/* Palette-aligned bits of Bootstrap that otherwise show its default blue/green */
+.badge.bg-success {
+  background-color: var(--spectrumColor2) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--spectrumColor3);
+  box-shadow: 0 0 0 0.25rem rgba(3, 120, 116, 0.2);
+}
+
+input[type='checkbox'] {
+  accent-color: var(--spectrumColor2);
+}
+
+code {
+  color: var(--spectrumColor2);
+}
+
+.form-label {
+  color: var(--spectrumColor1);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}

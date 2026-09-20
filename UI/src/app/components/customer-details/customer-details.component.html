@@ -1,13 +1,21 @@
 @if (!isLoading()) {
 @if (errorMessage(); as error) {
-<div class="container">
-  <div class="alert alert-danger mt-3">{{ error }}</div>
+<div class="page">
+  <div class="alert alert-danger">{{ error }}</div>
+  <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
 </div>
 } @else {
-<div class="container details-page">
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Customer details</h1>
+      <p class="page-subtitle">Full record and audit history for this customer.</p>
+    </div>
+    <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
+  </div>
   <div class="row g-4">
     <div class="col-12 col-lg-6 d-flex flex-column gap-4">
-      <div class="card details-card">
+      <div class="card app-card">
         <div class="card-body">
           <div class="profile-header">
             <img
@@ -61,7 +69,7 @@
         </div>
       </div>
 
-      <div class="card details-card">
+      <div class="card app-card">
         <div class="card-body">
           <h5 class="card-title">Contact</h5>
           <dl class="detail-list">
@@ -79,7 +87,7 @@
     </div>
 
     <div class="col-12 col-lg-6 d-flex flex-column gap-4">
-      <div class="card details-card">
+      <div class="card app-card">
         <div class="card-body">
           <h5 class="card-title">Address</h5>
           <dl class="detail-list">
@@ -111,7 +119,7 @@
         </div>
       </div>
 
-      <div class="card details-card">
+      <div class="card app-card">
         <div class="card-body">
           <h5 class="card-title">Account</h5>
           <dl class="detail-list">
@@ -134,7 +142,7 @@
         </div>
       </div>
 
-      <div class="card details-card">
+      <div class="card app-card">
         <div class="card-body">
           <h5 class="card-title">Audit trail</h5>
           @if (auditLogLoading()) {
@@ -161,7 +169,7 @@
         </div>
       </div>
 
-      <div class="card details-card">
+      <div class="card app-card">
         <div class="card-body">
           <h5 class="card-title">Actions</h5>
           <div class="d-flex flex-wrap gap-2" role="group">
@@ -220,4 +228,10 @@
   </div>
 </div>
 }
+} @else {
+<div class="page">
+  <div class="app-card loading-state">
+    <span class="spinner-border spinner-border-sm me-2"></span>Loading customer…
+  </div>
+</div>
 }
