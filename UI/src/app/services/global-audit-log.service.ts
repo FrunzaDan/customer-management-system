@@ -3,7 +3,7 @@ import {
   HttpErrorResponse,
   HttpParams,
 } from '@angular/common/http';
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal, inject } from '@angular/core';
 import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
@@ -45,11 +45,11 @@ export class GlobalAuditLogService {
   // later one and overwrite it with stale data (same fix as GetCustomerService.loadCustomers).
   private readonly loadParams$ = new Subject<LoadAllAuditLogParams>();
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-    private notificationService: NotificationService,
-  ) {
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+  private readonly notificationService = inject(NotificationService);
+
+  constructor() {
     this.loadParams$
       .pipe(
         switchMap((params) => {

@@ -4,8 +4,9 @@ import {
   computed,
   effect,
   inject,
+  input,
   signal,
-  OnInit,
+  untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,7 +19,7 @@ import {
   Customer,
   CustomerActivationStatus,
 } from '../../interfaces/customer-response';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
@@ -27,14 +28,16 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   styleUrls: ['./customer-details.component.css'],
   imports: [DatePipe, RouterLink],
 })
-export class CustomerDetailsComponent implements OnInit {
+export class CustomerDetailsComponent {
   private readonly getCustomerService = inject(GetCustomerService);
   private readonly activateCustomerService = inject(ActivateCustomerService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly deleteCustomerService = inject(DeleteCustomerService);
   private readonly auditLogService = inject(AuditLogService);
   private readonly router = inject(Router);
-  private readonly activatedRoute = inject(ActivatedRoute);
+
+  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
+  readonly id = input<string>();
 
   genderMap = new Map<Customer['gender'], string>([
     [0, 'not declared'],
@@ -93,6 +96,19 @@ export class CustomerDetailsComponent implements OnInit {
   });
 
   constructor() {
+    // (Re)load whenever the id in the URL changes; no id means nothing to show.
+    effect(() => {
+      const id = this.id();
+      untracked(() => {
+        if (id) {
+          this.getCustomerService.getCustomer(id);
+          this.auditLogService.loadAuditLog(id);
+        } else {
+          this.router.navigate(['']);
+        }
+      });
+    });
+
     // The rest of the page (e.g. Account Status) updates live via
     // updateCustomerLocally() as soon as a deactivate/reactivate call
     // resolves; the audit trail can only be refreshed by re-fetching, so
@@ -105,24 +121,6 @@ export class CustomerDetailsComponent implements OnInit {
       }
       this.wasActivationLoading = isLoading;
     });
-  }
-
-  ngOnInit(): void {
-    this.activatedRoute.queryParamMap.subscribe((params) => {
-      const paramID = params.get('id');
-      if (paramID) {
-        this.getCustomerService.getCustomer(paramID);
-        this.auditLogService.loadAuditLog(paramID);
-      } else {
-        this.router.navigate(['']);
-      }
-    });
-  }
-
-  navigateToEdit(): void {
-    const guid = this.customer()?.guid;
-    if (!guid) return;
-    this.router.navigate(['/editCustomer'], { queryParams: { id: guid } });
   }
 
   async deactivateCustomer(): Promise<void> {

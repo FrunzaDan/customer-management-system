@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { submit } from '@angular/forms/signals';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AddCustomerService } from '../../services/add-customer.service';
+import { CustomerFormModel } from '../customer-form-fields/customer-form';
 import { AddCustomerComponent } from './add-customer.component';
 
 describe('AddCustomerComponent', () => {
@@ -10,7 +12,7 @@ describe('AddCustomerComponent', () => {
   let navigate: ReturnType<typeof vi.fn>;
   let component: AddCustomerComponent;
 
-  const validFormValue = {
+  const validModel: CustomerFormModel = {
     firstName: 'Dan',
     lastName: 'Frunza',
     email: 'dan@example.com',
@@ -27,34 +29,44 @@ describe('AddCustomerComponent', () => {
 
   beforeEach(() => {
     addCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
-    navigate = vi.fn();
+    navigate = vi.fn().mockResolvedValue(true);
 
-    // The component resolves its dependencies via field-initializer inject()
-    // calls, so it needs an active injection context (TestBed) to construct
-    // — plain positional constructor args won't work here.
+    // The component resolves its dependencies (and builds its signal form) in
+    // field initializers, so it needs an active injection context.
     TestBed.configureTestingModule({
       providers: [
-        { provide: ActivatedRoute, useValue: {} },
         { provide: Router, useValue: { navigate } },
         { provide: AddCustomerService, useValue: { addCustomer } },
       ],
     });
 
     component = TestBed.runInInjectionContext(() => new AddCustomerComponent());
-    component.ngOnInit();
   });
 
-  it('does not call the service and marks the form as submitted when the form is invalid', () => {
-    component.onSubmit();
+  it('does not call the service and reports the errors when the form is invalid', async () => {
+    await submit(component.customerForm);
 
-    expect(component.submitted()).toBe(true);
     expect(addCustomer).not.toHaveBeenCalled();
+    expect(component.invalidSummary()).toBe(
+      'The form has 12 errors. Please correct the highlighted fields.',
+    );
   });
 
-  it('maps the form value into a Customer (gender as a number, address nested) and registers it', () => {
-    component.form.setValue(validFormValue);
+  it('validates the email and phone formats', () => {
+    component.model.set({ ...validModel, email: 'not-an-email', msisdn: '12' });
 
-    component.onSubmit();
+    expect(component.customerForm.email().errors()[0].message).toBe(
+      'The Email should be a valid one',
+    );
+    expect(component.customerForm.msisdn().errors()[0].message).toBe(
+      'The phone number should be a valid one',
+    );
+  });
+
+  it('maps the form value into a Customer (gender as a number, address nested) and registers it', async () => {
+    component.model.set(validModel);
+
+    await submit(component.customerForm);
 
     expect(addCustomer).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,30 +88,31 @@ describe('AddCustomerComponent', () => {
     );
   });
 
-  it('navigates to the customer list relative to the current route on success', () => {
-    component.form.setValue(validFormValue);
+  it('navigates to the customer list on success', async () => {
+    component.model.set(validModel);
 
-    component.onSubmit();
+    await submit(component.customerForm);
 
-    expect(navigate).toHaveBeenCalledWith(['../customers'], { relativeTo: {} });
-    expect(component.loading()).toBe(true);
+    expect(navigate).toHaveBeenCalledWith(['/customers']);
+    expect(component.errorMessage()).toBeNull();
   });
 
-  it('sets a friendly message and stops loading on a network error (status 0)', () => {
+  it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
     addCustomer.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 0 })),
     );
-    component.form.setValue(validFormValue);
+    component.model.set(validModel);
 
-    component.onSubmit();
+    await submit(component.customerForm);
 
-    expect(component.loading()).toBe(false);
+    expect(component.customerForm().submitting()).toBe(false);
     expect(component.errorMessage()).toBe(
       'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
     );
+    expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('surfaces the server-provided message on a non-zero error status', () => {
+  it('surfaces the server-provided message on a non-zero error status', async () => {
     addCustomer.mockReturnValue(
       throwError(
         () =>
@@ -109,9 +122,9 @@ describe('AddCustomerComponent', () => {
           }),
       ),
     );
-    component.form.setValue(validFormValue);
+    component.model.set(validModel);
 
-    component.onSubmit();
+    await submit(component.customerForm);
 
     expect(component.errorMessage()).toBe('Email already registered.');
   });

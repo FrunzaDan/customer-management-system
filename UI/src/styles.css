@@ -4,7 +4,13 @@
   --spectrumColor2: #037874;
   --spectrumColor3: #00917c;
   --spectrumColor4: #a5f0c5;
-  --dangerColor1: #b67295;
+  /* Button/toast fills that carry white text must reach 4.5:1 (WCAG 1.4.3):
+     --dangerColor1 5.6:1, --secondaryColor 5.3:1. --spectrumColor3 (3.9:1) is
+     decorative only (gradients, large numerals, input borders). */
+  --dangerColor1: #a45a82;
+  --secondaryColor: #007a68;
+  --mutedText: #5a6268;
+  --focusColor: #133b36;
   --regularFont: 'JostRegular', sans-serif;
   --extralightFont: 'JostExtraLight', sans-serif;
 }
@@ -12,11 +18,13 @@
 @font-face {
   font-family: 'JostRegular';
   src: url('/assets/fonts/Jost-Regular.ttf');
+  font-display: swap;
 }
 
 @font-face {
   font-family: 'JostExtraLight';
   src: url('/assets/fonts/Jost-ExtraLight.ttf');
+  font-display: swap;
 }
 
 html,
@@ -55,7 +63,6 @@ a {
 .btn-primary:active,
 .btn-primary:visited {
   background-color: var(--spectrumColor2) !important;
-  outline: none !important;
   box-shadow: none;
   border-color: var(--spectrumColor2);
   transition: all 0.3s;
@@ -68,10 +75,9 @@ a {
 .btn-secondary,
 .btn-secondary:active,
 .btn-secondary:visited {
-  background-color: var(--spectrumColor3) !important;
-  outline: none !important;
+  background-color: var(--secondaryColor) !important;
   box-shadow: none;
-  border-color: var(--spectrumColor3);
+  border-color: var(--secondaryColor);
   transition: all 0.3s;
 }
 
@@ -83,7 +89,6 @@ a {
 .btn-danger:active,
 .btn-danger:visited {
   background-color: var(--dangerColor1) !important;
-  outline: none !important;
   box-shadow: none;
   border-color: var(--dangerColor1);
   transition: all 0.3s;
@@ -155,7 +160,7 @@ app-footer {
 
 .page-subtitle {
   margin: 0.25rem 0 0;
-  color: #6c757d;
+  color: var(--mutedText);
 }
 
 /* Cards */
@@ -213,25 +218,30 @@ app-footer {
 
 .table-themed > caption {
   padding: 0.75rem 1rem;
-  color: #6c757d;
+  color: var(--mutedText);
   font-size: 0.85rem;
 }
 
 .plain-Links {
-  text-decoration: none;
   color: var(--spectrumColor1);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
   cursor: pointer;
+}
+
+.plain-Links:hover {
+  text-decoration-thickness: 2px;
 }
 
 .empty-state {
   padding: 3rem 1rem;
-  color: #6c757d;
+  color: var(--mutedText);
   text-align: center;
 }
 
 .loading-state {
   padding: 3rem 1rem;
-  color: #6c757d;
+  color: var(--mutedText);
   text-align: center;
 }
 
@@ -240,14 +250,24 @@ app-footer {
   background-color: var(--spectrumColor2) !important;
 }
 
+.form-control,
+.form-select {
+  border-color: #767676;
+}
+
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--spectrumColor3);
+  border-color: var(--spectrumColor2);
   box-shadow: 0 0 0 0.25rem rgba(3, 120, 116, 0.2);
 }
 
+/* Native checkboxes are ~13px; WCAG 2.2 (2.5.8) wants targets of at least 24px
+   or enough spacing around them. */
 input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
   accent-color: var(--spectrumColor2);
+  cursor: pointer;
 }
 
 code {
@@ -265,4 +285,71 @@ code {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------
+   Accessibility
+   --------------------------------------------------------------------- */
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7 / 2.4.11). Deliberately an
+   outline, not a box-shadow: Bootstrap's `.shadow-none` on buttons would
+   otherwise wipe the indicator out. Dark surfaces flip it to white. */
+:focus-visible {
+  outline: 3px solid var(--focusColor);
+  outline-offset: 2px;
+}
+
+.navbar :focus-visible,
+.app-footer :focus-visible,
+.table-themed > thead :focus-visible {
+  outline-color: #fff;
+}
+
+/* Programmatic focus target after route changes — not an interactive control. */
+main:focus,
+main [tabindex='-1']:focus {
+  outline: none;
+}
+
+/* Skip link: first tab stop on every page, hidden until focused (WCAG 2.4.1). */
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--spectrumColor1);
+  border-radius: 0.5rem;
+  background-color: #fff;
+  color: var(--spectrumColor1);
+  font-weight: 500;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  color: var(--spectrumColor1);
+}
+
+/* Respect the OS "reduce motion" setting (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .hoverItem:hover,
+  .hoverBrand:hover {
+    transform: none;
+  }
+}
+
+.form-note {
+  margin-bottom: 1rem;
+  color: var(--mutedText);
+  font-size: 0.9rem;
 }

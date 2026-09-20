@@ -7,7 +7,7 @@ export class ConfirmDialogService {
   // Matches confirm-dialog.component.css's zoom-out/fade-out duration — the
   // dialog stays mounted (playing the close animation) for this long after
   // respond() before it's actually removed.
-  private static readonly CLOSE_ANIMATION_MS = 1000;
+  private static readonly CLOSE_ANIMATION_MS = 150;
 
   private readonly _message = signal('');
   private readonly _visible = signal(false);

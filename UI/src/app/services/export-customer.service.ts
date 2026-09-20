@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpHeaderService } from './http-header-service';
 
@@ -18,10 +18,8 @@ export class ExportCustomerService {
   readonly loadingSignal = signal(false);
   readonly errorSignal = signal<string | null>(null);
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
 
   // Exports whatever the customer list is currently searching/sorted by, not
   // just the current page (see CustomerGetting.GetCustomersForExportFunction) —

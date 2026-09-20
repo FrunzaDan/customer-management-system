@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NavbarService } from '../../services/navbar.service';
 import { SessionStorageService } from '../../services/session-storage.service';
 
@@ -17,7 +17,20 @@ export class NavigationBarComponent {
 
   readonly showNavbar = this.navbarService.showNavbar;
 
+  // Drives the mobile menu; replaces Bootstrap's JS collapse plugin so
+  // aria-expanded always reflects the real state.
+  protected readonly menuOpen = signal(false);
+
+  toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+
   logout(): void {
+    this.closeMenu();
     this.sessionStorageService.removeSessionStorage();
     this.router.navigate(['login']);
   }

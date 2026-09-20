@@ -1,7 +1,7 @@
 @if (!isLoading()) {
 @if (errorMessage(); as error) {
 <div class="page">
-  <div class="alert alert-danger">{{ error }}</div>
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
   <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
 </div>
 } @else {
@@ -25,12 +25,12 @@
                   : '/assets/avatar_male.jpg'
               "
               class="avatar"
-              alt="Customer avatar"
+              alt=""
             />
             <div class="profile-heading">
-              <h4 class="profile-name">
+              <h2 class="profile-name">
                 {{ customer()?.firstName }} {{ customer()?.lastName }}
-              </h4>
+              </h2>
               <span
                 class="badge rounded-pill"
                 [class.bg-success]="customer()?.customerStatus === CustomerStatus.Active"
@@ -43,7 +43,7 @@
             </div>
           </div>
 
-          <h5 class="card-title">Basic info</h5>
+          <h2 class="card-title">Basic info</h2>
           <dl class="detail-list">
             <div class="detail-row">
               <dt>First name</dt>
@@ -71,7 +71,7 @@
 
       <div class="card app-card">
         <div class="card-body">
-          <h5 class="card-title">Contact</h5>
+          <h2 class="card-title">Contact</h2>
           <dl class="detail-list">
             <div class="detail-row">
               <dt>E-mail</dt>
@@ -89,7 +89,7 @@
     <div class="col-12 col-lg-6 d-flex flex-column gap-4">
       <div class="card app-card">
         <div class="card-body">
-          <h5 class="card-title">Address</h5>
+          <h2 class="card-title">Address</h2>
           <dl class="detail-list">
             <div class="detail-row">
               <dt>Country</dt>
@@ -121,7 +121,7 @@
 
       <div class="card app-card">
         <div class="card-body">
-          <h5 class="card-title">Account</h5>
+          <h2 class="card-title">Account</h2>
           <dl class="detail-list">
             <div class="detail-row">
               <dt>Created</dt>
@@ -144,14 +144,15 @@
 
       <div class="card app-card">
         <div class="card-body">
-          <h5 class="card-title">Audit trail</h5>
+          <h2 class="card-title">Audit trail</h2>
           @if (auditLogLoading()) {
-          <p class="text-muted mb-0">Loading audit trail…</p>
+          <p class="text-muted mb-0" role="status">Loading audit trail…</p>
           } @else if (auditLogError()) {
-          <p class="text-danger mb-0">{{ auditLogError() }}</p>
+          <p class="text-danger mb-0" role="alert">{{ auditLogError() }}</p>
           } @else if (auditLog().length === 0) {
           <p class="text-muted mb-0">No recorded actions yet.</p>
           } @else {
+          <div class="audit-scroll" role="region" aria-label="Audit trail entries" tabindex="0">
           <ul class="audit-list">
             @for (entry of auditLog(); track entry.auditId) {
             <li class="audit-item">
@@ -165,22 +166,21 @@
             </li>
             }
           </ul>
+          </div>
           }
         </div>
       </div>
 
       <div class="card app-card">
         <div class="card-body">
-          <h5 class="card-title">Actions</h5>
-          <div class="d-flex flex-wrap gap-2" role="group">
-            <button
-              (click)="navigateToEdit()"
-              type="button"
+          <h2 class="card-title">Actions</h2>
+          <div class="d-flex flex-wrap gap-2" role="group" aria-label="Customer actions">
+            <a
               class="btn btn-primary shadow-none"
-              [disabled]="activationLoading() || deleting()"
+              routerLink="/editCustomer"
+              [queryParams]="{ id: customer()?.guid }"
+              >Edit</a
             >
-              Edit
-            </button>
 
             @if (customer()?.customerStatus === CustomerStatus.Active || customer()?.customerStatus === CustomerStatus.Test) {
             <button
@@ -207,20 +207,22 @@
               type="button"
               class="btn btn-danger shadow-none"
               [disabled]="!canDelete() || activationLoading() || deleting()"
-              [title]="
-                !canDelete()
-                  ? 'Deactivate this customer before deleting it'
-                  : ''
-              "
+              [attr.aria-describedby]="!canDelete() ? 'delete-hint' : null"
             >
               Delete
             </button>
           </div>
 
+          @if (!canDelete()) {
+          <p class="form-note mt-3 mb-0" id="delete-hint">
+            Deactivate this customer before deleting it.
+          </p>
+          }
+
           @if (activationError(); as error) {
-          <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+          <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>
           } @if (deleteError(); as error) {
-          <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
+          <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>
           }
         </div>
       </div>
@@ -230,8 +232,8 @@
 }
 } @else {
 <div class="page">
-  <div class="app-card loading-state">
-    <span class="spinner-border spinner-border-sm me-2"></span>Loading customer…
+  <div class="app-card loading-state" role="status">
+    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading customer…
   </div>
 </div>
 }

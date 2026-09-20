@@ -4,7 +4,7 @@ import {
   HttpHeaders,
   HttpParams,
 } from '@angular/common/http';
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GetCustomerService } from './get-customer.service';
@@ -49,12 +49,10 @@ export class ActivateCustomerService {
   public readonly loadingSignal = computed(() => this.state().loading);
   public readonly errorSignal = computed(() => this.state().error);
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-    private getCustomerService: GetCustomerService, // Inject GetCustomersService to update locally
-    private notificationService: NotificationService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+  private readonly getCustomerService = inject(GetCustomerService);
+  private readonly notificationService = inject(NotificationService);
 
   deactivateCustomer(customerGUID: string): void {
     this.setLoading(true);

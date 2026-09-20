@@ -26,6 +26,7 @@
 
 .profile-name {
   margin: 0;
+  font-size: 1.5rem;
   color: var(--spectrumColor1);
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -68,10 +69,13 @@
 }
 
 /* Audit trail */
-.audit-list {
+.audit-scroll {
   max-height: 20rem;
-  margin: 0;
   overflow-y: auto;
+}
+
+.audit-list {
+  margin: 0;
   list-style: none;
 }
 

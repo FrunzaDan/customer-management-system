@@ -6,11 +6,11 @@
   align-items: center;
   justify-content: center;
   z-index: 1050;
-  animation: confirm-overlay-fade-in 0.5s ease forwards;
+  animation: confirm-overlay-fade-in 0.2s ease forwards;
 }
 
 .confirm-overlay.closing {
-  animation: confirm-overlay-fade-out 1s ease forwards;
+  animation: confirm-overlay-fade-out 0.15s ease forwards;
 }
 
 .confirm-card {
@@ -20,11 +20,18 @@
   width: 90%;
   max-width: 420px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  animation: confirm-card-zoom-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: confirm-card-zoom-in 0.2s ease-out forwards;
 }
 
 .confirm-card.closing {
-  animation: confirm-card-zoom-out 1s cubic-bezier(0.6, -0.28, 0.735, 0.05) forwards;
+  animation: confirm-card-zoom-out 0.15s ease-in forwards;
+}
+
+.confirm-title {
+  margin: 0 0 0.75rem;
+  color: var(--spectrumColor1);
+  font-size: 1.15rem;
+  font-weight: 600;
 }
 
 .confirm-message {

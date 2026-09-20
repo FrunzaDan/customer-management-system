@@ -1,43 +1,58 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { UserLoginService } from '../../services/user-login.service';
-import { NavbarService } from '../../services/navbar.service';
-import { FooterService } from '../../services/footer.service';
-import { UserLoginRequest } from '../../interfaces/user-login-request';
+  FormField,
+  FormRoot,
+  form,
+  pattern,
+  required,
+} from '@angular/forms/signals';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { UserLoginRequest } from '../../interfaces/user-login-request';
+import { FooterService } from '../../services/footer.service';
+import { NavbarService } from '../../services/navbar.service';
 import { SessionStorageService } from '../../services/session-storage.service';
-import { NgClass } from '@angular/common';
+import { UserLoginService } from '../../services/user-login.service';
+
+interface LoginModel {
+  username: string;
+  password: string;
+}
 
 @Component({
   selector: 'app-user-login',
   templateUrl: './user-login.component.html',
   styleUrls: ['./user-login.component.css'],
-  imports: [NgClass, ReactiveFormsModule],
+  imports: [FormField, FormRoot],
 })
 export class UserLoginComponent implements OnInit, OnDestroy {
-  private readonly formBuilder = inject(FormBuilder);
   private readonly userLoginService = inject(UserLoginService);
   private readonly navbarService = inject(NavbarService);
   private readonly footerService = inject(FooterService);
   private readonly sessionStorageService = inject(SessionStorageService);
 
-  loginForm: FormGroup<{
-    username: FormControl<string>;
-    password: FormControl<string>;
-  }> = this.formBuilder.nonNullable.group({
-    username: [
-      '',
-      [Validators.required, Validators.pattern(environment.UserName)],
-    ],
-    password: ['', Validators.required],
-  });
+  readonly model = signal<LoginModel>({ username: '', password: '' });
   readonly errorMessage = signal<string | null>(null);
+
+  readonly loginForm = form(
+    this.model,
+    (p) => {
+      required(p.username, { message: 'Username is required.' });
+      pattern(p.username, new RegExp(environment.UserName), {
+        message: 'Invalid username format.',
+      });
+      required(p.password, { message: 'Password is required.' });
+    },
+    {
+      submission: {
+        action: () => this.login(),
+        // Land on the first field that needs fixing.
+        onInvalid: (field) =>
+          field().errorSummary()[0]?.fieldTree().focusBoundControl(),
+      },
+    },
+  );
 
   ngOnInit(): void {
     // Clear session storage and prepare UI
@@ -47,30 +62,21 @@ export class UserLoginComponent implements OnInit, OnDestroy {
     this.errorMessage.set(null);
   }
 
-  get usernameControl() {
-    return this.loginForm.get('username');
-  }
+  private async login(): Promise<void> {
+    const { username, password } = this.model();
+    const loginRequest: UserLoginRequest = {
+      merchantID: username,
+      merchantPassword: password,
+    };
 
-  get passwordControl() {
-    return this.loginForm.get('password');
-  }
-
-  onSubmit(): void {
-    if (this.loginForm.valid) {
-      const loginRequest: UserLoginRequest = {
-        merchantID: this.usernameControl?.value ?? '',
-        merchantPassword: this.passwordControl?.value ?? '',
-      };
-
-      this.userLoginService.login(loginRequest).subscribe({
-        next: (response) => {
-          const result = this.userLoginService.checkCredentials(response);
-          this.errorMessage.set(result.success ? null : result.message);
-        },
-        error: (error) => {
-          this.handleLoginError(error.status);
-        },
-      });
+    try {
+      const response = await firstValueFrom(
+        this.userLoginService.login(loginRequest),
+      );
+      const result = this.userLoginService.checkCredentials(response);
+      this.errorMessage.set(result.success ? null : result.message);
+    } catch (error) {
+      this.handleLoginError((error as HttpErrorResponse).status);
     }
   }
 

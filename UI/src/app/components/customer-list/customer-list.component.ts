@@ -1,6 +1,6 @@
 // customer-list.component.ts
 import { Component, OnInit, computed, effect, signal, Signal, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { GetCustomerService } from '../../services/get-customer.service';
@@ -19,6 +19,7 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   selector: 'app-customer-list',
   templateUrl: './customer-list.component.html',
   styleUrls: ['./customer-list.component.css'],
+  imports: [RouterLink],
 })
 export class CustomerListComponent implements OnInit {
   // Use dependency injection with inject()
@@ -28,7 +29,6 @@ export class CustomerListComponent implements OnInit {
   private readonly deleteCustomerService = inject(DeleteCustomerService);
   private readonly exportCustomerService = inject(ExportCustomerService);
   private readonly notificationService = inject(NotificationService);
-  private readonly router = inject(Router);
 
   // Public signals for template
   readonly customers = this.getCustomerService.customersSignal;
@@ -85,6 +85,19 @@ export class CustomerListComponent implements OnInit {
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );
 
+  // Spoken by the polite live region so a screen-reader user hears the outcome
+  // of a search / page change without hunting for it.
+  readonly resultsAnnouncement = computed(() => {
+    if (this.isLoading()) return 'Loading customers';
+    const total = this.totalItems();
+    return `${total} ${total === 1 ? 'customer' : 'customers'} found`;
+  });
+
+  readonly tableCaption = computed(
+    () =>
+      `Customers, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${this.sortColumn()} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
+  );
+
   // Debounced so typing doesn't fire an API call per keystroke — the search
   // used to be a synchronous in-memory filter, but now it's a network call.
   private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -138,6 +151,12 @@ export class CustomerListComponent implements OnInit {
     this.fetchCustomers();
   }
 
+  // Exposed on the <th> so assistive tech announces the current sort.
+  ariaSort(column: 'name' | 'email' | 'msisdn'): 'ascending' | 'descending' | 'none' {
+    if (this.sortColumn() !== column) return 'none';
+    return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
+  }
+
   setSort(column: 'name' | 'email' | 'msisdn'): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
@@ -151,10 +170,6 @@ export class CustomerListComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchCustomers();
-  }
-
-  addCustomer(): void {
-    this.router.navigate(['/addCustomer']);
   }
 
   exportCsv(): void {
@@ -173,24 +188,6 @@ export class CustomerListComponent implements OnInit {
       searchTerm: this.searchTerm().trim() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
-    });
-  }
-
-  // Add return type and improve type safety
-  trackByCustomerId(_: number, customer: Customer): string {
-    return customer.guid;
-  }
-
-  // Navigation methods
-  navigateToCustomer(guid: string): void {
-    this.router.navigate(['/customerDetails'], {
-      queryParams: { id: guid },
-    });
-  }
-
-  navigateToEdit(guid: string): void {
-    this.router.navigate(['/editCustomer'], {
-      queryParams: { id: guid },
     });
   }
 

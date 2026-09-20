@@ -1,0 +1,99 @@
+<p class="form-note">All fields are required.</p>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <div class="card app-card">
+      <fieldset class="card-body">
+        <legend class="card-title">Basic information</legend>
+
+        @for (field of basicFields; track field.key) {
+        @let state = form()[field.key]();
+        @let showError = state.touched() && state.invalid();
+        <div class="mb-3">
+          <label class="form-label" [for]="field.key">{{ field.label }}</label>
+          <input
+            type="text"
+            class="form-control"
+            [id]="field.key"
+            [formField]="form()[field.key]"
+            [class.is-invalid]="showError"
+            [attr.aria-invalid]="showError"
+            [attr.aria-describedby]="showError ? field.key + '-error' : null"
+          />
+          @if (showError) {
+          <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
+          }
+        </div>
+        }
+
+        @let gender = form().gender();
+        @let genderError = gender.touched() && gender.invalid();
+        <div class="mb-3">
+          <label class="form-label" for="gender">Gender</label>
+          <select
+            id="gender"
+            class="form-select"
+            [formField]="form().gender"
+            [class.is-invalid]="genderError"
+            [attr.aria-invalid]="genderError"
+            [attr.aria-describedby]="genderError ? 'gender-error' : null"
+          >
+            <option value="">Select a gender</option>
+            <option value="0">Not declared</option>
+            <option value="1">Male</option>
+            <option value="2">Female</option>
+          </select>
+          @if (genderError) {
+          <div class="invalid-feedback" id="gender-error">{{ gender.errors()[0].message }}</div>
+          }
+        </div>
+
+        @let birthdate = form().birthdate();
+        @let birthdateError = birthdate.touched() && birthdate.invalid();
+        <div class="mb-3">
+          <label class="form-label" for="birthdate">Birthdate</label>
+          <input
+            id="birthdate"
+            type="date"
+            class="form-control"
+            [formField]="form().birthdate"
+            [class.is-invalid]="birthdateError"
+            [attr.aria-invalid]="birthdateError"
+            [attr.aria-describedby]="birthdateError ? 'birthdate-error' : null"
+          />
+          @if (birthdateError) {
+          <div class="invalid-feedback" id="birthdate-error">{{ birthdate.errors()[0].message }}</div>
+          }
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card app-card">
+      <fieldset class="card-body">
+        <legend class="card-title">Address</legend>
+
+        @for (field of addressFields; track field.key) {
+        @let state = form()[field.key]();
+        @let showError = state.touched() && state.invalid();
+        <div class="mb-3">
+          <label class="form-label" [for]="field.key">{{ field.label }}</label>
+          <input
+            type="text"
+            class="form-control"
+            [id]="field.key"
+            [formField]="form()[field.key]"
+            [class.is-invalid]="showError"
+            [attr.aria-invalid]="showError"
+            [attr.aria-describedby]="showError ? field.key + '-error' : null"
+          />
+          @if (showError) {
+          <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
+          }
+        </div>
+        }
+      </fieldset>
+    </div>
+  </div>
+</div>

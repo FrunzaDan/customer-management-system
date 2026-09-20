@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpHeaders } from '@angular/common/http';
 import { SessionStorageService } from '../services/session-storage.service';
 
@@ -6,7 +6,7 @@ import { SessionStorageService } from '../services/session-storage.service';
   providedIn: 'root',
 })
 export class HttpHeaderService {
-  constructor(private sessionStorageService: SessionStorageService) {}
+  private readonly sessionStorageService = inject(SessionStorageService);
 
   getHeadersWithTokenSet(): HttpHeaders {
     const token = this.sessionStorageService.getSessionAccessToken();

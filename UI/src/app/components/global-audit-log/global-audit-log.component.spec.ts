@@ -109,22 +109,4 @@ describe('GlobalAuditLogComponent', () => {
       );
     });
   });
-
-  describe('navigateToCustomer', () => {
-    it('navigates to customerDetails when the customer still exists', () => {
-      component.navigateToCustomer(buildEntry());
-
-      expect(navigate).toHaveBeenCalledWith(['/customerDetails'], {
-        queryParams: { id: 'guid-1' },
-      });
-    });
-
-    it('does nothing for a deleted customer', () => {
-      component.navigateToCustomer(
-        buildEntry({ customerFirstName: null, customerLastName: null }),
-      );
-
-      expect(navigate).not.toHaveBeenCalled();
-    });
-  });
 });

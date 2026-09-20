@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { catchError, map, Observable, of, switchMap, timer } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -11,7 +11,7 @@ const POLL_INTERVAL_MS = 15000;
 export class HealthService {
   private readonly healthUrl = `${environment.CustomerManagementSystemAPI}/health`;
 
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   /**
    * Checks if the API is reachable and responding.

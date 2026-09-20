@@ -14,20 +14,23 @@
     </button>
   </div>
 @if (clearError(); as error) {
-<div class="alert alert-danger">{{ error }}</div>
+<div class="alert alert-danger" role="alert">{{ error }}</div>
 }
 @if (isLoading()) {
-<div class="app-card loading-state">
-  <span class="spinner-border spinner-border-sm me-2"></span>Loading audit log…
+<div class="app-card loading-state" role="status">
+  <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading audit log…
 </div>
 } @else if (errorMessage(); as error) {
-<div class="alert alert-danger">{{ error }}</div>
+<div class="alert alert-danger" role="alert">{{ error }}</div>
 } @else if (entries().length === 0) {
 <div class="app-card empty-state">No recorded actions yet.</div>
 } @else {
 <div class="app-card table-card">
-<div class="table-responsive">
+<div class="table-responsive" role="region" aria-label="Audit log table" tabindex="0">
   <table class="table table-themed table-striped table-hover">
+    <caption class="visually-hidden">
+      Audit log, page {{ currentPage() }} of {{ totalPages() }}, newest first
+    </caption>
     <thead>
       <tr>
         <th scope="col" class="text-center">Date</th>
@@ -38,7 +41,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (entry of entries(); track trackByAuditId($index, entry)) {
+      @for (entry of entries(); track entry.auditId) {
       <tr>
         <td class="align-middle text-center">
           {{ entry.actionDate | date: 'medium' }}
@@ -46,9 +49,9 @@
         <td class="align-middle text-center">
           @if (entry.customerFirstName || entry.customerLastName) {
           <a
-            (click)="navigateToCustomer(entry)"
             class="plain-Links hoverItem"
-            role="button"
+            routerLink="/customerDetails"
+            [queryParams]="{ id: entry.customerGuid }"
           >
             {{ customerLabel(entry) }}
           </a>
@@ -78,7 +81,7 @@
   >
     Previous
   </button>
-  <span>Page {{ currentPage() }} of {{ totalPages() }}</span>
+  <span aria-live="polite">Page {{ currentPage() }} of {{ totalPages() }}</span>
   <button
     type="button"
     class="btn btn-primary btn-sm shadow-none"

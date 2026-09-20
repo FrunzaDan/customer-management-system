@@ -3,6 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { AuditLogEntry } from '../interfaces/audit-log-entry';
@@ -36,59 +37,114 @@ describe('AuditLogService', () => {
     httpMock.verify();
   });
 
-  it('sends the customerGuid as a query param', () => {
-    service.loadAuditLog('guid-1');
+  // httpResource issues its request from an effect, so flush effects after
+  // calling loadAuditLog() before expecting the HTTP call.
+  const load = (guid: string) => {
+    service.loadAuditLog(guid);
+    TestBed.tick();
+  };
+
+  // ...and the response is applied asynchronously, so wait for the app to settle
+  // after flushing before asserting on the signals.
+  const settle = () => TestBed.inject(ApplicationRef).whenStable();
+
+  it('makes no request until a customer is loaded', async () => {
+    TestBed.tick();
+
+    httpMock.expectNone((r) => r.url === API_URL);
+    expect(service.entriesSignal()).toEqual([]);
+    expect(service.loadingSignal()).toBe(false);
+  });
+
+  it('sends the customerGuid as a query param', async () => {
+    load('guid-1');
 
     const req = httpMock.expectOne((r) => r.url === API_URL);
     expect(req.request.params.get('customerGuid')).toBe('guid-1');
 
     req.flush({ status: 200, responseMessage: 'ok', data: [] });
+    await settle();
   });
 
-  it('sets loading true synchronously while the request is in flight', () => {
-    service.loadAuditLog('guid-1');
+  it('reports loading while the request is in flight', async () => {
+    load('guid-1');
 
     expect(service.loadingSignal()).toBe(true);
 
     httpMock
       .expectOne((r) => r.url === API_URL)
       .flush({ status: 200, responseMessage: 'ok', data: [] });
+    await settle();
 
     expect(service.loadingSignal()).toBe(false);
   });
 
-  it('populates entriesSignal from a successful response and clears any error', () => {
+  it('populates entriesSignal from a successful response and clears any error', async () => {
     const entry = buildEntry();
 
-    service.loadAuditLog('guid-1');
+    load('guid-1');
     httpMock
       .expectOne((r) => r.url === API_URL)
       .flush({ status: 200, responseMessage: 'ok', data: [entry] });
+    await settle();
 
     expect(service.entriesSignal()).toEqual([entry]);
     expect(service.errorSignal()).toBeNull();
   });
 
-  it('surfaces the server-provided error message when present', () => {
-    service.loadAuditLog('guid-1');
+  it('surfaces the server-provided error message when present', async () => {
+    load('guid-1');
 
     httpMock
       .expectOne((r) => r.url === API_URL)
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+    await settle();
 
     expect(service.loadingSignal()).toBe(false);
     expect(service.errorSignal()).toBe('boom');
   });
 
-  it('falls back to a generic message when the error body has no message', () => {
-    service.loadAuditLog('guid-1');
+  it('falls back to a generic message when the error body has no message', async () => {
+    load('guid-1');
 
     httpMock
       .expectOne((r) => r.url === API_URL)
       .flush(null, { status: 500, statusText: 'Server Error' });
+    await settle();
 
     expect(service.errorSignal()).toBe(
       'Request failed (500). Please try again.',
     );
+  });
+
+  it('re-requests when asked to load the same customer again (e.g. after a status change)', async () => {
+    load('guid-1');
+    httpMock
+      .expectOne((r) => r.url === API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: [] });
+    await settle();
+
+    load('guid-1');
+
+    httpMock
+      .expectOne((r) => r.url === API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: [buildEntry()] });
+    await settle();
+    expect(service.entriesSignal()).toHaveLength(1);
+  });
+
+  it('starts a new request for a different customer', async () => {
+    load('guid-1');
+    httpMock
+      .expectOne((r) => r.url === API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: [] });
+    await settle();
+
+    load('guid-2');
+
+    const req = httpMock.expectOne((r) => r.url === API_URL);
+    expect(req.request.params.get('customerGuid')).toBe('guid-2');
+    req.flush({ status: 200, responseMessage: 'ok', data: [] });
+    await settle();
   });
 });

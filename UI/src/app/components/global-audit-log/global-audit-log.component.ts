@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { GlobalAuditLogService } from '../../services/global-audit-log.service';
 import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
@@ -17,12 +17,11 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   selector: 'app-global-audit-log',
   templateUrl: './global-audit-log.component.html',
   styleUrls: ['./global-audit-log.component.css'],
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
 })
 export class GlobalAuditLogComponent implements OnInit {
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly globalAuditLogService = inject(GlobalAuditLogService);
-  private readonly router = inject(Router);
 
   readonly entries = this.globalAuditLogService.entriesSignal;
   readonly isLoading = this.globalAuditLogService.loadingSignal;
@@ -50,24 +49,11 @@ export class GlobalAuditLogComponent implements OnInit {
     this.fetchAuditLog();
   }
 
-  // A deleted customer has no name to link to (see GlobalAuditLogEntry) —
-  // only navigate when there's still a customer record behind the GUID.
-  navigateToCustomer(entry: GlobalAuditLogEntry): void {
-    if (!entry.customerFirstName && !entry.customerLastName) return;
-    this.router.navigate(['/customerDetails'], {
-      queryParams: { id: entry.customerGuid },
-    });
-  }
-
   customerLabel(entry: GlobalAuditLogEntry): string {
     if (!entry.customerFirstName && !entry.customerLastName) {
       return `(deleted customer ${entry.customerGuid})`;
     }
     return `${entry.customerFirstName ?? ''} ${entry.customerLastName ?? ''}`.trim();
-  }
-
-  trackByAuditId(_: number, entry: GlobalAuditLogEntry): number {
-    return entry.auditId;
   }
 
   async clearAuditLog(): Promise<void> {

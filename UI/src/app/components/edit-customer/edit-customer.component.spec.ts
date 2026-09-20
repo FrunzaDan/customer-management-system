@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { submit } from '@angular/forms/signals';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Customer } from '../../interfaces/customer-response';
 import { GetCustomerService } from '../../services/get-customer.service';
@@ -13,7 +14,6 @@ describe('EditCustomerComponent', () => {
   let editCustomer: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let selectedCustomer: ReturnType<typeof signal<Customer | null>>;
-  let component: EditCustomerComponent;
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
     guid: 'guid-1',
@@ -37,21 +37,23 @@ describe('EditCustomerComponent', () => {
     ...overrides,
   });
 
+  // `id` is what withComponentInputBinding() binds from `?id=`.
+  const createComponent = (id: string | null = 'guid-1') => {
+    const fixture = TestBed.createComponent(EditCustomerComponent);
+    if (id) fixture.componentRef.setInput('id', id);
+    fixture.detectChanges();
+    return fixture.componentInstance;
+  };
+
   beforeEach(() => {
     getCustomer = vi.fn();
     editCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
-    navigate = vi.fn();
+    navigate = vi.fn().mockResolvedValue(true);
     selectedCustomer = signal<Customer | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            snapshot: { queryParamMap: convertToParamMap({ id: 'guid-1' }) },
-          },
-        },
-        { provide: Router, useValue: { navigate } },
+        provideRouter([]),
         {
           provide: GetCustomerService,
           useValue: {
@@ -64,91 +66,107 @@ describe('EditCustomerComponent', () => {
         { provide: EditCustomerService, useValue: { editCustomer } },
       ],
     });
-
-    component = TestBed.runInInjectionContext(() => new EditCustomerComponent());
+    // RouterLink in the template needs the real Router; only stub navigate().
+    TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
   });
 
-  describe('ngOnInit', () => {
-    it('reads the id from the route and fetches that customer', () => {
-      component.ngOnInit();
+  describe('loading by id', () => {
+    it('fetches the customer named by the id input', () => {
+      createComponent('guid-1');
 
       expect(getCustomer).toHaveBeenCalledWith('guid-1');
     });
+
+    it('does not fetch when there is no id', () => {
+      createComponent(null);
+
+      expect(getCustomer).not.toHaveBeenCalled();
+    });
   });
 
-  describe('patching the form from the loaded customer', () => {
-    it('pre-fills every field, converting gender to a string', () => {
-      selectedCustomer.set(buildCustomer({ gender: 2 }));
-      TestBed.flushEffects();
+  describe('form model derived from the loaded customer', () => {
+    it('starts empty until a customer is loaded', () => {
+      const component = createComponent();
 
-      expect(component.form.controls.firstName.value).toBe('Dan');
-      expect(component.form.controls.gender.value).toBe('2');
-      expect(component.form.controls.country.value).toBe('Romania');
+      expect(component.model().firstName).toBe('');
     });
 
-    it('zero-pads an unpadded stored birthdate before patching the date input', () => {
-      selectedCustomer.set(buildCustomer({ birthdate: '2020-1-5' }));
-      TestBed.flushEffects();
+    it('pre-fills every field, converting gender to a string', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer({ gender: 2 }));
 
-      expect(component.form.controls.birthdate.value).toBe('2020-01-05');
+      expect(component.model().firstName).toBe('Dan');
+      expect(component.model().gender).toBe('2');
+      expect(component.model().country).toBe('Romania');
+    });
+
+    it('zero-pads an unpadded stored birthdate for the date input', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer({ birthdate: '2020-1-5' }));
+
+      expect(component.model().birthdate).toBe('2020-01-05');
     });
 
     it('leaves the birthdate blank when the stored value is not a full date', () => {
+      const component = createComponent();
       selectedCustomer.set(buildCustomer({ birthdate: '2020' }));
-      TestBed.flushEffects();
 
-      expect(component.form.controls.birthdate.value).toBe('');
+      expect(component.model().birthdate).toBe('');
     });
   });
 
-  describe('onSubmit', () => {
-    it('does nothing when the form is invalid', () => {
+  describe('submitting', () => {
+    it('does nothing and reports the errors when the form is invalid', async () => {
+      const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      TestBed.flushEffects();
-      component.form.controls.firstName.setValue('');
+      component.model.update((m) => ({ ...m, firstName: '' }));
 
-      component.onSubmit();
+      await submit(component.customerForm);
 
-      expect(component.submitted()).toBe(true);
+      expect(editCustomer).not.toHaveBeenCalled();
+      expect(component.invalidSummary()).toBe(
+        'The form has 1 error. Please correct the highlighted fields.',
+      );
+    });
+
+    it('does nothing when no customer has been loaded yet', async () => {
+      const component = createComponent();
+      component.model.set({ ...component.model(), ...toModel(buildCustomer()) });
+
+      await submit(component.customerForm);
+
       expect(editCustomer).not.toHaveBeenCalled();
     });
 
-    it('does nothing when no customer has been loaded yet', () => {
-      component.onSubmit();
-
-      expect(editCustomer).not.toHaveBeenCalled();
-    });
-
-    it('merges the form values onto the loaded customer and saves', () => {
+    it('merges the form values onto the loaded customer and saves', async () => {
+      const component = createComponent();
       selectedCustomer.set(buildCustomer({ guid: 'guid-1', creationDate: '2026-01-01' }));
-      TestBed.flushEffects();
-      component.form.controls.firstName.setValue('Updated');
+      component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
-      component.onSubmit();
+      await submit(component.customerForm);
 
       expect(editCustomer).toHaveBeenCalledWith(
         expect.objectContaining({
           guid: 'guid-1',
           creationDate: '2026-01-01', // preserved from the original record, not in the form
           firstName: 'Updated',
+          gender: 1,
         }),
       );
     });
 
-    it('navigates back to the customer list on success', () => {
+    it('navigates back to the customer list on success', async () => {
+      const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      TestBed.flushEffects();
 
-      component.onSubmit();
+      await submit(component.customerForm);
 
-      expect(navigate).toHaveBeenCalledWith(['../customers'], {
-        relativeTo: expect.anything(),
-      });
+      expect(navigate).toHaveBeenCalledWith(['/customers']);
     });
 
-    it('surfaces the error and stops saving on failure', () => {
+    it('surfaces the error and stops submitting on failure', async () => {
+      const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      TestBed.flushEffects();
       editCustomer.mockReturnValue(
         throwError(
           () =>
@@ -159,10 +177,30 @@ describe('EditCustomerComponent', () => {
         ),
       );
 
-      component.onSubmit();
+      await submit(component.customerForm);
 
-      expect(component.saving()).toBe(false);
+      expect(component.customerForm().submitting()).toBe(false);
       expect(component.saveError()).toBe('Email already registered.');
+      expect(navigate).not.toHaveBeenCalled();
     });
   });
+
+  // Local helper: the same mapping the component uses, to build a valid model
+  // without a loaded customer.
+  function toModel(customer: Customer) {
+    return {
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      email: customer.email,
+      msisdn: customer.msisdn,
+      gender: String(customer.gender),
+      birthdate: customer.birthdate,
+      country: customer.address.country,
+      county: customer.address.county,
+      town: customer.address.town,
+      street: customer.address.street,
+      number: customer.address.number,
+      zip: customer.address.zip,
+    };
+  }
 });

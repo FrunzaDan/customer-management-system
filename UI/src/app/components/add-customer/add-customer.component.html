@@ -1,4 +1,4 @@
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
+<form [formRoot]="customerForm">
   <div class="page">
     <div class="page-header">
       <div>
@@ -6,233 +6,24 @@
         <p class="page-subtitle">Enter the customer's personal details and address.</p>
       </div>
     </div>
-    <div class="row g-4">
-      <div class="col-12 col-lg-6">
-        <div class="card app-card">
-          <div class="card-body">
-            <h5 class="card-title">Basic information</h5>
-            <div class="mb-3">
-              <label class="form-label" for="firstName">First Name</label>
-              <input id="firstName"
-                type="text"
-                formControlName="firstName"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['firstName'].errors }"
-              />
-              @if (submitted() && f['firstName'].errors) {
-              <div class="invalid-feedback">
-                @if (f['firstName'].errors['required']) {
-                <div>First Name is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="lastName">Last Name</label>
-              <input id="lastName"
-                type="text"
-                formControlName="lastName"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['lastName'].errors }"
-              />
-              @if (submitted() && f['lastName'].errors) {
-              <div class="invalid-feedback">
-                @if (f['lastName'].errors['required']) {
-                <div>Last Name is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="email">Email</label>
-              <input id="email"
-                type="text"
-                formControlName="email"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['email'].errors }"
-              />
-              @if (submitted() && f['email'].errors) {
-              <div class="invalid-feedback">
-                @if (f['email'].errors['required']) {
-                <div>Email is required</div>
-                } @if (f['email'].errors['pattern']) {
-                <div>The Email should be a valid one</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="msisdn">Phone</label>
-              <input id="msisdn"
-                type="text"
-                formControlName="msisdn"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['msisdn'].errors }"
-              />
-              @if (submitted() && f['msisdn'].errors) {
-              <div class="invalid-feedback">
-                @if (f['msisdn'].errors['required']) {
-                <div>Phone Number is required</div>
-                } @if (f['msisdn'].errors['pattern']) {
-                <div>The phone number should be a valid one</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="gender">Gender</label>
-              <select id="gender"
-                formControlName="gender"
-                class="form-select"
-                aria-label="Select gender"
-                [ngClass]="{ 'is-invalid': submitted() && f['gender'].errors }"
-              >
-                <option value="" selected>Select a gender</option>
-                <option value="0">Not declared</option>
-                <option value="1">Male</option>
-                <option value="2">Female</option>
-              </select>
-              @if (submitted() && f['gender'].errors) {
-              <div class="invalid-feedback">
-                @if (f['gender'].errors['required']) {
-                <div>Gender is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="birthdate">Birthdate</label>
-              <input id="birthdate"
-                type="date"
-                formControlName="birthdate"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['birthdate'].errors }"
-              />
-              @if (submitted() && f['birthdate'].errors) {
-              <div class="invalid-feedback">
-                @if (f['birthdate'].errors['required']) {
-                <div>Birthdate is required</div>
-                }
-              </div>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-lg-6">
-        <div class="card app-card">
-          <div class="card-body">
-            <h5 class="card-title">Address</h5>
-            <div class="mb-3">
-              <label class="form-label" for="country">Country</label>
-              <input id="country"
-                type="text"
-                formControlName="country"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['country'].errors }"
-              />
-              @if (submitted() && f['country'].errors) {
-              <div class="invalid-feedback">
-                @if (f['country'].errors['required']) {
-                <div>Country is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="county">County</label>
-              <input id="county"
-                type="text"
-                formControlName="county"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['county'].errors }"
-              />
-              @if (submitted() && f['county'].errors) {
-              <div class="invalid-feedback">
-                @if (f['county'].errors['required']) {
-                <div>County is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="town">Town</label>
-              <input id="town"
-                type="text"
-                formControlName="town"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['town'].errors }"
-              />
-              @if (submitted() && f['town'].errors) {
-              <div class="invalid-feedback">
-                @if (f['town'].errors['required']) {
-                <div>Town is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="street">Street</label>
-              <input id="street"
-                type="text"
-                formControlName="street"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['street'].errors }"
-              />
-              @if (submitted() && f['street'].errors) {
-              <div class="invalid-feedback">
-                @if (f['street'].errors['required']) {
-                <div>Street is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="number">Number</label>
-              <input id="number"
-                type="text"
-                formControlName="number"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['number'].errors }"
-              />
-              @if (submitted() && f['number'].errors) {
-              <div class="invalid-feedback">
-                @if (f['number'].errors['required']) {
-                <div>Street number is required</div>
-                }
-              </div>
-              }
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="zip">Zip</label>
-              <input id="zip"
-                type="text"
-                formControlName="zip"
-                class="form-control"
-                [ngClass]="{ 'is-invalid': submitted() && f['zip'].errors }"
-              />
-              @if (submitted() && f['zip'].errors) {
-              <div class="invalid-feedback">
-                @if (f['zip'].errors['required']) {
-                <div>Zip code is required</div>
-                }
-              </div>
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+
+    @if (invalidSummary(); as summary) {
+    <div class="alert alert-danger" role="alert">{{ summary }}</div>
+    }
+
+    <app-customer-form-fields [form]="customerForm" />
+
     <div class="form-actions mt-4">
-      <button [disabled]="loading()" class="btn btn-primary">
-        @if (loading()) {
-        <span class="spinner-border spinner-border-sm me-1"></span>
+      <button type="submit" class="btn btn-primary" [disabled]="customerForm().submitting()">
+        @if (customerForm().submitting()) {
+        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
         } Add Customer
       </button>
       <a routerLink="/customers" class="btn btn-link">Cancel</a>
     </div>
-    @if (errorMessage()) {
-    <div class="alert alert-danger mt-3">{{ errorMessage() }}</div>
+
+    @if (errorMessage(); as error) {
+    <div class="alert alert-danger mt-3" role="alert">{{ error }}</div>
     }
   </div>
 </form>

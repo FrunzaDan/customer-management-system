@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -26,13 +26,11 @@ export class UserLoginService {
     environment.CustomerManagementSystemAPI +
     '/api/Authentication/access-token';
 
-  constructor(
-    private http: HttpClient,
-    private router: Router,
-    private sessionStorageService: SessionStorageService,
-    private httpHeaderService: HttpHeaderService,
-    private notificationService: NotificationService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly sessionStorageService = inject(SessionStorageService);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+  private readonly notificationService = inject(NotificationService);
 
   login(userLoginRequest: UserLoginRequest): Observable<LoginDataResponse> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();

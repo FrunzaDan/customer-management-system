@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
@@ -14,12 +14,10 @@ export class DeleteCustomerService {
   readonly APIURL =
     environment.CustomerManagementSystemAPI + '/api/Customer/delete';
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-    private getCustomerService: GetCustomerService,
-    private notificationService: NotificationService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+  private readonly getCustomerService = inject(GetCustomerService);
+  private readonly notificationService = inject(NotificationService);
 
   deleteCustomer(customerGUID: string): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =

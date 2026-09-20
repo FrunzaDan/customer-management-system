@@ -4,7 +4,7 @@ import {
   HttpHeaders,
   HttpParams,
 } from '@angular/common/http';
-import { computed, Injectable, Signal, signal } from '@angular/core';
+import { computed, Injectable, Signal, signal, inject } from '@angular/core';
 import { catchError, map, of, Subject, switchMap } from 'rxjs';
 import { Customer } from '../interfaces/customer-response';
 import { environment } from '../../environments/environment';
@@ -55,10 +55,10 @@ export class GetCustomerService {
   // can land after a faster later one and overwrite it with stale data.
   private readonly loadCustomersParams$ = new Subject<LoadCustomersParams>();
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-  ) {
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+
+  constructor() {
     this.loadCustomersParams$
       .pipe(
         switchMap((params) => {

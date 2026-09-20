@@ -15,11 +15,13 @@ import {
 } from '@angular/platform-browser';
 import {
   provideRouter,
+  TitleStrategy,
   withComponentInputBinding,
   withInMemoryScrolling,
 } from '@angular/router';
 import { routes } from './app.routes';
 import { apiLoggerInterceptor } from './services/api-logger.interceptor';
+import { AppTitleStrategy } from './services/app-title-strategy';
 import { authErrorInterceptor } from './services/auth-error.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -33,6 +35,7 @@ export const appConfig: ApplicationConfig = {
         anchorScrolling: 'enabled',
       }),
     ),
+    { provide: TitleStrategy, useClass: AppTitleStrategy },
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
     provideHttpClient(
       withFetch(),

@@ -4,7 +4,7 @@
     class="notification-toast"
     [class.notification-success]="notification.type === 'success'"
     [class.notification-error]="notification.type === 'error'"
-    role="status"
+    [attr.role]="notification.type === 'error' ? 'alert' : 'status'"
   >
     <span>{{ notification.message }}</span>
     <button
@@ -13,7 +13,7 @@
       (click)="dismiss(notification.id)"
       aria-label="Dismiss notification"
     >
-      &times;
+      <span aria-hidden="true">&times;</span>
     </button>
   </div>
   }

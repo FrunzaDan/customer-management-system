@@ -16,13 +16,16 @@
     <div class="col-12">
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Running It Locally</h5>
+          <h2 class="card-title">Running It Locally</h2>
           <p class="card-text">
             The database is a containerized SQL Server (Azure SQL Edge, which
             also runs natively on Apple Silicon). Started by hand, that's:
           </p>
           <pre
             class="code-block p-3 rounded"
+            role="region"
+            tabindex="0"
+            aria-label="Docker commands"
           ><code>docker pull mcr.microsoft.com/azure-sql-edge
 
 docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1433 --name sqlserver --platform linux/arm64 -d mcr.microsoft.com/azure-sql-edge</code></pre>
@@ -57,7 +60,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Build &amp; Run Scripts</h5>
+          <h2 class="card-title">Build &amp; Run Scripts</h2>
           <p class="card-text">
             Two scripts at the repository root wrap all of the above so nothing
             needs to be pieced together by hand:
@@ -92,7 +95,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Database</h5>
+          <h2 class="card-title">Database</h2>
           <p class="card-text">
             The schema lives in its own SQL Server Database Project (a
             <code>.sqlproj</code>), not in migration scripts run by the API.
@@ -179,7 +182,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Security Flow</h5>
+          <h2 class="card-title">Security Flow</h2>
           <p class="card-text">
             Authentication is stateless, bearer-token based — there are no
             server-side sessions and no auth cookies:
@@ -248,7 +251,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Data Access &amp; CRUD Operations</h5>
+          <h2 class="card-title">Data Access &amp; CRUD Operations</h2>
           <p class="card-text mb-0">
             All customer data access goes through ADO.NET
             <code>SqlCommand</code> objects calling the stored procedures listed
@@ -265,7 +268,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Console-Logged API Calls</h5>
+          <h2 class="card-title">Console-Logged API Calls</h2>
           <p class="card-text">
             Since this is a showcase app, every HTTP call the Angular frontend
             makes to the API is mirrored to the browser's devtools console via
@@ -312,7 +315,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">Generate Test Customers</h5>
+          <h2 class="card-title">Generate Test Customers</h2>
           <p class="card-text">
             <strong>This is test data.</strong> The button below registers 50
             fictitious customers through the same
@@ -344,7 +347,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h5 class="card-title">What You Can Do In The UI</h5>
+          <h2 class="card-title">What You Can Do In The UI</h2>
           <ul class="mb-0">
             <li>
               Log in with merchant credentials to start a session, and log out

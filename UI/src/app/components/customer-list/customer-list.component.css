@@ -7,11 +7,6 @@
   margin-bottom: 1.25rem;
 }
 
-.list-search {
-  flex: 1 1 260px;
-  max-width: 360px;
-}
-
 .list-toolbar-actions {
   display: flex;
   flex-wrap: wrap;
@@ -25,14 +20,25 @@
 }
 
 .table-card.is-refreshing {
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
-.sortable-header {
+.list-search {
+  flex: 1 1 260px;
+  max-width: 360px;
+}
+
+/* Column-sort control: a real <button> (keyboard + screen-reader operable)
+   styled to look like the header text it replaces. */
+.sort-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
-  user-select: none;
 }
 
-.sortable-header:hover {
+.sort-button:hover {
   text-decoration: underline;
 }

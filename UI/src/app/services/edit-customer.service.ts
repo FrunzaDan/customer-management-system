@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -15,12 +15,10 @@ export class EditCustomerService {
   private readonly APIURL =
     environment.CustomerManagementSystemAPI + '/api/Customer/edit';
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-    private getCustomerService: GetCustomerService, // Used for local updates
-    private notificationService: NotificationService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
+  private readonly getCustomerService = inject(GetCustomerService);
+  private readonly notificationService = inject(NotificationService);
 
   editCustomer(customer: Customer): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =

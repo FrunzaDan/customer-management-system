@@ -23,6 +23,10 @@
   pointer-events: auto;
 }
 
+.notification-toast :focus-visible {
+  outline-color: #fff;
+}
+
 .notification-success {
   background-color: var(--spectrumColor2);
 }
@@ -38,8 +42,10 @@
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.9;
   padding: 0;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
 }
 
 .notification-close:hover {

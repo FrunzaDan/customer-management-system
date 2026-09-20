@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of } from 'rxjs';
 import { VerifyTokenService } from '../../../src/app/services/verify-token.service';
@@ -8,11 +8,9 @@ import { SessionStorageService } from './session-storage.service';
   providedIn: 'root',
 })
 export class AuthGuardService {
-  constructor(
-    private verifyTokenService: VerifyTokenService,
-    private router: Router,
-    private sessionStorageService: SessionStorageService,
-  ) {}
+  private readonly verifyTokenService = inject(VerifyTokenService);
+  private readonly router = inject(Router);
+  private readonly sessionStorageService = inject(SessionStorageService);
 
   canActivate(): Observable<boolean> {
     return this.verifyTokenService.isTokenValid().pipe(

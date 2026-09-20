@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Customer } from '../interfaces/customer-response';
@@ -11,11 +11,9 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class AddCustomerService {
-  constructor(
-    private httpHeaderService: HttpHeaderService,
-    private http: HttpClient,
-    private notificationService: NotificationService,
-  ) {}
+  private readonly httpHeaderService = inject(HttpHeaderService);
+  private readonly http = inject(HttpClient);
+  private readonly notificationService = inject(NotificationService);
   readonly APIURL =
     environment.CustomerManagementSystemAPI + '/api/Customer/register';
 

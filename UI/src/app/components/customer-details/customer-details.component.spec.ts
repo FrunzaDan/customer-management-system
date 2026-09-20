@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import {
   Customer,
@@ -47,8 +47,8 @@ describe('CustomerDetailsComponent', () => {
     ...overrides,
   });
 
-  // routeParamId controls what ActivatedRoute.queryParamMap emits; set it
-  // before calling createComponent() in tests that need the "no id" case.
+  // routeParamId is what withComponentInputBinding() would bind to the `id`
+  // input from `?id=`; set it to null before createComponent() for the "no id" case.
   let routeParamId: string | null = 'guid-1';
 
   const createComponent = (): CustomerDetailsComponent => {
@@ -58,7 +58,7 @@ describe('CustomerDetailsComponent', () => {
     reactivateCustomer = vi.fn();
     deleteCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     confirm = vi.fn().mockResolvedValue(true);
-    navigate = vi.fn();
+    navigate = vi.fn().mockResolvedValue(true);
     selectedCustomer = signal<Customer | null>(null);
     activationLoading = signal(false);
 
@@ -97,17 +97,17 @@ describe('CustomerDetailsComponent', () => {
             loadAuditLog,
           },
         },
-        { provide: Router, useValue: { navigate } },
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            queryParamMap: of(convertToParamMap(routeParamId ? { id: routeParamId } : {})),
-          },
-        },
+        provideRouter([]),
       ],
     });
 
-    return TestBed.runInInjectionContext(() => new CustomerDetailsComponent());
+    // RouterLink in the template needs the real Router; only stub navigate().
+    TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
+
+    const fixture = TestBed.createComponent(CustomerDetailsComponent);
+    if (routeParamId) fixture.componentRef.setInput('id', routeParamId);
+    fixture.detectChanges();
+    return fixture.componentInstance;
   };
 
   beforeEach(() => {
@@ -118,21 +118,17 @@ describe('CustomerDetailsComponent', () => {
     vi.restoreAllMocks();
   });
 
-  describe('ngOnInit', () => {
-    it('fetches the customer and its audit log using the id query param', () => {
-      const component = createComponent();
-
-      component.ngOnInit();
+  describe('loading by id', () => {
+    it('fetches the customer and its audit log using the id input', () => {
+      createComponent();
 
       expect(getCustomer).toHaveBeenCalledWith('guid-1');
       expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
     });
 
-    it('navigates home instead of fetching when there is no id query param', () => {
+    it('navigates home instead of fetching when there is no id', () => {
       routeParamId = null;
-      const component = createComponent();
-
-      component.ngOnInit();
+      createComponent();
 
       expect(getCustomer).not.toHaveBeenCalled();
       expect(loadAuditLog).not.toHaveBeenCalled();
@@ -191,27 +187,6 @@ describe('CustomerDetailsComponent', () => {
       );
 
       expect(component.canDelete()).toBe(true);
-    });
-  });
-
-  describe('navigateToEdit', () => {
-    it('navigates to editCustomer with the current guid', () => {
-      const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
-
-      component.navigateToEdit();
-
-      expect(navigate).toHaveBeenCalledWith(['/editCustomer'], {
-        queryParams: { id: 'guid-1' },
-      });
-    });
-
-    it('does nothing when no customer is loaded', () => {
-      const component = createComponent();
-
-      component.navigateToEdit();
-
-      expect(navigate).not.toHaveBeenCalled();
     });
   });
 

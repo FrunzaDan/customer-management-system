@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { GenericResponse } from '../../../src/app/interfaces/generic-response';
 import { catchError, map, Observable, of } from 'rxjs';
@@ -13,10 +13,8 @@ export class VerifyTokenService {
     environment.CustomerManagementSystemAPI +
     '/api/Authentication/verify-token';
 
-  constructor(
-    private http: HttpClient,
-    private httpHeaderService: HttpHeaderService,
-  ) {}
+  private readonly http = inject(HttpClient);
+  private readonly httpHeaderService = inject(HttpHeaderService);
 
   isTokenValid(): Observable<boolean> {
     // Reaching a response at all means the API's [Authorize] middleware accepted the

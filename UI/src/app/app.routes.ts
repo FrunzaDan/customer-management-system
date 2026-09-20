@@ -1,15 +1,5 @@
-import { Routes } from '@angular/router';
-import { CanActivateFn } from '@angular/router';
 import { inject } from '@angular/core';
-
-import { UserLoginComponent } from './components/user-login/user-login.component';
-import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
-import { HomeComponent } from './components/home/home.component';
-import { AboutComponent } from './components/about/about.component';
-import { AddCustomerComponent } from './components/add-customer/add-customer.component';
-import { EditCustomerComponent } from './components/edit-customer/edit-customer.component';
-import { CustomerDetailsComponent } from './components/customer-details/customer-details.component';
-import { GlobalAuditLogComponent } from './components/global-audit-log/global-audit-log.component';
+import { CanActivateFn, Routes } from '@angular/router';
 import { AuthGuardService } from './services/auth-guard.service';
 
 const authGuardFn: CanActivateFn = () => {
@@ -17,56 +7,83 @@ const authGuardFn: CanActivateFn = () => {
   return authService.canActivate();
 };
 
+// Every page is lazy-loaded so the initial bundle only carries the shell;
+// `title` feeds AppTitleStrategy (document title = WCAG 2.4.2).
 export const routes: Routes = [
   {
     path: 'login',
-    component: UserLoginComponent,
-    title: 'Login',
+    loadComponent: () =>
+      import('./components/user-login/user-login.component').then(
+        (m) => m.UserLoginComponent,
+      ),
+    title: 'Sign in',
   },
   {
     path: '',
-    component: HomeComponent,
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./components/home/home.component').then((m) => m.HomeComponent),
     canActivate: [authGuardFn],
     title: 'Customers',
   },
   {
     path: 'customers',
-    component: HomeComponent,
+    loadComponent: () =>
+      import('./components/home/home.component').then((m) => m.HomeComponent),
     canActivate: [authGuardFn],
     title: 'Customers',
   },
   {
     path: 'addCustomer',
-    component: AddCustomerComponent,
+    loadComponent: () =>
+      import('./components/add-customer/add-customer.component').then(
+        (m) => m.AddCustomerComponent,
+      ),
     canActivate: [authGuardFn],
-    title: 'Add Customer',
+    title: 'Register customer',
   },
   {
     path: 'editCustomer',
-    component: EditCustomerComponent,
+    loadComponent: () =>
+      import('./components/edit-customer/edit-customer.component').then(
+        (m) => m.EditCustomerComponent,
+      ),
     canActivate: [authGuardFn],
-    title: 'Edit Customer',
+    title: 'Edit customer',
   },
   {
     path: 'about',
-    component: AboutComponent,
+    loadComponent: () =>
+      import('./components/about/about.component').then(
+        (m) => m.AboutComponent,
+      ),
     canActivate: [authGuardFn],
     title: 'About',
   },
   {
     path: 'customerDetails',
-    component: CustomerDetailsComponent,
+    loadComponent: () =>
+      import('./components/customer-details/customer-details.component').then(
+        (m) => m.CustomerDetailsComponent,
+      ),
     canActivate: [authGuardFn],
-    title: 'Customer Details',
+    title: 'Customer details',
   },
   {
     path: 'auditLog',
-    component: GlobalAuditLogComponent,
+    loadComponent: () =>
+      import('./components/global-audit-log/global-audit-log.component').then(
+        (m) => m.GlobalAuditLogComponent,
+      ),
     canActivate: [authGuardFn],
-    title: 'Audit Log',
+    title: 'Audit log',
   },
   {
     path: '**',
-    component: PageNotFoundComponent,
+    loadComponent: () =>
+      import('./components/page-not-found/page-not-found.component').then(
+        (m) => m.PageNotFoundComponent,
+      ),
+    title: 'Page not found',
   },
 ];
