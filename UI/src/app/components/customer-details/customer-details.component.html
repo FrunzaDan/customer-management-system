@@ -4,92 +4,155 @@
   <div class="alert alert-danger mt-3">{{ error }}</div>
 </div>
 } @else {
-<div class="container">
-  <div class="row">
-    <div class="col">
-      <div class="card my-5">
-        @if (this.customer()?.gender == 2) {
-        <img
-          src="/assets/avatar_female.jpg"
-          class="card-img-top"
-          alt="avatar_female"
-        />
-        } @else {
-        <img
-          src="/assets/avatar_male.jpg"
-          class="card-img-top"
-          alt="avatar_male"
-        />
-        }
+<div class="container details-page">
+  <div class="row g-4">
+    <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+      <div class="card details-card">
         <div class="card-body">
-          <h5 class="card-title">Basic info:</h5>
-          <div class="card-text">
-            <p>First name: {{ this.customer()?.firstName }}</p>
-            <p>Last name: {{ this.customer()?.lastName }}</p>
-            <p>Gender: {{ this.customerGender() }}</p>
-            <p>Birthdate: {{ this.customer()?.birthdate }}</p>
-            <p>Internal GUID: {{ this.customer()?.guid }}</p>
+          <div class="profile-header">
+            <img
+              [src]="
+                customer()?.gender === 2
+                  ? '/assets/avatar_female.jpg'
+                  : '/assets/avatar_male.jpg'
+              "
+              class="avatar"
+              alt="Customer avatar"
+            />
+            <div class="profile-heading">
+              <h4 class="profile-name">
+                {{ customer()?.firstName }} {{ customer()?.lastName }}
+              </h4>
+              <span
+                class="badge rounded-pill"
+                [class.bg-success]="customer()?.customerStatus === CustomerStatus.Active"
+                [class.bg-secondary]="customer()?.customerStatus === CustomerStatus.Deactivated"
+                [class.bg-warning]="customer()?.customerStatus === CustomerStatus.Test"
+                [class.text-dark]="customer()?.customerStatus === CustomerStatus.Test"
+              >
+                {{ customerStatusLabel() }}
+              </span>
+            </div>
           </div>
+
+          <h5 class="card-title">Basic info</h5>
+          <dl class="detail-list">
+            <div class="detail-row">
+              <dt>First name</dt>
+              <dd>{{ customer()?.firstName || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Last name</dt>
+              <dd>{{ customer()?.lastName || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Gender</dt>
+              <dd class="text-capitalize">{{ customerGender() || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Birthdate</dt>
+              <dd>{{ customer()?.birthdate || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Internal GUID</dt>
+              <dd class="guid">{{ customer()?.guid || '—' }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
-      <div class="card my-5">
+
+      <div class="card details-card">
         <div class="card-body">
-          <h5 class="card-title">Contact:</h5>
-          <div class="card-text">
-            <p>E-mail: {{ this.customer()?.email }}</p>
-            <p>Phone: {{ this.customer()?.msisdn }}</p>
-          </div>
+          <h5 class="card-title">Contact</h5>
+          <dl class="detail-list">
+            <div class="detail-row">
+              <dt>E-mail</dt>
+              <dd>{{ customer()?.email || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Phone</dt>
+              <dd>{{ customer()?.msisdn || '—' }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
     </div>
-    <div class="col">
-      <div class="card my-5">
+
+    <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+      <div class="card details-card">
         <div class="card-body">
-          <h5 class="card-title">Address:</h5>
-          <div class="card-text">
-            <p>Country: {{ this.customer()?.address?.country }}</p>
-            <p>County: {{ this.customer()?.address?.county }}</p>
-            <p>Town: {{ this.customer()?.address?.town }}</p>
-            <p>Street: {{ this.customer()?.address?.street }}</p>
-            <p>Number: {{ this.customer()?.address?.number }}</p>
-            <p>ZIP: {{ this.customer()?.address?.zip }}</p>
-          </div>
+          <h5 class="card-title">Address</h5>
+          <dl class="detail-list">
+            <div class="detail-row">
+              <dt>Country</dt>
+              <dd>{{ customer()?.address?.country || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>County</dt>
+              <dd>{{ customer()?.address?.county || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Town</dt>
+              <dd>{{ customer()?.address?.town || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Street</dt>
+              <dd>{{ customer()?.address?.street || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Number</dt>
+              <dd>{{ customer()?.address?.number || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>ZIP</dt>
+              <dd>{{ customer()?.address?.zip || '—' }}</dd>
+            </div>
+          </dl>
         </div>
       </div>
-      <div class="card my-5">
+
+      <div class="card details-card">
         <div class="card-body">
-          <h5 class="card-title">Account Misc:</h5>
-          <div class="card-text">
-            <p>Account Creation Time: {{ this.customer()?.creationDate }}</p>
-            <p>
-              Account Last Interaction Time:
-              {{ this.customer()?.interactionDate }}
-            </p>
-            <p>
-              Account Status: {{ this.customerStatusLabel() }} ({{
-                this.customer()?.customerStatus
-              }})
-            </p>
-          </div>
+          <h5 class="card-title">Account</h5>
+          <dl class="detail-list">
+            <div class="detail-row">
+              <dt>Created</dt>
+              <dd>{{ customer()?.creationDate || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Last interaction</dt>
+              <dd>{{ customer()?.interactionDate || '—' }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Status</dt>
+              <dd>
+                {{ customerStatusLabel() }}
+                <span class="text-muted small">({{ customer()?.customerStatus }})</span>
+              </dd>
+            </div>
+          </dl>
         </div>
       </div>
-      <div class="card my-5">
+
+      <div class="card details-card">
         <div class="card-body">
-          <h5 class="card-title">Audit Trail:</h5>
+          <h5 class="card-title">Audit trail</h5>
           @if (auditLogLoading()) {
-          <p class="card-text">Loading audit trail…</p>
+          <p class="text-muted mb-0">Loading audit trail…</p>
           } @else if (auditLogError()) {
-          <p class="card-text text-danger">{{ auditLogError() }}</p>
+          <p class="text-danger mb-0">{{ auditLogError() }}</p>
           } @else if (auditLog().length === 0) {
-          <p class="card-text">No recorded actions yet.</p>
+          <p class="text-muted mb-0">No recorded actions yet.</p>
           } @else {
-          <ul class="list-group list-group-flush">
+          <ul class="audit-list">
             @for (entry of auditLog(); track entry.auditId) {
-            <li class="list-group-item">
-              <strong>{{ entry.action }}</strong> by {{ entry.merchantId }} on
-              {{ entry.actionDate | date: 'medium' }}
+            <li class="audit-item">
+              <div class="audit-action">{{ entry.action }}</div>
+              <div class="audit-meta">
+                by {{ entry.merchantId }} · {{ entry.actionDate | date: 'medium' }}
+              </div>
               @if (entry.details) {
-              <div class="text-muted small">{{ entry.details }}</div>
+              <div class="audit-details">{{ entry.details }}</div>
               }
             </li>
             }
@@ -97,10 +160,11 @@
           }
         </div>
       </div>
-      <div class="card my-5">
+
+      <div class="card details-card">
         <div class="card-body">
-          <h5 class="card-title">Actions:</h5>
-          <div class="btn-group" role="group">
+          <h5 class="card-title">Actions</h5>
+          <div class="d-flex flex-wrap gap-2" role="group">
             <button
               (click)="navigateToEdit()"
               type="button"
@@ -146,9 +210,9 @@
           </div>
 
           @if (activationError(); as error) {
-          <div class="alert alert-danger mt-3">{{ error }}</div>
+          <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
           } @if (deleteError(); as error) {
-          <div class="alert alert-danger mt-3">{{ error }}</div>
+          <div class="alert alert-danger mt-3 mb-0">{{ error }}</div>
           }
         </div>
       </div>

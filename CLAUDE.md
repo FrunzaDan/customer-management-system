@@ -2,7 +2,7 @@
 
 ## Mandatory: Read ai_docs before answering code questions
 
-When asked anything about this codebase, **always read `/workspace/ai_docs/index.md` first**.
+When asked anything about this codebase, **always read `ai_docs/index.md` first**.
 
 Then check the relevant concept doc (`api.md`, `database.md`, `angular-frontend.md`, or `build-and-run.md`) before exploring source.
 

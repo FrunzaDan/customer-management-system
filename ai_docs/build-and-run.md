@@ -36,7 +36,7 @@ docker run \
 2. Installs `sqlpackage` (pinned to `170.3.93` — newer releases can need a .NET runtime patch this machine doesn't have) as a global dotnet tool if missing, builds the DB `.sqlproj`, and publishes the `.dacpac`, retrying with jitter (no `sqlcmd` in the container to probe readiness with, so it retries the *real* publish instead) until SQL Server accepts connections or 180s elapse.
 3. Starts the API in the background (`dotnet run --launch-profile https`, `https://localhost:7145`), waits for `/swagger/index.html` to respond — and now **hard-fails with a clear error** if it doesn't come up within 60s, instead of silently continuing into a broken UI-only session.
 4. Extracts the API's live TLS cert (via `openssl s_client | openssl x509`) into `.run/dev-cert.pem` and sets `NODE_EXTRA_CA_CERTS` to it, so Node's `fetch()` (used during Angular SSR) trusts it.
-5. Starts the Angular dev server in the foreground (`npm start`, `http://localhost:4200`). `Ctrl+C` stops both API and Angular (trap on `EXIT INT TERM`).
+5. Starts the Angular dev server in the foreground (`npm start`, `http://localhost:4203` — port set in `UI/angular.json`; must stay in the API's `Cors:AllowedOrigins`). `Ctrl+C` stops both API and Angular (trap on `EXIT INT TERM`).
 
 **Test login** (seeded by the post-deployment script, skipped if the merchant already exists):
 - Merchant ID: `TestMerchantID`

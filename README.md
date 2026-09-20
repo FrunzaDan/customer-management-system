@@ -93,7 +93,7 @@ That will:
 2. Build and publish the DB schema to it.
 3. Start the API in the background (`https://localhost:7145`) and wait for it to come up.
 4. Trust the API's dev TLS cert for Node, so Angular's server-side rendering can actually call it.
-5. Start the Angular dev server in the foreground (`http://localhost:4200`).
+5. Start the Angular dev server in the foreground (`http://localhost:4203`).
 
 `Ctrl+C` stops both the API and Angular; the DB container keeps running so the next `./run.sh` is fast.
 

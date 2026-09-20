@@ -29,7 +29,7 @@ The ASP.NET Core Web API: request pipeline, controllers, request validation, JWT
 
 - `GET /health` is a bare minimal-API endpoint (not on `CustomerController`, no `[Authorize]`, doesn't return the `ResponseModel` shape — just a 200) added purely so the Angular UI can poll for API liveness and show an "API is not running" banner instead of the app looking broken (see [angular-frontend](angular-frontend.md)). Being unauthenticated is intentional: it needs to answer even when nobody has a token yet.
 - A global exception handler middleware catches any unhandled exception, logs it, and returns a generic `{ Message, Details }` JSON 500 (`Details` only populated in Development) — controllers themselves don't have try/catch blocks.
-- CORS is locked to `Cors:AllowedOrigins` in `appsettings.json` (`http://localhost:4200`, `https://localhost:4200`), methods limited to `GET/POST/PATCH/DELETE`, headers limited to `Content-Type`/`Authorization`. No `AllowCredentials()` — consistent with bearer-token (not cookie) auth.
+- CORS is locked to `Cors:AllowedOrigins` in `appsettings.json` (`http`/`https` on `localhost:4203` and `localhost:4203` — 4203 is the port `UI/angular.json` actually serves on; an origin missing from this list shows up in the browser as a CORS block on `/health` and the "API is not running" banner even though the API is up), methods limited to `GET/POST/PATCH/DELETE`, headers limited to `Content-Type`/`Authorization`. No `AllowCredentials()` — consistent with bearer-token (not cookie) auth.
 - Swagger UI is only wired up in Development, with a Bearer-JWT security scheme so tokens can be pasted in for manual testing.
 - `AddRateLimiter` registers one named policy, `"login"`: a per-client-IP fixed-window limiter (5 requests/minute, in-memory), applied via `[EnableRateLimiting("login")]` on just `AuthenticationController.GetAccessToken` — not global, so it never throttles `verify-token` or any `CustomerController` endpoint. Exceeding it short-circuits with `429` and a small hand-written JSON body, configured via `options.OnRejected` (mirrors the exception handler's `{ Message }` shape rather than going through `ResponseModel`, since this runs before MVC's formatters). In-memory/per-instance, resets on app restart — a deliberate choice for this app's single-instance local/demo scope, not a persistent/distributed solution.
 
@@ -58,10 +58,11 @@ The ASP.NET Core Web API: request pipeline, controllers, request validation, JWT
 ### JWT auth flow
 
 **Issuing** (`POST /api/Authentication/access-token`):
+
 1. `AuthService.GetAccessToken` rejects empty merchant ID/password (`403`), otherwise delegates straight to `JwtCreation.GenerateBearerJwt`.
 2. `JwtCreation.GenerateBearerJwt` calls `DbUtils.CheckMerchantCredentialsFromDb`, which fetches the merchant's password hash/salt/role via `usp_getMerchantAuthData` and verifies the password (see Password security below). The success response's `Data` carries the merchant's role (an `int?`) back up.
 3. On success, a JWT is minted: symmetric **HMAC-SHA256** signing (`SymmetricSecurityKey` + `HmacSha256Signature`), key from `Auth:SecureJWTKey` in `appsettings.json` via `JwtSigningKey.Create` (committed value is a demo placeholder — see Known gaps below).
-4. **Claims on the token**: `ClaimTypes.Sid` = merchant ID, `JwtRegisteredClaimNames.Sub` = merchant ID, `ClaimTypes.Name` = merchant ID (no separate display name exists yet), `ClaimTypes.Role` = the merchant's role fetched in step 2 (empty string if somehow null), `"amr"` = `"pwd"` (authentication-method-reference, OIDC-style — documents *how* the subject authenticated), `Jti` = random GUID, `Iat` = issue time.
+4. **Claims on the token**: `ClaimTypes.Sid` = merchant ID, `JwtRegisteredClaimNames.Sub` = merchant ID, `ClaimTypes.Name` = merchant ID (no separate display name exists yet), `ClaimTypes.Role` = the merchant's role fetched in step 2 (empty string if somehow null), `"amr"` = `"pwd"` (authentication-method-reference, OIDC-style — documents _how_ the subject authenticated), `Jti` = random GUID, `Iat` = issue time.
 5. Issuer/Audience both `https://localhost:7145/` (demo value), expiry from `Auth:AccessTokenTimeout` (currently `15` minutes).
 
 **Validating** — there is now **one** place tokens are checked, deliberately: `Program.cs`'s `AddJwtBearer` middleware, which runs on every `[Authorize]`-attributed endpoint (all of `CustomerController`, plus `AuthenticationController.VerifyToken`). It checks signature, issuer, audience, and expiry (`ClockSkew = TimeSpan.Zero`, no grace period), deriving its `IssuerSigningKey` from the same `JwtSigningKey.Create` used at issuing time. `ClaimTypes.Role` is ASP.NET's default role-claim type, so `[Authorize(Roles = "1801")]` works on any endpoint today without touching the JWT pipeline further (used on `DELETE /auditLog/all`, above).
@@ -80,7 +81,7 @@ The ASP.NET Core Web API: request pipeline, controllers, request validation, JWT
 
 ### Testing (xUnit v3 on .NET 10 SDK)
 
-- The test project covers `BusinessLogic` (validations including `AddressValidation`, `JwtCreation`, `AuthService`, `CustomerRegistration`/`Editing`/`Getting`/`Activation`/`Deletion`) and `DataAccess`'s `PasswordHasher` — all pure logic, no live DB or Docker needed. This is why `build.sh` runs `dotnet test` *before* the DB/Docker steps.
+- The test project covers `BusinessLogic` (validations including `AddressValidation`, `JwtCreation`, `AuthService`, `CustomerRegistration`/`Editing`/`Getting`/`Activation`/`Deletion`) and `DataAccess`'s `PasswordHasher` — all pure logic, no live DB or Docker needed. This is why `build.sh` runs `dotnet test` _before_ the DB/Docker steps.
 - `DbHelper` (stored-proc-result → `ResponseModel` mapping, including the `SqlDataReader`-based row mappers) is **not** unit tested — it takes a concrete `SqlDataReader`, not an interface, so exercising it would need a live connection or a structural change to introduce a mockable seam. Covered indirectly today only by manual testing (Postman/Swagger) and the app actually running.
 - Uses `xunit.v3` 4.0.0 (not the older `xunit` v2 meta-package) and `Moq` for mocking `IDbUtils`/`IAppSettingsConfig`.
 - The **.NET 10 SDK dropped VSTest support for xUnit v3** entirely — `dotnet test` fails with "Testing with VSTest target is no longer supported..." unless the project opts into the new **Microsoft Testing Platform (MTP)** runner. That opt-in is the repo-root `global.json`.
@@ -100,6 +101,7 @@ Read before assuming something below is an oversight rather than a known, confir
 - Don't treat this list as a TODO to clear autonomously — several of these (placeholder JWT key, single role, weak `Data` typing, role-message leak, no server-side revocation) are appropriate for a local-learning-project scope and were explicitly confirmed as "leave alone."
 
 **Resolved** (kept for history — don't rediscover these as "new" findings):
+
 - `IDbUtils.CheckMerchantCredentialsFromDb` returning `ResponseModel<object>` cast back to `int?` via `credentialsCheck.Data as int?` — fixed: the interface, `DbUtils`'s implementation, and the call site now use `ResponseModel<int?>` directly.
 - No rate limiting or account lockout on `POST /api/Authentication/access-token` — fixed: the `"login"` rate-limiter policy described above.
 - `DELETE /api/Customer/auditLog/all` was gated only by the controller's class-level `[Authorize]` — fixed: now also carries `[Authorize(Roles = "1801")]`, see Controllers above.
