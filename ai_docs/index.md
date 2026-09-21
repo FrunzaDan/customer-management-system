@@ -25,9 +25,9 @@ Customer_Management_System/
 │       ├── CustomerManagementSystem.Domain/         # models, config interfaces
 │       └── CustomerManagementSystem.Tests/          # xUnit v3 unit tests (BusinessLogic + DataAccess, DB mocked out)
 ├── DB/Customer_Management_System_DB/
-│   ├── Tables/                                  # tbl_customers, tbl_addresses, tbl_merchants
+│   ├── Tables/                                  # tbl_customers, tbl_addresses, tbl_merchants, tbl_products, tbl_customer_purchases
 │   ├── Stored_Procedures/                       # usp_* — all data access goes through these
-│   └── Post_Deployment_Scripts/                 # seeds the test merchant
+│   └── Post_Deployment_Scripts/                 # post_deployment.sql :r-includes the merchant seed + the 50-product catalogue seed
 └── UI/
     └── src/app/
         ├── components/                          # one folder per route/view
@@ -38,7 +38,7 @@ Customer_Management_System/
 - Local dev DB runs as a **Docker container** (Azure SQL Edge — the only Microsoft SQL Server image with a working Apple Silicon/arm64 build). See [build-and-run](build-and-run.md).
 - This is a learning project: some rough edges are deliberately left as-is rather than "fixed" — each doc below has a "Known gaps" section for its layer; don't treat those as an unclaimed TODO list.
 
-**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`.
+**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`; a fixed 50-product catalogue with per-customer purchases (shown on customer details) and a Products tab with sold/inventory/left and who bought what.
 
 ## Architecture at a glance
 
@@ -61,6 +61,7 @@ Three hand-drawn sketches from the original pre-.NET-10/Angular-22 design. The o
 - [api](api.md) — ASP.NET Core request pipeline, controllers, validation, JWT auth, password hashing, xUnit v3 test setup, API-side known gaps.
 - [database](database.md) — `tbl_customers`/`tbl_addresses`/`tbl_merchants` schema, stored procedures, status-code lifecycle, audit log, DB-side known gaps.
 - [angular-frontend](angular-frontend.md) — app config/routing/auth guard, login flow, route/component map, services, Angular-side known gaps.
+- [products-and-purchases](products-and-purchases.md) — `tbl_products`/`tbl_customer_purchases`, the seeded catalogue, the record-a-purchase rules, sold/inventory/left, the Products tab and the customer-details Purchases card.
 - [build-and-run](build-and-run.md) — Docker SQL Server, `build.sh`/`run.sh`, test login, TLS-trust gotchas.
 
 Before exploring source directly, read the relevant doc above.
@@ -68,6 +69,7 @@ Before exploring source directly, read the relevant doc above.
 **Starting points for common tasks:**
 
 - Changing a customer field, a validation rule, or the status lifecycle → [database](database.md) for the schema/proc rules, then [api](api.md) for where C# validates before the DB is touched.
+- Changing products, stock, purchases, or the Products tab → [products-and-purchases](products-and-purchases.md), then [database](database.md) for the delete/transaction conventions it follows.
 - Changing login, tokens, or roles → [api](api.md)'s JWT section, then [angular-frontend](angular-frontend.md)'s auth guard/interceptor section.
 - Changing a list/table page (search, sort, paging, bulk actions) → [angular-frontend](angular-frontend.md)'s component notes, cross-referenced with [database](database.md)'s `usp_getCustomers` pagination convention.
 - Something won't start locally (Docker, TLS, ports) → [build-and-run](build-and-run.md).
@@ -80,6 +82,8 @@ Domain terms and magic numbers used across this codebase — check here before a
 - **Customer** — the record being managed (name, contact info, address). Stored in `tbl_customers` + `tbl_addresses`.
 - **`customer_Status` codes** — `1901` = active, `1903` = deactivated, `1904` = test (fictitious customers created via the About page's bulk generator). See [database](database.md).
 - **`merchant_role` codes** — `1801` = the only role currently in use. See [api](api.md).
+- **Depot** — the warehouse a product's stock is held in (`tbl_products.depot`); the original request said "depos". See [products-and-purchases](products-and-purchases.md).
+- **Sold / inventory / left** — a product's units sold, originally stocked, and remaining; `sold = inventory - left`, derived in SQL. See [products-and-purchases](products-and-purchases.md).
 - **GUID** — customer primary key, always server-generated (`Guid.NewGuid()`), never client-supplied. See [database](database.md).
 - **ADO.NET** — .NET's low-level data access API (`SqlConnection`/`SqlCommand`/`SqlDataReader`); this project uses it directly against stored procedures, with no ORM (no Entity Framework) in between.
 - **Stored-proc result convention** — every mutating stored procedure returns a `(result INT, message NVARCHAR)` row: `result = 0` means success, any nonzero value is the HTTP status the API should return. See [api](api.md).

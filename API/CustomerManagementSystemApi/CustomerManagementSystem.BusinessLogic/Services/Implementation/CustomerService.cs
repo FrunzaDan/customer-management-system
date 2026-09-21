@@ -8,9 +8,25 @@ public class CustomerService(
     CustomerGetting customerGetting,
     CustomerEditing customerEditing,
     CustomerActivation customerActivation,
-    CustomerDeletion customerDeletion)
+    CustomerDeletion customerDeletion,
+    CustomerPurchasing customerPurchasing)
     : ICustomerService
 {
+    public async Task<ResponseModel<object>> GetProducts(CancellationToken cancellationToken = default) =>
+        await customerGetting.GetProductsFunction(cancellationToken);
+
+    public async Task<ResponseModel<object>> GetProductDetails(string productGuid,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetProductDetailsFunction(productGuid, cancellationToken);
+
+    public async Task<ResponseModel<object>> GetCustomerPurchases(string customerGuid,
+        CancellationToken cancellationToken = default) =>
+        await customerGetting.GetCustomerPurchasesFunction(customerGuid, cancellationToken);
+
+    public async Task<ResponseModel<object>> PurchaseProduct(string customerGuid, string productGuid,
+        string merchantId, CancellationToken cancellationToken = default) =>
+        await customerPurchasing.PurchaseProduct(customerGuid, productGuid, merchantId, cancellationToken);
+
     public async Task<ResponseModel<object>> DeactivateCustomer(string customerGuid, string merchantId,
         CancellationToken cancellationToken = default) =>
         await customerActivation.DeactivateCustomer(customerGuid, merchantId, cancellationToken);

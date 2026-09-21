@@ -1,0 +1,93 @@
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--spectrumColor2);
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--spectrumColor1);
+}
+
+/* Sold / Inventory / Left */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 0;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat dt {
+  color: var(--mutedText);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.stat dd {
+  margin: 0;
+  color: var(--spectrumColor1);
+  font-size: 2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Label / value rows (same look as customer details) */
+.detail-list {
+  margin: 0;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 35%) 1fr;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(19, 59, 54, 0.08);
+}
+
+.detail-row:first-child {
+  padding-top: 0;
+}
+
+.detail-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.detail-row dt {
+  color: var(--mutedText);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.detail-row dd {
+  margin: 0;
+  color: #212529;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.guid {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 575.98px) {
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+}
+
+/* Three narrow columns inside a half-width card: the shared .table-themed 760px minimum would
+   make the table scroll sideways and clip the date, so let this one shrink to its card. */
+.buyers-table {
+  min-width: 0;
+}
+
+.email-cell {
+  overflow-wrap: anywhere;
+}

@@ -77,6 +77,49 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
         return StatusCode(response.Status ?? 200, response);
     }
 
+    [HttpGet("products")]
+    public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
+    {
+        var response = await customerService.GetProducts(cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
+    [HttpGet("productDetails")]
+    public async Task<IActionResult> GetProductDetails([FromQuery] string productGuid,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(productGuid))
+            return BadRequest(new { Message = "Product GUID cannot be null or empty." });
+
+        var response = await customerService.GetProductDetails(productGuid, cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
+    [HttpGet("purchases")]
+    public async Task<IActionResult> GetCustomerPurchases([FromQuery] string customerGuid,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(customerGuid))
+            return BadRequest(new { Message = "Customer GUID cannot be null or empty." });
+
+        var response = await customerService.GetCustomerPurchases(customerGuid, cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
+    [HttpPost("purchase")]
+    public async Task<IActionResult> PurchaseProduct([FromQuery] string customerGuid, [FromQuery] string productGuid,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(customerGuid))
+            return BadRequest(new { Message = "Customer GUID cannot be null or empty." });
+
+        if (string.IsNullOrEmpty(productGuid))
+            return BadRequest(new { Message = "Product GUID cannot be null or empty." });
+
+        var response = await customerService.PurchaseProduct(customerGuid, productGuid, MerchantId, cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
     [HttpPatch("edit")]
     public async Task<IActionResult> EditCustomer([FromBody] CustomerModel editCustomerRqst,
         CancellationToken cancellationToken)

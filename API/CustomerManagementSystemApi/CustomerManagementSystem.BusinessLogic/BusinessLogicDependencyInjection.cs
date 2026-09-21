@@ -24,5 +24,6 @@ public static class BusinessLogicDependencyInjection
         services.AddScoped<CustomerEditing>();
         services.AddScoped<CustomerActivation>();
         services.AddScoped<CustomerDeletion>();
+        services.AddScoped<CustomerPurchasing>();
     }
 }

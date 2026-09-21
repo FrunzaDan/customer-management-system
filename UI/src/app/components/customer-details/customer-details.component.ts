@@ -8,13 +8,16 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GetCustomerService } from '../../services/get-customer.service';
 import { ActivateCustomerService } from '../../services/activate-customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { DeleteCustomerService } from '../../services/delete-customer.service';
+import { ProductService } from '../../services/product.service';
+import { PurchaseService } from '../../services/purchase.service';
+import { Product } from '../../interfaces/product';
 import {
   Customer,
   CustomerActivationStatus,
@@ -26,7 +29,7 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   selector: 'app-customer-details',
   templateUrl: './customer-details.component.html',
   styleUrls: ['./customer-details.component.css'],
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, DecimalPipe, RouterLink],
 })
 export class CustomerDetailsComponent {
   private readonly getCustomerService = inject(GetCustomerService);
@@ -34,6 +37,8 @@ export class CustomerDetailsComponent {
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly deleteCustomerService = inject(DeleteCustomerService);
   private readonly auditLogService = inject(AuditLogService);
+  private readonly purchaseService = inject(PurchaseService);
+  private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
 
   // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
@@ -70,6 +75,19 @@ export class CustomerDetailsComponent {
   readonly auditLogError = this.auditLogService.errorSignal;
   private wasActivationLoading = false;
 
+  readonly purchases = this.purchaseService.entriesSignal;
+  readonly purchasesLoading = this.purchaseService.loadingSignal;
+  readonly purchasesError = this.purchaseService.errorSignal;
+
+  readonly products = this.productService.productsSignal;
+  readonly productsLoading = this.productService.loadingSignal;
+  readonly productsError = this.productService.errorSignal;
+
+  // Which product is picked in the "Record purchase" <select> ('' = none yet).
+  readonly selectedProductGuid = signal('');
+  readonly purchasing = signal(false);
+  readonly purchaseError = signal<string | null>(null);
+
   customerGender: Signal<string | undefined> = computed(() => {
     const c = this.customer();
     return c && c.gender !== undefined
@@ -95,7 +113,43 @@ export class CustomerDetailsComponent {
     );
   });
 
+  // Same rule as usp_purchaseProduct: everything but a deactivated customer may buy.
+  canPurchase: Signal<boolean> = computed(() => {
+    const status = this.customer()?.customerStatus;
+    return status !== undefined && status !== CustomerActivationStatus.Deactivated;
+  });
+
+  // The catalogue grouped by category (the API already returns it category-ordered),
+  // for <optgroup>s — 50 flat options would be a long list to scan.
+  readonly productGroups = computed(() => {
+    const groups = new Map<string, Product[]>();
+    for (const product of this.products()) {
+      const group = groups.get(product.category);
+      if (group) group.push(product);
+      else groups.set(product.category, [product]);
+    }
+    return [...groups].map(([category, products]) => ({ category, products }));
+  });
+
+  readonly selectedProduct = computed(() =>
+    this.products().find((p) => p.guid === this.selectedProductGuid()),
+  );
+
+  readonly canSubmitPurchase = computed(() => {
+    const product = this.selectedProduct();
+    return (
+      this.canPurchase() &&
+      !this.purchasing() &&
+      product !== undefined &&
+      product.stockQuantity > 0
+    );
+  });
+
   constructor() {
+    // The catalogue is the same for every customer, so it's fetched once per visit
+    // to this page rather than per id.
+    this.productService.loadProducts();
+
     // (Re)load whenever the id in the URL changes; no id means nothing to show.
     effect(() => {
       const id = this.id();
@@ -103,6 +157,7 @@ export class CustomerDetailsComponent {
         if (id) {
           this.getCustomerService.getCustomer(id);
           this.auditLogService.loadAuditLog(id);
+          this.purchaseService.loadPurchases(id);
         } else {
           this.router.navigate(['']);
         }
@@ -137,6 +192,37 @@ export class CustomerDetailsComponent {
     const guid = this.customer()?.guid;
     if (!guid) return;
     this.activateCustomerService.reactivateCustomer(guid);
+  }
+
+  selectProduct(event: Event): void {
+    this.selectedProductGuid.set((event.target as HTMLSelectElement).value);
+  }
+
+  recordPurchase(): void {
+    const customerGuid = this.customer()?.guid;
+    const productGuid = this.selectedProductGuid();
+    if (!customerGuid || !productGuid || !this.canSubmitPurchase()) return;
+
+    this.purchasing.set(true);
+    this.purchaseError.set(null);
+
+    this.purchaseService.purchaseProduct(customerGuid, productGuid).subscribe({
+      next: () => {
+        this.purchasing.set(false);
+        this.selectedProductGuid.set('');
+        // A purchase changes three things on this page: the history, the product's
+        // stock (shown in the <select>) and the audit trail (a "Purchased" entry).
+        this.purchaseService.loadPurchases(customerGuid);
+        this.productService.loadProducts();
+        this.auditLogService.loadAuditLog(customerGuid);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.purchasing.set(false);
+        this.purchaseError.set(extractErrorMessage(error));
+        // e.g. "out of stock" — the list the user picked from is now stale.
+        this.productService.loadProducts();
+      },
+    });
   }
 
   async deleteCustomer(): Promise<void> {

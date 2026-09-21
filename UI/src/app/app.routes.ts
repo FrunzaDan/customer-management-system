@@ -73,6 +73,24 @@ export const routes: Routes = [
     title: 'Customer details',
   },
   {
+    path: 'products',
+    loadComponent: () =>
+      import('./components/products/products.component').then(
+        (m) => m.ProductsComponent,
+      ),
+    canActivate: [authGuardFn],
+    title: 'Products',
+  },
+  {
+    path: 'productDetails',
+    loadComponent: () =>
+      import('./components/product-details/product-details.component').then(
+        (m) => m.ProductDetailsComponent,
+      ),
+    canActivate: [authGuardFn],
+    title: 'Product details',
+  },
+  {
     path: 'auditLog',
     loadComponent: () =>
       import('./components/global-audit-log/global-audit-log.component').then(

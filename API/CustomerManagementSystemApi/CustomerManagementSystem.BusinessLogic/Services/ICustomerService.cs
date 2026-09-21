@@ -14,6 +14,14 @@ public interface ICustomerService
 
     Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
+    Task<ResponseModel<object>> GetProducts(CancellationToken cancellationToken = default);
+
+    Task<ResponseModel<object>> GetProductDetails(string productGuid, CancellationToken cancellationToken = default);
+
+    Task<ResponseModel<object>> GetCustomerPurchases(string customerGuid, CancellationToken cancellationToken = default);
+
+    Task<ResponseModel<object>> PurchaseProduct(string customerGuid, string productGuid, string merchantId, CancellationToken cancellationToken = default);
+
     Task<ResponseModel<object>> RegisterCustomer(CustomerModel request, string merchantId, CancellationToken cancellationToken = default);
 
     Task<ResponseModel<object>> EditCustomer(CustomerModel request, string merchantId, CancellationToken cancellationToken = default);

@@ -176,6 +176,53 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         );
     }
 
+    public async Task<ResponseModel<object>> GetProducts(CancellationToken cancellationToken = default)
+    {
+        return await ExecuteStoredProcedureAsync(
+            "dbo.usp_getProducts",
+            null,
+            DbHelper.HandleResponseWithProductList,
+            cancellationToken
+        );
+    }
+
+    public async Task<ResponseModel<object>> GetProductDetails(string productGuid,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteStoredProcedureAsync(
+            "dbo.usp_getProductDetails",
+            command => command.Parameters.AddWithValue("@var_ProductGuid", productGuid),
+            DbHelper.HandleResponseWithProductDetails,
+            cancellationToken
+        );
+    }
+
+    public async Task<ResponseModel<object>> GetCustomerPurchases(string customerGuid,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteStoredProcedureAsync(
+            "dbo.usp_getCustomerPurchases",
+            command => command.Parameters.AddWithValue("@var_CustomerGuid", customerGuid),
+            DbHelper.HandleResponseWithPurchaseList,
+            cancellationToken
+        );
+    }
+
+    public async Task<ResponseModel<object>> PurchaseProduct(string customerGuid, string productGuid,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteStoredProcedureAsync(
+            "dbo.usp_purchaseProduct",
+            command =>
+            {
+                command.Parameters.AddWithValue("@var_CustomerGuid", customerGuid);
+                command.Parameters.AddWithValue("@var_ProductGuid", productGuid);
+            },
+            DbHelper.HandleResponseWithPurchaseResult,
+            cancellationToken
+        );
+    }
+
     private async Task CheckConnectionStringAsync(CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(CurrentConnectionString)) return;

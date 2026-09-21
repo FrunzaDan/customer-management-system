@@ -198,6 +198,94 @@
 
       <div class="card app-card">
         <div class="card-body">
+          <h2 class="card-title">Purchases</h2>
+
+          <div class="purchase-form">
+            <label for="purchase-product" class="form-label">Record a purchase</label>
+            <div class="purchase-form-row">
+              <select
+                id="purchase-product"
+                class="form-select"
+                [disabled]="!canPurchase() || purchasing() || productsLoading() || !!productsError()"
+                [attr.aria-describedby]="'purchase-hint' + (purchaseError() ? ' purchase-error' : '')"
+                (change)="selectProduct($event)"
+              >
+                <option value="" [selected]="!selectedProductGuid()">
+                  @if (productsLoading() && products().length === 0) { Loading products… } @else { Select a product… }
+                </option>
+                @for (group of productGroups(); track group.category) {
+                <optgroup [label]="group.category">
+                  @for (product of group.products; track product.guid) {
+                  <option
+                    [value]="product.guid"
+                    [selected]="product.guid === selectedProductGuid()"
+                    [disabled]="product.stockQuantity === 0"
+                  >
+                    {{ product.name }} — {{ product.price | number: '1.2-2' }}
+                    @if (product.stockQuantity === 0) { (out of stock) } @else { ({{ product.stockQuantity }} in stock) }
+                  </option>
+                  }
+                </optgroup>
+                }
+              </select>
+              <button
+                type="button"
+                class="btn btn-primary shadow-none"
+                [disabled]="!canSubmitPurchase()"
+                (click)="recordPurchase()"
+              >
+                {{ purchasing() ? 'Recording…' : 'Record purchase' }}
+              </button>
+            </div>
+
+            <p class="form-note mb-0" id="purchase-hint">
+              @if (!canPurchase()) { A deactivated customer cannot make purchases. }
+              @else if (selectedProduct(); as product) {
+              {{ product.comment || 'No description.' }} Stock: {{ product.stockQuantity }} in {{ product.depot }}.
+              } @else { Choose a product to record it against this customer. }
+            </p>
+
+            @if (productsError(); as error) {
+            <p class="text-danger mb-0" role="alert">Could not load products: {{ error }}</p>
+            } @if (purchaseError(); as error) {
+            <p class="text-danger mb-0" id="purchase-error" role="alert">{{ error }}</p>
+            }
+          </div>
+
+          <h3 class="purchase-heading">History</h3>
+          @if (purchasesLoading()) {
+          <p class="text-muted mb-0" role="status">Loading purchases…</p>
+          } @else if (purchasesError()) {
+          <p class="text-danger mb-0" role="alert">{{ purchasesError() }}</p>
+          } @else if (purchases().length === 0) {
+          <p class="text-muted mb-0">No purchases yet.</p>
+          } @else {
+          <div class="purchase-scroll" role="region" aria-label="Purchase history" tabindex="0">
+            <ul class="purchase-list">
+              @for (purchase of purchases(); track purchase.purchaseId) {
+              <li class="purchase-item">
+                <div>
+                  <a
+                    class="purchase-name plain-Links hoverItem"
+                    routerLink="/productDetails"
+                    [queryParams]="{ id: purchase.productGuid }"
+                    >{{ purchase.productName }}</a
+                  >
+                  <div class="purchase-meta">
+                    {{ purchase.category }} · {{ purchase.purchaseDate | date: 'medium' }}
+                  </div>
+                </div>
+                <div class="purchase-price">{{ purchase.price | number: '1.2-2' }}</div>
+              </li>
+              }
+            </ul>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="card app-card">
+        <div class="card-body">
           <h2 class="card-title">Audit trail</h2>
           @if (auditLogLoading()) {
           <p class="text-muted mb-0" role="status">Loading audit trail…</p>

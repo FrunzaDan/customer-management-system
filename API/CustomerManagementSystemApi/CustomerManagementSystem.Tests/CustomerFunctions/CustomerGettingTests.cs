@@ -274,6 +274,81 @@ public class CustomerGettingTests
         dbUtils.Verify(d => d.GetAllCustomerAuditLog(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-guid")]
+    public async Task GetCustomerPurchasesFunction_RejectsAnInvalidGuid_WithoutTouchingTheDb(string? customerGuid)
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetCustomerPurchasesFunction(customerGuid!, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        dbUtils.Verify(d => d.GetCustomerPurchases(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetCustomerPurchasesFunction_ReturnsWhateverTheDbLayerReturns()
+    {
+        const string guid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+        var dbUtils = new Mock<IDbUtils>();
+        var expected = new ResponseModel<object>(200, "1 purchases found.", new List<PurchaseModel>());
+        dbUtils.Setup(d => d.GetCustomerPurchases(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetCustomerPurchasesFunction(guid, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        dbUtils.Verify(d => d.GetCustomerPurchases(guid, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-guid")]
+    public async Task GetProductDetailsFunction_RejectsAnInvalidGuid_WithoutTouchingTheDb(string? productGuid)
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetProductDetailsFunction(productGuid!, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        dbUtils.Verify(d => d.GetProductDetails(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetProductDetailsFunction_ReturnsWhateverTheDbLayerReturns()
+    {
+        const string guid = "2432276c-4ef0-4e50-abc5-8b5f82297844";
+        var dbUtils = new Mock<IDbUtils>();
+        var expected = new ResponseModel<object>(200, "Product found.", new ProductDetailsModel());
+        dbUtils.Setup(d => d.GetProductDetails(guid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetProductDetailsFunction(guid, TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        dbUtils.Verify(d => d.GetProductDetails(guid, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetProductsFunction_ReturnsWhateverTheDbLayerReturns()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var expected = new ResponseModel<object>(200, "50 products found.", new List<ProductModel>());
+        dbUtils.Setup(d => d.GetProducts(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetProductsFunction(TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+    }
+
     [Fact]
     public async Task GetAllAuditLogFunction_ReturnsWhateverTheDbLayerReturns()
     {

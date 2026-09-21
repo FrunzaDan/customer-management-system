@@ -110,6 +110,28 @@ public class CustomerGetting
         return await _dbUtils.GetCustomerAuditLog(customerGuid, cancellationToken);
     }
 
+    // Unpaginated on purpose: the catalogue is a fixed set of 50 products.
+    public async Task<ResponseModel<object>> GetProductsFunction(CancellationToken cancellationToken = default) =>
+        await _dbUtils.GetProducts(cancellationToken);
+
+    public async Task<ResponseModel<object>> GetProductDetailsFunction(string productGuid,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(productGuid) || !GuidValidation.ValidateGuid(productGuid))
+            return new ResponseModel<object>(400, "A valid product GUID is required.");
+
+        return await _dbUtils.GetProductDetails(productGuid, cancellationToken);
+    }
+
+    public async Task<ResponseModel<object>> GetCustomerPurchasesFunction(string customerGuid,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(customerGuid) || !GuidValidation.ValidateGuid(customerGuid))
+            return new ResponseModel<object>(400, "A valid customer GUID is required.");
+
+        return await _dbUtils.GetCustomerPurchases(customerGuid, cancellationToken);
+    }
+
     public async Task<ResponseModel<object>> GetAllAuditLogFunction(int pageNumber, int pageSize,
         CancellationToken cancellationToken = default)
     {

@@ -63,7 +63,9 @@ Because routes are guarded and the app uses SSR, this guard's HTTP call can run 
 | `user-login` | `/login` | Merchant sign-in form |
 | `home` | `/`, `/customers` | Customer list landing page (just a heading + `app-customer-list`; the "Register customer" button lives in the customer-list toolbar, not here) |
 | `customer-list` | (used by `home`) | Table of customers, `@for` track-by GUID; server-side search, sort, and pagination |
-| `customer-details` | `/customerDetails` | Single customer's full record (friendly status) plus its audit trail |
+| `customer-details` | `/customerDetails` | Single customer's full record (friendly status), a Purchases card (record a purchase + history) and its audit trail |
+| `products` | `/products` | Product catalogue table: price, sold, inventory, left ("Sold out" badge); name links to the product page |
+| `product-details` | `/productDetails` | One product: Sold/Inventory/Left, product info, and which customers bought it and when |
 | `global-audit-log` | `/auditLog` | Paginated audit trail across every customer, newest first |
 | `add-customer` | `/addCustomer` | Create-customer form |
 | `edit-customer` | `/editCustomer` | Edit-customer form |
@@ -122,6 +124,7 @@ Verified with axe-core (tags `wcag2a/2aa/21a/21aa/22aa/best-practice`) against e
 
 - `user-login.service.ts`, `verify-token.service.ts`, `auth-guard.service.ts`, `session-storage.service.ts`, `http-header-service.ts`, `auth-error.interceptor.ts` — see Login flow / App config above.
 - `get-customer.service.ts`, `add-customer.service.ts`, `edit-customer.service.ts`, `activate-customer.service.ts`, `delete-customer.service.ts`, `audit-log.service.ts`, `export-customer.service.ts`, `global-audit-log.service.ts` — one per `CustomerController` endpoint group (see [api](api.md)).
+- `product.service.ts`, `product-details.service.ts`, `purchase.service.ts` — the catalogue, one product + its buyers, and a customer's purchases (all `httpResource`-based like `audit-log.service.ts`; `PurchaseService.purchaseProduct` is the POST). See [products-and-purchases](products-and-purchases.md).
 - `navbar.service.ts`, `footer.service.ts` — simple show/hide state (a `signal<boolean>`, exposed read-only via `.asReadonly()`) for chrome that shouldn't appear on the login screen.
 - `health.service.ts` — polls `GET /health` (see [api](api.md)) every 15s via `pollApiHealth()`; consumed only by the root `App` component (`app.ts`), not routed/component-scoped like the others.
 

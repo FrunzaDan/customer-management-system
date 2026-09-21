@@ -12,11 +12,18 @@ import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { DeleteCustomerService } from '../../services/delete-customer.service';
 import { GetCustomerService } from '../../services/get-customer.service';
+import { ProductService } from '../../services/product.service';
+import { PurchaseService } from '../../services/purchase.service';
+import { Product } from '../../interfaces/product';
 import { CustomerDetailsComponent } from './customer-details.component';
 
 describe('CustomerDetailsComponent', () => {
   let getCustomer: ReturnType<typeof vi.fn>;
   let loadAuditLog: ReturnType<typeof vi.fn>;
+  let loadPurchases: ReturnType<typeof vi.fn>;
+  let loadProducts: ReturnType<typeof vi.fn>;
+  let purchaseProduct: ReturnType<typeof vi.fn>;
+  let products: ReturnType<typeof signal<Product[]>>;
   let deactivateCustomer: ReturnType<typeof vi.fn>;
   let reactivateCustomer: ReturnType<typeof vi.fn>;
   let deleteCustomer: ReturnType<typeof vi.fn>;
@@ -47,6 +54,19 @@ describe('CustomerDetailsComponent', () => {
     ...overrides,
   });
 
+  const buildProduct = (overrides: Partial<Product> = {}): Product => ({
+    guid: 'product-1',
+    name: 'Aerobook 14 Pro',
+    category: 'Laptop',
+    comment: '14-inch ultraportable.',
+    price: 1299,
+    inventoryQuantity: 10,
+    stockQuantity: 5,
+    soldQuantity: 5,
+    depot: 'Central Depot',
+    ...overrides,
+  });
+
   // routeParamId is what withComponentInputBinding() would bind to the `id`
   // input from `?id=`; set it to null before createComponent() for the "no id" case.
   let routeParamId: string | null = 'guid-1';
@@ -54,6 +74,10 @@ describe('CustomerDetailsComponent', () => {
   const createComponent = (): CustomerDetailsComponent => {
     getCustomer = vi.fn();
     loadAuditLog = vi.fn();
+    loadPurchases = vi.fn();
+    loadProducts = vi.fn();
+    purchaseProduct = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    products = signal<Product[]>([]);
     deactivateCustomer = vi.fn();
     reactivateCustomer = vi.fn();
     deleteCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
@@ -97,6 +121,25 @@ describe('CustomerDetailsComponent', () => {
             loadAuditLog,
           },
         },
+        {
+          provide: PurchaseService,
+          useValue: {
+            entriesSignal: signal([]),
+            loadingSignal: signal(false),
+            errorSignal: signal<string | null>(null),
+            loadPurchases,
+            purchaseProduct,
+          },
+        },
+        {
+          provide: ProductService,
+          useValue: {
+            productsSignal: products,
+            loadingSignal: signal(false),
+            errorSignal: signal<string | null>(null),
+            loadProducts,
+          },
+        },
         provideRouter([]),
       ],
     });
@@ -119,11 +162,18 @@ describe('CustomerDetailsComponent', () => {
   });
 
   describe('loading by id', () => {
-    it('fetches the customer and its audit log using the id input', () => {
+    it('fetches the customer, its audit log and its purchases using the id input', () => {
       createComponent();
 
       expect(getCustomer).toHaveBeenCalledWith('guid-1');
       expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
+      expect(loadPurchases).toHaveBeenCalledWith('guid-1');
+    });
+
+    it('loads the product catalogue for the purchase picker', () => {
+      createComponent();
+
+      expect(loadProducts).toHaveBeenCalled();
     });
 
     it('navigates home instead of fetching when there is no id', () => {
@@ -132,6 +182,7 @@ describe('CustomerDetailsComponent', () => {
 
       expect(getCustomer).not.toHaveBeenCalled();
       expect(loadAuditLog).not.toHaveBeenCalled();
+      expect(loadPurchases).not.toHaveBeenCalled();
       expect(navigate).toHaveBeenCalledWith(['']);
     });
   });
@@ -287,6 +338,119 @@ describe('CustomerDetailsComponent', () => {
       TestBed.flushEffects();
 
       expect(loadAuditLog).not.toHaveBeenCalled();
+    });
+  });
+  describe('purchases', () => {
+    it('canPurchase is true for Active and Test customers, false for Deactivated', () => {
+      const component = createComponent();
+
+      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Active }));
+      expect(component.canPurchase()).toBe(true);
+
+      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Test }));
+      expect(component.canPurchase()).toBe(true);
+
+      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }));
+      expect(component.canPurchase()).toBe(false);
+    });
+
+    it('groups the catalogue by category', () => {
+      const component = createComponent();
+      products.set([
+        buildProduct({ guid: 'p1', category: 'Laptop' }),
+        buildProduct({ guid: 'p2', category: 'Laptop' }),
+        buildProduct({ guid: 'p3', category: 'Mouse' }),
+      ]);
+
+      const groups = component.productGroups();
+
+      expect(groups.map((g) => g.category)).toEqual(['Laptop', 'Mouse']);
+      expect(groups[0].products.map((p) => p.guid)).toEqual(['p1', 'p2']);
+    });
+
+    it('canSubmitPurchase needs a picked, in-stock product for a customer who can buy', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+      products.set([
+        buildProduct({ guid: 'in-stock', stockQuantity: 3 }),
+        buildProduct({ guid: 'sold-out', stockQuantity: 0 }),
+      ]);
+
+      expect(component.canSubmitPurchase()).toBe(false); // nothing picked
+
+      component.selectedProductGuid.set('sold-out');
+      expect(component.canSubmitPurchase()).toBe(false); // out of stock
+
+      component.selectedProductGuid.set('in-stock');
+      expect(component.canSubmitPurchase()).toBe(true);
+
+      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }));
+      expect(component.canSubmitPurchase()).toBe(false); // deactivated customer
+    });
+
+    it('recordPurchase posts the pick, resets it, and refreshes purchases, stock and audit trail', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      products.set([buildProduct({ guid: 'product-1' })]);
+      component.selectedProductGuid.set('product-1');
+      loadPurchases.mockClear();
+      loadProducts.mockClear();
+      loadAuditLog.mockClear();
+
+      component.recordPurchase();
+
+      expect(purchaseProduct).toHaveBeenCalledWith('guid-1', 'product-1');
+      expect(component.selectedProductGuid()).toBe('');
+      expect(component.purchasing()).toBe(false);
+      expect(loadPurchases).toHaveBeenCalledWith('guid-1');
+      expect(loadProducts).toHaveBeenCalled();
+      expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
+    });
+
+    it('recordPurchase does nothing when no product is picked', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+
+      component.recordPurchase();
+
+      expect(purchaseProduct).not.toHaveBeenCalled();
+    });
+
+    it('recordPurchase does nothing for a product that is out of stock', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+      products.set([buildProduct({ guid: 'sold-out', stockQuantity: 0 })]);
+      component.selectedProductGuid.set('sold-out');
+
+      component.recordPurchase();
+
+      expect(purchaseProduct).not.toHaveBeenCalled();
+    });
+
+    it('surfaces the server message, stops loading and re-fetches stock when the purchase fails', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      products.set([buildProduct({ guid: 'product-1' })]);
+      component.selectedProductGuid.set('product-1');
+      loadProducts.mockClear();
+      loadPurchases.mockClear();
+      purchaseProduct.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 409,
+              error: { responseMessage: 'Product is out of stock.' },
+            }),
+        ),
+      );
+
+      component.recordPurchase();
+
+      expect(component.purchasing()).toBe(false);
+      expect(component.purchaseError()).toBe('Product is out of stock.');
+      expect(component.selectedProductGuid()).toBe('product-1'); // pick kept
+      expect(loadProducts).toHaveBeenCalled(); // stock shown is stale
+      expect(loadPurchases).not.toHaveBeenCalled(); // nothing was recorded
     });
   });
 });

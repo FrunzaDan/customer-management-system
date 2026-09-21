@@ -13,7 +13,12 @@
     <Folder Include="Tables" />
   </ItemGroup>
   <ItemGroup>
-    <PostDeploy Include="Post_Deployment_Scripts\post_deployment_populate_tbl_merchants.sql" />
+    <PostDeploy Include="Post_Deployment_Scripts\post_deployment.sql" />
+    <!-- Pulled into post_deployment.sql via :r; must not also be compiled as schema objects. -->
+    <None Include="Post_Deployment_Scripts\post_deployment_populate_tbl_merchants.sql" />
+    <None Include="Post_Deployment_Scripts\post_deployment_populate_tbl_products.sql" />
+    <Build Remove="Post_Deployment_Scripts\post_deployment_populate_tbl_merchants.sql" />
+    <Build Remove="Post_Deployment_Scripts\post_deployment_populate_tbl_products.sql" />
   </ItemGroup>
   <Target Name="BeforeBuild">
     <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />

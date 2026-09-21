@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "c180bccf-4b03-4a85-a636-97a102c34e31",
 		"name": "Customer Management System",
-		"description": "Full API coverage for the Customer Management System (.NET 10 / ASP.NET Core Web API \u2014 see ai_docs/api.md). Import this collection plus the companion environment file (optional \u2014 sane defaults are baked in as collection variables, so this works immediately after import even with no environment selected).\n\n**How auth works here:** every request auto-authenticates via the collection-level Pre-request Script, which logs in once with the seeded demo merchant (`TestMerchantID` / `Merchant123`) and caches the token in collection variables until shortly before it expires. `POST /access-token` is rate-limited to 5 requests/minute, so requests deliberately do **not** each log in independently \u2014 that was the previous collection's behavior and would 429 itself out partway through a Collection Runner pass.\n\n**Folders:**\n- **Auth** \u2014 login, token verification, and invalid-credential cases.\n- **Customer Lifecycle** \u2014 a numbered, top-to-bottom, self-cleaning walk through register \u2192 get \u2192 edit \u2192 deactivate \u2192 reactivate \u2192 deactivate \u2192 audit log \u2192 delete \u2192 confirm-gone. Safe to run repeatedly (Collection Runner-friendly): each pass creates and then deletes its own randomly-generated customer.\n- **Customer Queries** \u2014 paginated/sortable/searchable listing and CSV export.\n- **Audit Log** \u2014 the global (cross-customer) audit trail, plus the destructive clear-all-logs action.\n- **Negative & Edge Cases** \u2014 validation failures (`400`), not-found (`404`), lifecycle-guardrail conflicts (`409`), and missing-auth (`401`), matching the status-code conventions documented in ai_docs/api.md and ai_docs/database.md. A few of these register their own short-lived helper customers first (same pattern as the Lifecycle folder) and, in two cases, deliberately leave a small amount of harmless demo data behind rather than adding extra cleanup requests \u2014 the same tradeoff the app's own \"add test customers\" bulk generator makes.\n- **Health** \u2014 the unauthenticated `/health` liveness check.\n\nSee `ai_docs/index.md` for the full architecture and `ai_docs/api.md` / `ai_docs/database.md` for the validation rules and status-code conventions this collection exercises.",
+		"description": "Full API coverage for the Customer Management System (.NET 10 / ASP.NET Core Web API \u2014 see ai_docs/api.md). Import this collection plus the companion environment file (optional \u2014 sane defaults are baked in as collection variables, so this works immediately after import even with no environment selected).\n\n**How auth works here:** every request auto-authenticates via the collection-level Pre-request Script, which logs in once with the seeded demo merchant (`TestMerchantID` / `Merchant123`) and caches the token in collection variables until shortly before it expires. `POST /access-token` is rate-limited to 5 requests/minute, so requests deliberately do **not** each log in independently \u2014 that was the previous collection's behavior and would 429 itself out partway through a Collection Runner pass.\n\n**Folders:**\n- **Auth** \u2014 login, token verification, and invalid-credential cases.\n- **Customer Lifecycle** \u2014 a numbered, top-to-bottom, self-cleaning walk through register \u2192 get \u2192 edit \u2192 deactivate \u2192 reactivate \u2192 deactivate \u2192 audit log \u2192 delete \u2192 confirm-gone. Safe to run repeatedly (Collection Runner-friendly): each pass creates and then deletes its own randomly-generated customer.\n- **Customer Queries** \u2014 paginated/sortable/searchable listing and CSV export.\n- **Audit Log** \u2014 the global (cross-customer) audit trail, plus the destructive clear-all-logs action.\n- **Products & Purchases** \u2014 the product catalogue, recording a purchase, a customer's purchase history and a product's buyers; self-cleaning (registers and deletes its own helper customer). Consumes one unit of product stock per run.\n- **Negative & Edge Cases** \u2014 validation failures (`400`), not-found (`404`), lifecycle-guardrail conflicts (`409`), and missing-auth (`401`), matching the status-code conventions documented in ai_docs/api.md and ai_docs/database.md. A few of these register their own short-lived helper customers first (same pattern as the Lifecycle folder) and, in two cases, deliberately leave a small amount of harmless demo data behind rather than adding extra cleanup requests \u2014 the same tradeoff the app's own \"add test customers\" bulk generator makes.\n- **Health** \u2014 the unauthenticated `/health` liveness check.\n\nSee `ai_docs/index.md` for the full architecture and `ai_docs/api.md` / `ai_docs/database.md` for the validation rules and status-code conventions this collection exercises.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -126,6 +126,36 @@
 		},
 		{
 			"key": "customerMsisdn",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "productGuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "productStockBefore",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "productSoldBefore",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "purchaseCustomerGuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "purchaseCustomerEmail",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "purchaseCustomerMsisdn",
 			"value": "",
 			"type": "string"
 		}
@@ -928,6 +958,505 @@
 				}
 			],
 			"description": "The global (cross-customer) audit trail and its destructive clear-all action. See ai_docs/database.md's Audit trail section."
+		},
+		{
+			"name": "Products & Purchases",
+			"description": "Product catalogue and per-customer purchases (see ai_docs/products-and-purchases.md). A numbered, self-cleaning walk: register a helper customer, buy the best-stocked product, verify the purchase history and the product's buyers/sold/left numbers, check the validation and lifecycle guardrails, then delete the helper. Each run consumes one unit of stock (from whichever product has the most left), which is never restored.",
+			"item": [
+				{
+					"name": "1. Get Products (captures the best-stocked product)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/products",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"products"
+							]
+						},
+						"description": "The fixed 50-product catalogue, ordered by category then name. Captures the product with the most units left into {{productGuid}} so repeated Collection Runner passes don't run it out of stock."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"",
+									"const body = pm.response.json();",
+									"pm.test(\"50 products\", () => pm.expect(body.data).to.be.an(\"array\").with.lengthOf(50));",
+									"pm.test(\"sold + left = inventory for every product\", () => {",
+									"    body.data.forEach(p => pm.expect(p.soldQuantity + p.stockQuantity).to.equal(p.inventoryQuantity));",
+									"});",
+									"const best = body.data.reduce((a, b) => (b.stockQuantity > a.stockQuantity ? b : a));",
+									"pm.collectionVariables.set(\"productGuid\", best.guid);",
+									"pm.collectionVariables.set(\"productStockBefore\", String(best.stockQuantity));",
+									"pm.collectionVariables.set(\"productSoldBefore\", String(best.soldQuantity));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Register Helper Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"register"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Purchase\",\n    \"lastName\": \"Helper\",\n    \"msisdn\": \"{{purchaseCustomerMsisdn}}\",\n    \"email\": \"{{purchaseCustomerEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": "Registers a short-lived customer to buy things; deleted again in step 12."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const n = Date.now();",
+									"pm.collectionVariables.set(\"purchaseCustomerEmail\", `purchase.${n}@example.com`);",
+									"pm.collectionVariables.set(\"purchaseCustomerMsisdn\", \"07\" + String(n).slice(-9));"
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "3. Get Helper Customer (captures GUID)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{purchaseCustomerEmail}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"get"
+							],
+							"query": [
+								{
+									"key": "searchVariable",
+									"value": "{{purchaseCustomerEmail}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"pm.collectionVariables.set(\"purchaseCustomerGuid\", pm.response.json().data.guid);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "4. Record Purchase (expect 200)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid={{productGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"purchase"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								},
+								{
+									"key": "productGuid",
+									"value": "{{productGuid}}"
+								}
+							]
+						},
+						"description": "Decrements the product's stock by 1 and inserts the purchase row in one transaction; also writes a 'Purchased' audit entry."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"pm.test(\"Mutation response carries no Data\", () => pm.expect(pm.response.json().data).to.be.oneOf([null, undefined]));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "5. Get Customer Purchases",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/purchases?customerGuid={{purchaseCustomerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"purchases"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								}
+							]
+						},
+						"description": "The customer's purchase history, newest first, joined to product name/category/price."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.test(\"One purchase, for the product we bought\", () => {",
+									"    pm.expect(body.data).to.have.lengthOf(1);",
+									"    pm.expect(body.data[0].productGuid).to.equal(pm.collectionVariables.get(\"productGuid\"));",
+									"    pm.expect(body.data[0].purchaseDate).to.be.a(\"string\");",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "6. Get Product Details (buyer listed, stock moved by 1)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/productDetails?productGuid={{productGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"productDetails"
+							],
+							"query": [
+								{
+									"key": "productGuid",
+									"value": "{{productGuid}}"
+								}
+							]
+						},
+						"description": "The product plus who bought it and when (newest first). Sold went up by 1 and left went down by 1 since step 1."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
+									"const d = pm.response.json().data;",
+									"pm.test(\"Helper customer is among the buyers\", () => pm.expect(d.buyers.map(b => b.customerGuid)).to.include(pm.collectionVariables.get(\"purchaseCustomerGuid\")));",
+									"pm.test(\"Sold +1, left -1\", () => {",
+									"    pm.expect(d.product.soldQuantity).to.equal(parseInt(pm.collectionVariables.get(\"productSoldBefore\"), 10) + 1);",
+									"    pm.expect(d.product.stockQuantity).to.equal(parseInt(pm.collectionVariables.get(\"productStockBefore\"), 10) - 1);",
+									"    pm.expect(d.product.soldQuantity + d.product.stockQuantity).to.equal(d.product.inventoryQuantity);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "7. Purchase - Invalid Product GUID (expect 400)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid=not-a-guid",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"purchase"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								},
+								{
+									"key": "productGuid",
+									"value": "not-a-guid"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 400\", () => pm.response.to.have.status(400));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "8. Purchase - Unknown Product (expect 404)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid=00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"purchase"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								},
+								{
+									"key": "productGuid",
+									"value": "00000000-0000-0000-0000-000000000000"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "9. Product Details - Unknown Product (expect 404)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/productDetails?productGuid=00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"productDetails"
+							],
+							"query": [
+								{
+									"key": "productGuid",
+									"value": "00000000-0000-0000-0000-000000000000"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 404\", () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "10. Deactivate Helper Customer",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{purchaseCustomerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"deactivate"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "11. Purchase as Deactivated Customer (expect 409)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid={{productGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"purchase"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								},
+								{
+									"key": "productGuid",
+									"value": "{{productGuid}}"
+								}
+							]
+						},
+						"description": "A deactivated customer cannot make purchases (usp_purchaseProduct)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 409\", () => pm.response.to.have.status(409));"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "12. Delete Helper Customer (its purchases go with it)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/Customer/delete?customerGuid={{purchaseCustomerGuid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"Customer",
+								"delete"
+							],
+							"query": [
+								{
+									"key": "customerGuid",
+									"value": "{{purchaseCustomerGuid}}"
+								}
+							]
+						},
+						"description": "usp_deleteCustomer deletes the customer's purchase rows first (FK). Product stock is NOT restored."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));"
+								]
+							}
+						}
+					]
+				}
+			]
 		},
 		{
 			"name": "Negative & Edge Cases",

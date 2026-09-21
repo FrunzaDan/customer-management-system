@@ -94,6 +94,81 @@
   font-size: 0.8rem;
 }
 
+/* Purchases */
+.purchase-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.purchase-form .form-label {
+  margin-bottom: 0;
+}
+
+.purchase-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.purchase-form-row .form-select {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.purchase-heading {
+  margin: 0 0 0.5rem;
+  color: var(--spectrumColor1);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.purchase-scroll {
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.purchase-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.purchase-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(19, 59, 54, 0.08);
+}
+
+.purchase-item:first-child {
+  padding-top: 0;
+}
+
+.purchase-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.purchase-name {
+  color: var(--spectrumColor1);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.purchase-meta {
+  color: var(--mutedText);
+  font-size: 0.85rem;
+}
+
+.purchase-price {
+  flex-shrink: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Audit trail */
 .audit-scroll {
   max-height: 20rem;

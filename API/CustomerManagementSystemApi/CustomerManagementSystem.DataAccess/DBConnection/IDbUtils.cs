@@ -16,4 +16,8 @@ public interface IDbUtils
     public Task<ResponseModel<object>> GetCustomerAuditLog(string customerGuid, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> GetAllCustomerAuditLog(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetProducts(CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetProductDetails(string productGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> GetCustomerPurchases(string customerGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> PurchaseProduct(string customerGuid, string productGuid, CancellationToken cancellationToken = default);
 }

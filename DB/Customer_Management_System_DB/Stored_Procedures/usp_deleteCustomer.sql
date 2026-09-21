@@ -39,6 +39,11 @@ BEGIN
         BEGIN TRY
             BEGIN TRANSACTION;
 
+            -- Purchases FK to tbl_customers, so they have to go before the customer row
+            -- (they're the customer's own data, unlike the audit log, which is kept).
+            DELETE FROM tbl_customer_purchases
+            WHERE FK_customer_guid = @var_Guid;
+
             DELETE FROM tbl_addresses
             WHERE FK_customer_guid = @var_Guid;
 

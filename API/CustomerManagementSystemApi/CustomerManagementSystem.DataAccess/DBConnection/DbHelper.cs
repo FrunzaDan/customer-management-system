@@ -113,6 +113,56 @@ public static class DbHelper
             pagedResponse);
     }
 
+    public static async Task<ResponseModel<object>> HandleResponseWithProductList(SqlDataReader reader)
+    {
+        var items = new List<ProductModel>();
+
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            items.Add(MapProductFromReader(reader));
+
+        return new ResponseModel<object>(200, $"{items.Count} products found.", items);
+    }
+
+    // usp_getProductDetails returns two result sets: the product (zero rows = not found), then
+    // the customers who bought it.
+    public static async Task<ResponseModel<object>> HandleResponseWithProductDetails(SqlDataReader reader)
+    {
+        if (!await reader.ReadAsync().ConfigureAwait(false))
+            return new ResponseModel<object>(404, "Product not found.");
+
+        var details = new ProductDetailsModel { Product = MapProductFromReader(reader) };
+
+        await reader.NextResultAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            details.Buyers.Add(MapProductBuyerFromReader(reader));
+
+        return new ResponseModel<object>(200, "Product found.", details);
+    }
+
+    public static async Task<ResponseModel<object>> HandleResponseWithPurchaseList(SqlDataReader reader)
+    {
+        var items = new List<PurchaseModel>();
+
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            items.Add(MapPurchaseFromReader(reader));
+
+        return new ResponseModel<object>(200, $"{items.Count} purchases found.", items);
+    }
+
+    // usp_purchaseProduct returns the usual (result, message) row plus product_name. On
+    // success the name comes back as Data (the caller puts it in the audit entry); on any
+    // failure it's the plain status + message that HandleResponseWithMessage would give.
+    public static async Task<ResponseModel<object>> HandleResponseWithPurchaseResult(SqlDataReader reader)
+    {
+        if (!await reader.ReadAsync().ConfigureAwait(false))
+            return new ResponseModel<object>(500, "No data returned or operation failed.");
+
+        var message = reader["message"] as string;
+        return reader["result"] is 0
+            ? new ResponseModel<object>(200, message ?? "Operation successful!", reader["product_name"] as string)
+            : new ResponseModel<object>(Convert.ToInt32(reader["result"]), message ?? "Operation failed.");
+    }
+
     public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponse(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
@@ -188,6 +238,49 @@ public static class DbHelper
             Action = GetNullableString(reader, "action"),
             Details = GetNullableString(reader, "details"),
             ActionDate = (DateTime)reader["action_Date"]
+        };
+    }
+
+    private static ProductModel MapProductFromReader(SqlDataReader reader)
+    {
+        return new ProductModel
+        {
+            Guid = GetNullableString(reader, "PK_product_guid"),
+            Name = GetNullableString(reader, "product_name"),
+            Category = GetNullableString(reader, "category"),
+            Comment = GetNullableString(reader, "comment"),
+            Price = Convert.ToDecimal(reader["price"]),
+            InventoryQuantity = Convert.ToInt32(reader["inventory_quantity"]),
+            StockQuantity = Convert.ToInt32(reader["stock_quantity"]),
+            SoldQuantity = Convert.ToInt32(reader["sold_quantity"]),
+            Depot = GetNullableString(reader, "depot")
+        };
+    }
+
+    private static ProductBuyerModel MapProductBuyerFromReader(SqlDataReader reader)
+    {
+        return new ProductBuyerModel
+        {
+            PurchaseId = Convert.ToInt32(reader["purchase_id"]),
+            CustomerGuid = GetNullableString(reader, "FK_customer_guid"),
+            CustomerFirstName = GetNullableString(reader, "first_name"),
+            CustomerLastName = GetNullableString(reader, "last_name"),
+            CustomerEmail = GetNullableString(reader, "email"),
+            PurchaseDate = (DateTime)reader["purchase_date"]
+        };
+    }
+
+    private static PurchaseModel MapPurchaseFromReader(SqlDataReader reader)
+    {
+        return new PurchaseModel
+        {
+            PurchaseId = Convert.ToInt32(reader["purchase_id"]),
+            CustomerGuid = GetNullableString(reader, "FK_customer_guid"),
+            ProductGuid = GetNullableString(reader, "FK_product_guid"),
+            ProductName = GetNullableString(reader, "product_name"),
+            Category = GetNullableString(reader, "category"),
+            Price = Convert.ToDecimal(reader["price"]),
+            PurchaseDate = (DateTime)reader["purchase_date"]
         };
     }
 

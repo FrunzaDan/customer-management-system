@@ -1,0 +1,67 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Products</h1>
+      <p class="page-subtitle">
+        The product catalogue with sales and stock. Select a product to see who bought it.
+      </p>
+    </div>
+  </div>
+
+  @if (isLoading() && products().length === 0) {
+  <div class="app-card loading-state" role="status">
+    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading products…
+  </div>
+  } @else if (errorMessage(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+  } @else if (products().length === 0) {
+  <div class="app-card empty-state">No products yet.</div>
+  } @else {
+  <div class="app-card table-card">
+    <div class="table-responsive" role="region" aria-label="Products table" tabindex="0">
+      <table class="table table-themed table-striped table-hover">
+        <caption class="visually-hidden">
+          Products with price, units sold, units originally stocked and units left
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Category</th>
+            <th scope="col">Depot</th>
+            <th scope="col" class="text-end">Price</th>
+            <th scope="col" class="text-end">Sold</th>
+            <th scope="col" class="text-end">Inventory</th>
+            <th scope="col" class="text-end">Left</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.guid) {
+          <tr>
+            <th scope="row" class="align-middle fw-normal">
+              <a
+                class="plain-Links hoverItem"
+                routerLink="/productDetails"
+                [queryParams]="{ id: product.guid }"
+                >{{ product.name }}</a
+              >
+            </th>
+            <td class="align-middle">{{ product.category }}</td>
+            <td class="align-middle">{{ product.depot }}</td>
+            <td class="align-middle text-end">{{ product.price | number: '1.2-2' }}</td>
+            <td class="align-middle text-end">{{ product.soldQuantity }}</td>
+            <td class="align-middle text-end">{{ product.inventoryQuantity }}</td>
+            <td class="align-middle text-end">
+              @if (product.stockQuantity === 0) {
+              <span class="badge rounded-pill bg-secondary">Sold out</span>
+              } @else {
+              {{ product.stockQuantity }}
+              }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+</div>

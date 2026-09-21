@@ -1,0 +1,105 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { environment } from '../../environments/environment';
+import { Product } from '../interfaces/product';
+import { ProductService } from './product.service';
+
+describe('ProductService', () => {
+  let service: ProductService;
+  let httpMock: HttpTestingController;
+
+  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/products`;
+
+  const buildProduct = (overrides: Partial<Product> = {}): Product => ({
+    guid: 'product-1',
+    name: 'Aerobook 14 Pro',
+    category: 'Laptop',
+    comment: '14-inch ultraportable.',
+    price: 1299,
+    inventoryQuantity: 10,
+    stockQuantity: 5,
+    soldQuantity: 5,
+    depot: 'Central Depot',
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(ProductService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  // httpResource issues its request from an effect, so flush effects after
+  // calling loadProducts() before expecting the HTTP call.
+  const load = () => {
+    service.loadProducts();
+    TestBed.tick();
+  };
+
+  // ...and the response is applied asynchronously, so wait for the app to settle
+  // after flushing before asserting on the signals.
+  const settle = () => TestBed.inject(ApplicationRef).whenStable();
+
+  it('makes no request until loadProducts() is called', () => {
+    TestBed.tick();
+
+    httpMock.expectNone(API_URL);
+    expect(service.productsSignal()).toEqual([]);
+    expect(service.loadingSignal()).toBe(false);
+  });
+
+  it('populates productsSignal from a successful response', async () => {
+    const product = buildProduct();
+
+    load();
+    httpMock
+      .expectOne(API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: [product] });
+    await settle();
+
+    expect(service.productsSignal()).toEqual([product]);
+    expect(service.errorSignal()).toBeNull();
+  });
+
+  it('re-requests when loadProducts() is called again (stock changes with each purchase)', async () => {
+    load();
+    httpMock
+      .expectOne(API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: [buildProduct()] });
+    await settle();
+
+    load();
+
+    httpMock.expectOne(API_URL).flush({
+      status: 200,
+      responseMessage: 'ok',
+      data: [buildProduct({ stockQuantity: 4 })],
+    });
+    await settle();
+    expect(service.productsSignal()[0].stockQuantity).toBe(4);
+  });
+
+  it('surfaces the server-provided error message when present', async () => {
+    load();
+
+    httpMock
+      .expectOne(API_URL)
+      .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+    await settle();
+
+    expect(service.loadingSignal()).toBe(false);
+    expect(service.errorSignal()).toBe('boom');
+    expect(service.productsSignal()).toEqual([]);
+  });
+});

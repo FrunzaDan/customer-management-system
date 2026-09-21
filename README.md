@@ -25,6 +25,7 @@ Nothing shares process or memory — the three layers only ever talk over HTTP(S
 - Server-side search, sort, and pagination on the customer list — the DB does the filtering, not the browser.
 - Bulk actions from the customer list: select a batch of rows and the app splits them by status, deactivating the active ones and deleting the rest, in one confirmation.
 - Per-customer and global audit log (created/edited/deactivated/reactivated/deleted, who did it, when).
+- Product catalogue (50 fixed tech products) with per-customer purchases on the customer details page, and a Products tab showing sold / inventory / left and which customers bought each product, and when.
 - CSV export of the current filtered/sorted list.
 - A "test customer" mode (seeded from the About page) for generating throwaway demo data that's exempt from the usual deactivate-before-delete rule.
 - A live "API is not running" banner in the UI, backed by a `/health` endpoint the app polls.
@@ -70,7 +71,7 @@ Customer_Management_System/
 │       ├── CustomerManagementSystem.Domain/         # models, config interfaces
 │       └── CustomerManagementSystem.Tests/          # xUnit v3 unit tests
 ├── DB/Customer_Management_System_DB/
-│   ├── Tables/                    # tbl_customers, tbl_addresses, tbl_merchants, tbl_customer_audit_log
+│   ├── Tables/                    # tbl_customers, tbl_addresses, tbl_merchants, tbl_customer_audit_log, tbl_products, tbl_customer_purchases
 │   ├── Stored_Procedures/         # usp_* — all data access goes through these, no ORM, no inline SQL
 │   └── Post_Deployment_Scripts/   # seeds a test merchant login
 └── UI/
