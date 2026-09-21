@@ -89,6 +89,16 @@ Gender is stored/sent as an **integer**: `0` = Not declared, `1` = Male, `2` = F
 
 `withComponentInputBinding()` (in `app.config.ts`) binds `?id=` straight to `readonly id = input<string>()` on `customer-details` and `edit-customer`; a constructor `effect()` (with the load call in `untracked`) fetches when it changes. Don't reintroduce `ActivatedRoute` subscriptions/snapshots there.
 
+### Unsaved-changes protection (add / edit customer)
+
+Leaving a form with unsaved edits asks first, at three layers:
+
+- **Route guard** — `unsavedChangesGuard` (`services/unsaved-changes.guard.ts`) is a `canDeactivate` on `/addCustomer` and `/editCustomer`. It calls `component.hasUnsavedChanges()` (the `HasUnsavedChanges` interface) and, if dirty, opens the accessible `ConfirmDialogService` dialog with `title: 'Discard changes?'`, buttons **Keep editing** (focused, cancels) / **Discard changes**. It covers Cancel, nav links, browser Back/Forward and Log out. It deliberately lets a redirect to `/login?sessionExpired=true` through — blocking that would strand the user on a form they can no longer save.
+- **`beforeunload`** — each component listens via `host: { '(window:beforeunload)': ... }` and calls `event.preventDefault()` when dirty, covering reload / tab close / typing another URL (not router navigations, so the guard can't see them).
+- **What "dirty" means** — `hasUnsavedChanges` is a `computed`: `!saved() && isCustomerFormDirty(model(), baseline)`. It compares *values* against a baseline (blank form when adding; `toFormModel(loadedCustomer)` when editing), not a touched flag, so typing something and putting it back clears the warning, and a customer merely *loading* into the edit form isn't "dirty". A `saved` signal is set right after a successful save **before** `router.navigate`, so saving never prompts; a failed save keeps the warning.
+- `app.config.ts` sets `withRouterConfig({ canceledNavigationResolution: 'computed' })`. Without it, cancelling a Back-button navigation overwrites a history entry and a *second* Back press skips the guard.
+- `ConfirmDialogService.confirm(message, { title?, confirmLabel?, cancelLabel? })` now accepts optional wording; defaults remain "Please confirm" / Cancel / Confirm.
+
 ### Routing, titles & focus
 
 - Every page is **lazy-loaded** (`loadComponent` in `app.routes.ts`), so the initial bundle only carries the shell.

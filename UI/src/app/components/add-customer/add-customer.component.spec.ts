@@ -128,4 +128,56 @@ describe('AddCustomerComponent', () => {
 
     expect(component.errorMessage()).toBe('Email already registered.');
   });
+
+  describe('unsaved changes', () => {
+    it('has none on a fresh form', () => {
+      expect(component.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('has some as soon as the user types anything', () => {
+      component.model.update((m) => ({ ...m, firstName: 'Dan' }));
+
+      expect(component.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('has none again if the field is emptied back out', () => {
+      component.model.update((m) => ({ ...m, firstName: 'Dan' }));
+      component.model.update((m) => ({ ...m, firstName: '' }));
+
+      expect(component.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('keeps them when the save fails, so the user is still warned', async () => {
+      addCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      component.model.set(validModel);
+
+      await submit(component.customerForm);
+
+      expect(component.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('clears them once the customer is saved, before navigating away', async () => {
+      let dirtyAtNavigation: boolean | undefined;
+      navigate.mockImplementation(async () => {
+        dirtyAtNavigation = component.hasUnsavedChanges();
+        return true;
+      });
+      component.model.set(validModel);
+
+      await submit(component.customerForm);
+
+      expect(dirtyAtNavigation).toBe(false);
+    });
+
+    it('asks the browser to confirm closing/reloading the tab only when dirty', () => {
+      const clean = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      component.onBeforeUnload(clean);
+      expect(clean.defaultPrevented).toBe(false);
+
+      component.model.update((m) => ({ ...m, firstName: 'Dan' }));
+      const dirty = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      component.onBeforeUnload(dirty);
+      expect(dirty.defaultPrevented).toBe(true);
+    });
+  });
 });

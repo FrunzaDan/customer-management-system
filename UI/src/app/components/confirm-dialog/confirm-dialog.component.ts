@@ -20,6 +20,9 @@ export class ConfirmDialogComponent {
   private readonly document = inject(DOCUMENT);
 
   readonly message = this.confirmDialogService.message;
+  readonly title = this.confirmDialogService.title;
+  readonly confirmLabel = this.confirmDialogService.confirmLabel;
+  readonly cancelLabel = this.confirmDialogService.cancelLabel;
   readonly visible = this.confirmDialogService.visible;
   readonly closing = this.confirmDialogService.closing;
 

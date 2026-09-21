@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   effect,
   inject,
   input,
@@ -17,6 +18,7 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   customerFormSchema,
   emptyCustomerForm,
+  isCustomerFormDirty,
   toCustomer,
   toFormModel,
 } from '../customer-form-fields/customer-form';
@@ -27,6 +29,8 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
   templateUrl: './edit-customer.component.html',
   styleUrls: ['./edit-customer.component.css'],
   imports: [CustomerFormFieldsComponent, FormRoot, RouterLink],
+  // Refresh / closing the tab isn't a router navigation, so guard it here too.
+  host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
 export class EditCustomerComponent {
   private readonly router = inject(Router);
@@ -43,10 +47,19 @@ export class EditCustomerComponent {
   // The form model *is* the loaded customer, mapped: it re-derives whenever
   // customer() changes and stays writable for the user's edits — no effect +
   // patchValue copy step.
-  readonly model = linkedSignal(() => {
+  private readonly baseline = computed(() => {
     const customer = this.customer();
     return customer ? toFormModel(customer) : emptyCustomerForm();
   });
+  readonly model = linkedSignal(() => this.baseline());
+
+  private readonly saved = signal(false);
+
+  // Read by unsavedChangesGuard: edits that differ from the loaded customer and
+  // haven't been saved. Putting a value back to the original clears it.
+  readonly hasUnsavedChanges = computed(
+    () => !this.saved() && isCustomerFormDirty(this.model(), this.baseline()),
+  );
 
   // Distinct from isLoading/errorMessage above, which reflect fetching the
   // customer being edited — these track the save (PATCH) request itself.
@@ -84,11 +97,17 @@ export class EditCustomerComponent {
       await firstValueFrom(
         this.editCustomerService.editCustomer(toCustomer(this.model(), current)),
       );
+      // Saved — leaving now must not trigger the unsaved-changes prompt.
+      this.saved.set(true);
       await this.router.navigate(['/customers']);
     } catch (error) {
       this.saveError.set(
         extractErrorMessage(error as HttpErrorResponse, 'Failed to save changes'),
       );
     }
+  }
+
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) event.preventDefault();
   }
 }

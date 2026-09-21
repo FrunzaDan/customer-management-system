@@ -105,3 +105,16 @@ export function toCustomer(
     },
   } as Customer;
 }
+
+// True when the user has changed anything relative to `baseline` (the blank
+// form when adding, the loaded customer when editing). Comparing values —
+// rather than trusting a "touched" flag — means typing something and then
+// putting it back doesn't count as an unsaved change.
+export function isCustomerFormDirty(
+  model: CustomerFormModel,
+  baseline: CustomerFormModel,
+): boolean {
+  return (Object.keys(model) as (keyof CustomerFormModel)[]).some(
+    (key) => model[key] !== baseline[key],
+  );
+}

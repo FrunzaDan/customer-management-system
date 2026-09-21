@@ -185,6 +185,72 @@ describe('EditCustomerComponent', () => {
     });
   });
 
+  describe('unsaved changes', () => {
+    it('has none after the customer loads (loading is not editing)', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+
+      expect(component.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('has some once the user changes a field', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+      component.model.update((m) => ({ ...m, firstName: 'Updated' }));
+
+      expect(component.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('has none again if the user puts the original value back', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+      component.model.update((m) => ({ ...m, firstName: 'Updated' }));
+      component.model.update((m) => ({ ...m, firstName: 'Dan' }));
+
+      expect(component.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('keeps them when the save fails', async () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+      editCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      component.model.update((m) => ({ ...m, firstName: 'Updated' }));
+
+      await submit(component.customerForm);
+
+      expect(component.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('clears them once saved, before navigating away', async () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+      let dirtyAtNavigation: boolean | undefined;
+      navigate.mockImplementation(async () => {
+        dirtyAtNavigation = component.hasUnsavedChanges();
+        return true;
+      });
+      component.model.update((m) => ({ ...m, firstName: 'Updated' }));
+
+      await submit(component.customerForm);
+
+      expect(dirtyAtNavigation).toBe(false);
+    });
+
+    it('asks the browser to confirm closing/reloading the tab only when dirty', () => {
+      const component = createComponent();
+      selectedCustomer.set(buildCustomer());
+
+      const clean = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      component.onBeforeUnload(clean);
+      expect(clean.defaultPrevented).toBe(false);
+
+      component.model.update((m) => ({ ...m, firstName: 'Updated' }));
+      const dirty = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      component.onBeforeUnload(dirty);
+      expect(dirty.defaultPrevented).toBe(true);
+    });
+  });
+
   // Local helper: the same mapping the component uses, to build a valid model
   // without a loaded customer.
   function toModel(customer: Customer) {

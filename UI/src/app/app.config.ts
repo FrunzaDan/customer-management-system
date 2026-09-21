@@ -18,6 +18,7 @@ import {
   TitleStrategy,
   withComponentInputBinding,
   withInMemoryScrolling,
+  withRouterConfig,
 } from '@angular/router';
 import { routes } from './app.routes';
 import { apiLoggerInterceptor } from './services/api-logger.interceptor';
@@ -34,6 +35,10 @@ export const appConfig: ApplicationConfig = {
         scrollPositionRestoration: 'top',
         anchorScrolling: 'enabled',
       }),
+      // The unsaved-changes guard can cancel a browser Back/Forward. The default
+      // ('replace') overwrites a history entry when that happens, so a second
+      // Back press skips the guard; 'computed' restores history correctly.
+      withRouterConfig({ canceledNavigationResolution: 'computed' }),
     ),
     { provide: TitleStrategy, useClass: AppTitleStrategy },
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),

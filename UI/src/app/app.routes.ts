@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Routes } from '@angular/router';
 import { AuthGuardService } from './services/auth-guard.service';
+import { unsavedChangesGuard } from './services/unsaved-changes.guard';
 
 const authGuardFn: CanActivateFn = () => {
   const authService = inject(AuthGuardService);
@@ -40,6 +41,7 @@ export const routes: Routes = [
         (m) => m.AddCustomerComponent,
       ),
     canActivate: [authGuardFn],
+    canDeactivate: [unsavedChangesGuard],
     title: 'Register customer',
   },
   {
@@ -49,6 +51,7 @@ export const routes: Routes = [
         (m) => m.EditCustomerComponent,
       ),
     canActivate: [authGuardFn],
+    canDeactivate: [unsavedChangesGuard],
     title: 'Edit customer',
   },
   {

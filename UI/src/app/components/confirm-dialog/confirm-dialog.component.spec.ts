@@ -79,4 +79,34 @@ describe('ConfirmDialogComponent accessibility', () => {
     );
     expect(document.activeElement).toBe(confirm); // wrapped backward
   });
+
+  it('uses the default title and Cancel / Confirm labels unless told otherwise', () => {
+    const fixture = TestBed.createComponent(ConfirmDialogComponent);
+    open(fixture);
+    const el: HTMLElement = fixture.nativeElement;
+
+    expect(el.querySelector('h2')?.textContent).toContain('Please confirm');
+    expect(Array.from(el.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual([
+      'Cancel',
+      'Confirm',
+    ]);
+  });
+
+  it('shows a custom title and button labels, still focusing the cancel-side button', () => {
+    const fixture = TestBed.createComponent(ConfirmDialogComponent);
+    service.confirm('You have unsaved changes.', {
+      title: 'Discard changes?',
+      confirmLabel: 'Discard changes',
+      cancelLabel: 'Keep editing',
+    });
+    settle(fixture);
+    const el: HTMLElement = fixture.nativeElement;
+
+    expect(el.querySelector('h2')?.textContent).toContain('Discard changes?');
+    expect(Array.from(el.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual([
+      'Keep editing',
+      'Discard changes',
+    ]);
+    expect(document.activeElement?.textContent?.trim()).toBe('Keep editing');
+  });
 });
