@@ -38,7 +38,7 @@ Customer_Management_System/
 - Local dev DB runs as a **Docker container** (Azure SQL Edge — the only Microsoft SQL Server image with a working Apple Silicon/arm64 build). See [build-and-run](build-and-run.md).
 - This is a learning project: some rough edges are deliberately left as-is rather than "fixed" — each doc below has a "Known gaps" section for its layer; don't treat those as an unclaimed TODO list.
 
-**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`; a fixed 50-product catalogue with per-customer purchases (shown on customer details) and a Products tab with sold/inventory/left and who bought what.
+**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator (each generated customer also gets 1–5 purchases) exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`; a fixed 50-product catalogue with per-customer purchases (shown on customer details) and a Products tab with sold/inventory/left and who bought what.
 
 ## Architecture at a glance
 
@@ -80,7 +80,7 @@ Domain terms and magic numbers used across this codebase — check here before a
 
 - **Merchant** — the API's authenticated principal; the user who logs in and manages customers. Stored in `tbl_merchants`. Not the same as a "customer."
 - **Customer** — the record being managed (name, contact info, address). Stored in `tbl_customers` + `tbl_addresses`.
-- **`customer_Status` codes** — `1901` = active, `1903` = deactivated, `1904` = test (fictitious customers created via the About page's bulk generator). See [database](database.md).
+- **`customer_Status` codes** — `1901` = active, `1903` = deactivated, `1904` = test (fictitious customers created via the About page's bulk generator, each with 1–5 purchases). See [database](database.md).
 - **`merchant_role` codes** — `1801` = the only role currently in use. See [api](api.md).
 - **Depot** — the warehouse a product's stock is held in (`tbl_products.depot`); the original request said "depos". See [products-and-purchases](products-and-purchases.md).
 - **Sold / inventory / left** — a product's units sold, originally stocked, and remaining; `sold = inventory - left`, derived in SQL. See [products-and-purchases](products-and-purchases.md).

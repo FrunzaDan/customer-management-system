@@ -5,7 +5,7 @@ import {
   HttpParams,
 } from '@angular/common/http';
 import { computed, Injectable, Signal, signal, inject } from '@angular/core';
-import { catchError, map, of, Subject, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { Customer } from '../interfaces/customer-response';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
@@ -134,6 +134,30 @@ export class GetCustomerService {
         },
         error: (error: HttpErrorResponse) => this.handleError(error),
       });
+  }
+
+  /**
+   * Looks a customer up by email and returns its GUID, without touching any of this
+   * service's signals (unlike {@link getCustomer}, which drives the details page's state).
+   * Registration doesn't return the new customer's server-generated GUID, so bulk callers
+   * (test-data generation) use this to find it afterwards.
+   */
+  findCustomerGuid(email: string): Observable<string> {
+    const headers = this.httpHeaderService.getHeadersWithTokenSet();
+    const params = new HttpParams().set('searchVariable', email);
+
+    return this.http
+      .get<GenericResponse<Customer>>(this.API_URL_GET_SINGLE, {
+        headers,
+        params,
+      })
+      .pipe(
+        map((response) => {
+          const guid = response?.data?.guid;
+          if (!guid) throw new Error(`No customer found for ${email}.`);
+          return guid;
+        }),
+      );
   }
 
   updateCustomerLocally(updatedCustomer: Customer): void {

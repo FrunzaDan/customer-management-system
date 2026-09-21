@@ -1,14 +1,23 @@
 import { Component, inject, signal } from '@angular/core';
-import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
 import { AddCustomerService } from '../../services/add-customer.service';
+import { GetCustomerService } from '../../services/get-customer.service';
+import { ProductService } from '../../services/product.service';
+import { PurchaseService } from '../../services/purchase.service';
+import { Product } from '../../interfaces/product';
+import { chooseProductsToBuy } from '../../utils/random-purchases';
 import {
   Customer,
   CustomerActivationStatus,
 } from '../../interfaces/customer-response';
 
 const TEST_CUSTOMER_COUNT = 50;
+
+// How many times to re-draw products for a customer whose every purchase was rejected
+// (e.g. the products it picked ran out of stock) before giving up on it.
+const MAX_PURCHASE_ROUNDS = 3;
 
 const FIRST_NAMES = [
   'Andrei',
@@ -183,6 +192,9 @@ export class AboutComponent {
   private readonly apiLoggerService = inject(ApiLoggerService);
   private readonly notificationService = inject(NotificationService);
   private readonly addCustomerService = inject(AddCustomerService);
+  private readonly getCustomerService = inject(GetCustomerService);
+  private readonly productService = inject(ProductService);
+  private readonly purchaseService = inject(PurchaseService);
 
   readonly apiLoggingEnabled = this.apiLoggerService.enabled;
   readonly addingTestCustomers = signal(false);
@@ -194,40 +206,116 @@ export class AboutComponent {
     );
   }
 
-  addTestCustomers(): void {
+  async addTestCustomers(): Promise<void> {
     if (this.addingTestCustomers()) {
       return;
     }
     this.addingTestCustomers.set(true);
 
-    // An index-based suffix (rather than pure randomness) guarantees no
-    // email/msisdn collisions within the batch itself, since both columns
-    // carry a unique constraint at the database level.
-    const customers = Array.from({ length: TEST_CUSTOMER_COUNT }, (_, index) =>
-      this.buildRandomCustomer(index),
-    );
-
-    from(customers)
-      .pipe(
-        concatMap((customer) =>
-          this.addCustomerService.addCustomerSilently(customer).pipe(
-            map(() => true),
-            catchError(() => of(false)),
-          ),
-        ),
-        toArray(),
-      )
-      .subscribe((results) => {
-        this.addingTestCustomers.set(false);
-        const succeeded = results.filter(Boolean).length;
-        const failed = results.length - succeeded;
-        this.notificationService.show(
-          failed === 0
-            ? `Added ${succeeded} test customers.`
-            : `Added ${succeeded} test customers (${failed} failed).`,
-          failed === 0 ? 'success' : 'error',
+    try {
+      // Fetched before anything is created: if the catalogue can't be loaded, fail up
+      // front rather than leaving 50 customers that were meant to have purchases without.
+      let stock: Product[];
+      try {
+        // A private copy, decremented as the run buys — so it stops offering products it
+        // has drained, without re-fetching the catalogue after every purchase.
+        stock = (await firstValueFrom(this.productService.fetchProducts())).map(
+          (product) => ({ ...product }),
         );
-      });
+      } catch {
+        this.notificationService.show(
+          'Could not load the product catalogue, so no test customers were added.',
+          'error',
+        );
+        return;
+      }
+
+      // An index-based suffix (rather than pure randomness) guarantees no
+      // email/msisdn collisions within the batch itself, since both columns
+      // carry a unique constraint at the database level.
+      const customers = Array.from(
+        { length: TEST_CUSTOMER_COUNT },
+        (_, index) => this.buildRandomCustomer(index),
+      );
+
+      // Sequential on purpose (as the bulk delete is): each purchase reads and decrements
+      // shared stock, and one HTTP call at a time keeps the API and the tally in step.
+      let added = 0;
+      let failed = 0;
+      let purchases = 0;
+      let withoutPurchases = 0;
+      for (const customer of customers) {
+        try {
+          await firstValueFrom(
+            this.addCustomerService.addCustomerSilently(customer),
+          );
+        } catch {
+          failed++;
+          continue;
+        }
+        added++;
+
+        const bought = await this.buyRandomProducts(customer.email, stock);
+        purchases += bought;
+        if (bought === 0) withoutPurchases++;
+      }
+
+      const problems = [
+        failed > 0 ? `${failed} failed` : null,
+        withoutPurchases > 0
+          ? `${withoutPurchases} could not buy anything — products are out of stock`
+          : null,
+      ].filter((problem) => problem !== null);
+      this.notificationService.show(
+        `Added ${added} test customers with ${purchases} purchases` +
+          (problems.length > 0 ? ` (${problems.join('; ')}).` : '.'),
+        problems.length > 0 ? 'error' : 'success',
+      );
+    } finally {
+      this.addingTestCustomers.set(false);
+    }
+  }
+
+  /**
+   * Gives a freshly registered test customer 1–5 distinct in-stock products and returns
+   * how many purchases went through. Registration doesn't return the new customer's
+   * server-generated GUID, so it's looked up by email first.
+   */
+  private async buyRandomProducts(
+    email: string,
+    stock: Product[],
+  ): Promise<number> {
+    let customerGuid: string;
+    try {
+      customerGuid = await firstValueFrom(
+        this.getCustomerService.findCustomerGuid(email),
+      );
+    } catch {
+      return 0;
+    }
+
+    let bought = 0;
+    for (let round = 0; round < MAX_PURCHASE_ROUNDS && bought === 0; round++) {
+      const chosen = chooseProductsToBuy(stock);
+      if (chosen.length === 0) break; // nothing left in stock
+
+      for (const product of chosen) {
+        try {
+          await firstValueFrom(
+            this.purchaseService.purchaseProductSilently(
+              customerGuid,
+              product.guid,
+            ),
+          );
+          product.stockQuantity--;
+          bought++;
+        } catch {
+          // Rejected (typically out of stock): don't offer it again this run.
+          product.stockQuantity = 0;
+        }
+      }
+    }
+    return bought;
   }
 
   private buildRandomCustomer(index: number): Customer {

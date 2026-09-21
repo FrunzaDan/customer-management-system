@@ -330,6 +330,16 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             locally; like an active customer, a test customer can still be
             deactivated and deleted afterwards.
           </p>
+          <p class="card-text">
+            Each test customer also buys <strong>between 1 and 5 different
+            products</strong> from the catalogue, picked at random from what's
+            still in stock (through
+            <code>POST /api/Customer/purchase</code>, the same endpoint as the
+            <em>Record purchase</em> control on a customer's page). Those
+            purchases are real: they use up product stock, and deleting a test
+            customer later does <em>not</em> put the stock back — so generating
+            test customers repeatedly will eventually sell products out.
+          </p>
           <button
             type="button"
             class="btn btn-primary"

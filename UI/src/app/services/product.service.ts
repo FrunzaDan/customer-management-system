@@ -1,5 +1,6 @@
-import { HttpErrorResponse, httpResource } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, httpResource } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { Product } from '../interfaces/product';
@@ -11,6 +12,7 @@ import { HttpHeaderService } from './http-header-service';
 })
 export class ProductService {
   private readonly API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/products`;
+  private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
 
   // No request is made until loadProducts() is first called (returning undefined
@@ -35,6 +37,19 @@ export class ProductService {
     const error = this.products.error();
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
+
+  /**
+   * One-shot fetch of the current catalogue, independent of the `httpResource` above —
+   * for imperative callers (bulk test-data generation) that need the list as a value
+   * *now*, rather than a signal that fills in later.
+   */
+  fetchProducts(): Observable<Product[]> {
+    return this.http
+      .get<GenericResponse<Product[]>>(this.API_URL, {
+        headers: this.httpHeaderService.getHeadersWithTokenSet(),
+      })
+      .pipe(map((response) => response?.data ?? []));
+  }
 
   loadProducts(): void {
     if (this.requested()) {

@@ -60,16 +60,29 @@ export class PurchaseService {
     customerGuid: string,
     productGuid: string,
   ): Observable<GenericResponse<object>> {
+    return this.purchaseProductSilently(customerGuid, productGuid).pipe(
+      tap(() => this.notificationService.show('Purchase recorded.')),
+    );
+  }
+
+  /**
+   * Same endpoint as {@link purchaseProduct}, without the per-call success toast — for
+   * callers (bulk test-data generation) that show one summary notification instead of
+   * one per request.
+   */
+  purchaseProductSilently(
+    customerGuid: string,
+    productGuid: string,
+  ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams()
       .set('customerGuid', customerGuid)
       .set('productGuid', productGuid);
 
-    return this.http
-      .post<GenericResponse<object>>(`${this.API_URL}/purchase`, null, {
-        headers,
-        params,
-      })
-      .pipe(tap(() => this.notificationService.show('Purchase recorded.')));
+    return this.http.post<GenericResponse<object>>(
+      `${this.API_URL}/purchase`,
+      null,
+      { headers, params },
+    );
   }
 }

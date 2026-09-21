@@ -26,7 +26,7 @@ The `tbl_customers`/`tbl_addresses`/`tbl_merchants` schema, the status codes tha
 **Status codes** (`tbl_customers.customer_Status`, `CustomerStatusCodes` in `Domain/Models`):
 - `1901` = active
 - `1903` = deactivated
-- `1904` = test — assigned only at creation time, by the About page's "add 50 test customers" bulk generator (see [angular-frontend](angular-frontend.md)); marks a customer as fictitious/demo data everywhere the status is shown (UI status labels, CSV export). Unlike an active customer, a test customer is exempt from the deactivate-before-delete rule (see below) since it isn't real data.
+- `1904` = test — assigned only at creation time, by the About page's "add 50 test customers" bulk generator (see [angular-frontend](angular-frontend.md); it also gives each one 1–5 purchases — see [products-and-purchases](products-and-purchases.md)); marks a customer as fictitious/demo data everywhere the status is shown (UI status labels, CSV export). Unlike an active customer, a test customer is exempt from the deactivate-before-delete rule (see below) since it isn't real data.
 
 **Lifecycle rules, enforced in the stored procedures themselves** (not just the API layer):
 - New customers are created **active** by default (`usp_createCustomer`'s `@var_CustomerStatus` parameter defaults to `1901`); `CustomerRegistration.RegisterCustomerFunction` additionally accepts an explicit `1904` (test) in the request body, but rejects any other value with `400` — a client can never register a customer as already deactivated.

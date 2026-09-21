@@ -127,6 +127,19 @@ describe('PurchaseService', () => {
       expect(show).toHaveBeenCalledWith('Purchase recorded.');
     });
 
+    it('purchaseProductSilently POSTs the same request but shows no notification', () => {
+      const show = vi.spyOn(notificationService, 'show');
+
+      service.purchaseProductSilently('guid-1', 'product-1').subscribe();
+      const req = httpMock.expectOne((r) => r.url === PURCHASE_URL);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.params.get('customerGuid')).toBe('guid-1');
+      expect(req.request.params.get('productGuid')).toBe('product-1');
+      req.flush({ status: 200, responseMessage: 'ok' });
+
+      expect(show).not.toHaveBeenCalled();
+    });
+
     it('propagates a failure to the caller without a success notification', () => {
       const show = vi.spyOn(notificationService, 'show');
       const onError = vi.fn();

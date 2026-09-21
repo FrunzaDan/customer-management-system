@@ -90,6 +90,19 @@ describe('ProductService', () => {
     expect(service.productsSignal()[0].stockQuantity).toBe(4);
   });
 
+  it('fetchProducts returns the catalogue as a value, without touching the resource signals', () => {
+    const product = buildProduct();
+    let result: Product[] | undefined;
+
+    service.fetchProducts().subscribe((products) => (result = products));
+    httpMock
+      .expectOne(API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: [product] });
+
+    expect(result).toEqual([product]);
+    expect(service.productsSignal()).toEqual([]); // the resource was never loaded
+  });
+
   it('surfaces the server-provided error message when present', async () => {
     load();
 
