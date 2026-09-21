@@ -28,7 +28,7 @@ export class GlobalAuditLogComponent implements OnInit {
   readonly errorMessage = this.globalAuditLogService.errorSignal;
   readonly totalItems = this.globalAuditLogService.totalItemsSignal;
 
-  readonly pageSize = 20;
+  readonly pageSize = 50;
   readonly currentPage = signal(1);
 
   readonly clearing = signal(false);

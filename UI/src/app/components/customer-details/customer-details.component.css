@@ -124,9 +124,16 @@
   font-weight: 600;
 }
 
-.purchase-scroll {
-  max-height: 20rem;
-  overflow-y: auto;
+.purchase-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  background: rgba(165, 240, 197, 0.3);
+  color: var(--spectrumColor1);
+  font-variant-numeric: tabular-nums;
 }
 
 .purchase-list {
@@ -170,11 +177,6 @@
 }
 
 /* Audit trail */
-.audit-scroll {
-  max-height: 20rem;
-  overflow-y: auto;
-}
-
 .audit-list {
   margin: 0;
   list-style: none;

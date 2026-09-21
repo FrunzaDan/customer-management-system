@@ -21,21 +21,70 @@
     <div class="table-responsive" role="region" aria-label="Products table" tabindex="0">
       <table class="table table-themed table-striped table-hover">
         <caption class="visually-hidden">
-          Products with price, units sold, units originally stocked and units left
+          {{ tableCaption() }}
         </caption>
         <thead>
           <tr>
-            <th scope="col">Product</th>
-            <th scope="col">Category</th>
-            <th scope="col">Depot</th>
-            <th scope="col" class="text-end">Price</th>
-            <th scope="col" class="text-end">Sold</th>
-            <th scope="col" class="text-end">Inventory</th>
-            <th scope="col" class="text-end">Left</th>
+            <th scope="col" [attr.aria-sort]="ariaSort('name')">
+              <button type="button" class="sort-button" (click)="setSort('name')">
+                Product
+                @if (sortColumn() === 'name') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" [attr.aria-sort]="ariaSort('category')">
+              <button type="button" class="sort-button" (click)="setSort('category')">
+                Category
+                @if (sortColumn() === 'category') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" [attr.aria-sort]="ariaSort('depot')">
+              <button type="button" class="sort-button" (click)="setSort('depot')">
+                Depot
+                @if (sortColumn() === 'depot') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" class="text-end" [attr.aria-sort]="ariaSort('price')">
+              <button type="button" class="sort-button" (click)="setSort('price')">
+                Price
+                @if (sortColumn() === 'price') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" class="text-end" [attr.aria-sort]="ariaSort('sold')">
+              <button type="button" class="sort-button" (click)="setSort('sold')">
+                Sold
+                @if (sortColumn() === 'sold') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" class="text-end" [attr.aria-sort]="ariaSort('inventory')">
+              <button type="button" class="sort-button" (click)="setSort('inventory')">
+                Inventory
+                @if (sortColumn() === 'inventory') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" class="text-end" [attr.aria-sort]="ariaSort('left')">
+              <button type="button" class="sort-button" (click)="setSort('left')">
+                Left
+                @if (sortColumn() === 'left') {
+                <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+                }
+              </button>
+            </th>
           </tr>
         </thead>
         <tbody>
-          @for (product of products(); track product.guid) {
+          @for (product of sortedProducts(); track product.guid) {
           <tr>
             <th scope="row" class="align-middle fw-normal">
               <a

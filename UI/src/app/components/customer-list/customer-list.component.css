@@ -27,18 +27,3 @@
   flex: 1 1 260px;
   max-width: 360px;
 }
-
-/* Column-sort control: a real <button> (keyboard + screen-reader operable)
-   styled to look like the header text it replaces. */
-.sort-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.sort-button:hover {
-  text-decoration: underline;
-}

@@ -56,13 +56,13 @@ describe('GlobalAuditLogComponent', () => {
 
     expect(loadAllAuditLog).toHaveBeenCalledWith({
       pageNumber: 1,
-      pageSize: 20,
+      pageSize: 50,
     });
   });
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
-      totalItems.set(45); // 45 items / 20 per page = 3 pages
+      totalItems.set(120); // 120 items / 50 per page = 3 pages
       loadAllAuditLog.mockClear();
 
       component.goToPage(10);
@@ -70,12 +70,12 @@ describe('GlobalAuditLogComponent', () => {
       expect(component.currentPage()).toBe(3);
       expect(loadAllAuditLog).toHaveBeenCalledWith({
         pageNumber: 3,
-        pageSize: 20,
+        pageSize: 50,
       });
     });
 
     it('clamps below page 1 up to 1', () => {
-      totalItems.set(45);
+      totalItems.set(120);
       component.currentPage.set(3);
       loadAllAuditLog.mockClear();
 

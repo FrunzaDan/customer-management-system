@@ -79,6 +79,12 @@ export class CustomerDetailsComponent {
   readonly purchasesLoading = this.purchaseService.loadingSignal;
   readonly purchasesError = this.purchaseService.errorSignal;
 
+  // Sum of the listed purchases' prices. Added up in whole cents so 0.1 + 0.2 style
+  // float drift never shows on screen (prices are DECIMAL(10,2) in the DB).
+  readonly totalSpent = computed(
+    () => this.purchases().reduce((cents, p) => cents + Math.round(p.price * 100), 0) / 100,
+  );
+
   readonly products = this.productService.productsSignal;
   readonly productsLoading = this.productService.loadingSignal;
   readonly productsError = this.productService.errorSignal;

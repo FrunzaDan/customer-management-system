@@ -115,7 +115,7 @@ describe('CustomerListComponent', () => {
 
   describe('setSort', () => {
     it('toggles direction when clicking the already-active column, and resets to page 1', () => {
-      totalItems.set(25);
+      totalItems.set(75);
       component.currentPage.set(3);
       loadCustomers.mockClear();
 
@@ -127,7 +127,7 @@ describe('CustomerListComponent', () => {
       expect(loadCustomers).toHaveBeenCalledTimes(1);
       expect(loadCustomers).toHaveBeenCalledWith({
         pageNumber: 1,
-        pageSize: 20,
+        pageSize: 50,
         searchTerm: undefined,
         sortColumn: 'name',
         sortDirection: 'desc',
@@ -141,7 +141,7 @@ describe('CustomerListComponent', () => {
       expect(component.sortDirection()).toBe('asc');
       expect(loadCustomers).toHaveBeenLastCalledWith({
         pageNumber: 1,
-        pageSize: 20,
+        pageSize: 50,
         searchTerm: undefined,
         sortColumn: 'email',
         sortDirection: 'asc',
@@ -151,7 +151,7 @@ describe('CustomerListComponent', () => {
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
-      totalItems.set(45); // 45 items / 20 per page = 3 pages
+      totalItems.set(120); // 120 items / 50 per page = 3 pages
       loadCustomers.mockClear();
 
       component.goToPage(10);
@@ -163,7 +163,7 @@ describe('CustomerListComponent', () => {
     });
 
     it('clamps below page 1 up to 1', () => {
-      totalItems.set(25);
+      totalItems.set(75);
       component.currentPage.set(3);
       loadCustomers.mockClear();
 
@@ -203,7 +203,7 @@ describe('CustomerListComponent', () => {
       expect(loadCustomers).toHaveBeenCalledTimes(1);
       expect(loadCustomers).toHaveBeenCalledWith({
         pageNumber: 1,
-        pageSize: 20,
+        pageSize: 50,
         searchTerm: 'dan',
         sortColumn: 'name',
         sortDirection: 'asc',
@@ -212,7 +212,7 @@ describe('CustomerListComponent', () => {
 
     it('resets to page 1 once the debounced fetch fires', () => {
       vi.useFakeTimers();
-      totalItems.set(25);
+      totalItems.set(75);
       component.currentPage.set(2);
       loadCustomers.mockClear();
 

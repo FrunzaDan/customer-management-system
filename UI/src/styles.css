@@ -194,6 +194,14 @@ app-footer {
   overflow: hidden;
 }
 
+/* Bootstrap's .table-responsive sets only overflow-x: auto, but the browser then computes
+   overflow-y as auto too, making the table its own vertical scroll container: the mouse wheel
+   gets captured over the table (even by a 1px overflow) and the page stops scrolling. Only the
+   horizontal (phone) scroll is wanted; vertical scrolling always belongs to the page. */
+.table-responsive {
+  overflow-y: hidden;
+}
+
 .table-themed {
   /* Inside .table-responsive: scroll sideways on phones rather than squeezing
      every column into a 4-line wrap. */
@@ -201,6 +209,22 @@ app-footer {
   --bs-table-striped-bg: rgba(165, 240, 197, 0.3);
   --bs-table-hover-bg: rgba(165, 240, 197, 0.55);
   margin-bottom: 0;
+}
+
+/* Column-sort control: a real <button> (keyboard + screen-reader operable)
+   styled to look like the header text it replaces
+   (customer list and products table). */
+.sort-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  text-decoration: underline;
 }
 
 .table-themed > thead > tr > th {

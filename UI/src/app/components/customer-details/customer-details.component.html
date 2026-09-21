@@ -260,26 +260,28 @@
           } @else if (purchases().length === 0) {
           <p class="text-muted mb-0">No purchases yet.</p>
           } @else {
-          <div class="purchase-scroll" role="region" aria-label="Purchase history" tabindex="0">
-            <ul class="purchase-list">
-              @for (purchase of purchases(); track purchase.purchaseId) {
-              <li class="purchase-item">
-                <div>
-                  <a
-                    class="purchase-name plain-Links hoverItem"
-                    routerLink="/productDetails"
-                    [queryParams]="{ id: purchase.productGuid }"
-                    >{{ purchase.productName }}</a
-                  >
-                  <div class="purchase-meta">
-                    {{ purchase.category }} · {{ purchase.purchaseDate | date: 'medium' }}
-                  </div>
+          <p class="purchase-total">
+            <span>Total spent</span>
+            <strong>{{ totalSpent() | number: '1.2-2' }}</strong>
+          </p>
+          <ul class="purchase-list">
+            @for (purchase of purchases(); track purchase.purchaseId) {
+            <li class="purchase-item">
+              <div>
+                <a
+                  class="purchase-name plain-Links hoverItem"
+                  routerLink="/productDetails"
+                  [queryParams]="{ id: purchase.productGuid }"
+                  >{{ purchase.productName }}</a
+                >
+                <div class="purchase-meta">
+                  {{ purchase.category }} · {{ purchase.purchaseDate | date: 'medium' }}
                 </div>
-                <div class="purchase-price">{{ purchase.price | number: '1.2-2' }}</div>
-              </li>
-              }
-            </ul>
-          </div>
+              </div>
+              <div class="purchase-price">{{ purchase.price | number: '1.2-2' }}</div>
+            </li>
+            }
+          </ul>
           }
         </div>
       </div>
@@ -294,7 +296,6 @@
           } @else if (auditLog().length === 0) {
           <p class="text-muted mb-0">No recorded actions yet.</p>
           } @else {
-          <div class="audit-scroll" role="region" aria-label="Audit trail entries" tabindex="0">
           <ul class="audit-list">
             @for (entry of auditLog(); track entry.auditId) {
             <li class="audit-item">
@@ -308,7 +309,6 @@
             </li>
             }
           </ul>
-          </div>
           }
         </div>
       </div>

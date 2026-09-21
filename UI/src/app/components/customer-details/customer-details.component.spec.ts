@@ -15,6 +15,7 @@ import { GetCustomerService } from '../../services/get-customer.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
+import { Purchase } from '../../interfaces/purchase';
 import { CustomerDetailsComponent } from './customer-details.component';
 
 describe('CustomerDetailsComponent', () => {
@@ -24,6 +25,7 @@ describe('CustomerDetailsComponent', () => {
   let loadProducts: ReturnType<typeof vi.fn>;
   let purchaseProduct: ReturnType<typeof vi.fn>;
   let products: ReturnType<typeof signal<Product[]>>;
+  let purchases: ReturnType<typeof signal<Purchase[]>>;
   let deactivateCustomer: ReturnType<typeof vi.fn>;
   let reactivateCustomer: ReturnType<typeof vi.fn>;
   let deleteCustomer: ReturnType<typeof vi.fn>;
@@ -78,6 +80,7 @@ describe('CustomerDetailsComponent', () => {
     loadProducts = vi.fn();
     purchaseProduct = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     products = signal<Product[]>([]);
+    purchases = signal<Purchase[]>([]);
     deactivateCustomer = vi.fn();
     reactivateCustomer = vi.fn();
     deleteCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
@@ -124,7 +127,7 @@ describe('CustomerDetailsComponent', () => {
         {
           provide: PurchaseService,
           useValue: {
-            entriesSignal: signal([]),
+            entriesSignal: purchases,
             loadingSignal: signal(false),
             errorSignal: signal<string | null>(null),
             loadPurchases,
@@ -352,6 +355,28 @@ describe('CustomerDetailsComponent', () => {
 
       selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }));
       expect(component.canPurchase()).toBe(false);
+    });
+
+    it('totalSpent sums the purchase prices, exactly to the cent', () => {
+      const component = createComponent();
+      const buildPurchase = (id: number, price: number): Purchase => ({
+        purchaseId: id,
+        customerGuid: 'guid-1',
+        productGuid: `product-${id}`,
+        productName: `Product ${id}`,
+        category: 'Laptop',
+        price,
+        purchaseDate: '2026-01-01',
+      });
+
+      expect(component.totalSpent()).toBe(0); // no purchases yet
+
+      purchases.set([buildPurchase(1, 0.1), buildPurchase(2, 0.2), buildPurchase(3, 1299)]);
+      expect(component.totalSpent()).toBe(1299.3); // plain float addition gives 1299.3000000000002
+
+      // The same product bought twice counts twice.
+      purchases.set([buildPurchase(1, 49.99), buildPurchase(2, 49.99)]);
+      expect(component.totalSpent()).toBe(99.98);
     });
 
     it('groups the catalogue by category', () => {

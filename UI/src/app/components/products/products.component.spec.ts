@@ -104,4 +104,93 @@ describe('ProductsComponent', () => {
     const lastCell = (fixture.nativeElement as HTMLElement).querySelector('tbody tr td:last-child');
     expect(lastCell?.textContent?.trim()).toBe('Sold out');
   });
+  describe('sorting', () => {
+    const names = (fixture: ReturnType<typeof render>) =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr th')).map((c) =>
+        c.textContent?.trim(),
+      );
+    const header = (fixture: ReturnType<typeof render>, label: string) =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('thead th')).find((th) =>
+        th.textContent?.includes(label),
+      ) as HTMLElement;
+    const click = (fixture: ReturnType<typeof render>, label: string) => {
+      (header(fixture, label).querySelector('button') as HTMLButtonElement).click();
+      fixture.detectChanges();
+    };
+    const seed = (fixture: ReturnType<typeof render>) => {
+      products.set([
+        buildProduct({ guid: 'a', name: 'Alpha', category: 'Mouse', price: 30, soldQuantity: 2, inventoryQuantity: 10, stockQuantity: 8 }),
+        buildProduct({ guid: 'b', name: 'Bravo', category: 'Laptop', price: 1200, soldQuantity: 9, inventoryQuantity: 10, stockQuantity: 1 }),
+        buildProduct({ guid: 'c', name: 'Charlie', category: 'Keyboard', price: 99.5, soldQuantity: 5, inventoryQuantity: 20, stockQuantity: 15 }),
+      ]);
+      fixture.detectChanges();
+    };
+
+    it('keeps the API order until a header is clicked', () => {
+      const fixture = render();
+      seed(fixture);
+
+      expect(names(fixture)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+      expect(header(fixture, 'Product').getAttribute('aria-sort')).toBe('none');
+    });
+
+    it('sorts text columns ascending on the first click and descending on the second', () => {
+      const fixture = render();
+      seed(fixture);
+
+      click(fixture, 'Category');
+      expect(names(fixture)).toEqual(['Charlie', 'Bravo', 'Alpha']); // Keyboard, Laptop, Mouse
+      expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe('ascending');
+
+      click(fixture, 'Category');
+      expect(names(fixture)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+      expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe('descending');
+    });
+
+    it('sorts numeric columns by value, not as text (1200 > 99.5 > 30)', () => {
+      const fixture = render();
+      seed(fixture);
+
+      click(fixture, 'Price');
+      expect(names(fixture)).toEqual(['Alpha', 'Charlie', 'Bravo']);
+
+      click(fixture, 'Price');
+      expect(names(fixture)).toEqual(['Bravo', 'Charlie', 'Alpha']);
+    });
+
+    it('sorts Sold, Inventory and Left on their own quantities', () => {
+      const fixture = render();
+      seed(fixture);
+
+      click(fixture, 'Sold');
+      expect(names(fixture)).toEqual(['Alpha', 'Charlie', 'Bravo']);
+
+      click(fixture, 'Inventory');
+      expect(names(fixture)).toEqual(['Alpha', 'Bravo', 'Charlie']); // 10, 10, 20 (stable)
+
+      click(fixture, 'Left');
+      expect(names(fixture)).toEqual(['Bravo', 'Alpha', 'Charlie']); // 1, 8, 15
+    });
+
+    it('starts a newly clicked column ascending and moves the aria-sort to it', () => {
+      const fixture = render();
+      seed(fixture);
+
+      click(fixture, 'Price');
+      click(fixture, 'Price'); // now descending
+      click(fixture, 'Product');
+
+      expect(header(fixture, 'Product').getAttribute('aria-sort')).toBe('ascending');
+      expect(header(fixture, 'Price').getAttribute('aria-sort')).toBe('none');
+    });
+
+    it('does not reorder the list the service owns', () => {
+      const fixture = render();
+      seed(fixture);
+
+      click(fixture, 'Price');
+
+      expect(products().map((p) => p.name)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    });
+  });
 });

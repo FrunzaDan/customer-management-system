@@ -77,7 +77,7 @@ export class CustomerListComponent implements OnInit {
   readonly sortColumn = signal<'name' | 'email' | 'msisdn'>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
-  readonly pageSize = 20;
+  readonly pageSize = 50;
   readonly currentPage = signal(1);
 
   readonly totalItems = this.getCustomerService.totalItemsSignal;
