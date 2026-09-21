@@ -51,10 +51,13 @@
   <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading customers…
 </div>
 } @else if (customers().length === 0) {
+<!-- A failed load already shows its alert above; "no customers" would be misleading. -->
+@if (!errorMessage()) {
 <div class="app-card empty-state">
   @if (searchTerm()) { No customers match "{{ searchTerm() }}". } @else { No
   customers yet. }
 </div>
+}
 } @else {
 <div class="app-card table-card" [class.is-refreshing]="isLoading()" [attr.aria-busy]="isLoading()">
   <div class="table-responsive" role="region" aria-label="Customers table" tabindex="0">

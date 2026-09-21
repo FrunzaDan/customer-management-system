@@ -4,9 +4,6 @@
   --spectrumColor2: #037874;
   --spectrumColor3: #00917c;
   --spectrumColor4: #a5f0c5;
-  /* Button/toast fills that carry white text must reach 4.5:1 (WCAG 1.4.3):
-     --dangerColor1 5.6:1, --secondaryColor 5.3:1. --spectrumColor3 (3.9:1) is
-     decorative only (gradients, large numerals, input borders). */
   --dangerColor1: #a45a82;
   --secondaryColor: #007a68;
   --mutedText: #5a6268;
@@ -198,6 +195,9 @@ app-footer {
 }
 
 .table-themed {
+  /* Inside .table-responsive: scroll sideways on phones rather than squeezing
+     every column into a 4-line wrap. */
+  min-width: 760px;
   --bs-table-striped-bg: rgba(165, 240, 197, 0.3);
   --bs-table-hover-bg: rgba(165, 240, 197, 0.55);
   margin-bottom: 0;

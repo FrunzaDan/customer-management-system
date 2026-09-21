@@ -1,3 +1,29 @@
+/* Header: back link above the title, customer actions on the right. */
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  color: var(--spectrumColor2);
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--spectrumColor1);
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+@media (min-width: 992px) {
+  .header-actions {
+    align-items: flex-end;
+    text-align: right;
+  }
+}
+
 /* Profile header (avatar + name + status) */
 .profile-header {
   display: flex;

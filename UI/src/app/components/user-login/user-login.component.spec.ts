@@ -82,4 +82,23 @@ describe('UserLoginComponent', () => {
 
     expect(component.errorMessage()).toBe(message);
   });
+
+  describe('session-expired notice', () => {
+    const render = (sessionExpired?: string) => {
+      const fixture = TestBed.createComponent(UserLoginComponent);
+      if (sessionExpired) fixture.componentRef.setInput('sessionExpired', sessionExpired);
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    it('explains why the user landed here after a session expiry', () => {
+      const alert = render('true').querySelector('[role="status"]');
+
+      expect(alert?.textContent).toContain('Your session has expired');
+    });
+
+    it('shows nothing extra on a normal visit', () => {
+      expect(render().querySelector('.alert-warning')).toBeNull();
+    });
+  });
 });

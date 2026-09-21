@@ -8,11 +8,65 @@
 <div class="page">
   <div class="page-header">
     <div>
+      <a routerLink="/customers" class="back-link"><span aria-hidden="true">←</span> Back to customers</a>
       <h1 class="page-title">Customer details</h1>
       <p class="page-subtitle">Full record and audit history for this customer.</p>
     </div>
-    <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
+
+    <div class="header-actions">
+      <div class="d-flex flex-wrap gap-2" role="group" aria-label="Customer actions">
+        <a
+          class="btn btn-primary shadow-none"
+          routerLink="/editCustomer"
+          [queryParams]="{ id: customer()?.guid }"
+          >Edit</a
+        >
+
+        @if (customer()?.customerStatus === CustomerStatus.Active || customer()?.customerStatus === CustomerStatus.Test) {
+        <button
+          (click)="deactivateCustomer()"
+          type="button"
+          class="btn btn-danger"
+          [disabled]="activationLoading() || deleting()"
+        >
+          Deactivate
+        </button>
+        } @if (customer()?.customerStatus === CustomerStatus.Deactivated) {
+        <button
+          (click)="reactivateCustomer()"
+          type="button"
+          class="btn btn-primary shadow-none"
+          [disabled]="activationLoading() || deleting()"
+        >
+          Reactivate
+        </button>
+        }
+
+        <button
+          (click)="deleteCustomer()"
+          type="button"
+          class="btn btn-danger shadow-none"
+          [disabled]="!canDelete() || activationLoading() || deleting()"
+          [attr.aria-describedby]="!canDelete() ? 'delete-hint' : null"
+        >
+          Delete
+        </button>
+      </div>
+
+      @if (!canDelete()) {
+      <p class="form-note mb-0" id="delete-hint">
+        Deactivate this customer before deleting it.
+      </p>
+      }
+    </div>
   </div>
+
+  @if (activationError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+  } @if (deleteError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
+
   <div class="row g-4">
     <div class="col-12 col-lg-6 d-flex flex-column gap-4">
       <div class="card app-card">
@@ -167,62 +221,6 @@
             }
           </ul>
           </div>
-          }
-        </div>
-      </div>
-
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Actions</h2>
-          <div class="d-flex flex-wrap gap-2" role="group" aria-label="Customer actions">
-            <a
-              class="btn btn-primary shadow-none"
-              routerLink="/editCustomer"
-              [queryParams]="{ id: customer()?.guid }"
-              >Edit</a
-            >
-
-            @if (customer()?.customerStatus === CustomerStatus.Active || customer()?.customerStatus === CustomerStatus.Test) {
-            <button
-              (click)="deactivateCustomer()"
-              type="button"
-              class="btn btn-danger"
-              [disabled]="activationLoading() || deleting()"
-            >
-              Deactivate
-            </button>
-            } @if (customer()?.customerStatus === CustomerStatus.Deactivated) {
-            <button
-              (click)="reactivateCustomer()"
-              type="button"
-              class="btn btn-primary shadow-none"
-              [disabled]="activationLoading() || deleting()"
-            >
-              Reactivate
-            </button>
-            }
-
-            <button
-              (click)="deleteCustomer()"
-              type="button"
-              class="btn btn-danger shadow-none"
-              [disabled]="!canDelete() || activationLoading() || deleting()"
-              [attr.aria-describedby]="!canDelete() ? 'delete-hint' : null"
-            >
-              Delete
-            </button>
-          </div>
-
-          @if (!canDelete()) {
-          <p class="form-note mt-3 mb-0" id="delete-hint">
-            Deactivate this customer before deleting it.
-          </p>
-          }
-
-          @if (activationError(); as error) {
-          <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>
-          } @if (deleteError(); as error) {
-          <div class="alert alert-danger mt-3 mb-0" role="alert">{{ error }}</div>
           }
         </div>
       </div>

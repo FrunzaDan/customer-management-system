@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormField,
@@ -31,6 +31,10 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   private readonly navbarService = inject(NavbarService);
   private readonly footerService = inject(FooterService);
   private readonly sessionStorageService = inject(SessionStorageService);
+
+  // `?sessionExpired=true` is added by AuthGuardService / authErrorInterceptor
+  // when a token is missing or rejected; bound here by withComponentInputBinding().
+  readonly sessionExpired = input<string>();
 
   readonly model = signal<LoginModel>({ username: '', password: '' });
   readonly errorMessage = signal<string | null>(null);
