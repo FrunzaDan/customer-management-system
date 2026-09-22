@@ -17,4 +17,10 @@ public static class FieldLengthConstants
     public const int Zip = 50;
     public const int Street = 100;
     public const int Number = 50;
+
+    // Mirrors tbl_products.sql.
+    public const int ProductName = 100;
+    public const int ProductCategory = 50;
+    public const int ProductComment = 500;
+    public const int ProductDepot = 100;
 }

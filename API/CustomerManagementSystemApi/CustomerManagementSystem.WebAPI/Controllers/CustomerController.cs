@@ -77,6 +77,14 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
         return StatusCode(response.Status ?? 200, response);
     }
 
+    [HttpPost("product")]
+    public async Task<IActionResult> CreateProduct([FromBody] ProductModel productRqst,
+        CancellationToken cancellationToken)
+    {
+        var response = await customerService.CreateProduct(productRqst, cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
     [HttpGet("products")]
     public async Task<IActionResult> GetProducts(CancellationToken cancellationToken)
     {

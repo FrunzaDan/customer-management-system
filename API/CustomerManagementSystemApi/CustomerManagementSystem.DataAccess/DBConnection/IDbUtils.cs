@@ -20,4 +20,5 @@ public interface IDbUtils
     public Task<ResponseModel<object>> GetProductDetails(string productGuid, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> GetCustomerPurchases(string customerGuid, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> PurchaseProduct(string customerGuid, string productGuid, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> CreateProduct(ProductModel product, CancellationToken cancellationToken = default);
 }

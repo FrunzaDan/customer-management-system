@@ -9,9 +9,14 @@ public class CustomerService(
     CustomerEditing customerEditing,
     CustomerActivation customerActivation,
     CustomerDeletion customerDeletion,
-    CustomerPurchasing customerPurchasing)
+    CustomerPurchasing customerPurchasing,
+    ProductRegistration productRegistration)
     : ICustomerService
 {
+    public async Task<ResponseModel<object>> CreateProduct(ProductModel request,
+        CancellationToken cancellationToken = default) =>
+        await productRegistration.RegisterProductFunction(request, cancellationToken);
+
     public async Task<ResponseModel<object>> GetProducts(CancellationToken cancellationToken = default) =>
         await customerGetting.GetProductsFunction(cancellationToken);
 

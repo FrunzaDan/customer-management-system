@@ -1,0 +1,68 @@
+<div class="card app-card">
+  <fieldset class="card-body">
+    <legend class="card-title">Product details</legend>
+
+    @for (field of textFields; track field.key) {
+    @let state = form()[field.key]();
+    @let showError = state.touched() && state.invalid();
+    <div class="mb-3">
+      <label class="form-label" [for]="field.key">{{ field.label }}</label>
+      <input
+        type="text"
+        class="form-control"
+        [id]="field.key"
+        [formField]="form()[field.key]"
+        [class.is-invalid]="showError"
+        [attr.aria-invalid]="showError"
+        [attr.aria-describedby]="showError ? field.key + '-error' : null"
+      />
+      @if (showError) {
+      <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
+      }
+    </div>
+    }
+
+    @let price = form().price();
+    @let priceError = price.touched() && price.invalid();
+    <div class="mb-3">
+      <label class="form-label" for="price">Price</label>
+      <input
+        id="price"
+        type="text"
+        inputmode="decimal"
+        class="form-control"
+        [formField]="form().price"
+        [class.is-invalid]="priceError"
+        [attr.aria-invalid]="priceError"
+        [attr.aria-describedby]="priceError ? 'price-error' : null"
+      />
+      @if (priceError) {
+      <div class="invalid-feedback" id="price-error">{{ price.errors()[0].message }}</div>
+      }
+    </div>
+
+    @let inventoryQuantity = form().inventoryQuantity();
+    @let inventoryQuantityError = inventoryQuantity.touched() && inventoryQuantity.invalid();
+    <div class="mb-3">
+      <label class="form-label" for="inventoryQuantity">Inventory quantity</label>
+      <input
+        id="inventoryQuantity"
+        type="text"
+        inputmode="numeric"
+        class="form-control"
+        [formField]="form().inventoryQuantity"
+        [class.is-invalid]="inventoryQuantityError"
+        [attr.aria-invalid]="inventoryQuantityError"
+        [attr.aria-describedby]="inventoryQuantityError ? 'inventoryQuantity-error' : null"
+      />
+      @if (inventoryQuantityError) {
+      <div class="invalid-feedback" id="inventoryQuantity-error">{{ inventoryQuantity.errors()[0].message }}</div>
+      }
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="comment">Comment (optional)</label>
+      <textarea id="comment" class="form-control" rows="3" [formField]="form().comment"></textarea>
+    </div>
+  </fieldset>
+</div>

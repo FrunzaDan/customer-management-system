@@ -223,6 +223,17 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         );
     }
 
+    public async Task<ResponseModel<object>> CreateProduct(ProductModel product,
+        CancellationToken cancellationToken = default)
+    {
+        return await ExecuteStoredProcedureAsync(
+            "dbo.usp_createProduct",
+            command => DbHelper.AddProductParametersForCreate(command, product),
+            DbHelper.HandleResponseWithMessage,
+            cancellationToken
+        );
+    }
+
     private async Task CheckConnectionStringAsync(CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(CurrentConnectionString)) return;

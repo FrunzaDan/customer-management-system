@@ -18,6 +18,17 @@ public static class DbHelper
         AddAddressParameters(command, customer.Address);
     }
 
+    public static void AddProductParametersForCreate(SqlCommand command, ProductModel product)
+    {
+        command.Parameters.AddWithValue("@var_Guid", product.Guid);
+        command.Parameters.AddWithValue("@var_Name", product.Name);
+        command.Parameters.AddWithValue("@var_Category", product.Category);
+        command.Parameters.AddWithValue("@var_Price", product.Price);
+        command.Parameters.AddWithValue("@var_InventoryQuantity", product.InventoryQuantity);
+        command.Parameters.AddWithValue("@var_Depot", product.Depot);
+        command.Parameters.AddWithValue("@var_Comment", (object?)product.Comment ?? DBNull.Value);
+    }
+
     public static void AddCustomerParametersForEdit(SqlCommand command, CustomerModel customer)
     {
         AddCustomerCoreParameters(command, customer);
