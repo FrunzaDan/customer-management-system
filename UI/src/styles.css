@@ -269,6 +269,65 @@ app-footer {
   text-align: center;
 }
 
+/* Ranked horizontal bar rows — shared by the Charts tab's ranked-bar and
+   stock-health charts (RankedBarChartComponent, StockHealthChartComponent). */
+.ranked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ranked-row {
+  display: grid;
+  grid-template-columns: 132px 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.ranked-label {
+  font-size: 0.85rem;
+  color: var(--spectrumColor1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranked-track {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background-color: rgba(19, 59, 54, 0.08);
+  overflow: hidden;
+}
+
+.ranked-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--spectrumColor2);
+}
+
+.ranked-value {
+  font-size: 0.82rem;
+  color: var(--mutedText);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ranked-empty {
+  color: var(--mutedText);
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .ranked-row {
+    grid-template-columns: 92px 1fr auto;
+  }
+}
+
 /* Palette-aligned bits of Bootstrap that otherwise show its default blue/green */
 .badge.bg-success {
   background-color: var(--spectrumColor2) !important;

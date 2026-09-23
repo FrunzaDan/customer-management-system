@@ -1,0 +1,178 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Charts</h1>
+      <p class="page-subtitle">Sales, stock and growth at a glance.</p>
+    </div>
+  </div>
+
+  <div class="d-flex flex-column gap-4">
+    <section>
+      <h2 class="section-title">Catalogue</h2>
+
+      @if (productsLoading() && products().length === 0) {
+      <div class="app-card loading-state" role="status">
+        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading catalogue data…
+      </div>
+      } @else if (productsError(); as error) {
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+      } @else if (products().length === 0) {
+      <div class="app-card empty-state">No products yet.</div>
+      } @else {
+      <div class="row g-4">
+        <div class="col-12 col-lg-6">
+          <div class="card app-card h-100">
+            <div class="card-body">
+              <h3 class="card-title">Units sold by category</h3>
+              <p class="chart-caption">Which categories are moving the most units.</p>
+              <app-ranked-bar-chart
+                [items]="categorySold()"
+                ariaLabel="Units sold by category"
+                emptyMessage="No sales yet."
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="card app-card h-100">
+            <div class="card-body">
+              <h3 class="card-title">Best-selling products</h3>
+              <p class="chart-caption">The 10 products with the most units sold.</p>
+              <app-ranked-bar-chart
+                [items]="bestSellers()"
+                ariaLabel="Best-selling products"
+                emptyMessage="No sales yet."
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="card app-card h-100">
+            <div class="card-body">
+              <h3 class="card-title">Stock health by category</h3>
+              <p class="chart-caption">
+                Share of each category's stock already sold. Categories near sellout are flagged.
+              </p>
+              <app-stock-health-chart [rows]="stockHealth()" emptyMessage="No products yet." />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="card app-card h-100">
+            <div class="card-body">
+              <h3 class="card-title">Revenue by category</h3>
+              <p class="chart-caption">Current price × units sold, summed per category.</p>
+              <app-ranked-bar-chart
+                [items]="revenueByCategory()"
+                [valueFormatter]="currencyFormatter"
+                ariaLabel="Revenue by category"
+                emptyMessage="No sales yet."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </section>
+
+    <section>
+      <h2 class="section-title">Growth over time</h2>
+
+      @if (activityLoading() && activity().customerRegistrations.length === 0 && activity().productPurchases.length
+      === 0) {
+      <div class="app-card loading-state" role="status">
+        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading activity data…
+      </div>
+      } @else if (activityError(); as error) {
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+      } @else {
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="card app-card">
+            <div class="card-body">
+              <div class="chart-card-header">
+                <div>
+                  <h3 class="card-title">Customers joined</h3>
+                  <p class="chart-caption">New customer registrations over time.</p>
+                </div>
+                <div class="range-toggle" role="group" aria-label="Time range">
+                  <button
+                    type="button"
+                    [class.active]="customerGrowthRange() === 'monthly'"
+                    (click)="setCustomerGrowthRange('monthly')"
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    [class.active]="customerGrowthRange() === 'yearly'"
+                    (click)="setCustomerGrowthRange('yearly')"
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
+              <app-time-series-chart
+                [points]="customerGrowthPoints()"
+                variant="bar"
+                emptyMessage="No registrations yet."
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card app-card">
+            <div class="card-body">
+              <h3 class="card-title">Cumulative customer growth</h3>
+              <p class="chart-caption">Running total of registrations — the growth curve at a glance.</p>
+              <app-time-series-chart
+                [points]="cumulativeGrowthPoints()"
+                variant="line"
+                emptyMessage="No registrations yet."
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="card app-card">
+            <div class="card-body">
+              <div class="chart-card-header">
+                <div>
+                  <h3 class="card-title">Products sold</h3>
+                  <p class="chart-caption">Purchases over time, across every customer.</p>
+                </div>
+                <div class="range-toggle" role="group" aria-label="Time range">
+                  <button
+                    type="button"
+                    [class.active]="productsSoldRange() === 'monthly'"
+                    (click)="setProductsSoldRange('monthly')"
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    [class.active]="productsSoldRange() === 'yearly'"
+                    (click)="setProductsSoldRange('yearly')"
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
+              <app-time-series-chart
+                [points]="productsSoldPoints()"
+                variant="bar"
+                emptyMessage="No purchases yet."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </section>
+  </div>
+</div>

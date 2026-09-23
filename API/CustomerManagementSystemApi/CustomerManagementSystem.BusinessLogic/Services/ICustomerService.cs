@@ -35,4 +35,6 @@ public interface ICustomerService
     Task<ResponseModel<object>> DeleteCustomer(string guid, string merchantId, CancellationToken cancellationToken = default);
 
     Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default);
+
+    Task<ResponseModel<object>> GetMonthlyActivity(CancellationToken cancellationToken = default);
 }

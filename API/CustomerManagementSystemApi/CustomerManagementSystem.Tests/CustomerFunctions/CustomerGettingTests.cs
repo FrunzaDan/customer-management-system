@@ -363,4 +363,17 @@ public class CustomerGettingTests
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.GetAllCustomerAuditLog(1, 10, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task GetMonthlyActivityFunction_ReturnsWhateverTheDbLayerReturns()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var expected = new ResponseModel<object>(200, "Monthly activity retrieved.", new MonthlyActivityModel());
+        dbUtils.Setup(d => d.GetMonthlyActivity(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetMonthlyActivityFunction(TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+    }
 }

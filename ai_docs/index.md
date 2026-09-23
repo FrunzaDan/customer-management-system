@@ -38,7 +38,7 @@ Customer_Management_System/
 - Local dev DB runs as a **Docker container** (Azure SQL Edge — the only Microsoft SQL Server image with a working Apple Silicon/arm64 build). See [build-and-run](build-and-run.md).
 - This is a learning project: some rough edges are deliberately left as-is rather than "fixed" — each doc below has a "Known gaps" section for its layer; don't treat those as an unclaimed TODO list.
 
-**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator (each generated customer also gets 1–5 purchases) exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`; a seeded 50-product catalogue (extensible via an "Add product" form) with per-customer purchases (shown on customer details) and a Products tab with sold/inventory/left and who bought what.
+**Features**: merchant login (JWT-secured); register/view/edit/deactivate/reactivate/delete customers with an enforced status lifecycle; server-side search/sort/pagination on the customer list; bulk deactivate-or-delete from a multi-select; a per-customer and a global audit log; CSV export of the current filtered/sorted view; a "test customer" bulk generator (each generated customer also gets 1–5 purchases) exempt from the normal delete lifecycle; a live API-availability banner backed by `/health`; a seeded 50-product catalogue (extensible via an "Add product" form) with per-customer purchases (shown on customer details) and a Products tab with sold/inventory/left and who bought what; a Charts tab with catalogue and time-series charts (see [charts](charts.md)).
 
 ## Architecture at a glance
 
@@ -62,6 +62,7 @@ Three hand-drawn sketches from the original pre-.NET-10/Angular-22 design. The o
 - [database](database.md) — `tbl_customers`/`tbl_addresses`/`tbl_merchants` schema, stored procedures, status-code lifecycle, audit log, DB-side known gaps.
 - [angular-frontend](angular-frontend.md) — app config/routing/auth guard, login flow, route/component map, services, Angular-side known gaps.
 - [products-and-purchases](products-and-purchases.md) — `tbl_products`/`tbl_customer_purchases`, the seeded catalogue, the record-a-purchase rules, sold/inventory/left, the Products tab and the customer-details Purchases card.
+- [charts](charts.md) — the Charts tab: catalogue charts off the existing product data, time-series charts off the new `usp_getMonthlyActivity` aggregate, and why every chart here is single-hue.
 - [build-and-run](build-and-run.md) — Docker SQL Server, `build.sh`/`run.sh`, test login, TLS-trust gotchas.
 
 Before exploring source directly, read the relevant doc above.
@@ -72,6 +73,7 @@ Before exploring source directly, read the relevant doc above.
 - Changing products, stock, purchases, or the Products tab → [products-and-purchases](products-and-purchases.md), then [database](database.md) for the delete/transaction conventions it follows.
 - Changing login, tokens, or roles → [api](api.md)'s JWT section, then [angular-frontend](angular-frontend.md)'s auth guard/interceptor section.
 - Changing a list/table page (search, sort, paging, bulk actions) → [angular-frontend](angular-frontend.md)'s component notes, cross-referenced with [database](database.md)'s `usp_getCustomers` pagination convention.
+- Adding or changing a chart on the Charts tab → [charts](charts.md) first — it explains which data is already available client-side vs. needs a DB aggregate, and why every chart is single-hue.
 - Something won't start locally (Docker, TLS, ports) → [build-and-run](build-and-run.md).
 
 ## Glossary

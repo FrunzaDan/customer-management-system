@@ -101,6 +101,15 @@ export const routes: Routes = [
     title: 'Product details',
   },
   {
+    path: 'charts',
+    loadComponent: () =>
+      import('./components/charts/charts.component').then(
+        (m) => m.ChartsComponent,
+      ),
+    canActivate: [authGuardFn],
+    title: 'Charts',
+  },
+  {
     path: 'auditLog',
     loadComponent: () =>
       import('./components/global-audit-log/global-audit-log.component').then(

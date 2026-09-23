@@ -174,6 +174,22 @@ public static class DbHelper
             : new ResponseModel<object>(Convert.ToInt32(reader["result"]), message ?? "Operation failed.");
     }
 
+    // usp_getMonthlyActivity returns two result sets: customer registrations by month,
+    // then product purchases by month (see that proc).
+    public static async Task<ResponseModel<object>> HandleResponseWithMonthlyActivity(SqlDataReader reader)
+    {
+        var activity = new MonthlyActivityModel();
+
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            activity.CustomerRegistrations.Add(MapMonthlyCountFromReader(reader, "customer_count"));
+
+        await reader.NextResultAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false))
+            activity.ProductPurchases.Add(MapMonthlyCountFromReader(reader, "purchase_count"));
+
+        return new ResponseModel<object>(200, "Monthly activity retrieved.", activity);
+    }
+
     public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponse(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
@@ -265,6 +281,15 @@ public static class DbHelper
             StockQuantity = Convert.ToInt32(reader["stock_quantity"]),
             SoldQuantity = Convert.ToInt32(reader["sold_quantity"]),
             Depot = GetNullableString(reader, "depot")
+        };
+    }
+
+    private static MonthlyCountModel MapMonthlyCountFromReader(SqlDataReader reader, string countColumn)
+    {
+        return new MonthlyCountModel
+        {
+            YearMonth = GetNullableString(reader, "year_month"),
+            Count = Convert.ToInt32(reader[countColumn])
         };
     }
 

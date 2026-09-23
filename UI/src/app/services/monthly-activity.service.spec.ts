@@ -1,0 +1,81 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { environment } from '../../environments/environment';
+import { MonthlyActivityService } from './monthly-activity.service';
+
+describe('MonthlyActivityService', () => {
+  let service: MonthlyActivityService;
+  let httpMock: HttpTestingController;
+
+  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/monthlyActivity`;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(MonthlyActivityService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  // httpResource issues its request from an effect, so flush effects after
+  // calling loadMonthlyActivity() before expecting the HTTP call.
+  const load = () => {
+    service.loadMonthlyActivity();
+    TestBed.tick();
+  };
+
+  // ...and the response is applied asynchronously, so wait for the app to settle
+  // after flushing before asserting on the signals.
+  const settle = () => TestBed.inject(ApplicationRef).whenStable();
+
+  it('makes no request until loadMonthlyActivity() is called', () => {
+    TestBed.tick();
+
+    httpMock.expectNone(API_URL);
+    expect(service.activitySignal()).toEqual({ customerRegistrations: [], productPurchases: [] });
+    expect(service.loadingSignal()).toBe(false);
+  });
+
+  it('populates activitySignal from a successful response', async () => {
+    const activity = {
+      customerRegistrations: [{ yearMonth: '2026-01', count: 3 }],
+      productPurchases: [{ yearMonth: '2026-01', count: 12 }],
+    };
+
+    load();
+    httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok', data: activity });
+    await settle();
+
+    expect(service.activitySignal()).toEqual(activity);
+    expect(service.errorSignal()).toBeNull();
+  });
+
+  it('falls back to empty series when the resource has no value', () => {
+    load();
+    // Not flushed yet — hasValue() is still false.
+    expect(service.activitySignal()).toEqual({ customerRegistrations: [], productPurchases: [] });
+    httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok', data: undefined });
+  });
+
+  it('surfaces the server-provided error message when present', async () => {
+    load();
+
+    httpMock
+      .expectOne(API_URL)
+      .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+    await settle();
+
+    expect(service.loadingSignal()).toBe(false);
+    expect(service.errorSignal()).toBe('boom');
+    expect(service.activitySignal()).toEqual({ customerRegistrations: [], productPurchases: [] });
+  });
+});

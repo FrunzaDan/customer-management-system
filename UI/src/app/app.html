@@ -1,4 +1,6 @@
-<a class="skip-link" href="#main" (click)="skipToContent($event)">Skip to main content</a>
+<a class="skip-link" href="#main" (click)="skipToContent($event)"
+  >Skip to main content</a
+>
 <header>
   <app-navigation-bar></app-navigation-bar>
 </header>
@@ -7,7 +9,7 @@
   <router-outlet />
   } @else {
   <div class="api-down-card" role="alert">
-    <h1>API is not running</h1>
+    <h1>⚠️ API is not running</h1>
     <p>
       Please start the backend server at
       <code>{{ environment.CustomerManagementSystemAPI }}</code>

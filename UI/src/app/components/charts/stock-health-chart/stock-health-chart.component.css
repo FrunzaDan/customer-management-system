@@ -1,0 +1,17 @@
+.near-sellout-flag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background-color: rgba(164, 90, 130, 0.12);
+  color: var(--dangerColor1);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.ranked-fill.near-sellout {
+  background-color: var(--dangerColor1);
+}

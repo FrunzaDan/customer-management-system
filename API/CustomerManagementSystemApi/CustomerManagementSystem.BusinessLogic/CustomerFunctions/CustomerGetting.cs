@@ -144,6 +144,11 @@ public class CustomerGetting
         return await _dbUtils.GetAllCustomerAuditLog(pageNumber, pageSize, cancellationToken);
     }
 
+    // Feeds the Charts tab's time-series charts. No paging/filtering — both series
+    // are small (one row per month with any activity), same reasoning as GetProductsFunction.
+    public async Task<ResponseModel<object>> GetMonthlyActivityFunction(CancellationToken cancellationToken = default) =>
+        await _dbUtils.GetMonthlyActivity(cancellationToken);
+
     private static int DetermineSearchOption(string searchVariable)
     {
         return GuidValidation.ValidateGuid(searchVariable) ? 1 :

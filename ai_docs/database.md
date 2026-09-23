@@ -7,7 +7,7 @@ The `tbl_customers`/`tbl_addresses`/`tbl_merchants` schema, the status codes tha
 ## Key files / paths
 
 - `DB/Customer_Management_System_DB/Tables/tbl_customers.sql`, `tbl_addresses.sql`, `tbl_merchants.sql`, `tbl_customer_audit_log.sql`, `tbl_products.sql`, `tbl_customer_purchases.sql` (the last two: see [products-and-purchases](products-and-purchases.md))
-- `DB/Customer_Management_System_DB/Stored_Procedures/usp_createCustomer.sql`, `usp_getCustomer.sql`, `usp_getCustomers.sql`, `usp_editCustomer.sql`, `usp_deactivateCustomer.sql`, `usp_reactivateCustomer.sql`, `usp_deleteCustomer.sql`, `usp_insertCustomerAuditLog.sql`, `usp_getCustomerAuditLog.sql`, `usp_getAllCustomerAuditLog.sql`, `usp_deleteAllCustomerAuditLog.sql`, `usp_getMerchantAuthData.sql`
+- `DB/Customer_Management_System_DB/Stored_Procedures/usp_createCustomer.sql`, `usp_getCustomer.sql`, `usp_getCustomers.sql`, `usp_editCustomer.sql`, `usp_deactivateCustomer.sql`, `usp_reactivateCustomer.sql`, `usp_deleteCustomer.sql`, `usp_insertCustomerAuditLog.sql`, `usp_getCustomerAuditLog.sql`, `usp_getAllCustomerAuditLog.sql`, `usp_deleteAllCustomerAuditLog.sql`, `usp_getMerchantAuthData.sql`, `usp_getMonthlyActivity.sql` (see [charts](charts.md))
 - `API/.../CustomerManagementSystem.BusinessLogic/CustomerFunctions/*.cs` — `CustomerRegistration`, `CustomerEditing`, `CustomerGetting`, `CustomerActivation`, `CustomerDeletion`, `CustomerAuditLogger`
 - `API/.../CustomerManagementSystem.DataAccess/DBConnection/DbUtils.cs`, `DbHelper.cs`
 
@@ -56,7 +56,7 @@ The `tbl_customers`/`tbl_addresses`/`tbl_merchants` schema, the status codes tha
 
 ## Known gaps / deliberately deferred
 
-- `creation_Date`/`interaction_Date` on `tbl_customers` are `NVARCHAR`, not a real `DATE`/`DATETIME2` column — matches how `birthdate` is stored (see [api](api.md)/[angular-frontend](angular-frontend.md) — the UI's date input always produces `YYYY-MM-DD`, so no parsing round-trip is needed). Left as-is; not a live bug.
+- `creation_Date`/`interaction_Date` on `tbl_customers` are `NVARCHAR`, not a real `DATE`/`DATETIME2` column. **Unlike `birthdate`, they are not `YYYY-MM-DD`** — `usp_createCustomer` writes them from `GETDATE()` (a `DATETIME`) implicitly converted to `NVARCHAR`, which SQL Server renders in its default datetime string style (e.g. `"Sep 22 2026 5:47AM"`), not ISO. `birthdate` is the one that's always `YYYY-MM-DD`, because that column is only ever written from the UI's `<input type="date">` value (see [angular-frontend](angular-frontend.md)) — don't assume the other two follow it. Discovered the hard way building `usp_getMonthlyActivity` (see [charts](charts.md)): a naive `LEFT(creation_Date, 7)` silently produced garbage like `"Sep 22 "` instead of a year-month key — any new query grouping/filtering on `creation_Date` or `interaction_Date` by date must `TRY_CONVERT(DATETIME, ...)` first, the way that proc does. Left as `NVARCHAR`; not a live bug on its own, just a sharp edge for new SQL.
 - A few procs return a raw `ERROR_MESSAGE()` string to the caller on unexpected `CATCH` failures. Left as-is — fixing this properly would need a server-side logging table to preserve debuggability once the raw message is no longer surfaced to the client, which is out of scope for this app's size.
 
 **Resolved** (kept for history — don't rediscover these as "new" findings):

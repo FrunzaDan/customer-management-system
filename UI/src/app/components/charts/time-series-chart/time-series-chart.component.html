@@ -1,0 +1,49 @@
+@if (!hasData()) {
+<p class="ranked-empty">{{ emptyMessage() }}</p>
+} @else {
+<div class="chart-scroll">
+  <svg
+    class="time-series-chart"
+    [attr.viewBox]="'0 0 ' + svgWidth() + ' ' + svgHeight"
+    [attr.width]="svgWidth()"
+    [attr.height]="svgHeight"
+    role="img"
+  >
+    @for (line of gridLines(); track line.label + line.y) {
+    <line class="gridline" [attr.x1]="leftPadding" [attr.x2]="svgWidth()" [attr.y1]="line.y" [attr.y2]="line.y" />
+    <text class="tick-label" [attr.x]="leftPadding - 6" [attr.y]="line.y + 3" text-anchor="end">
+      {{ line.label }}
+    </text>
+    }
+
+    @if (variant() === 'bar') { @for (bar of barMarks(); track bar.key) {
+    <path class="mark" [attr.d]="bar.path">
+      <title>{{ bar.tooltip }}</title>
+    </path>
+    @if (bar.isPeak) {
+    <text class="value-label" [attr.x]="bar.x + bar.width / 2" [attr.y]="bar.y - 8" text-anchor="middle">
+      {{ bar.valueText }}
+    </text>
+    }
+    <text class="axis-label" [attr.x]="bar.x + bar.width / 2" [attr.y]="axisY + 16" text-anchor="middle">
+      {{ bar.label }}
+    </text>
+    } } @else {
+    <path class="area-path" [attr.d]="areaPath()"></path>
+    <path class="line-path" [attr.d]="linePath()"></path>
+    @for (point of linePoints(); track point.key) {
+    <circle class="point" [attr.cx]="point.x" [attr.cy]="point.y" [attr.r]="markerRadius">
+      <title>{{ point.tooltip }}</title>
+    </circle>
+    @if (point.labelAnchor) {
+    <text class="value-label" [attr.x]="point.x" [attr.y]="point.y - 10" [attr.text-anchor]="point.labelAnchor">
+      {{ point.valueText }}
+    </text>
+    }
+    <text class="axis-label" [attr.x]="point.x" [attr.y]="axisY + 16" text-anchor="middle">
+      {{ point.label }}
+    </text>
+    } }
+  </svg>
+</div>
+}

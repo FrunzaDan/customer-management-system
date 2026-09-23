@@ -1,0 +1,54 @@
+.chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.time-series-chart {
+  display: block;
+}
+
+.gridline {
+  stroke: rgba(19, 59, 54, 0.12);
+  stroke-width: 1;
+}
+
+.tick-label,
+.axis-label {
+  font-size: 10.5px;
+  fill: var(--mutedText);
+}
+
+.value-label {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--spectrumColor1);
+}
+
+.mark {
+  fill: var(--spectrumColor2);
+}
+
+.mark:hover {
+  fill: var(--spectrumColor1);
+}
+
+.line-path {
+  fill: none;
+  stroke: var(--spectrumColor2);
+  stroke-width: 2;
+}
+
+.area-path {
+  fill: var(--spectrumColor2);
+  opacity: 0.12;
+}
+
+.point {
+  fill: #fff;
+  stroke: var(--spectrumColor2);
+  stroke-width: 2;
+}
+
+.point:hover {
+  fill: var(--spectrumColor2);
+}

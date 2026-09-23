@@ -92,6 +92,13 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
         return StatusCode(response.Status ?? 200, response);
     }
 
+    [HttpGet("monthlyActivity")]
+    public async Task<IActionResult> GetMonthlyActivity(CancellationToken cancellationToken)
+    {
+        var response = await customerService.GetMonthlyActivity(cancellationToken);
+        return StatusCode(response.Status ?? 200, response);
+    }
+
     [HttpGet("productDetails")]
     public async Task<IActionResult> GetProductDetails([FromQuery] string productGuid,
         CancellationToken cancellationToken)

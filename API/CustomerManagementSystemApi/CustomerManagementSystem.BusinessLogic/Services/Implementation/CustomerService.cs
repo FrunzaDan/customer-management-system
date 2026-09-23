@@ -75,4 +75,7 @@ public class CustomerService(
     public async Task<ResponseModel<object>> RegisterCustomer(CustomerModel customerRqst, string merchantId,
         CancellationToken cancellationToken = default) =>
         await customerRegistration.RegisterCustomerFunction(customerRqst, merchantId, cancellationToken);
+
+    public async Task<ResponseModel<object>> GetMonthlyActivity(CancellationToken cancellationToken = default) =>
+        await customerGetting.GetMonthlyActivityFunction(cancellationToken);
 }

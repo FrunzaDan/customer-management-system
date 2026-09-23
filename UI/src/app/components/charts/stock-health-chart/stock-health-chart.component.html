@@ -1,0 +1,24 @@
+@if (bars().length === 0) {
+<p class="ranked-empty">{{ emptyMessage() }}</p>
+} @else {
+<ul class="ranked-list" aria-label="Stock health by category">
+  @for (bar of bars(); track bar.label) {
+  <li class="ranked-row">
+    <span class="ranked-label"
+      >{{ bar.label }}
+      @if (bar.nearSellout) {
+      <span class="near-sellout-flag">Near sellout</span>
+      }
+    </span>
+    <span class="ranked-track">
+      <span
+        class="ranked-fill"
+        [class.near-sellout]="bar.nearSellout"
+        [style.width.%]="bar.percent"
+      ></span>
+    </span>
+    <span class="ranked-value">{{ bar.percent }}% sold</span>
+  </li>
+  }
+</ul>
+}
