@@ -14,18 +14,18 @@ public static class DbHelper
     // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
     public static void AddCustomerParametersForCreate(SqlCommand command, CreateCustomerRequest customer)
     {
-        AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.Msisdn,
-            customer.Gender ?? Gender.NotDeclared, customer.Birthdate);
+        AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber,
+            customer.Gender ?? Gender.NotDeclared, customer.BirthDate);
         command.Parameters.AddSmallInt("@StatusCode",
-            (short)(customer.CustomerStatus ?? CustomerStatus.Active));
+            (short)(customer.Status ?? CustomerStatus.Active));
         AddAddressParameters(command, customer.Address);
     }
 
     public static void AddCustomerParametersForEdit(SqlCommand command, UpdateCustomerRequest customer)
     {
-        command.Parameters.AddGuid("@CustomerId", customer.Guid);
-        AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.Msisdn,
-            customer.Gender, customer.Birthdate);
+        command.Parameters.AddGuid("@CustomerId", customer.CustomerId);
+        AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber,
+            customer.Gender, customer.BirthDate);
         AddAddressParameters(command, customer.Address);
     }
 
@@ -33,31 +33,31 @@ public static class DbHelper
     {
         command.Parameters.AddNVarChar("@Name", FieldLengthConstants.ProductName, product.Name);
         command.Parameters.AddNVarChar("@Category", FieldLengthConstants.ProductCategory, product.Category);
-        command.Parameters.AddDecimal("@Price", 10, 2, product.Price);
-        command.Parameters.AddInt("@InitialQuantity", product.InventoryQuantity);
-        command.Parameters.AddNVarChar("@Warehouse", FieldLengthConstants.ProductDepot, product.Depot);
-        command.Parameters.AddNVarChar("@Description", FieldLengthConstants.ProductComment, product.Comment);
+        command.Parameters.AddDecimal("@Price", 12, 2, product.Price);
+        command.Parameters.AddInt("@InitialQuantity", product.InitialQuantity);
+        command.Parameters.AddNVarChar("@Warehouse", FieldLengthConstants.ProductWarehouse, product.Warehouse);
+        command.Parameters.AddNVarChar("@Description", FieldLengthConstants.ProductDescription, product.Description);
     }
 
     private static void AddCustomerCoreParameters(SqlCommand command, string? firstName, string? lastName,
-        string? email, string? msisdn, Gender? gender, DateOnly? birthdate)
+        string? email, string? phoneNumber, Gender? gender, DateOnly? birthDate)
     {
         command.Parameters.AddNVarChar("@FirstName", FieldLengthConstants.FirstName, firstName);
         command.Parameters.AddNVarChar("@LastName", FieldLengthConstants.LastName, lastName);
         command.Parameters.AddNVarChar("@Email", FieldLengthConstants.Email, email);
-        command.Parameters.AddVarChar("@PhoneNumber", FieldLengthConstants.Msisdn, msisdn);
+        command.Parameters.AddVarChar("@PhoneNumber", FieldLengthConstants.PhoneNumber, phoneNumber);
         command.Parameters.AddTinyInt("@Gender", (byte?)gender);
-        command.Parameters.AddDate("@BirthDate", birthdate);
+        command.Parameters.AddDate("@BirthDate", birthDate);
     }
 
     private static void AddAddressParameters(SqlCommand command, AddressRequest? address)
     {
         command.Parameters.AddNVarChar("@Country", FieldLengthConstants.Country, address?.Country);
         command.Parameters.AddNVarChar("@County", FieldLengthConstants.County, address?.County);
-        command.Parameters.AddNVarChar("@City", FieldLengthConstants.Town, address?.Town);
-        command.Parameters.AddNVarChar("@PostalCode", FieldLengthConstants.Zip, address?.Zip);
+        command.Parameters.AddNVarChar("@City", FieldLengthConstants.City, address?.City);
+        command.Parameters.AddNVarChar("@PostalCode", FieldLengthConstants.PostalCode, address?.PostalCode);
         command.Parameters.AddNVarChar("@Street", FieldLengthConstants.Street, address?.Street);
-        command.Parameters.AddNVarChar("@StreetNumber", FieldLengthConstants.Number, address?.Number);
+        command.Parameters.AddNVarChar("@StreetNumber", FieldLengthConstants.StreetNumber, address?.StreetNumber);
     }
 
     public static async Task<ResponseModel<CustomerModel>> HandleResponseWithCustomer(SqlDataReader reader)
@@ -234,61 +234,61 @@ public static class DbHelper
 
     private static CustomerModel MapCustomerFromReader(SqlDataReader reader) => new()
     {
-        Guid = reader.GetGuid("CustomerId"),
+        CustomerId = reader.GetGuid("CustomerId"),
         FirstName = reader.GetString("FirstName"),
         LastName = reader.GetString("LastName"),
         Email = reader.GetString("Email"),
-        Msisdn = reader.GetString("PhoneNumber"),
+        PhoneNumber = reader.GetString("PhoneNumber"),
         Gender = (Gender)reader.GetByte("Gender"),
-        Birthdate = reader.GetNullableDateOnly("BirthDate"),
-        CustomerStatus = (CustomerStatus)reader.GetInt16("StatusCode"),
-        CreationDate = reader.GetUtcDateTime("CreatedAt"),
-        InteractionDate = reader.GetUtcDateTime("LastInteractionAt"),
+        BirthDate = reader.GetNullableDateOnly("BirthDate"),
+        Status = (CustomerStatus)reader.GetInt16("StatusCode"),
+        CreatedAt = reader.GetUtcDateTime("CreatedAt"),
+        LastInteractionAt = reader.GetUtcDateTime("LastInteractionAt"),
         Address = new AddressModel
         {
             Country = reader.GetString("Country"),
             County = reader.GetString("County"),
-            Town = reader.GetString("City"),
-            Zip = reader.GetString("PostalCode"),
+            City = reader.GetString("City"),
+            PostalCode = reader.GetString("PostalCode"),
             Street = reader.GetString("Street"),
-            Number = reader.GetString("StreetNumber")
+            StreetNumber = reader.GetString("StreetNumber")
         }
     };
 
     private static AuditLogEntry MapAuditLogEntryFromReader(SqlDataReader reader) => new()
     {
-        AuditId = reader.GetInt32("CustomerAuditLogId"),
-        CustomerGuid = reader.GetGuid("CustomerId"),
-        MerchantId = reader.GetString("PerformedBy"),
-        Action = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
+        CustomerAuditLogId = reader.GetInt32("CustomerAuditLogId"),
+        CustomerId = reader.GetGuid("CustomerId"),
+        PerformedBy = reader.GetString("PerformedBy"),
+        ActionType = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
         Details = reader.GetNullableString("Details"),
-        ActionDate = reader.GetUtcDateTime("OccurredAt")
+        OccurredAt = reader.GetUtcDateTime("OccurredAt")
     };
 
     private static GlobalAuditLogEntry MapGlobalAuditLogEntryFromReader(SqlDataReader reader) => new()
     {
-        AuditId = reader.GetInt32("CustomerAuditLogId"),
-        CustomerGuid = reader.GetGuid("CustomerId"),
+        CustomerAuditLogId = reader.GetInt32("CustomerAuditLogId"),
+        CustomerId = reader.GetGuid("CustomerId"),
         // NULL here (deleted customer, via the proc's LEFT JOIN) must come back as a real null.
         CustomerFirstName = reader.GetNullableString("FirstName"),
         CustomerLastName = reader.GetNullableString("LastName"),
-        MerchantId = reader.GetString("PerformedBy"),
-        Action = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
+        PerformedBy = reader.GetString("PerformedBy"),
+        ActionType = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
         Details = reader.GetNullableString("Details"),
-        ActionDate = reader.GetUtcDateTime("OccurredAt")
+        OccurredAt = reader.GetUtcDateTime("OccurredAt")
     };
 
     private static ProductModel MapProductFromReader(SqlDataReader reader) => new()
     {
-        Guid = reader.GetGuid("ProductId"),
+        ProductId = reader.GetGuid("ProductId"),
         Name = reader.GetString("Name"),
         Category = reader.GetString("Category"),
-        Comment = reader.GetNullableString("Description"),
+        Description = reader.GetNullableString("Description"),
         Price = reader.GetDecimal("Price"),
-        InventoryQuantity = reader.GetInt32("InitialQuantity"),
-        StockQuantity = reader.GetInt32("QuantityOnHand"),
+        InitialQuantity = reader.GetInt32("InitialQuantity"),
+        QuantityOnHand = reader.GetInt32("QuantityOnHand"),
         SoldQuantity = reader.GetInt32("SoldQuantity"),
-        Depot = reader.GetString("Warehouse")
+        Warehouse = reader.GetString("Warehouse")
     };
 
     private static MonthlyCountModel MapMonthlyCountFromReader(SqlDataReader reader, string countColumn) => new()
@@ -299,22 +299,22 @@ public static class DbHelper
 
     private static ProductBuyerModel MapProductBuyerFromReader(SqlDataReader reader) => new()
     {
-        PurchaseId = reader.GetInt32("CustomerPurchaseId"),
-        CustomerGuid = reader.GetGuid("CustomerId"),
+        CustomerPurchaseId = reader.GetInt32("CustomerPurchaseId"),
+        CustomerId = reader.GetGuid("CustomerId"),
         CustomerFirstName = reader.GetString("FirstName"),
         CustomerLastName = reader.GetString("LastName"),
         CustomerEmail = reader.GetString("Email"),
-        PurchaseDate = reader.GetUtcDateTime("PurchasedAt")
+        PurchasedAt = reader.GetUtcDateTime("PurchasedAt")
     };
 
     private static PurchaseModel MapPurchaseFromReader(SqlDataReader reader) => new()
     {
-        PurchaseId = reader.GetInt32("CustomerPurchaseId"),
-        CustomerGuid = reader.GetGuid("CustomerId"),
-        ProductGuid = reader.GetGuid("ProductId"),
+        CustomerPurchaseId = reader.GetInt32("CustomerPurchaseId"),
+        CustomerId = reader.GetGuid("CustomerId"),
+        ProductId = reader.GetGuid("ProductId"),
         ProductName = reader.GetString("ProductName"),
         Category = reader.GetString("Category"),
         Price = reader.GetDecimal("Price"),
-        PurchaseDate = reader.GetUtcDateTime("PurchasedAt")
+        PurchasedAt = reader.GetUtcDateTime("PurchasedAt")
     };
 }

@@ -5,7 +5,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import {
   Customer,
-  CustomerActivationStatus,
+  CustomerStatus,
 } from '../../interfaces/customer-response';
 import { ActivateCustomerService } from '../../services/activate-customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
@@ -35,43 +35,43 @@ describe('CustomerDetailsComponent', () => {
   let activationLoading: ReturnType<typeof signal<boolean>>;
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
-    guid: 'guid-1',
+    customerId: 'customer-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    customerStatus: CustomerActivationStatus.Active,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: CustomerStatus.Active,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
 
   const buildProduct = (overrides: Partial<Product> = {}): Product => ({
-    guid: 'product-1',
+    productId: 'product-1',
     name: 'Aerobook 14 Pro',
     category: 'Laptop',
-    comment: '14-inch ultraportable.',
+    description: '14-inch ultraportable.',
     price: 1299,
-    inventoryQuantity: 10,
-    stockQuantity: 5,
+    initialQuantity: 10,
+    quantityOnHand: 5,
     soldQuantity: 5,
-    depot: 'Central Depot',
+    warehouse: 'Central Depot',
     ...overrides,
   });
 
   // routeParamId is what withComponentInputBinding() would bind to the `id`
   // input from `?id=`; set it to null before createComponent() for the "no id" case.
-  let routeParamId: string | null = 'guid-1';
+  let routeParamId: string | null = 'customer-1';
 
   const createComponent = (): CustomerDetailsComponent => {
     getCustomer = vi.fn();
@@ -157,7 +157,7 @@ describe('CustomerDetailsComponent', () => {
   };
 
   beforeEach(() => {
-    routeParamId = 'guid-1';
+    routeParamId = 'customer-1';
   });
 
   afterEach(() => {
@@ -168,9 +168,9 @@ describe('CustomerDetailsComponent', () => {
     it('fetches the customer, its audit log and its purchases using the id input', () => {
       createComponent();
 
-      expect(getCustomer).toHaveBeenCalledWith('guid-1');
-      expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
-      expect(loadPurchases).toHaveBeenCalledWith('guid-1');
+      expect(getCustomer).toHaveBeenCalledWith('customer-1');
+      expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
+      expect(loadPurchases).toHaveBeenCalledWith('customer-1');
     });
 
     it('loads the product catalogue for the purchase picker', () => {
@@ -201,7 +201,7 @@ describe('CustomerDetailsComponent', () => {
     it('customerStatusLabel maps the status code to a label', () => {
       const component = createComponent();
       selectedCustomer.set(
-        buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }),
+        buildCustomer({ status: CustomerStatus.Deactivated }),
       );
 
       expect(component.customerStatusLabel()).toBe('Deactivated');
@@ -219,7 +219,7 @@ describe('CustomerDetailsComponent', () => {
     it('is false for an Active customer', () => {
       const component = createComponent();
       selectedCustomer.set(
-        buildCustomer({ customerStatus: CustomerActivationStatus.Active }),
+        buildCustomer({ status: CustomerStatus.Active }),
       );
 
       expect(component.canDelete()).toBe(false);
@@ -228,7 +228,7 @@ describe('CustomerDetailsComponent', () => {
     it('is true for a Deactivated customer', () => {
       const component = createComponent();
       selectedCustomer.set(
-        buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }),
+        buildCustomer({ status: CustomerStatus.Deactivated }),
       );
 
       expect(component.canDelete()).toBe(true);
@@ -237,7 +237,7 @@ describe('CustomerDetailsComponent', () => {
     it('is true for a Test customer (exempt from the deactivate-first rule)', () => {
       const component = createComponent();
       selectedCustomer.set(
-        buildCustomer({ customerStatus: CustomerActivationStatus.Test }),
+        buildCustomer({ status: CustomerStatus.Test }),
       );
 
       expect(component.canDelete()).toBe(true);
@@ -247,17 +247,17 @@ describe('CustomerDetailsComponent', () => {
   describe('deactivateCustomer / reactivateCustomer', () => {
     it('deactivateCustomer asks for confirmation before delegating to the service', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
 
       await component.deactivateCustomer();
 
       expect(confirm).toHaveBeenCalled();
-      expect(deactivateCustomer).toHaveBeenCalledWith('guid-1');
+      expect(deactivateCustomer).toHaveBeenCalledWith('customer-1');
     });
 
     it('deactivateCustomer does nothing when the user cancels', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deactivateCustomer();
@@ -267,19 +267,19 @@ describe('CustomerDetailsComponent', () => {
 
     it('reactivateCustomer delegates directly, without a confirmation prompt', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
 
       component.reactivateCustomer();
 
       expect(confirm).not.toHaveBeenCalled();
-      expect(reactivateCustomer).toHaveBeenCalledWith('guid-1');
+      expect(reactivateCustomer).toHaveBeenCalledWith('customer-1');
     });
   });
 
   describe('deleteCustomer', () => {
     it('does nothing when the user cancels the confirmation', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deleteCustomer();
@@ -289,17 +289,17 @@ describe('CustomerDetailsComponent', () => {
 
     it('deletes the customer and navigates back to the list on success', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
 
       await component.deleteCustomer();
 
-      expect(deleteCustomer).toHaveBeenCalledWith('guid-1');
+      expect(deleteCustomer).toHaveBeenCalledWith('customer-1');
       expect(navigate).toHaveBeenCalledWith(['/customers']);
     });
 
     it('surfaces the error and stops loading when the delete request fails', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
       deleteCustomer.mockReturnValue(
         throwError(
           () =>
@@ -320,7 +320,7 @@ describe('CustomerDetailsComponent', () => {
   describe('audit log reload on activation-loading transition', () => {
     it('reloads the audit log once a deactivate/reactivate call resolves (true -> false)', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
       loadAuditLog.mockClear();
 
       activationLoading.set(true);
@@ -330,12 +330,12 @@ describe('CustomerDetailsComponent', () => {
       activationLoading.set(false);
       TestBed.flushEffects();
 
-      expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
+      expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
     });
 
     it('does not reload on the initial false state (no prior true)', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
       loadAuditLog.mockClear();
 
       TestBed.flushEffects();
@@ -347,26 +347,26 @@ describe('CustomerDetailsComponent', () => {
     it('canPurchase is true for Active and Test customers, false for Deactivated', () => {
       const component = createComponent();
 
-      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Active }));
+      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Active }));
       expect(component.canPurchase()).toBe(true);
 
-      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Test }));
+      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Test }));
       expect(component.canPurchase()).toBe(true);
 
-      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }));
+      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Deactivated }));
       expect(component.canPurchase()).toBe(false);
     });
 
     it('totalSpent sums the purchase prices, exactly to the cent', () => {
       const component = createComponent();
       const buildPurchase = (id: number, price: number): Purchase => ({
-        purchaseId: id,
-        customerGuid: 'guid-1',
-        productGuid: `product-${id}`,
+        customerPurchaseId: id,
+        customerId: 'customer-1',
+        productId: `product-${id}`,
         productName: `Product ${id}`,
         category: 'Laptop',
         price,
-        purchaseDate: '2026-01-01',
+        purchasedAt: '2026-01-01',
       });
 
       expect(component.totalSpent()).toBe(0); // no purchases yet
@@ -382,54 +382,54 @@ describe('CustomerDetailsComponent', () => {
     it('groups the catalogue by category', () => {
       const component = createComponent();
       products.set([
-        buildProduct({ guid: 'p1', category: 'Laptop' }),
-        buildProduct({ guid: 'p2', category: 'Laptop' }),
-        buildProduct({ guid: 'p3', category: 'Mouse' }),
+        buildProduct({ productId: 'p1', category: 'Laptop' }),
+        buildProduct({ productId: 'p2', category: 'Laptop' }),
+        buildProduct({ productId: 'p3', category: 'Mouse' }),
       ]);
 
       const groups = component.productGroups();
 
       expect(groups.map((g) => g.category)).toEqual(['Laptop', 'Mouse']);
-      expect(groups[0].products.map((p) => p.guid)).toEqual(['p1', 'p2']);
+      expect(groups[0].products.map((p) => p.productId)).toEqual(['p1', 'p2']);
     });
 
     it('canSubmitPurchase needs a picked, in-stock product for a customer who can buy', () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
       products.set([
-        buildProduct({ guid: 'in-stock', stockQuantity: 3 }),
-        buildProduct({ guid: 'sold-out', stockQuantity: 0 }),
+        buildProduct({ productId: 'in-stock', quantityOnHand: 3 }),
+        buildProduct({ productId: 'sold-out', quantityOnHand: 0 }),
       ]);
 
       expect(component.canSubmitPurchase()).toBe(false); // nothing picked
 
-      component.selectedProductGuid.set('sold-out');
+      component.selectedProductId.set('sold-out');
       expect(component.canSubmitPurchase()).toBe(false); // out of stock
 
-      component.selectedProductGuid.set('in-stock');
+      component.selectedProductId.set('in-stock');
       expect(component.canSubmitPurchase()).toBe(true);
 
-      selectedCustomer.set(buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated }));
+      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Deactivated }));
       expect(component.canSubmitPurchase()).toBe(false); // deactivated customer
     });
 
     it('recordPurchase posts the pick, resets it, and refreshes purchases, stock and audit trail', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
-      products.set([buildProduct({ guid: 'product-1' })]);
-      component.selectedProductGuid.set('product-1');
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      products.set([buildProduct({ productId: 'product-1' })]);
+      component.selectedProductId.set('product-1');
       loadPurchases.mockClear();
       loadProducts.mockClear();
       loadAuditLog.mockClear();
 
       component.recordPurchase();
 
-      expect(purchaseProduct).toHaveBeenCalledWith('guid-1', 'product-1');
-      expect(component.selectedProductGuid()).toBe('');
+      expect(purchaseProduct).toHaveBeenCalledWith('customer-1', 'product-1');
+      expect(component.selectedProductId()).toBe('');
       expect(component.purchasing()).toBe(false);
-      expect(loadPurchases).toHaveBeenCalledWith('guid-1');
+      expect(loadPurchases).toHaveBeenCalledWith('customer-1');
       expect(loadProducts).toHaveBeenCalled();
-      expect(loadAuditLog).toHaveBeenCalledWith('guid-1');
+      expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
     });
 
     it('recordPurchase does nothing when no product is picked', () => {
@@ -444,8 +444,8 @@ describe('CustomerDetailsComponent', () => {
     it('recordPurchase does nothing for a product that is out of stock', () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      products.set([buildProduct({ guid: 'sold-out', stockQuantity: 0 })]);
-      component.selectedProductGuid.set('sold-out');
+      products.set([buildProduct({ productId: 'sold-out', quantityOnHand: 0 })]);
+      component.selectedProductId.set('sold-out');
 
       component.recordPurchase();
 
@@ -454,9 +454,9 @@ describe('CustomerDetailsComponent', () => {
 
     it('surfaces the server message, stops loading and re-fetches stock when the purchase fails', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1' }));
-      products.set([buildProduct({ guid: 'product-1' })]);
-      component.selectedProductGuid.set('product-1');
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      products.set([buildProduct({ productId: 'product-1' })]);
+      component.selectedProductId.set('product-1');
       loadProducts.mockClear();
       loadPurchases.mockClear();
       purchaseProduct.mockReturnValue(
@@ -473,7 +473,7 @@ describe('CustomerDetailsComponent', () => {
 
       expect(component.purchasing()).toBe(false);
       expect(component.purchaseError()).toBe('Product is out of stock.');
-      expect(component.selectedProductGuid()).toBe('product-1'); // pick kept
+      expect(component.selectedProductId()).toBe('product-1'); // pick kept
       expect(loadProducts).toHaveBeenCalled(); // stock shown is stale
       expect(loadPurchases).not.toHaveBeenCalled(); // nothing was recorded
     });

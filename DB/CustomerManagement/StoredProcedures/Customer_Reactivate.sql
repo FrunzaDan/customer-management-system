@@ -13,7 +13,7 @@ BEGIN
         WHERE CustomerId = @CustomerId
     )
     BEGIN
-        DECLARE @Now DATETIME2(0) = SYSUTCDATETIME();
+        DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
 
         UPDATE dbo.Customer
         SET

@@ -37,11 +37,11 @@ describe('authErrorInterceptor', () => {
   it('clears the session and redirects to login on a 401 from a non-auth endpoint', () => {
     let errored = false;
     http
-      .get('https://localhost:7145/api/Customer/all')
+      .get('https://localhost:7145/api/customer/all')
       .subscribe({ error: () => (errored = true) });
 
     httpMock
-      .expectOne('https://localhost:7145/api/Customer/all')
+      .expectOne('https://localhost:7145/api/customer/all')
       .flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(errored).toBe(true);
@@ -54,11 +54,11 @@ describe('authErrorInterceptor', () => {
   it('does not redirect on a 401 from an Authentication endpoint', () => {
     let errored = false;
     http
-      .post('https://localhost:7145/api/Authentication/access-token', {})
+      .post('https://localhost:7145/api/authentication/access-token', {})
       .subscribe({ error: () => (errored = true) });
 
     httpMock
-      .expectOne('https://localhost:7145/api/Authentication/access-token')
+      .expectOne('https://localhost:7145/api/authentication/access-token')
       .flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(errored).toBe(true);
@@ -69,11 +69,11 @@ describe('authErrorInterceptor', () => {
   it('does not redirect on a non-401 error from a protected endpoint', () => {
     let errored = false;
     http
-      .get('https://localhost:7145/api/Customer/all')
+      .get('https://localhost:7145/api/customer/all')
       .subscribe({ error: () => (errored = true) });
 
     httpMock
-      .expectOne('https://localhost:7145/api/Customer/all')
+      .expectOne('https://localhost:7145/api/customer/all')
       .flush(null, { status: 500, statusText: 'Server Error' });
 
     expect(errored).toBe(true);

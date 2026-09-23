@@ -14,7 +14,7 @@ export class AddProductService {
   private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
-  readonly APIURL = environment.CustomerManagementSystemAPI + '/api/Customer/product';
+  readonly APIURL = environment.apiUrl + '/api/customer/product';
 
   // On success, `data` is the new product's server-generated GUID.
   addProduct(product: CreateProductRequest): Observable<GenericResponse<string>> {

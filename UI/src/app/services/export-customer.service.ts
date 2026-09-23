@@ -5,7 +5,7 @@ import { HttpHeaderService } from './http-header-service';
 
 export interface ExportCustomersParams {
   searchTerm?: string;
-  sortColumn?: 'name' | 'email' | 'msisdn';
+  sortColumn?: 'name' | 'email' | 'phoneNumber';
   sortDirection?: 'asc' | 'desc';
 }
 
@@ -13,7 +13,7 @@ export interface ExportCustomersParams {
   providedIn: 'root',
 })
 export class ExportCustomerService {
-  private readonly API_URL_EXPORT = `${environment.CustomerManagementSystemAPI}/api/Customer/export`;
+  private readonly API_URL_EXPORT = `${environment.apiUrl}/api/customer/export`;
 
   readonly loadingSignal = signal(false);
   readonly errorSignal = signal<string | null>(null);

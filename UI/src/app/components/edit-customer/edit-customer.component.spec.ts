@@ -16,29 +16,29 @@ describe('EditCustomerComponent', () => {
   let selectedCustomer: ReturnType<typeof signal<Customer | null>>;
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
-    guid: 'guid-1',
+    customerId: 'customer-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    customerStatus: 1901,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: 1901,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
 
   // `id` is what withComponentInputBinding() binds from `?id=`.
-  const createComponent = (id: string | null = 'guid-1') => {
+  const createComponent = (id: string | null = 'customer-1') => {
     const fixture = TestBed.createComponent(EditCustomerComponent);
     if (id) fixture.componentRef.setInput('id', id);
     fixture.detectChanges();
@@ -72,9 +72,9 @@ describe('EditCustomerComponent', () => {
 
   describe('loading by id', () => {
     it('fetches the customer named by the id input', () => {
-      createComponent('guid-1');
+      createComponent('customer-1');
 
-      expect(getCustomer).toHaveBeenCalledWith('guid-1');
+      expect(getCustomer).toHaveBeenCalledWith('customer-1');
     });
 
     it('does not fetch when there is no id', () => {
@@ -100,18 +100,18 @@ describe('EditCustomerComponent', () => {
       expect(component.model().country).toBe('Romania');
     });
 
-    it('pre-fills the stored birthdate as-is (the API always sends YYYY-MM-DD)', () => {
+    it('pre-fills the stored birthDate as-is (the API always sends YYYY-MM-DD)', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ birthdate: '2020-01-05' }));
+      selectedCustomer.set(buildCustomer({ birthDate: '2020-01-05' }));
 
-      expect(component.model().birthdate).toBe('2020-01-05');
+      expect(component.model().birthDate).toBe('2020-01-05');
     });
 
-    it('leaves the birthdate blank when the customer has none', () => {
+    it('leaves the birthDate blank when the customer has none', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ birthdate: undefined }));
+      selectedCustomer.set(buildCustomer({ birthDate: undefined }));
 
-      expect(component.model().birthdate).toBe('');
+      expect(component.model().birthDate).toBe('');
     });
   });
 
@@ -140,15 +140,15 @@ describe('EditCustomerComponent', () => {
 
     it('merges the form values onto the loaded customer and saves', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ guid: 'guid-1', creationDate: '2026-01-01' }));
+      selectedCustomer.set(buildCustomer({ customerId: 'customer-1', createdAt: '2026-01-01' }));
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       await submit(component.customerForm);
 
       expect(editCustomer).toHaveBeenCalledWith(
         expect.objectContaining({
-          guid: 'guid-1',
-          creationDate: '2026-01-01', // preserved from the original record, not in the form
+          customerId: 'customer-1',
+          createdAt: '2026-01-01', // preserved from the original record, not in the form
           firstName: 'Updated',
           gender: 1,
         }),
@@ -258,15 +258,15 @@ describe('EditCustomerComponent', () => {
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
-      msisdn: customer.msisdn,
+      phoneNumber: customer.phoneNumber,
       gender: String(customer.gender),
-      birthdate: customer.birthdate ?? '',
+      birthDate: customer.birthDate ?? '',
       country: customer.address.country,
       county: customer.address.county,
-      town: customer.address.town,
+      city: customer.address.city,
       street: customer.address.street,
-      number: customer.address.number,
-      zip: customer.address.zip,
+      streetNumber: customer.address.streetNumber,
+      postalCode: customer.address.postalCode,
     };
   }
 });

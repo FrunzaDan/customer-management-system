@@ -10,18 +10,18 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 // swallowed and logged instead.
 public class CustomerAuditLogger(IDbUtils dbUtils, ILogger<CustomerAuditLogger> logger) : ICustomerAuditLogger
 {
-    public async Task Log(Guid customerGuid, string merchantId, AuditAction action, string? details = null,
+    public async Task Log(Guid customerId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            await dbUtils.LogCustomerAudit(customerGuid, merchantId, action, details, cancellationToken);
+            await dbUtils.LogCustomerAudit(customerId, performedBy, action, details, cancellationToken);
         }
         catch (Exception ex)
         {
             logger.LogError(ex,
-                "Failed to write audit log entry for customer {CustomerGuid}, action {Action}",
-                customerGuid, action);
+                "Failed to write audit log entry for customer {CustomerId}, action {Action}",
+                customerId, action);
         }
     }
 }

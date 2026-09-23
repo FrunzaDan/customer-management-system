@@ -41,28 +41,28 @@
       }
     </div>
 
-    @let inventoryQuantity = form().inventoryQuantity();
-    @let inventoryQuantityError = inventoryQuantity.touched() && inventoryQuantity.invalid();
+    @let initialQuantity = form().initialQuantity();
+    @let initialQuantityError = initialQuantity.touched() && initialQuantity.invalid();
     <div class="mb-3">
-      <label class="form-label" for="inventoryQuantity">Inventory quantity</label>
+      <label class="form-label" for="initialQuantity">Initial quantity</label>
       <input
-        id="inventoryQuantity"
+        id="initialQuantity"
         type="text"
         inputmode="numeric"
         class="form-control"
-        [formField]="form().inventoryQuantity"
-        [class.is-invalid]="inventoryQuantityError"
-        [attr.aria-invalid]="inventoryQuantityError"
-        [attr.aria-describedby]="inventoryQuantityError ? 'inventoryQuantity-error' : null"
+        [formField]="form().initialQuantity"
+        [class.is-invalid]="initialQuantityError"
+        [attr.aria-invalid]="initialQuantityError"
+        [attr.aria-describedby]="initialQuantityError ? 'initialQuantity-error' : null"
       />
-      @if (inventoryQuantityError) {
-      <div class="invalid-feedback" id="inventoryQuantity-error">{{ inventoryQuantity.errors()[0].message }}</div>
+      @if (initialQuantityError) {
+      <div class="invalid-feedback" id="initialQuantity-error">{{ initialQuantity.errors()[0].message }}</div>
       }
     </div>
 
     <div class="mb-3">
-      <label class="form-label" for="comment">Comment (optional)</label>
-      <textarea id="comment" class="form-control" rows="3" [formField]="form().comment"></textarea>
+      <label class="form-label" for="description">Description (optional)</label>
+      <textarea id="description" class="form-control" rows="3" [formField]="form().description"></textarea>
     </div>
   </fieldset>
 </div>

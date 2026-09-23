@@ -1,4 +1,4 @@
 export interface UserLoginRequest {
-  merchantId: string;
-  merchantPassword: string;
+  username: string;
+  password: string;
 }

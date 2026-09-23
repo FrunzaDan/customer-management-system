@@ -12,9 +12,9 @@ public sealed record ProductDetailsModel
 // One purchase of a product, from the product's side: who bought it and when.
 public sealed record ProductBuyerModel
 {
-    public required int PurchaseId { get; init; }
+    public required int CustomerPurchaseId { get; init; }
 
-    public required Guid CustomerGuid { get; init; }
+    public required Guid CustomerId { get; init; }
 
     public required string CustomerFirstName { get; init; }
 
@@ -23,5 +23,5 @@ public sealed record ProductBuyerModel
     public required string CustomerEmail { get; init; }
 
     // UTC.
-    public required DateTime PurchaseDate { get; init; }
+    public required DateTime PurchasedAt { get; init; }
 }

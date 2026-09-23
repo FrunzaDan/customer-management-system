@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using CustomerManagementSystem.WebAPI.Routing;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,9 +19,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddBusinessLogic();
 
 // Add services to the container.
+// Routes are declared as "api/[controller]"; the transformer turns the PascalCase class name
+// into the kebab-case URL segment (CostCenterController -> /api/cost-center). JSON is
 // System.Text.Json (the ASP.NET Core default; camelCase, case-insensitive reads) — it handles
 // DateOnly, UTC DateTime ("...Z") and Guid natively.
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+        options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())))
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)
     .ConfigureApiBehaviorOptions(options =>
@@ -29,7 +34,7 @@ builder.Services.AddControllers()
         // every other 400, instead of ASP.NET's default ValidationProblemDetails shape.
         options.InvalidModelStateResponseFactory = context =>
         {
-            // A bad JSON body value is reported twice: once under its JSON path ("$.birthdate")
+            // A bad JSON body value is reported twice: once under its JSON path ("$.birthDate")
             // and once under the action parameter's name ("request") — name the field.
             var firstError = context.ModelState
                 .Where(entry => entry.Value?.Errors.Count > 0)
@@ -99,7 +104,7 @@ builder.Services.AddCors(options =>
         .WithHeaders("Content-Type", "Authorization"));
 });
 
-// Throttles POST /api/Authentication/access-token so scripted credential-stuffing/brute-force
+// Throttles POST /api/authentication/access-token so scripted credential-stuffing/brute-force
 // can't run at network speed; PBKDF2 alone (see PasswordHasher) only slows a single guess.
 // Per-IP fixed window, in-memory — resets on app restart, doesn't survive multiple instances,
 // which is fine for this app's single-instance local/demo scope.

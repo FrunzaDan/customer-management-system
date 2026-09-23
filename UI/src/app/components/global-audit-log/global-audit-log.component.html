@@ -35,23 +35,23 @@
       <tr>
         <th scope="col" class="text-center">Date</th>
         <th scope="col" class="text-center">Customer</th>
-        <th scope="col" class="text-center">Merchant</th>
+        <th scope="col" class="text-center">Performed by</th>
         <th scope="col" class="text-center">Action</th>
         <th scope="col" class="text-center">Details</th>
       </tr>
     </thead>
     <tbody>
-      @for (entry of entries(); track entry.auditId) {
+      @for (entry of entries(); track entry.customerAuditLogId) {
       <tr>
         <td class="align-middle text-center">
-          {{ entry.actionDate | date: 'medium' }}
+          {{ entry.occurredAt | date: 'medium' }}
         </td>
         <td class="align-middle text-center">
           @if (entry.customerFirstName || entry.customerLastName) {
           <a
             class="plain-Links hoverItem"
-            routerLink="/customerDetails"
-            [queryParams]="{ id: entry.customerGuid }"
+            routerLink="/customer-details"
+            [queryParams]="{ id: entry.customerId }"
           >
             {{ customerLabel(entry) }}
           </a>
@@ -59,8 +59,8 @@
           <span class="text-muted">{{ customerLabel(entry) }}</span>
           }
         </td>
-        <td class="align-middle text-center">{{ entry.merchantId }}</td>
-        <td class="align-middle text-center">{{ entry.action }}</td>
+        <td class="align-middle text-center">{{ entry.performedBy }}</td>
+        <td class="align-middle text-center">{{ entry.actionType }}</td>
         <td class="align-middle text-center">{{ entry.details }}</td>
       </tr>
       }

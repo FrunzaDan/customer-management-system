@@ -18,22 +18,22 @@ describe('AddCustomerService', () => {
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/register`;
+  const API_URL = `${environment.apiUrl}/api/customer/register`;
 
   const buildCustomer = (): CreateCustomerRequest => ({
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: Gender.Male,
-    birthdate: '1990-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
   });
 

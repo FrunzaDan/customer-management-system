@@ -16,7 +16,7 @@ import { NotificationService } from './notification.service';
 })
 export class EditCustomerService {
   private readonly APIURL =
-    environment.CustomerManagementSystemAPI + '/api/Customer/edit';
+    environment.apiUrl + '/api/customer/edit';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -46,13 +46,13 @@ export class EditCustomerService {
 
 function toUpdateCustomerRequest(customer: Customer): UpdateCustomerRequest {
   return {
-    guid: customer.guid,
+    customerId: customer.customerId,
     firstName: customer.firstName,
     lastName: customer.lastName,
     email: customer.email,
-    msisdn: customer.msisdn,
+    phoneNumber: customer.phoneNumber,
     gender: customer.gender,
-    birthdate: customer.birthdate,
+    birthDate: customer.birthDate,
     address: customer.address,
   };
 }

@@ -31,14 +31,14 @@
             </div>
             <div class="stat">
               <dt>Inventory</dt>
-              <dd>{{ product.inventoryQuantity }}</dd>
+              <dd>{{ product.initialQuantity }}</dd>
             </div>
             <div class="stat">
               <dt>Left</dt>
-              <dd>{{ product.stockQuantity }}</dd>
+              <dd>{{ product.quantityOnHand }}</dd>
             </div>
           </dl>
-          @if (product.stockQuantity === 0) {
+          @if (product.quantityOnHand === 0) {
           <p class="form-note mb-0 mt-3">This product is sold out.</p>
           }
         </div>
@@ -57,16 +57,16 @@
               <dd>{{ product.price | number: '1.2-2' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>Depot</dt>
-              <dd>{{ product.depot }}</dd>
+              <dt>Warehouse</dt>
+              <dd>{{ product.warehouse }}</dd>
             </div>
             <div class="detail-row">
               <dt>Description</dt>
-              <dd>{{ product.comment || '—' }}</dd>
+              <dd>{{ product.description || '—' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>Product GUID</dt>
-              <dd class="guid">{{ product.guid }}</dd>
+              <dt>Product ID</dt>
+              <dd class="entity-id">{{ product.productId }}</dd>
             </div>
           </dl>
         </div>
@@ -95,18 +95,18 @@
                 </tr>
               </thead>
               <tbody>
-                @for (buyer of buyers(); track buyer.purchaseId) {
+                @for (buyer of buyers(); track buyer.customerPurchaseId) {
                 <tr>
                   <th scope="row" class="align-middle fw-normal">
                     <a
                       class="plain-Links hoverItem"
-                      routerLink="/customerDetails"
-                      [queryParams]="{ id: buyer.customerGuid }"
+                      routerLink="/customer-details"
+                      [queryParams]="{ id: buyer.customerId }"
                       >{{ buyerName(buyer) }}</a
                     >
                   </th>
                   <td class="align-middle email-cell">{{ buyer.customerEmail }}</td>
-                  <td class="align-middle">{{ buyer.purchaseDate | date: 'medium' }}</td>
+                  <td class="align-middle">{{ buyer.purchasedAt | date: 'medium' }}</td>
                 </tr>
                 }
               </tbody>

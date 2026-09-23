@@ -1,9 +1,11 @@
+using System.Text.RegularExpressions;
+using CustomerManagementSystem.BusinessLogic.Constants;
 using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.BusinessLogic.Validations;
 
-public static class AddressValidation
+public static partial class AddressValidation
 {
     // Registration only: every CustomerAddress column is NOT NULL, so a missing field would
     // otherwise surface as an opaque 500 from the insert instead of a validation error.
@@ -12,10 +14,10 @@ public static class AddressValidation
     {
         if (string.IsNullOrWhiteSpace(address.Country)) return "Country is required.";
         if (string.IsNullOrWhiteSpace(address.County)) return "County is required.";
-        if (string.IsNullOrWhiteSpace(address.Town)) return "Town is required.";
-        if (string.IsNullOrWhiteSpace(address.Zip)) return "Zip is required.";
+        if (string.IsNullOrWhiteSpace(address.City)) return "City is required.";
+        if (string.IsNullOrWhiteSpace(address.PostalCode)) return "Postal code is required.";
         if (string.IsNullOrWhiteSpace(address.Street)) return "Street is required.";
-        if (string.IsNullOrWhiteSpace(address.Number)) return "Number is required.";
+        if (string.IsNullOrWhiteSpace(address.StreetNumber)) return "Street number is required.";
         return null;
     }
 
@@ -24,10 +26,17 @@ public static class AddressValidation
     {
         if (address.Country?.Length > FieldLengthConstants.Country) return "Country is too long.";
         if (address.County?.Length > FieldLengthConstants.County) return "County is too long.";
-        if (address.Town?.Length > FieldLengthConstants.Town) return "Town is too long.";
-        if (address.Zip?.Length > FieldLengthConstants.Zip) return "Zip is too long.";
+        if (address.City?.Length > FieldLengthConstants.City) return "City is too long.";
+        if (address.PostalCode?.Length > FieldLengthConstants.PostalCode) return "Postal code is too long.";
+        // CustomerAddress.PostalCode is VARCHAR, not NVARCHAR — a non-ASCII character would be
+        // silently stored as '?', so reject it instead. Real postal codes never need one.
+        if (!string.IsNullOrEmpty(address.PostalCode) && !PostalCodeRegex().IsMatch(address.PostalCode))
+            return "Postal code may only contain letters, digits, spaces and hyphens.";
         if (address.Street?.Length > FieldLengthConstants.Street) return "Street is too long.";
-        if (address.Number?.Length > FieldLengthConstants.Number) return "Number is too long.";
+        if (address.StreetNumber?.Length > FieldLengthConstants.StreetNumber) return "Street number is too long.";
         return null;
     }
+
+    [GeneratedRegex(RegexConstants.PostalCodeRegex)]
+    private static partial Regex PostalCodeRegex();
 }

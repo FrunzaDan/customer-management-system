@@ -5,20 +5,20 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
 public class CustomerDeletion(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> DeleteCustomer(Guid guid, string merchantId,
+    public async Task<ResponseModel<object>> DeleteCustomer(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default)
     {
-        if (guid == Guid.Empty)
-            return new ResponseModel<object>(400, "Invalid or empty Guid.");
+        if (customerId == Guid.Empty)
+            return new ResponseModel<object>(400, "Invalid or empty customer ID.");
 
-        var response = await dbUtils.DeleteCustomer(guid, cancellationToken);
+        var response = await dbUtils.DeleteCustomer(customerId, cancellationToken);
 
         // No FK from CustomerAuditLog to Customer, deliberately — this row
         // is the one place that outlives the customer it's about. Also not forwarding
         // cancellationToken here: the delete already succeeded, so the log entry should
         // still be attempted even if the client has since disconnected.
         if (response.Status == 200)
-            await auditLogger.Log(guid, merchantId, AuditAction.Deleted);
+            await auditLogger.Log(customerId, performedBy, AuditAction.Deleted);
 
         return response;
     }

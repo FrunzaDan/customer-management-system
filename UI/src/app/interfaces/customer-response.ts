@@ -8,7 +8,7 @@ export enum Gender {
 }
 
 // Customer.StatusCode values — see ai_docs/database.md.
-export enum CustomerActivationStatus {
+export enum CustomerStatus {
   Active = 1901,
   Deactivated = 1903,
   Test = 1904,
@@ -17,43 +17,43 @@ export enum CustomerActivationStatus {
 export interface Address {
   country: string;
   county: string;
-  town: string;
-  zip: string;
+  city: string;
+  postalCode: string;
   street: string;
-  number: string;
+  streetNumber: string;
 }
 
-// A customer as the API returns it. Every field but birthdate is NOT NULL in the DB; the API
-// omits null properties entirely, so an unset birthdate arrives as a missing key.
+// A customer as the API returns it. Every field but birthDate is NOT NULL in the DB; the API
+// omits null properties entirely, so an unset birthDate arrives as a missing key.
 export interface Customer {
-  guid: string;
+  customerId: string;
   firstName: string;
   lastName: string;
-  msisdn: string;
+  phoneNumber: string;
   email: string;
   gender: Gender;
-  customerStatus: CustomerActivationStatus;
-  creationDate: IsoDateTime;
-  interactionDate: IsoDateTime;
-  birthdate?: IsoDate;
+  status: CustomerStatus;
+  createdAt: IsoDateTime;
+  lastInteractionAt: IsoDateTime;
+  birthDate?: IsoDate;
   address: Address;
 }
 
-// POST /api/Customer/register. No guid: the DB generates it and the response returns it.
+// POST /api/customer/register. No customerId: the DB generates it and the response returns it.
 export interface CreateCustomerRequest {
   firstName: string;
   lastName: string;
   email: string;
-  msisdn: string;
+  phoneNumber: string;
   gender: Gender;
-  birthdate?: IsoDate;
+  birthDate?: IsoDate;
   // Omitted = Active. The only other value the API accepts is Test.
-  customerStatus?: CustomerActivationStatus.Active | CustomerActivationStatus.Test;
+  status?: CustomerStatus.Active | CustomerStatus.Test;
   address: Address;
 }
 
-// PATCH /api/Customer/edit — a partial update: an omitted field is left unchanged. There's no
-// customerStatus: status only changes through deactivate/reactivate/delete.
-export interface UpdateCustomerRequest extends Partial<Omit<CreateCustomerRequest, 'customerStatus'>> {
-  guid: string;
+// PATCH /api/customer/edit — a partial update: an omitted field is left unchanged. There's no
+// status: status only changes through deactivate/reactivate/delete.
+export interface UpdateCustomerRequest extends Partial<Omit<CreateCustomerRequest, 'status'>> {
+  customerId: string;
 }

@@ -1,12 +1,12 @@
 import { IsoDateTime } from './iso-date';
 
 export interface Purchase {
-  purchaseId: number;
-  customerGuid: string;
-  productGuid: string;
+  customerPurchaseId: number;
+  customerId: string;
+  productId: string;
   productName: string;
   category: string;
   // The product's current price, not a snapshot of what was paid at purchase time.
   price: number;
-  purchaseDate: IsoDateTime;
+  purchasedAt: IsoDateTime;
 }

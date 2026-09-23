@@ -8,20 +8,20 @@ import { PurchaseService } from '../../services/purchase.service';
 import { AboutComponent } from './about.component';
 
 describe('AboutComponent — addTestCustomers', () => {
-  const buildProduct = (n: number, stockQuantity = 100): Product => ({
-    guid: `p${n}`,
+  const buildProduct = (n: number, quantityOnHand = 100): Product => ({
+    productId: `p${n}`,
     name: `Product ${n}`,
     category: 'Laptop',
     price: 100,
-    inventoryQuantity: stockQuantity,
-    stockQuantity,
+    initialQuantity: quantityOnHand,
+    quantityOnHand,
     soldQuantity: 0,
-    depot: 'Central Depot',
+    warehouse: 'Central Depot',
   });
   const catalogue = (size = 50, stock = 100) => Array.from({ length: size }, (_, i) => buildProduct(i, stock));
 
   let registered: string[]; // emails, in registration order
-  let purchases: { customerGuid: string; productGuid: string }[];
+  let purchases: { customerId: string; productId: string }[];
   let fetchProducts: ReturnType<typeof vi.fn>;
   let addCustomerSilently: ReturnType<typeof vi.fn>;
   let purchaseProductSilently: ReturnType<typeof vi.fn>;
@@ -33,10 +33,10 @@ describe('AboutComponent — addTestCustomers', () => {
     fetchProducts = vi.fn().mockReturnValue(of(products));
     addCustomerSilently = vi.fn((customer: { email: string }) => {
       registered.push(customer.email);
-      return of({ status: 200, responseMessage: 'ok', data: `guid-for-${customer.email}` });
+      return of({ status: 200, responseMessage: 'ok', data: `customer-for-${customer.email}` });
     });
-    purchaseProductSilently = vi.fn((customerGuid: string, productGuid: string) => {
-      purchases.push({ customerGuid, productGuid });
+    purchaseProductSilently = vi.fn((customerId: string, productId: string) => {
+      purchases.push({ customerId, productId });
       return of({ status: 200, responseMessage: 'ok' });
     });
     show = vi.fn();
@@ -55,7 +55,7 @@ describe('AboutComponent — addTestCustomers', () => {
   const purchasesByCustomer = () => {
     const byCustomer = new Map<string, string[]>();
     for (const p of purchases) {
-      byCustomer.set(p.customerGuid, [...(byCustomer.get(p.customerGuid) ?? []), p.productGuid]);
+      byCustomer.set(p.customerId, [...(byCustomer.get(p.customerId) ?? []), p.productId]);
     }
     return byCustomer;
   };
@@ -100,18 +100,18 @@ describe('AboutComponent — addTestCustomers', () => {
 
     await component.addTestCustomers();
 
-    const buyers = new Set(purchases.map((p) => p.customerGuid));
-    expect([...buyers].sort()).toEqual(registered.map((email) => `guid-for-${email}`).sort());
+    const buyers = new Set(purchases.map((p) => p.customerId));
+    expect([...buyers].sort()).toEqual(registered.map((email) => `customer-for-${email}`).sort());
   });
 
   it('never buys a product that is out of stock', async () => {
-    const products = [...catalogue(20).map((p) => ({ ...p, stockQuantity: 0 })), buildProduct(99), buildProduct(98)];
+    const products = [...catalogue(20).map((p) => ({ ...p, quantityOnHand: 0 })), buildProduct(99), buildProduct(98)];
     const component = createComponent(products);
 
     await component.addTestCustomers();
 
     expect(purchases.length).toBeGreaterThan(0);
-    for (const p of purchases) expect(['p99', 'p98']).toContain(p.productGuid);
+    for (const p of purchases) expect(['p99', 'p98']).toContain(p.productId);
   });
 
   it('never buys more units of a product than it has in stock', async () => {
@@ -121,16 +121,16 @@ describe('AboutComponent — addTestCustomers', () => {
 
     await component.addTestCustomers();
 
-    expect(purchases.filter((p) => p.productGuid === 'p0').length).toBeLessThanOrEqual(3);
+    expect(purchases.filter((p) => p.productId === 'p0').length).toBeLessThanOrEqual(3);
   });
 
   it('draws again when every product it picked is rejected, so the customer still ends up with one', async () => {
     const component = createComponent(catalogue(50));
     // Reject the first 3 attempts overall (e.g. someone else took the stock), then accept.
     let attempts = 0;
-    purchaseProductSilently.mockImplementation((customerGuid: string, productGuid: string) => {
+    purchaseProductSilently.mockImplementation((customerId: string, productId: string) => {
       if (attempts++ < 3) return throwError(() => new Error('409'));
-      purchases.push({ customerGuid, productGuid });
+      purchases.push({ customerId, productId });
       return of({ status: 200, responseMessage: 'ok' });
     });
 
@@ -170,12 +170,12 @@ describe('AboutComponent — addTestCustomers', () => {
     addCustomerSilently.mockImplementation((customer: { email: string }) => {
       if (n++ === 0) return throwError(() => new Error('400'));
       registered.push(customer.email);
-      return of({ status: 200, responseMessage: 'ok', data: `guid-for-${customer.email}` });
+      return of({ status: 200, responseMessage: 'ok', data: `customer-for-${customer.email}` });
     });
 
     await component.addTestCustomers();
 
-    expect(new Set(purchases.map((p) => p.customerGuid)).size).toBe(49);
+    expect(new Set(purchases.map((p) => p.customerId)).size).toBe(49);
     expect(show).toHaveBeenCalledWith(expect.stringContaining('Added 49 test customers'), 'error');
     expect(show).toHaveBeenCalledWith(expect.stringContaining('1 failed'), 'error');
   });

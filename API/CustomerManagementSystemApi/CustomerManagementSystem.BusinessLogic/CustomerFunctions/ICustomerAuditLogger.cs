@@ -4,6 +4,6 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
 public interface ICustomerAuditLogger
 {
-    Task Log(Guid customerGuid, string merchantId, AuditAction action, string? details = null,
+    Task Log(Guid customerId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default);
 }

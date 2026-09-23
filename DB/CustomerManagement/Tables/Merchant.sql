@@ -6,6 +6,6 @@ CREATE TABLE [dbo].[Merchant] (
     [PasswordSalt]      BINARY (16)   NOT NULL,
     -- 1801 = the only role currently in use (see ai_docs/api.md).
     [RoleCode]          SMALLINT      NOT NULL,
-    [LastInteractionAt] DATETIME2 (0) NULL,
-    CONSTRAINT [PK_Merchant] PRIMARY KEY ([Username])
+    [LastInteractionAt] DATETIME2 (3) NULL,
+    CONSTRAINT [PK_Merchant] PRIMARY KEY CLUSTERED ([Username])
 );

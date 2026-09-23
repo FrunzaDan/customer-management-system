@@ -44,14 +44,14 @@ describe('UserLoginComponent', () => {
     );
   });
 
-  it('sends the merchant id and password and clears any error on success', async () => {
+  it('sends the username and password and clears any error on success', async () => {
     component.model.set({ username: 'TestMerchantID', password: 'Merchant123' });
 
     await submit(component.loginForm);
 
     expect(login).toHaveBeenCalledWith({
-      merchantId: 'TestMerchantID',
-      merchantPassword: 'Merchant123',
+      username: 'TestMerchantID',
+      password: 'Merchant123',
     });
     expect(component.errorMessage()).toBeNull();
   });

@@ -51,7 +51,7 @@ export class GlobalAuditLogComponent implements OnInit {
 
   customerLabel(entry: GlobalAuditLogEntry): string {
     if (!entry.customerFirstName && !entry.customerLastName) {
-      return `(deleted customer ${entry.customerGuid})`;
+      return `(deleted customer ${entry.customerId})`;
     }
     return `${entry.customerFirstName ?? ''} ${entry.customerLastName ?? ''}`.trim();
   }

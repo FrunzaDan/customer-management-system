@@ -17,21 +17,21 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class PurchaseService {
-  private readonly API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer`;
+  private readonly API_URL = `${environment.apiUrl}/api/customer`;
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly customerGuid = signal<string | undefined>(undefined);
+  private readonly customerId = signal<string | undefined>(undefined);
 
-  // Same shape as AuditLogService: the request is a function of `customerGuid`, so a
-  // new guid cancels the in-flight request, and nothing is fetched until one is set.
+  // Same shape as AuditLogService: the request is a function of `customerId`, so a
+  // new customerId cancels the in-flight request, and nothing is fetched until one is set.
   private readonly purchases = httpResource<GenericResponse<Purchase[]>>(() => {
-    const guid = this.customerGuid();
-    if (!guid) return undefined;
+    const customerId = this.customerId();
+    if (!customerId) return undefined;
     return {
       url: `${this.API_URL}/purchases`,
-      params: { customerGuid: guid },
+      params: { customerId: customerId },
       headers: this.httpHeaderService.getHeadersWithTokenSet(),
     };
   });
@@ -46,21 +46,21 @@ export class PurchaseService {
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
-  loadPurchases(customerGuid: string): void {
-    if (this.customerGuid() === customerGuid) {
+  loadPurchases(customerId: string): void {
+    if (this.customerId() === customerId) {
       // Same customer (e.g. right after recording a purchase) — the request itself
       // hasn't changed, so ask for a fresh copy.
       this.purchases.reload();
     } else {
-      this.customerGuid.set(customerGuid);
+      this.customerId.set(customerId);
     }
   }
 
   purchaseProduct(
-    customerGuid: string,
-    productGuid: string,
+    customerId: string,
+    productId: string,
   ): Observable<GenericResponse<object>> {
-    return this.purchaseProductSilently(customerGuid, productGuid).pipe(
+    return this.purchaseProductSilently(customerId, productId).pipe(
       tap(() => this.notificationService.show('Purchase recorded.')),
     );
   }
@@ -71,13 +71,13 @@ export class PurchaseService {
    * one per request.
    */
   purchaseProductSilently(
-    customerGuid: string,
-    productGuid: string,
+    customerId: string,
+    productId: string,
   ): Observable<GenericResponse<object>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams()
-      .set('customerGuid', customerGuid)
-      .set('productGuid', productGuid);
+      .set('customerId', customerId)
+      .set('productId', productId);
 
     return this.http.post<GenericResponse<object>>(
       `${this.API_URL}/purchase`,

@@ -7,7 +7,7 @@ import { ProductService } from '../../services/product.service';
 export type ProductSortColumn =
   | 'name'
   | 'category'
-  | 'depot'
+  | 'warehouse'
   | 'price'
   | 'sold'
   | 'inventory'
@@ -17,11 +17,11 @@ export type ProductSortColumn =
 const SORT_VALUES: Record<ProductSortColumn, (product: Product) => string | number> = {
   name: (p) => p.name,
   category: (p) => p.category,
-  depot: (p) => p.depot,
+  warehouse: (p) => p.warehouse,
   price: (p) => p.price,
   sold: (p) => p.soldQuantity,
-  inventory: (p) => p.inventoryQuantity,
-  left: (p) => p.stockQuantity,
+  inventory: (p) => p.initialQuantity,
+  left: (p) => p.quantityOnHand,
 };
 
 @Component({

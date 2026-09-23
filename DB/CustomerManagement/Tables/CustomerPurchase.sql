@@ -5,9 +5,9 @@ CREATE TABLE [dbo].[CustomerPurchase]
     [CustomerPurchaseId] INT IDENTITY (1, 1) NOT NULL,
     [CustomerId] UNIQUEIDENTIFIER NOT NULL,
     [ProductId] UNIQUEIDENTIFIER NOT NULL,
-    [PurchasedAt] DATETIME2 (0) NOT NULL
+    [PurchasedAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_CustomerPurchase_PurchasedAt] DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT [PK_CustomerPurchase] PRIMARY KEY ([CustomerPurchaseId]),
+    CONSTRAINT [PK_CustomerPurchase] PRIMARY KEY CLUSTERED ([CustomerPurchaseId]),
     -- Unlike CustomerAuditLog, purchases are real FKs: a purchase row is meaningless
     -- without its customer, so Customer_Delete deletes them together with the customer
     -- (see that proc) rather than letting them outlive it.

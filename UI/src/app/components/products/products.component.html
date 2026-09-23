@@ -6,7 +6,7 @@
         The product catalogue with sales and stock. Select a product to see who bought it.
       </p>
     </div>
-    <a routerLink="/addProduct" class="btn btn-primary shadow-none">Add product</a>
+    <a routerLink="/add-product" class="btn btn-primary shadow-none">Add product</a>
   </div>
 
   @if (isLoading() && products().length === 0) {
@@ -42,10 +42,10 @@
                 }
               </button>
             </th>
-            <th scope="col" [attr.aria-sort]="ariaSort('depot')">
-              <button type="button" class="sort-button" (click)="setSort('depot')">
-                Depot
-                @if (sortColumn() === 'depot') {
+            <th scope="col" [attr.aria-sort]="ariaSort('warehouse')">
+              <button type="button" class="sort-button" (click)="setSort('warehouse')">
+                Warehouse
+                @if (sortColumn() === 'warehouse') {
                 <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
                 }
               </button>
@@ -85,26 +85,26 @@
           </tr>
         </thead>
         <tbody>
-          @for (product of sortedProducts(); track product.guid) {
+          @for (product of sortedProducts(); track product.productId) {
           <tr>
             <th scope="row" class="align-middle fw-normal">
               <a
                 class="plain-Links hoverItem"
-                routerLink="/productDetails"
-                [queryParams]="{ id: product.guid }"
+                routerLink="/product-details"
+                [queryParams]="{ id: product.productId }"
                 >{{ product.name }}</a
               >
             </th>
             <td class="align-middle">{{ product.category }}</td>
-            <td class="align-middle">{{ product.depot }}</td>
+            <td class="align-middle">{{ product.warehouse }}</td>
             <td class="align-middle text-end">{{ product.price | number: '1.2-2' }}</td>
             <td class="align-middle text-end">{{ product.soldQuantity }}</td>
-            <td class="align-middle text-end">{{ product.inventoryQuantity }}</td>
+            <td class="align-middle text-end">{{ product.initialQuantity }}</td>
             <td class="align-middle text-end">
-              @if (product.stockQuantity === 0) {
+              @if (product.quantityOnHand === 0) {
               <span class="badge rounded-pill bg-secondary">Sold out</span>
               } @else {
-              {{ product.stockQuantity }}
+              {{ product.quantityOnHand }}
               }
             </td>
           </tr>

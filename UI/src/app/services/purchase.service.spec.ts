@@ -15,18 +15,18 @@ describe('PurchaseService', () => {
   let httpMock: HttpTestingController;
   let notificationService: NotificationService;
 
-  const BASE_URL = `${environment.CustomerManagementSystemAPI}/api/Customer`;
+  const BASE_URL = `${environment.apiUrl}/api/customer`;
   const LIST_URL = `${BASE_URL}/purchases`;
   const PURCHASE_URL = `${BASE_URL}/purchase`;
 
   const buildPurchase = (overrides: Partial<Purchase> = {}): Purchase => ({
-    purchaseId: 1,
-    customerGuid: 'guid-1',
-    productGuid: 'product-1',
+    customerPurchaseId: 1,
+    customerId: 'customer-1',
+    productId: 'product-1',
     productName: 'Aerobook 14 Pro',
     category: 'Laptop',
     price: 1299,
-    purchaseDate: '2026-01-01T10:00:00',
+    purchasedAt: '2026-01-01T10:00:00',
     ...overrides,
   });
 
@@ -45,8 +45,8 @@ describe('PurchaseService', () => {
 
   // httpResource issues its request from an effect, so flush effects after
   // calling loadPurchases() before expecting the HTTP call.
-  const load = (guid: string) => {
-    service.loadPurchases(guid);
+  const load = (customerId: string) => {
+    service.loadPurchases(customerId);
     TestBed.tick();
   };
 
@@ -63,12 +63,12 @@ describe('PurchaseService', () => {
       expect(service.loadingSignal()).toBe(false);
     });
 
-    it('sends the customerGuid as a query param and populates entriesSignal', async () => {
+    it('sends the customerId as a query param and populates entriesSignal', async () => {
       const purchase = buildPurchase();
 
-      load('guid-1');
+      load('customer-1');
       const req = httpMock.expectOne((r) => r.url === LIST_URL);
-      expect(req.request.params.get('customerGuid')).toBe('guid-1');
+      expect(req.request.params.get('customerId')).toBe('customer-1');
       req.flush({ status: 200, responseMessage: 'ok', data: [purchase] });
       await settle();
 
@@ -77,13 +77,13 @@ describe('PurchaseService', () => {
     });
 
     it('re-requests when asked to load the same customer again (e.g. after a purchase)', async () => {
-      load('guid-1');
+      load('customer-1');
       httpMock
         .expectOne((r) => r.url === LIST_URL)
         .flush({ status: 200, responseMessage: 'ok', data: [] });
       await settle();
 
-      load('guid-1');
+      load('customer-1');
 
       httpMock
         .expectOne((r) => r.url === LIST_URL)
@@ -93,7 +93,7 @@ describe('PurchaseService', () => {
     });
 
     it('surfaces the server-provided error message when present', async () => {
-      load('guid-1');
+      load('customer-1');
 
       httpMock
         .expectOne((r) => r.url === LIST_URL)
@@ -106,20 +106,20 @@ describe('PurchaseService', () => {
   });
 
   describe('purchaseProduct', () => {
-    it('POSTs the customer and product guids as query params', () => {
-      service.purchaseProduct('guid-1', 'product-1').subscribe();
+    it('POSTs the customer and product customerIds as query params', () => {
+      service.purchaseProduct('customer-1', 'product-1').subscribe();
 
       const req = httpMock.expectOne((r) => r.url === PURCHASE_URL);
       expect(req.request.method).toBe('POST');
-      expect(req.request.params.get('customerGuid')).toBe('guid-1');
-      expect(req.request.params.get('productGuid')).toBe('product-1');
+      expect(req.request.params.get('customerId')).toBe('customer-1');
+      expect(req.request.params.get('productId')).toBe('product-1');
       req.flush({ status: 200, responseMessage: 'Purchase recorded successfully.' });
     });
 
     it('shows a success notification once the purchase is recorded', () => {
       const show = vi.spyOn(notificationService, 'show');
 
-      service.purchaseProduct('guid-1', 'product-1').subscribe();
+      service.purchaseProduct('customer-1', 'product-1').subscribe();
       httpMock
         .expectOne((r) => r.url === PURCHASE_URL)
         .flush({ status: 200, responseMessage: 'ok' });
@@ -130,11 +130,11 @@ describe('PurchaseService', () => {
     it('purchaseProductSilently POSTs the same request but shows no notification', () => {
       const show = vi.spyOn(notificationService, 'show');
 
-      service.purchaseProductSilently('guid-1', 'product-1').subscribe();
+      service.purchaseProductSilently('customer-1', 'product-1').subscribe();
       const req = httpMock.expectOne((r) => r.url === PURCHASE_URL);
       expect(req.request.method).toBe('POST');
-      expect(req.request.params.get('customerGuid')).toBe('guid-1');
-      expect(req.request.params.get('productGuid')).toBe('product-1');
+      expect(req.request.params.get('customerId')).toBe('customer-1');
+      expect(req.request.params.get('productId')).toBe('product-1');
       req.flush({ status: 200, responseMessage: 'ok' });
 
       expect(show).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe('PurchaseService', () => {
       const show = vi.spyOn(notificationService, 'show');
       const onError = vi.fn();
 
-      service.purchaseProduct('guid-1', 'product-1').subscribe({ error: onError });
+      service.purchaseProduct('customer-1', 'product-1').subscribe({ error: onError });
       httpMock
         .expectOne((r) => r.url === PURCHASE_URL)
         .flush(

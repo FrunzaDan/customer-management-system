@@ -33,16 +33,16 @@
     >
       {{ exportLoading() ? 'Exporting…' : 'Export CSV' }}
     </button>
-    <a routerLink="/addCustomer" class="btn btn-primary shadow-none">
+    <a routerLink="/add-customer" class="btn btn-primary shadow-none">
       Register customer
     </a>
     <button
       type="button"
       class="btn btn-danger"
-      [disabled]="selectedGuids().size === 0 || bulkActionInProgress() || activationLoading() || deleting()"
+      [disabled]="selectedCustomerIds().size === 0 || bulkActionInProgress() || activationLoading() || deleting()"
       (click)="bulkDeleteSelected()"
     >
-      {{ bulkActionInProgress() ? 'Processing…' : 'Bulk delete selected (' + selectedGuids().size + ')' }}
+      {{ bulkActionInProgress() ? 'Processing…' : 'Bulk delete selected (' + selectedCustomerIds().size + ')' }}
     </button>
   </div>
 </div>
@@ -92,10 +92,10 @@
               }
             </button>
           </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('msisdn')">
-            <button type="button" class="sort-button" (click)="setSort('msisdn')">
-              MSISDN
-              @if (sortColumn() === 'msisdn') {
+          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('phoneNumber')">
+            <button type="button" class="sort-button" (click)="setSort('phoneNumber')">
+              phone number
+              @if (sortColumn() === 'phoneNumber') {
               <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
               }
             </button>
@@ -105,7 +105,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (customer of customers(); track customer.guid) {
+        @for (customer of customers(); track customer.customerId) {
         @let fullName = customer.firstName + ' ' + customer.lastName;
         <tr>
           <td class="align-middle text-center">
@@ -113,45 +113,45 @@
               #rowCheckbox
               type="checkbox"
               [attr.aria-label]="'Select ' + fullName"
-              [checked]="isSelected(customer.guid)"
-              (change)="toggleSelection(customer.guid, rowCheckbox.checked)"
+              [checked]="isSelected(customer.customerId)"
+              (change)="toggleSelection(customer.customerId, rowCheckbox.checked)"
             />
           </td>
           <td class="align-middle text-center">
             <a
               class="plain-Links hoverItem"
-              routerLink="/customerDetails"
-              [queryParams]="{ id: customer.guid }"
+              routerLink="/customer-details"
+              [queryParams]="{ id: customer.customerId }"
             >
               {{ fullName }}
             </a>
           </td>
           <td class="align-middle text-center">{{ customer.email }}</td>
-          <td class="align-middle text-center">{{ customer.msisdn }}</td>
+          <td class="align-middle text-center">{{ customer.phoneNumber }}</td>
           <td class="align-middle text-center">
             <span
               class="badge rounded-pill"
-              [class.bg-success]="customer.customerStatus === CustomerStatus.Active"
-              [class.bg-secondary]="customer.customerStatus === CustomerStatus.Deactivated"
-              [class.bg-warning]="customer.customerStatus === CustomerStatus.Test"
-              [class.text-dark]="customer.customerStatus === CustomerStatus.Test"
+              [class.bg-success]="customer.status === CustomerStatus.Active"
+              [class.bg-secondary]="customer.status === CustomerStatus.Deactivated"
+              [class.bg-warning]="customer.status === CustomerStatus.Test"
+              [class.text-dark]="customer.status === CustomerStatus.Test"
             >
-              {{ statusLabels.get(customer.customerStatus) }}
+              {{ statusLabels.get(customer.status) }}
             </span>
           </td>
           <td class="align-middle text-center">
             <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + fullName">
               <a
                 class="btn btn-primary btn-sm shadow-none"
-                routerLink="/editCustomer"
-                [queryParams]="{ id: customer.guid }"
+                routerLink="/edit-customer"
+                [queryParams]="{ id: customer.customerId }"
                 [attr.aria-label]="'Edit ' + fullName"
                 >Edit</a
               >
 
-              @if (customer.customerStatus === CustomerStatus.Active || customer.customerStatus === CustomerStatus.Test) {
+              @if (customer.status === CustomerStatus.Active || customer.status === CustomerStatus.Test) {
               <button
-                (click)="deactivateCustomer(customer.guid)"
+                (click)="deactivateCustomer(customer.customerId)"
                 type="button"
                 class="btn btn-danger btn-sm"
                 [attr.aria-label]="'Deactivate ' + fullName"
@@ -159,9 +159,9 @@
               >
                 Deactivate
               </button>
-              } @if (customer.customerStatus === CustomerStatus.Deactivated) {
+              } @if (customer.status === CustomerStatus.Deactivated) {
               <button
-                (click)="reactivateCustomer(customer.guid)"
+                (click)="reactivateCustomer(customer.customerId)"
                 type="button"
                 class="btn btn-primary btn-sm shadow-none"
                 [attr.aria-label]="'Reactivate ' + fullName"
@@ -169,9 +169,9 @@
               >
                 Reactivate
               </button>
-              } @if (customer.customerStatus === CustomerStatus.Deactivated || customer.customerStatus === CustomerStatus.Test) {
+              } @if (customer.status === CustomerStatus.Deactivated || customer.status === CustomerStatus.Test) {
               <button
-                (click)="deleteCustomer(customer.guid)"
+                (click)="deleteCustomer(customer.customerId)"
                 type="button"
                 class="btn btn-danger btn-sm shadow-none"
                 [attr.aria-label]="'Delete ' + fullName"

@@ -10,11 +10,11 @@ export type AuditAction =
   | 'Purchased';
 
 export interface AuditLogEntry {
-  auditId: number;
-  customerGuid: string;
-  merchantId: string;
-  action: AuditAction;
+  customerAuditLogId: number;
+  customerId: string;
+  performedBy: string;
+  actionType: AuditAction;
   // Optional in the DB; the API omits it when there are none.
   details?: string;
-  actionDate: IsoDateTime;
+  occurredAt: IsoDateTime;
 }

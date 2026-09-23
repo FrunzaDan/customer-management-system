@@ -13,27 +13,27 @@ describe('ProductDetailsService', () => {
   let service: ProductDetailsService;
   let httpMock: HttpTestingController;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/productDetails`;
+  const API_URL = `${environment.apiUrl}/api/customer/product-details`;
 
   const buildDetails = (): ProductDetails => ({
     product: {
-      guid: 'product-1',
+      productId: 'product-1',
       name: 'Aerobook 14 Pro',
       category: 'Laptop',
       price: 1299,
-      inventoryQuantity: 25,
-      stockQuantity: 24,
+      initialQuantity: 25,
+      quantityOnHand: 24,
       soldQuantity: 1,
-      depot: 'Central Depot',
+      warehouse: 'Central Depot',
     },
     buyers: [
       {
-        purchaseId: 1,
-        customerGuid: 'guid-1',
+        customerPurchaseId: 1,
+        customerId: 'customer-1',
         customerFirstName: 'Dan',
         customerLastName: 'Frunza',
         customerEmail: 'dan@example.com',
-        purchaseDate: '2026-01-01T10:00:00',
+        purchasedAt: '2026-01-01T10:00:00',
       },
     ],
   });
@@ -51,8 +51,8 @@ describe('ProductDetailsService', () => {
   });
 
   // httpResource issues its request from an effect, so flush effects after loading.
-  const load = (guid: string) => {
-    service.loadProductDetails(guid);
+  const load = (productId: string) => {
+    service.loadProductDetails(productId);
     TestBed.tick();
   };
 
@@ -67,12 +67,12 @@ describe('ProductDetailsService', () => {
     expect(service.loadingSignal()).toBe(false);
   });
 
-  it('sends the productGuid as a query param and exposes the product and its buyers', async () => {
+  it('sends the productId as a query param and exposes the product and its buyers', async () => {
     const details = buildDetails();
 
     load('product-1');
     const req = httpMock.expectOne((r) => r.url === API_URL);
-    expect(req.request.params.get('productGuid')).toBe('product-1');
+    expect(req.request.params.get('productId')).toBe('product-1');
     req.flush({ status: 200, responseMessage: 'ok', data: details });
     await settle();
 

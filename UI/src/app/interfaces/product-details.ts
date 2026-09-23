@@ -3,12 +3,12 @@ import { Product } from './product';
 
 // One purchase of a product, seen from the product's side.
 export interface ProductBuyer {
-  purchaseId: number;
-  customerGuid: string;
+  customerPurchaseId: number;
+  customerId: string;
   customerFirstName: string;
   customerLastName: string;
   customerEmail: string;
-  purchaseDate: IsoDateTime;
+  purchasedAt: IsoDateTime;
 }
 
 export interface ProductDetails {

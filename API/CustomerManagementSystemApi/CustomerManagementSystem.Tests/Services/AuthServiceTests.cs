@@ -33,8 +33,8 @@ public class AuthServiceTests
 
         var result = await sut.GetAccessToken(new MerchantCredentials
         {
-            MerchantId = "TestMerchantID",
-            MerchantPassword = "Merchant123",
+            Username = "TestMerchant",
+            Password = "Merchant123",
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
@@ -45,15 +45,15 @@ public class AuthServiceTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetAccessToken_RejectsMissingMerchantId_WithoutTouchingTheDb(string? merchantId)
+    public async Task GetAccessToken_RejectsMissingUsername_WithoutTouchingTheDb(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new MerchantCredentials
         {
-            MerchantId = merchantId,
-            MerchantPassword = "Merchant123",
+            Username = username,
+            Password = "Merchant123",
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
@@ -62,21 +62,21 @@ public class AuthServiceTests
             Times.Never);
     }
 
-    // Distinct from JwtCreation's own guard, which only checks MerchantId — AuthService is
+    // Distinct from JwtCreation's own guard, which only checks Username — AuthService is
     // the one place that also rejects a missing/blank password before any DB call is made.
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetAccessToken_RejectsMissingMerchantPassword_WithoutTouchingTheDb(string? merchantPassword)
+    public async Task GetAccessToken_RejectsMissingPassword_WithoutTouchingTheDb(string? password)
     {
         var dbUtils = new Mock<IDbUtils>();
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new MerchantCredentials
         {
-            MerchantId = "TestMerchantID",
-            MerchantPassword = merchantPassword,
+            Username = "TestMerchant",
+            Password = password,
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
@@ -91,16 +91,16 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(403, "Invalid Merchant ID or Password."));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(403, "Invalid username or password."));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new MerchantCredentials
         {
-            MerchantId = "TestMerchantID",
-            MerchantPassword = "WrongPassword",
+            Username = "TestMerchant",
+            Password = "WrongPassword",
         }, TestContext.Current.CancellationToken);
 
         Assert.Equal(403, result.Status);
-        Assert.Equal("Invalid Merchant ID or Password.", result.ResponseMessage);
+        Assert.Equal("Invalid username or password.", result.ResponseMessage);
     }
 }

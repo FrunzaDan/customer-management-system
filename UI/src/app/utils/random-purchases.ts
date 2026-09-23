@@ -20,7 +20,7 @@ export function chooseProductsToBuy(
     MIN_TEST_PURCHASES +
     Math.floor(random() * (MAX_TEST_PURCHASES - MIN_TEST_PURCHASES + 1));
 
-  return shuffled(products.filter((p) => p.stockQuantity > 0), random).slice(
+  return shuffled(products.filter((p) => p.quantityOnHand > 0), random).slice(
     0,
     count,
   );

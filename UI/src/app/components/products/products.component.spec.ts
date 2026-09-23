@@ -12,14 +12,14 @@ describe('ProductsComponent', () => {
   let error: ReturnType<typeof signal<string | null>>;
 
   const buildProduct = (overrides: Partial<Product> = {}): Product => ({
-    guid: 'p1',
+    productId: 'p1',
     name: 'Aerobook 14 Pro',
     category: 'Laptop',
     price: 1299,
-    inventoryQuantity: 25,
-    stockQuantity: 20,
+    initialQuantity: 25,
+    quantityOnHand: 20,
     soldQuantity: 5,
-    depot: 'Central Depot',
+    warehouse: 'Central Depot',
     ...overrides,
   });
 
@@ -75,8 +75,8 @@ describe('ProductsComponent', () => {
   it('renders a row per product with sold, inventory and left', () => {
     const fixture = render();
     products.set([
-      buildProduct({ guid: 'p1', name: 'Aerobook 14 Pro' }),
-      buildProduct({ guid: 'p2', name: 'Voltix K1', soldQuantity: 3, inventoryQuantity: 10, stockQuantity: 7 }),
+      buildProduct({ productId: 'p1', name: 'Aerobook 14 Pro' }),
+      buildProduct({ productId: 'p2', name: 'Voltix K1', soldQuantity: 3, initialQuantity: 10, quantityOnHand: 7 }),
     ]);
     fixture.detectChanges();
 
@@ -86,18 +86,18 @@ describe('ProductsComponent', () => {
     expect(cells).toEqual(['Voltix K1', 'Laptop', 'Central Depot', '1,299.00', '3', '10', '7']);
   });
 
-  it('links each product to its details page by guid', () => {
+  it('links each product to its details page by productId', () => {
     const fixture = render();
-    products.set([buildProduct({ guid: 'abc-123' })]);
+    products.set([buildProduct({ productId: 'abc-123' })]);
     fixture.detectChanges();
 
     const link = (fixture.nativeElement as HTMLElement).querySelector('tbody a') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/productDetails?id=abc-123');
+    expect(link.getAttribute('href')).toBe('/product-details?id=abc-123');
   });
 
   it('shows "Sold out" instead of 0 when nothing is left', () => {
     const fixture = render();
-    products.set([buildProduct({ stockQuantity: 0, soldQuantity: 25 })]);
+    products.set([buildProduct({ quantityOnHand: 0, soldQuantity: 25 })]);
     fixture.detectChanges();
 
     const lastCell = (fixture.nativeElement as HTMLElement).querySelector('tbody tr td:last-child');
@@ -118,9 +118,9 @@ describe('ProductsComponent', () => {
     };
     const seed = (fixture: ReturnType<typeof render>) => {
       products.set([
-        buildProduct({ guid: 'a', name: 'Alpha', category: 'Mouse', price: 30, soldQuantity: 2, inventoryQuantity: 10, stockQuantity: 8 }),
-        buildProduct({ guid: 'b', name: 'Bravo', category: 'Laptop', price: 1200, soldQuantity: 9, inventoryQuantity: 10, stockQuantity: 1 }),
-        buildProduct({ guid: 'c', name: 'Charlie', category: 'Keyboard', price: 99.5, soldQuantity: 5, inventoryQuantity: 20, stockQuantity: 15 }),
+        buildProduct({ productId: 'a', name: 'Alpha', category: 'Mouse', price: 30, soldQuantity: 2, initialQuantity: 10, quantityOnHand: 8 }),
+        buildProduct({ productId: 'b', name: 'Bravo', category: 'Laptop', price: 1200, soldQuantity: 9, initialQuantity: 10, quantityOnHand: 1 }),
+        buildProduct({ productId: 'c', name: 'Charlie', category: 'Keyboard', price: 99.5, soldQuantity: 5, initialQuantity: 20, quantityOnHand: 15 }),
       ]);
       fixture.detectChanges();
     };

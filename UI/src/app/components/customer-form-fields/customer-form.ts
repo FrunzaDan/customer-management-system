@@ -12,51 +12,51 @@ export interface CustomerFormModel {
   firstName: string;
   lastName: string;
   email: string;
-  msisdn: string;
+  phoneNumber: string;
   gender: string; // <select> emits strings; the API wants a Gender number (see toCreateCustomerRequest)
-  birthdate: string;
+  birthDate: string;
   country: string;
   county: string;
-  town: string;
+  city: string;
   street: string;
-  number: string;
-  zip: string;
+  streetNumber: string;
+  postalCode: string;
 }
 
 export const emptyCustomerForm = (): CustomerFormModel => ({
   firstName: '',
   lastName: '',
   email: '',
-  msisdn: '',
+  phoneNumber: '',
   gender: '',
-  birthdate: '',
+  birthDate: '',
   country: '',
   county: '',
-  town: '',
+  city: '',
   street: '',
-  number: '',
-  zip: '',
+  streetNumber: '',
+  postalCode: '',
 });
 
 export const customerFormSchema = schema<CustomerFormModel>((p) => {
   required(p.firstName, { message: 'First Name is required' });
   required(p.lastName, { message: 'Last Name is required' });
   required(p.email, { message: 'Email is required' });
-  pattern(p.email, new RegExp(environment.EmailRegex), {
+  pattern(p.email, new RegExp(environment.emailRegex), {
     message: 'The Email should be a valid one',
   });
-  required(p.msisdn, { message: 'Phone Number is required' });
-  pattern(p.msisdn, new RegExp(environment.PhoneRegex), {
+  required(p.phoneNumber, { message: 'Phone Number is required' });
+  pattern(p.phoneNumber, new RegExp(environment.phoneNumberRegex), {
     message: 'The phone number should be a valid one',
   });
   required(p.gender, { message: 'Gender is required' });
-  required(p.birthdate, { message: 'Birthdate is required' });
+  required(p.birthDate, { message: 'Birth date is required' });
   required(p.country, { message: 'Country is required' });
   required(p.county, { message: 'County is required' });
-  required(p.town, { message: 'Town is required' });
+  required(p.city, { message: 'City is required' });
   required(p.street, { message: 'Street is required' });
-  required(p.number, { message: 'Street number is required' });
-  required(p.zip, { message: 'Zip code is required' });
+  required(p.streetNumber, { message: 'Street number is required' });
+  required(p.postalCode, { message: 'Postal code is required' });
 });
 
 export function toFormModel(customer: Customer): CustomerFormModel {
@@ -64,17 +64,17 @@ export function toFormModel(customer: Customer): CustomerFormModel {
     firstName: customer.firstName,
     lastName: customer.lastName,
     email: customer.email,
-    msisdn: customer.msisdn,
+    phoneNumber: customer.phoneNumber,
     gender: customer.gender.toString(),
     // Already "YYYY-MM-DD" — the DB column is a real DATE — which is exactly what
     // <input type="date"> needs to pre-fill.
-    birthdate: customer.birthdate ?? '',
+    birthDate: customer.birthDate ?? '',
     country: customer.address.country,
     county: customer.address.county,
-    town: customer.address.town,
+    city: customer.address.city,
     street: customer.address.street,
-    number: customer.address.number,
-    zip: customer.address.zip,
+    streetNumber: customer.address.streetNumber,
+    postalCode: customer.address.postalCode,
   };
 }
 
@@ -85,22 +85,22 @@ export function toCreateCustomerRequest(
     firstName: model.firstName,
     lastName: model.lastName,
     email: model.email,
-    msisdn: model.msisdn,
+    phoneNumber: model.phoneNumber,
     gender: Number(model.gender) as Gender,
-    birthdate: model.birthdate || undefined,
+    birthDate: model.birthDate || undefined,
     address: {
       country: model.country,
       county: model.county,
-      town: model.town,
+      city: model.city,
       street: model.street,
-      number: model.number,
-      zip: model.zip,
+      streetNumber: model.streetNumber,
+      postalCode: model.postalCode,
     },
   };
 }
 
 // The loaded customer with the form's values applied — what the edit page saves, and what
-// the local customer list is updated to once the save succeeds. Server-owned fields (guid,
+// the local customer list is updated to once the save succeeds. Server-owned fields (customerId,
 // status, dates) come from `current` unchanged.
 export function applyFormModel(
   model: CustomerFormModel,

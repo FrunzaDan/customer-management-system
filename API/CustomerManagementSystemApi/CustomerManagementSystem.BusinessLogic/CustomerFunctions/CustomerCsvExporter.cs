@@ -12,8 +12,8 @@ public static class CustomerCsvExporter
 
     private static readonly string[] Header =
     [
-        "Guid", "First Name", "Last Name", "Email", "MSISDN", "Gender", "Birthdate", "Status",
-        "Creation Date", "Interaction Date", "Country", "County", "Town", "Zip", "Street", "Number"
+        "Customer ID", "First Name", "Last Name", "Email", "Phone Number", "Gender", "Birth Date", "Status",
+        "Created At", "Last Interaction At", "Country", "County", "City", "Postal Code", "Street", "Street Number"
     ];
 
     public static string ToCsv(IEnumerable<CustomerModel> customers)
@@ -28,23 +28,23 @@ public static class CustomerCsvExporter
         {
             var fields = new[]
             {
-                customer.Guid.ToString(),
+                customer.CustomerId.ToString(),
                 customer.FirstName,
                 customer.LastName,
                 customer.Email,
-                customer.Msisdn,
+                customer.PhoneNumber,
                 GenderLabel(customer.Gender),
-                customer.Birthdate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
-                StatusLabel(customer.CustomerStatus),
+                customer.BirthDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                StatusLabel(customer.Status),
                 // "u" = "yyyy-MM-dd HH:mm:ssZ": sortable, unambiguous, and explicitly UTC.
-                customer.CreationDate.ToString("u", CultureInfo.InvariantCulture),
-                customer.InteractionDate.ToString("u", CultureInfo.InvariantCulture),
+                customer.CreatedAt.ToString("u", CultureInfo.InvariantCulture),
+                customer.LastInteractionAt.ToString("u", CultureInfo.InvariantCulture),
                 customer.Address.Country,
                 customer.Address.County,
-                customer.Address.Town,
-                customer.Address.Zip,
+                customer.Address.City,
+                customer.Address.PostalCode,
                 customer.Address.Street,
-                customer.Address.Number
+                customer.Address.StreetNumber
             };
 
             builder.AppendJoin(',', fields.Select(EscapeField)).Append("\r\n");

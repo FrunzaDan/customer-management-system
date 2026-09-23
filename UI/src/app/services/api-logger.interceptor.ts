@@ -11,7 +11,7 @@ import { ApiLoggerService } from './api-logger.service';
 // Showcase app: every API call is mirrored to the browser console so anyone
 // looking at devtools can see exactly what's being sent/received. Not
 // something you'd want in a real production app.
-const SENSITIVE_FIELDS = ['password', 'merchantPassword'];
+const SENSITIVE_FIELDS = ['password'];
 
 function redact(body: unknown): unknown {
   if (!body || typeof body !== 'object') return body;

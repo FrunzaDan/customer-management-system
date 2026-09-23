@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GetCustomerService } from './get-customer.service';
 import { HttpHeaderService } from './http-header-service';
-import { CustomerActivationStatus } from '../interfaces/customer-response';
+import { CustomerStatus } from '../interfaces/customer-response';
 import { Observable, tap, throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/internal/operators/retry';
 import { catchError } from 'rxjs/internal/operators/catchError';
@@ -37,9 +37,9 @@ const TRANSIENT_ERROR_RETRY_CONFIG = {
 })
 export class ActivateCustomerService {
   readonly APIURL_DEACTIVATE =
-    environment.CustomerManagementSystemAPI + '/api/Customer/deactivate';
+    environment.apiUrl + '/api/customer/deactivate';
   readonly APIURL_REACTIVATE =
-    environment.CustomerManagementSystemAPI + '/api/Customer/reactivate';
+    environment.apiUrl + '/api/customer/reactivate';
 
   private readonly state = signal<ActivationState>({
     loading: false,
@@ -54,11 +54,11 @@ export class ActivateCustomerService {
   private readonly getCustomerService = inject(GetCustomerService);
   private readonly notificationService = inject(NotificationService);
 
-  deactivateCustomer(customerGUID: string): void {
+  deactivateCustomer(customerId: string): void {
     this.setLoading(true);
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('customerGUID', customerGUID);
+    const params = new HttpParams().set('customerId', customerId);
 
     this.http
       .patch<GenericResponse<object>>(this.APIURL_DEACTIVATE, null, {
@@ -81,19 +81,19 @@ export class ActivateCustomerService {
 
           const existingCustomer = this.getCustomerService
             .customersSignal()
-            .find((c) => c.guid === customerGUID);
+            .find((c) => c.customerId === customerId);
 
           if (existingCustomer) {
             this.getCustomerService.updateCustomerLocally({
               ...existingCustomer,
-              customerStatus: CustomerActivationStatus.Deactivated,
+              status: CustomerStatus.Deactivated,
             });
             this.clearError();
             this.notificationService.show('Customer deactivated successfully.');
           } else {
             this.handleError(
               new Error(
-                `Customer with GUID ${customerGUID} not found locally.`,
+                `Customer with GUID ${customerId} not found locally.`,
               ),
             );
           }
@@ -102,11 +102,11 @@ export class ActivateCustomerService {
       });
   }
 
-  reactivateCustomer(customerGUID: string): void {
+  reactivateCustomer(customerId: string): void {
     this.setLoading(true);
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('customerGUID', customerGUID);
+    const params = new HttpParams().set('customerId', customerId);
 
     this.http
       .patch<GenericResponse<object>>(this.APIURL_REACTIVATE, null, {
@@ -129,19 +129,19 @@ export class ActivateCustomerService {
 
           const existingCustomer = this.getCustomerService
             .customersSignal()
-            .find((c) => c.guid === customerGUID);
+            .find((c) => c.customerId === customerId);
 
           if (existingCustomer) {
             this.getCustomerService.updateCustomerLocally({
               ...existingCustomer,
-              customerStatus: CustomerActivationStatus.Active,
+              status: CustomerStatus.Active,
             });
             this.clearError();
             this.notificationService.show('Customer reactivated successfully.');
           } else {
             this.handleError(
               new Error(
-                `Customer with GUID ${customerGUID} not found locally.`,
+                `Customer with GUID ${customerId} not found locally.`,
               ),
             );
           }
@@ -156,11 +156,11 @@ export class ActivateCustomerService {
    * summary notification and track their own in-flight state instead.
    */
   deactivateCustomerSilently(
-    customerGUID: string,
+    customerId: string,
   ): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('customerGUID', customerGUID);
+    const params = new HttpParams().set('customerId', customerId);
 
     return this.http
       .patch<GenericResponse<object>>(this.APIURL_DEACTIVATE, null, {
@@ -171,12 +171,12 @@ export class ActivateCustomerService {
         tap(() => {
           const existingCustomer = this.getCustomerService
             .customersSignal()
-            .find((c) => c.guid === customerGUID);
+            .find((c) => c.customerId === customerId);
 
           if (existingCustomer) {
             this.getCustomerService.updateCustomerLocally({
               ...existingCustomer,
-              customerStatus: CustomerActivationStatus.Deactivated,
+              status: CustomerStatus.Deactivated,
             });
           }
         }),

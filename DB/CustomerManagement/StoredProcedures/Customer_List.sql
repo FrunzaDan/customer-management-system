@@ -2,7 +2,7 @@ CREATE PROCEDURE [dbo].[Customer_List]
     @PageNumber INT = 1,
     @PageSize INT = 10,
     @SearchTerm NVARCHAR(254) = NULL,
-    @SortColumn VARCHAR(10) = 'name',
+    @SortColumn VARCHAR(20) = 'name',
     @SortDirection VARCHAR(4) = 'asc'
 AS
 BEGIN
@@ -50,7 +50,7 @@ BEGIN
         -- below evaluates to non-NULL for every row, so it's the only pair
         -- that actually influences row order — the rest are NULL for every
         -- row and are no-ops. Ties within name always break by FirstName.
-        -- The sort keys ('name', 'email', 'msisdn') are the API's CustomerSortColumn
+        -- The sort keys ('name', 'email', 'phonenumber') are the API's CustomerSortColumn
         -- values, not column names.
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN c.LastName END ASC,
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN c.FirstName END ASC,
@@ -58,8 +58,8 @@ BEGIN
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'desc' THEN c.FirstName END DESC,
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'asc' THEN c.Email END ASC,
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'desc' THEN c.Email END DESC,
-        CASE WHEN @SortColumn = 'msisdn' AND @SortDirection = 'asc' THEN c.PhoneNumber END ASC,
-        CASE WHEN @SortColumn = 'msisdn' AND @SortDirection = 'desc' THEN c.PhoneNumber END DESC
+        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'asc' THEN c.PhoneNumber END ASC,
+        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'desc' THEN c.PhoneNumber END DESC
     OFFSET (@PageNumber - 1) * @PageSize ROWS
     FETCH NEXT @PageSize ROWS ONLY;
 END

@@ -39,7 +39,7 @@ docker run \
 5. Starts the Angular dev server in the foreground (`npm start`, `http://localhost:4203` — port set in `UI/angular.json`; must stay in the API's `Cors:AllowedOrigins`). `Ctrl+C` stops both API and Angular (trap on `EXIT INT TERM`).
 
 **Test login** (seeded by the post-deployment script, skipped if the merchant already exists):
-- Merchant ID: `TestMerchantID`
+- Username: `TestMerchantID`
 - Password: `Merchant123`
 
 ## Gotchas / conventions

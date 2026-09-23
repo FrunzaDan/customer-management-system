@@ -15,7 +15,7 @@ export class AddCustomerService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
   readonly APIURL =
-    environment.CustomerManagementSystemAPI + '/api/Customer/register';
+    environment.apiUrl + '/api/customer/register';
 
   // On success, `data` is the new customer's server-generated GUID.
   addCustomer(customer: CreateCustomerRequest): Observable<GenericResponse<string>> {

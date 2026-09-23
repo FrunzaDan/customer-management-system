@@ -1,7 +1,7 @@
 CREATE PROCEDURE [dbo].[Product_Create]
     @Name NVARCHAR(100),
     @Category NVARCHAR(50),
-    @Price DECIMAL(10, 2),
+    @Price DECIMAL(12, 2),
     @InitialQuantity INT,
     @Warehouse NVARCHAR(100),
     @Description NVARCHAR(500) = NULL

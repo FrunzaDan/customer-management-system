@@ -7,18 +7,18 @@ namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
 public class CustomerPurchasingTests
 {
-    private static readonly Guid CustomerGuid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-    private static readonly Guid ProductGuid = Guid.Parse("2432276c-4ef0-4e50-abc5-8b5f82297844");
-    private const string MerchantId = "TestMerchantID";
+    private static readonly Guid CustomerId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    private static readonly Guid ProductId = Guid.Parse("2432276c-4ef0-4e50-abc5-8b5f82297844");
+    private const string PerformedBy = "TestMerchant";
 
     [Fact]
-    public async Task PurchaseProduct_RejectsAnEmptyCustomerGuid_WithoutTouchingTheDb()
+    public async Task PurchaseProduct_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(Guid.Empty, ProductGuid, MerchantId,
+        var result = await purchasing.PurchaseProduct(Guid.Empty, ProductId, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
@@ -28,13 +28,13 @@ public class CustomerPurchasingTests
     }
 
     [Fact]
-    public async Task PurchaseProduct_RejectsAnEmptyProductGuid_WithoutTouchingTheDb()
+    public async Task PurchaseProduct_RejectsAnEmptyProductId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(CustomerGuid, Guid.Empty, MerchantId,
+        var result = await purchasing.PurchaseProduct(CustomerId, Guid.Empty, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
@@ -48,18 +48,18 @@ public class CustomerPurchasingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        dbUtils.Setup(d => d.PurchaseProduct(CustomerGuid, ProductGuid, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.PurchaseProduct(CustomerId, ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<string>(200, "Purchase recorded successfully.", "Aerobook 14 Pro"));
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(CustomerGuid, ProductGuid, MerchantId,
+        var result = await purchasing.PurchaseProduct(CustomerId, ProductId, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.Equal("Purchase recorded successfully.", result.ResponseMessage);
         Assert.Null(result.Data);
         auditLogger.Verify(
-            a => a.Log(CustomerGuid, MerchantId, AuditAction.Purchased, "Product: Aerobook 14 Pro",
+            a => a.Log(CustomerId, PerformedBy, AuditAction.Purchased, "Product: Aerobook 14 Pro",
                 It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -71,11 +71,11 @@ public class CustomerPurchasingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        dbUtils.Setup(d => d.PurchaseProduct(CustomerGuid, ProductGuid, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.PurchaseProduct(CustomerId, ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<string>(status, "Rejected."));
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(CustomerGuid, ProductGuid, MerchantId,
+        var result = await purchasing.PurchaseProduct(CustomerId, ProductId, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(status, result.Status);

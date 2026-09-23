@@ -17,12 +17,12 @@
       <div class="d-flex flex-wrap gap-2" role="group" aria-label="Customer actions">
         <a
           class="btn btn-primary shadow-none"
-          routerLink="/editCustomer"
-          [queryParams]="{ id: customer()?.guid }"
+          routerLink="/edit-customer"
+          [queryParams]="{ id: customer()?.customerId }"
           >Edit</a
         >
 
-        @if (customer()?.customerStatus === CustomerStatus.Active || customer()?.customerStatus === CustomerStatus.Test) {
+        @if (customer()?.status === CustomerStatus.Active || customer()?.status === CustomerStatus.Test) {
         <button
           (click)="deactivateCustomer()"
           type="button"
@@ -31,7 +31,7 @@
         >
           Deactivate
         </button>
-        } @if (customer()?.customerStatus === CustomerStatus.Deactivated) {
+        } @if (customer()?.status === CustomerStatus.Deactivated) {
         <button
           (click)="reactivateCustomer()"
           type="button"
@@ -87,10 +87,10 @@
               </h2>
               <span
                 class="badge rounded-pill"
-                [class.bg-success]="customer()?.customerStatus === CustomerStatus.Active"
-                [class.bg-secondary]="customer()?.customerStatus === CustomerStatus.Deactivated"
-                [class.bg-warning]="customer()?.customerStatus === CustomerStatus.Test"
-                [class.text-dark]="customer()?.customerStatus === CustomerStatus.Test"
+                [class.bg-success]="customer()?.status === CustomerStatus.Active"
+                [class.bg-secondary]="customer()?.status === CustomerStatus.Deactivated"
+                [class.bg-warning]="customer()?.status === CustomerStatus.Test"
+                [class.text-dark]="customer()?.status === CustomerStatus.Test"
               >
                 {{ customerStatusLabel() }}
               </span>
@@ -112,12 +112,12 @@
               <dd class="text-capitalize">{{ customerGender() || '—' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>Birthdate</dt>
-              <dd>{{ (customer()?.birthdate | date: 'longDate') || '—' }}</dd>
+              <dt>Birth date</dt>
+              <dd>{{ (customer()?.birthDate | date: 'longDate') || '—' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>Internal GUID</dt>
-              <dd class="guid">{{ customer()?.guid || '—' }}</dd>
+              <dt>Customer ID</dt>
+              <dd class="entity-id">{{ customer()?.customerId || '—' }}</dd>
             </div>
           </dl>
         </div>
@@ -133,7 +133,7 @@
             </div>
             <div class="detail-row">
               <dt>Phone</dt>
-              <dd>{{ customer()?.msisdn || '—' }}</dd>
+              <dd>{{ customer()?.phoneNumber || '—' }}</dd>
             </div>
           </dl>
         </div>
@@ -154,20 +154,20 @@
               <dd>{{ customer()?.address?.county || '—' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>Town</dt>
-              <dd>{{ customer()?.address?.town || '—' }}</dd>
+              <dt>City</dt>
+              <dd>{{ customer()?.address?.city || '—' }}</dd>
             </div>
             <div class="detail-row">
               <dt>Street</dt>
               <dd>{{ customer()?.address?.street || '—' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>Number</dt>
-              <dd>{{ customer()?.address?.number || '—' }}</dd>
+              <dt>Street number</dt>
+              <dd>{{ customer()?.address?.streetNumber || '—' }}</dd>
             </div>
             <div class="detail-row">
-              <dt>ZIP</dt>
-              <dd>{{ customer()?.address?.zip || '—' }}</dd>
+              <dt>Postal code</dt>
+              <dd>{{ customer()?.address?.postalCode || '—' }}</dd>
             </div>
           </dl>
         </div>
@@ -179,17 +179,17 @@
           <dl class="detail-list">
             <div class="detail-row">
               <dt>Created</dt>
-              <dd>{{ (customer()?.creationDate | date: 'medium') || '—' }}</dd>
+              <dd>{{ (customer()?.createdAt | date: 'medium') || '—' }}</dd>
             </div>
             <div class="detail-row">
               <dt>Last interaction</dt>
-              <dd>{{ (customer()?.interactionDate | date: 'medium') || '—' }}</dd>
+              <dd>{{ (customer()?.lastInteractionAt | date: 'medium') || '—' }}</dd>
             </div>
             <div class="detail-row">
               <dt>Status</dt>
               <dd>
                 {{ customerStatusLabel() }}
-                <span class="text-muted small">({{ customer()?.customerStatus }})</span>
+                <span class="text-muted small">({{ customer()?.status }})</span>
               </dd>
             </div>
           </dl>
@@ -210,19 +210,19 @@
                 [attr.aria-describedby]="'purchase-hint' + (purchaseError() ? ' purchase-error' : '')"
                 (change)="selectProduct($event)"
               >
-                <option value="" [selected]="!selectedProductGuid()">
+                <option value="" [selected]="!selectedProductId()">
                   @if (productsLoading() && products().length === 0) { Loading products… } @else { Select a product… }
                 </option>
                 @for (group of productGroups(); track group.category) {
                 <optgroup [label]="group.category">
-                  @for (product of group.products; track product.guid) {
+                  @for (product of group.products; track product.productId) {
                   <option
-                    [value]="product.guid"
-                    [selected]="product.guid === selectedProductGuid()"
-                    [disabled]="product.stockQuantity === 0"
+                    [value]="product.productId"
+                    [selected]="product.productId === selectedProductId()"
+                    [disabled]="product.quantityOnHand === 0"
                   >
                     {{ product.name }} — {{ product.price | number: '1.2-2' }}
-                    @if (product.stockQuantity === 0) { (out of stock) } @else { ({{ product.stockQuantity }} in stock) }
+                    @if (product.quantityOnHand === 0) { (out of stock) } @else { ({{ product.quantityOnHand }} in stock) }
                   </option>
                   }
                 </optgroup>
@@ -241,7 +241,7 @@
             <p class="form-note mb-0" id="purchase-hint">
               @if (!canPurchase()) { A deactivated customer cannot make purchases. }
               @else if (selectedProduct(); as product) {
-              {{ product.comment || 'No description.' }} Stock: {{ product.stockQuantity }} in {{ product.depot }}.
+              {{ product.description || 'No description.' }} Stock: {{ product.quantityOnHand }} in {{ product.warehouse }}.
               } @else { Choose a product to record it against this customer. }
             </p>
 
@@ -265,17 +265,17 @@
             <strong>{{ totalSpent() | number: '1.2-2' }}</strong>
           </p>
           <ul class="purchase-list">
-            @for (purchase of purchases(); track purchase.purchaseId) {
+            @for (purchase of purchases(); track purchase.customerPurchaseId) {
             <li class="purchase-item">
               <div>
                 <a
                   class="purchase-name plain-Links hoverItem"
-                  routerLink="/productDetails"
-                  [queryParams]="{ id: purchase.productGuid }"
+                  routerLink="/product-details"
+                  [queryParams]="{ id: purchase.productId }"
                   >{{ purchase.productName }}</a
                 >
                 <div class="purchase-meta">
-                  {{ purchase.category }} · {{ purchase.purchaseDate | date: 'medium' }}
+                  {{ purchase.category }} · {{ purchase.purchasedAt | date: 'medium' }}
                 </div>
               </div>
               <div class="purchase-price">{{ purchase.price | number: '1.2-2' }}</div>
@@ -297,11 +297,11 @@
           <p class="text-muted mb-0">No recorded actions yet.</p>
           } @else {
           <ul class="audit-list">
-            @for (entry of auditLog(); track entry.auditId) {
+            @for (entry of auditLog(); track entry.customerAuditLogId) {
             <li class="audit-item">
-              <div class="audit-action">{{ entry.action }}</div>
+              <div class="audit-action">{{ entry.actionType }}</div>
               <div class="audit-meta">
-                by {{ entry.merchantId }} · {{ entry.actionDate | date: 'medium' }}
+                by {{ entry.performedBy }} · {{ entry.occurredAt | date: 'medium' }}
               </div>
               @if (entry.details) {
               <div class="audit-details">{{ entry.details }}</div>

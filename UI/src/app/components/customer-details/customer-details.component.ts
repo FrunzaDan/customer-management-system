@@ -19,7 +19,7 @@ import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
 import {
-  CustomerActivationStatus,
+  CustomerStatus,
   Gender,
 } from '../../interfaces/customer-response';
 import { Router, RouterLink } from '@angular/router';
@@ -50,17 +50,17 @@ export class CustomerDetailsComponent {
     [Gender.Female, 'female'],
   ]);
 
-  statusMap = new Map<CustomerActivationStatus, string>([
-    [CustomerActivationStatus.Active, 'Active'],
-    [CustomerActivationStatus.Deactivated, 'Deactivated'],
-    [CustomerActivationStatus.Test, 'Test'],
+  statusMap = new Map<CustomerStatus, string>([
+    [CustomerStatus.Active, 'Active'],
+    [CustomerStatus.Deactivated, 'Deactivated'],
+    [CustomerStatus.Test, 'Test'],
   ]);
 
   readonly customer = this.getCustomerService.selectedCustomerSignal;
   readonly isLoading = this.getCustomerService.loadingSignal;
   readonly errorMessage = this.getCustomerService.errorSignal;
 
-  readonly CustomerStatus = CustomerActivationStatus;
+  readonly CustomerStatus = CustomerStatus;
   readonly Gender = Gender;
 
   // Deactivate/reactivate share ActivateCustomerService's loading/error state (it's
@@ -81,7 +81,7 @@ export class CustomerDetailsComponent {
   readonly purchasesError = this.purchaseService.errorSignal;
 
   // Sum of the listed purchases' prices. Added up in whole cents so 0.1 + 0.2 style
-  // float drift never shows on screen (prices are DECIMAL(10,2) in the DB).
+  // float drift never shows on screen (prices are DECIMAL(12,2) in the DB).
   readonly totalSpent = computed(
     () => this.purchases().reduce((cents, p) => cents + Math.round(p.price * 100), 0) / 100,
   );
@@ -91,7 +91,7 @@ export class CustomerDetailsComponent {
   readonly productsError = this.productService.errorSignal;
 
   // Which product is picked in the "Record purchase" <select> ('' = none yet).
-  readonly selectedProductGuid = signal('');
+  readonly selectedProductId = signal('');
   readonly purchasing = signal(false);
   readonly purchaseError = signal<string | null>(null);
 
@@ -104,8 +104,8 @@ export class CustomerDetailsComponent {
 
   customerStatusLabel: Signal<string | undefined> = computed(() => {
     const c = this.customer();
-    return c && c.customerStatus !== undefined
-      ? this.statusMap.get(c.customerStatus)
+    return c && c.status !== undefined
+      ? this.statusMap.get(c.status)
       : undefined;
   });
 
@@ -113,17 +113,17 @@ export class CustomerDetailsComponent {
   // Test customers are fictitious data and are exempt from that guardrail
   // (see Customer_Delete), so they can be deleted straight away too.
   canDelete: Signal<boolean> = computed(() => {
-    const status = this.customer()?.customerStatus;
+    const status = this.customer()?.status;
     return (
-      status === CustomerActivationStatus.Deactivated ||
-      status === CustomerActivationStatus.Test
+      status === CustomerStatus.Deactivated ||
+      status === CustomerStatus.Test
     );
   });
 
   // Same rule as CustomerPurchase_Create: everything but a deactivated customer may buy.
   canPurchase: Signal<boolean> = computed(() => {
-    const status = this.customer()?.customerStatus;
-    return status !== undefined && status !== CustomerActivationStatus.Deactivated;
+    const status = this.customer()?.status;
+    return status !== undefined && status !== CustomerStatus.Deactivated;
   });
 
   // The catalogue grouped by category (the API already returns it category-ordered),
@@ -139,7 +139,7 @@ export class CustomerDetailsComponent {
   });
 
   readonly selectedProduct = computed(() =>
-    this.products().find((p) => p.guid === this.selectedProductGuid()),
+    this.products().find((p) => p.productId === this.selectedProductId()),
   );
 
   readonly canSubmitPurchase = computed(() => {
@@ -148,7 +148,7 @@ export class CustomerDetailsComponent {
       this.canPurchase() &&
       !this.purchasing() &&
       product !== undefined &&
-      product.stockQuantity > 0
+      product.quantityOnHand > 0
     );
   });
 
@@ -178,50 +178,50 @@ export class CustomerDetailsComponent {
     effect(() => {
       const isLoading = this.activationLoading();
       if (this.wasActivationLoading && !isLoading) {
-        const guid = this.customer()?.guid;
-        if (guid) this.auditLogService.loadAuditLog(guid);
+        const customerId = this.customer()?.customerId;
+        if (customerId) this.auditLogService.loadAuditLog(customerId);
       }
       this.wasActivationLoading = isLoading;
     });
   }
 
   async deactivateCustomer(): Promise<void> {
-    const guid = this.customer()?.guid;
-    if (!guid) return;
+    const customerId = this.customer()?.customerId;
+    if (!customerId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this customer?',
     );
     if (!confirmed) return;
-    this.activateCustomerService.deactivateCustomer(guid);
+    this.activateCustomerService.deactivateCustomer(customerId);
   }
 
   reactivateCustomer(): void {
-    const guid = this.customer()?.guid;
-    if (!guid) return;
-    this.activateCustomerService.reactivateCustomer(guid);
+    const customerId = this.customer()?.customerId;
+    if (!customerId) return;
+    this.activateCustomerService.reactivateCustomer(customerId);
   }
 
   selectProduct(event: Event): void {
-    this.selectedProductGuid.set((event.target as HTMLSelectElement).value);
+    this.selectedProductId.set((event.target as HTMLSelectElement).value);
   }
 
   recordPurchase(): void {
-    const customerGuid = this.customer()?.guid;
-    const productGuid = this.selectedProductGuid();
-    if (!customerGuid || !productGuid || !this.canSubmitPurchase()) return;
+    const customerId = this.customer()?.customerId;
+    const productId = this.selectedProductId();
+    if (!customerId || !productId || !this.canSubmitPurchase()) return;
 
     this.purchasing.set(true);
     this.purchaseError.set(null);
 
-    this.purchaseService.purchaseProduct(customerGuid, productGuid).subscribe({
+    this.purchaseService.purchaseProduct(customerId, productId).subscribe({
       next: () => {
         this.purchasing.set(false);
-        this.selectedProductGuid.set('');
+        this.selectedProductId.set('');
         // A purchase changes three things on this page: the history, the product's
         // stock (shown in the <select>) and the audit trail (a "Purchased" entry).
-        this.purchaseService.loadPurchases(customerGuid);
+        this.purchaseService.loadPurchases(customerId);
         this.productService.loadProducts();
-        this.auditLogService.loadAuditLog(customerGuid);
+        this.auditLogService.loadAuditLog(customerId);
       },
       error: (error: HttpErrorResponse) => {
         this.purchasing.set(false);
@@ -233,8 +233,8 @@ export class CustomerDetailsComponent {
   }
 
   async deleteCustomer(): Promise<void> {
-    const guid = this.customer()?.guid;
-    if (!guid) return;
+    const customerId = this.customer()?.customerId;
+    if (!customerId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this customer? This cannot be undone.',
     );
@@ -243,7 +243,7 @@ export class CustomerDetailsComponent {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteCustomerService.deleteCustomer(guid).subscribe({
+    this.deleteCustomerService.deleteCustomer(customerId).subscribe({
       next: () => this.router.navigate(['/customers']),
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);

@@ -12,23 +12,23 @@ import { NotificationService } from './notification.service';
 })
 export class DeleteCustomerService {
   readonly APIURL =
-    environment.CustomerManagementSystemAPI + '/api/Customer/delete';
+    environment.apiUrl + '/api/customer/delete';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly getCustomerService = inject(GetCustomerService);
   private readonly notificationService = inject(NotificationService);
 
-  deleteCustomer(customerGUID: string): Observable<GenericResponse<object>> {
+  deleteCustomer(customerId: string): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('customerGUID', customerGUID);
+    const params = new HttpParams().set('customerId', customerId);
 
     return this.http
       .delete<GenericResponse<object>>(this.APIURL, { headers, params })
       .pipe(
         tap(() => {
-          this.getCustomerService.removeCustomerLocally(customerGUID);
+          this.getCustomerService.removeCustomerLocally(customerId);
           this.notificationService.show('Customer deleted successfully.');
         }),
       );
@@ -40,14 +40,14 @@ export class DeleteCustomerService {
    * customer.
    */
   deleteCustomerSilently(
-    customerGUID: string,
+    customerId: string,
   ): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('customerGUID', customerGUID);
+    const params = new HttpParams().set('customerId', customerId);
 
     return this.http
       .delete<GenericResponse<object>>(this.APIURL, { headers, params })
-      .pipe(tap(() => this.getCustomerService.removeCustomerLocally(customerGUID)));
+      .pipe(tap(() => this.getCustomerService.removeCustomerLocally(customerId)));
   }
 }

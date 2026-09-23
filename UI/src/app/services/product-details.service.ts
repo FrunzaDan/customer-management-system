@@ -10,20 +10,20 @@ import { HttpHeaderService } from './http-header-service';
   providedIn: 'root',
 })
 export class ProductDetailsService {
-  private readonly API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/productDetails`;
+  private readonly API_URL = `${environment.apiUrl}/api/customer/product-details`;
   private readonly httpHeaderService = inject(HttpHeaderService);
 
-  private readonly productGuid = signal<string | undefined>(undefined);
+  private readonly productId = signal<string | undefined>(undefined);
 
-  // Same shape as AuditLogService: the request is a function of `productGuid`, so a new
-  // guid cancels the in-flight request, and nothing is fetched until one is set.
+  // Same shape as AuditLogService: the request is a function of `productId`, so a new
+  // productId cancels the in-flight request, and nothing is fetched until one is set.
   private readonly details = httpResource<GenericResponse<ProductDetails>>(
     () => {
-      const guid = this.productGuid();
-      if (!guid) return undefined;
+      const productId = this.productId();
+      if (!productId) return undefined;
       return {
         url: this.API_URL,
-        params: { productGuid: guid },
+        params: { productId: productId },
         headers: this.httpHeaderService.getHeadersWithTokenSet(),
       };
     },
@@ -39,11 +39,11 @@ export class ProductDetailsService {
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
-  loadProductDetails(productGuid: string): void {
-    if (this.productGuid() === productGuid) {
+  loadProductDetails(productId: string): void {
+    if (this.productId() === productId) {
       this.details.reload();
     } else {
-      this.productGuid.set(productGuid);
+      this.productId.set(productId);
     }
   }
 }

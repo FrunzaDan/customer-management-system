@@ -16,7 +16,7 @@ export interface LoadCustomersParams {
   pageNumber: number;
   pageSize: number;
   searchTerm?: string;
-  sortColumn?: 'name' | 'email' | 'msisdn';
+  sortColumn?: 'name' | 'email' | 'phoneNumber';
   sortDirection?: 'asc' | 'desc';
 }
 
@@ -26,8 +26,8 @@ const DEFAULT_PAGE_SIZE = 10;
   providedIn: 'root',
 })
 export class GetCustomerService {
-  private readonly API_URL_GET_ALL = `${environment.CustomerManagementSystemAPI}/api/Customer/all`;
-  private readonly API_URL_GET_SINGLE = `${environment.CustomerManagementSystemAPI}/api/Customer/get`;
+  private readonly API_URL_GET_ALL = `${environment.apiUrl}/api/customer/all`;
+  private readonly API_URL_GET_SINGLE = `${environment.apiUrl}/api/customer/get`;
 
   private readonly state = signal({
     customers: [] as Customer[],
@@ -116,7 +116,7 @@ export class GetCustomerService {
     this.setLoading(true);
 
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('searchVariable', queryString);
+    const params = new HttpParams().set('searchTerm', queryString);
 
     this.http
       .get<GenericResponse<Customer>>(this.API_URL_GET_SINGLE, {
@@ -140,21 +140,21 @@ export class GetCustomerService {
     this.state.update((state) => ({
       ...state,
       customers: state.customers.map((c) =>
-        c.guid === updatedCustomer.guid ? updatedCustomer : c,
+        c.customerId === updatedCustomer.customerId ? updatedCustomer : c,
       ),
       selectedCustomer:
-        state.selectedCustomer?.guid === updatedCustomer.guid
+        state.selectedCustomer?.customerId === updatedCustomer.customerId
           ? updatedCustomer
           : state.selectedCustomer,
     }));
   }
 
-  removeCustomerLocally(customerGUID: string): void {
+  removeCustomerLocally(customerId: string): void {
     this.state.update((state) => ({
       ...state,
-      customers: state.customers.filter((c) => c.guid !== customerGUID),
+      customers: state.customers.filter((c) => c.customerId !== customerId),
       selectedCustomer:
-        state.selectedCustomer?.guid === customerGUID
+        state.selectedCustomer?.customerId === customerId
           ? null
           : state.selectedCustomer,
     }));

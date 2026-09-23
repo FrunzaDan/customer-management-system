@@ -2,14 +2,14 @@ using CustomerManagementSystem.BusinessLogic.Validations;
 
 namespace CustomerManagementSystem.Tests.Validations;
 
-public class MsisdnValidationTests
+public class PhoneNumberValidationTests
 {
     [Theory]
     [InlineData("123456789")] // 9 digits, minimum accepted length
     [InlineData("123456789012")] // 12 digits, maximum accepted length
-    public void ValidateMsisdn_AcceptsNumbersWithinAllowedLength(string msisdn)
+    public void ValidatePhoneNumber_AcceptsNumbersWithinAllowedLength(string phoneNumber)
     {
-        Assert.True(MsisdnValidation.ValidateMsisdn(msisdn));
+        Assert.True(PhoneNumberValidation.ValidatePhoneNumber(phoneNumber));
     }
 
     [Theory]
@@ -19,8 +19,8 @@ public class MsisdnValidationTests
     [InlineData("1234567890123")] // 13 digits, too long
     [InlineData("+123456789")] // non-digit characters not allowed
     [InlineData("12345678a")]
-    public void ValidateMsisdn_RejectsInvalidNumbers(string? msisdn)
+    public void ValidatePhoneNumber_RejectsInvalidNumbers(string? phoneNumber)
     {
-        Assert.False(MsisdnValidation.ValidateMsisdn(msisdn!));
+        Assert.False(PhoneNumberValidation.ValidatePhoneNumber(phoneNumber!));
     }
 }

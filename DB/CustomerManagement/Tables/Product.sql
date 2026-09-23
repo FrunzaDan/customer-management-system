@@ -7,7 +7,7 @@ CREATE TABLE [dbo].[Product]
     [Name] NVARCHAR (100) NOT NULL,
     [Category] NVARCHAR (50) NOT NULL,
     [Description] NVARCHAR (500) NULL,
-    [Price] DECIMAL (10, 2) NOT NULL,
+    [Price] DECIMAL (12, 2) NOT NULL,
     -- Units originally stocked. Never changes after seeding.
     [InitialQuantity] INT NOT NULL,
     -- Units left on hand. CustomerPurchase_Create decrements this; the CHECKs below are the
@@ -18,7 +18,7 @@ CREATE TABLE [dbo].[Product]
     [QuantityOnHand] INT NOT NULL,
     -- The warehouse (depot) the stock is held in.
     [Warehouse] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_Product] PRIMARY KEY ([ProductId]),
+    CONSTRAINT [PK_Product] PRIMARY KEY CLUSTERED ([ProductId]),
     CONSTRAINT [CK_Product_Price] CHECK ([Price] >= 0),
     CONSTRAINT [CK_Product_QuantityOnHand] CHECK ([QuantityOnHand] >= 0),
     CONSTRAINT [CK_Product_QuantityOnHand_InitialQuantity] CHECK ([QuantityOnHand] <= [InitialQuantity])

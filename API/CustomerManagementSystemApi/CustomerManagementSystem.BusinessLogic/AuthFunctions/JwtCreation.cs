@@ -25,8 +25,8 @@ public class JwtCreation
     public async Task<ResponseModel<AccessTokenResponse>> GenerateBearerJwt(MerchantCredentials merchantCredentials,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(merchantCredentials.MerchantId))
-            return new ResponseModel<AccessTokenResponse>(403, "Invalid or empty merchant ID.");
+        if (string.IsNullOrWhiteSpace(merchantCredentials.Username))
+            return new ResponseModel<AccessTokenResponse>(403, "Invalid or empty username.");
 
         try
         {
@@ -42,13 +42,13 @@ public class JwtCreation
             if (!double.TryParse(_configuration.AccessTokenTimeout, out var timeoutMinutes))
                 return new ResponseModel<AccessTokenResponse>(500, "Invalid AccessTokenTimeout configuration.");
 
-            // One timestamp for both the token's exp claim and the ValidUntil reported to the
+            // One timestamp for both the token's exp claim and the ExpiresAt reported to the
             // client, so the two can't drift apart.
             var expires = DateTime.UtcNow.AddMinutes(timeoutMinutes);
-            var token = GenerateJwtToken(merchantCredentials.MerchantId, credentialsCheck.Data, expires);
+            var token = GenerateJwtToken(merchantCredentials.Username, credentialsCheck.Data, expires);
 
             return new ResponseModel<AccessTokenResponse>(StatusCodes.Status200OK, "Success!",
-                new AccessTokenResponse { AccessToken = token, ValidUntil = expires });
+                new AccessTokenResponse { AccessToken = token, ExpiresAt = expires });
         }
         catch (OperationCanceledException)
         {
@@ -64,22 +64,22 @@ public class JwtCreation
         }
     }
 
-    private string GenerateJwtToken(string merchantId, MerchantRole? merchantRole, DateTime expires)
+    private string GenerateJwtToken(string username, MerchantRole? merchantRole, DateTime expires)
     {
-        var tokenDescriptor = BuildTokenDescriptor(merchantId, merchantRole, expires);
+        var tokenDescriptor = BuildTokenDescriptor(username, merchantRole, expires);
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
 
-    private SecurityTokenDescriptor BuildTokenDescriptor(string merchantId, MerchantRole? merchantRole, DateTime expires)
+    private SecurityTokenDescriptor BuildTokenDescriptor(string username, MerchantRole? merchantRole, DateTime expires)
     {
         return new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([
-                new Claim(ClaimTypes.Sid, merchantId),
-                new Claim(JwtRegisteredClaimNames.Sub, merchantId),
-                new Claim(ClaimTypes.Name, merchantId),
+                new Claim(ClaimTypes.Sid, username),
+                new Claim(JwtRegisteredClaimNames.Sub, username),
+                new Claim(ClaimTypes.Name, username),
                 // The role claim is the numeric code ("1801"), which is what [Authorize(Roles = "1801")]
                 // checks — not the enum member's name.
                 new Claim(ClaimTypes.Role,

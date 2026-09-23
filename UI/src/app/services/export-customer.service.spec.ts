@@ -12,7 +12,7 @@ describe('ExportCustomerService', () => {
   let httpMock: HttpTestingController;
   let triggerDownloadSpy: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/export`;
+  const API_URL = `${environment.apiUrl}/api/customer/export`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

@@ -14,27 +14,27 @@ describe('ProductDetailsComponent', () => {
 
   const buildDetails = (overrides: Partial<ProductDetails['product']> = {}, buyers: ProductDetails['buyers'] = []): ProductDetails => ({
     product: {
-      guid: 'product-1',
+      productId: 'product-1',
       name: 'Aerobook 14 Pro',
       category: 'Laptop',
-      comment: '14-inch ultraportable.',
+      description: '14-inch ultraportable.',
       price: 1299,
-      inventoryQuantity: 25,
-      stockQuantity: 23,
+      initialQuantity: 25,
+      quantityOnHand: 23,
       soldQuantity: 2,
-      depot: 'Central Depot',
+      warehouse: 'Central Depot',
       ...overrides,
     },
     buyers,
   });
 
-  const buyer = (id: number, first: string, guid = `guid-${id}`): ProductDetails['buyers'][number] => ({
-    purchaseId: id,
-    customerGuid: guid,
+  const buyer = (id: number, first: string, customerId = `customer-${id}`): ProductDetails['buyers'][number] => ({
+    customerPurchaseId: id,
+    customerId: customerId,
     customerFirstName: first,
     customerLastName: 'Shopper',
     customerEmail: `${first.toLowerCase()}@example.com`,
-    purchaseDate: '2026-01-01T10:00:00',
+    purchasedAt: '2026-01-01T10:00:00',
   });
 
   let routeParamId: string | null = 'product-1';
@@ -132,19 +132,19 @@ describe('ProductDetailsComponent', () => {
 
   it('lists who bought it, linking each customer to their details page', () => {
     const fixture = render();
-    details.set(buildDetails({}, [buyer(2, 'Ada', 'guid-ada'), buyer(1, 'Ivan', 'guid-ivan')]));
+    details.set(buildDetails({}, [buyer(2, 'Ada', 'customer-ada'), buyer(1, 'Ivan', 'customer-ivan')]));
     fixture.detectChanges();
 
     const rows = el(fixture).querySelectorAll('tbody tr');
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Ada Shopper');
     expect(rows[0].textContent).toContain('ada@example.com');
-    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/customerDetails?id=guid-ada');
+    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/customer-details?id=customer-ada');
   });
 
   it('says nobody has bought it yet when it has no sales', () => {
     const fixture = render();
-    details.set(buildDetails({ soldQuantity: 0, stockQuantity: 25 }));
+    details.set(buildDetails({ soldQuantity: 0, quantityOnHand: 25 }));
     fixture.detectChanges();
 
     expect(el(fixture).textContent).toContain('Nobody has bought this product yet.');
@@ -162,7 +162,7 @@ describe('ProductDetailsComponent', () => {
 
   it('flags a sold-out product', () => {
     const fixture = render();
-    details.set(buildDetails({ stockQuantity: 0, soldQuantity: 25 }));
+    details.set(buildDetails({ quantityOnHand: 0, soldQuantity: 25 }));
     fixture.detectChanges();
 
     expect(el(fixture).textContent).toContain('This product is sold out.');

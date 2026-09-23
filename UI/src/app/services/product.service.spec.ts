@@ -13,18 +13,18 @@ describe('ProductService', () => {
   let service: ProductService;
   let httpMock: HttpTestingController;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/products`;
+  const API_URL = `${environment.apiUrl}/api/customer/products`;
 
   const buildProduct = (overrides: Partial<Product> = {}): Product => ({
-    guid: 'product-1',
+    productId: 'product-1',
     name: 'Aerobook 14 Pro',
     category: 'Laptop',
-    comment: '14-inch ultraportable.',
+    description: '14-inch ultraportable.',
     price: 1299,
-    inventoryQuantity: 10,
-    stockQuantity: 5,
+    initialQuantity: 10,
+    quantityOnHand: 5,
     soldQuantity: 5,
-    depot: 'Central Depot',
+    warehouse: 'Central Depot',
     ...overrides,
   });
 
@@ -84,10 +84,10 @@ describe('ProductService', () => {
     httpMock.expectOne(API_URL).flush({
       status: 200,
       responseMessage: 'ok',
-      data: [buildProduct({ stockQuantity: 4 })],
+      data: [buildProduct({ quantityOnHand: 4 })],
     });
     await settle();
-    expect(service.productsSignal()[0].stockQuantity).toBe(4);
+    expect(service.productsSignal()[0].quantityOnHand).toBe(4);
   });
 
   it('fetchProducts returns the catalogue as a value, without touching the resource signals', () => {

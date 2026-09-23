@@ -12,8 +12,8 @@ public class ProductRegistrationTests
         Name = "Widget",
         Category = "Gadgets",
         Price = 9.99m,
-        InventoryQuantity = 10,
-        Depot = "Cluj",
+        InitialQuantity = 10,
+        Warehouse = "Cluj",
     };
 
     [Theory]
@@ -77,7 +77,7 @@ public class ProductRegistrationTests
         var dbUtils = new Mock<IDbUtils>();
         var registration = new ProductRegistration(dbUtils.Object);
         var request = ValidRequest();
-        request.InventoryQuantity = quantity;
+        request.InitialQuantity = quantity;
 
         var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
 
@@ -90,23 +90,23 @@ public class ProductRegistrationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public async Task RegisterProductFunction_RejectsMissingDepot_WithoutTouchingTheDb(string? depot)
+    public async Task RegisterProductFunction_RejectsMissingWarehouse_WithoutTouchingTheDb(string? warehouse)
     {
         var dbUtils = new Mock<IDbUtils>();
         var registration = new ProductRegistration(dbUtils.Object);
         var request = ValidRequest();
-        request.Depot = depot;
+        request.Warehouse = warehouse;
 
         var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        Assert.Contains("Depot", result.ResponseMessage);
+        Assert.Contains("Warehouse", result.ResponseMessage);
         dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
     [InlineData("9.999")]
-    [InlineData("100000000")]
+    [InlineData("10000000000")]
     public async Task RegisterProductFunction_RejectsAPriceTheDecimalColumnCantHold_WithoutTouchingTheDb(string price)
     {
         var dbUtils = new Mock<IDbUtils>();

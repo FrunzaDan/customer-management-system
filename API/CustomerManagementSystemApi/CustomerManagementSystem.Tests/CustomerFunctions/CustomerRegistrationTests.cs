@@ -7,17 +7,17 @@ namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
 public class CustomerRegistrationTests
 {
-    private const string MerchantId = "TestMerchantID";
+    private const string PerformedBy = "TestMerchant";
 
     private static CreateCustomerRequest ValidRequest() => new()
     {
         FirstName = "Dan",
         LastName = "Frunza",
         Email = "dan@example.com",
-        Msisdn = "123456789",
+        PhoneNumber = "123456789",
         Address = new AddressRequest
         {
-            Country = "Romania", County = "Cluj", Town = "Cluj-Napoca", Zip = "400001", Street = "Main", Number = "1"
+            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main", StreetNumber = "1"
         },
     };
 
@@ -36,7 +36,7 @@ public class CustomerRegistrationTests
         request.FirstName = firstName;
         request.LastName = lastName;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("name", result.ResponseMessage, StringComparison.OrdinalIgnoreCase);
@@ -55,7 +55,7 @@ public class CustomerRegistrationTests
         var request = ValidRequest();
         request.Email = email;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Email", result.ResponseMessage);
@@ -71,7 +71,7 @@ public class CustomerRegistrationTests
         var request = ValidRequest();
         request.Email = new string('a', 250) + "@x.ro"; // 255 chars, one over NVARCHAR(254)
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Equal("Email is too long.", result.ResponseMessage);
@@ -81,18 +81,18 @@ public class CustomerRegistrationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("123")]
-    public async Task RegisterCustomerFunction_RejectsInvalidMsisdn_WithoutTouchingTheDb(string? msisdn)
+    public async Task RegisterCustomerFunction_RejectsInvalidPhoneNumber_WithoutTouchingTheDb(string? phoneNumber)
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = ValidRequest();
-        request.Msisdn = msisdn;
+        request.PhoneNumber = phoneNumber;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        Assert.Contains("MSISDN", result.ResponseMessage);
+        Assert.Contains("phone number", result.ResponseMessage);
         dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -105,7 +105,7 @@ public class CustomerRegistrationTests
         var request = ValidRequest();
         request.Address = null;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Address", result.ResponseMessage);
@@ -120,12 +120,12 @@ public class CustomerRegistrationTests
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = ValidRequest();
-        request.Address!.Town = " ";
+        request.Address!.City = " ";
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        Assert.Equal("Town is required.", result.ResponseMessage);
+        Assert.Equal("City is required.", result.ResponseMessage);
         dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -138,7 +138,7 @@ public class CustomerRegistrationTests
         var request = ValidRequest();
         request.Gender = (Gender)7;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Gender", result.ResponseMessage);
@@ -156,9 +156,9 @@ public class CustomerRegistrationTests
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Customer created successfully.", Guid.NewGuid()));
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = ValidRequest();
-        request.CustomerStatus = status;
+        request.Status = status;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
     }
@@ -172,16 +172,16 @@ public class CustomerRegistrationTests
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
         var request = ValidRequest();
-        request.CustomerStatus = status;
+        request.Status = status;
 
-        var result = await registration.RegisterCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.RegisterCustomer(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task RegisterCustomerFunction_ReturnsTheDbGeneratedGuid_AndAuditLogsAgainstIt()
+    public async Task RegisterCustomerFunction_ReturnsTheDbGeneratedCustomerId_AndAuditLogsAgainstIt()
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
@@ -190,12 +190,12 @@ public class CustomerRegistrationTests
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Customer created successfully.", newGuid));
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
 
-        var result = await registration.RegisterCustomerFunction(ValidRequest(), MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.Equal(newGuid, result.Data);
         auditLogger.Verify(
-            a => a.Log(newGuid, MerchantId, AuditAction.Created, "Email: dan@example.com, MSISDN: 123456789",
+            a => a.Log(newGuid, PerformedBy, AuditAction.Created, "Email: dan@example.com, Phone number: 123456789",
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -209,7 +209,7 @@ public class CustomerRegistrationTests
             .ReturnsAsync(new ResponseModel<Guid?>(400, "Email already exists."));
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);
 
-        var result = await registration.RegisterCustomerFunction(ValidRequest(), MerchantId, TestContext.Current.CancellationToken);
+        var result = await registration.RegisterCustomerFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         auditLogger.Verify(

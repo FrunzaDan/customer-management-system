@@ -15,15 +15,15 @@ describe('AddProductService', () => {
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/product`;
+  const API_URL = `${environment.apiUrl}/api/customer/product`;
 
   const buildProduct = (): CreateProductRequest => ({
     name: 'Widget',
     category: 'Gadgets',
-    comment: null,
+    description: null,
     price: 9.99,
-    inventoryQuantity: 10,
-    depot: 'Cluj',
+    initialQuantity: 10,
+    warehouse: 'Cluj',
   });
 
   beforeEach(() => {

@@ -15,10 +15,10 @@ describe('AddProductComponent', () => {
   const validModel: ProductFormModel = {
     name: 'Widget',
     category: 'Gadgets',
-    comment: '',
+    description: '',
     price: '9.99',
-    inventoryQuantity: '10',
-    depot: 'Cluj',
+    initialQuantity: '10',
+    warehouse: 'Cluj',
   };
 
   beforeEach(() => {
@@ -47,13 +47,13 @@ describe('AddProductComponent', () => {
   });
 
   it('validates the price and inventory quantity formats', () => {
-    component.model.set({ ...validModel, price: 'free', inventoryQuantity: '-1' });
+    component.model.set({ ...validModel, price: 'free', initialQuantity: '-1' });
 
     expect(component.productForm.price().errors()[0].message).toBe(
       'Price must be a positive number with up to two decimals',
     );
-    expect(component.productForm.inventoryQuantity().errors()[0].message).toBe(
-      'Inventory quantity must be a positive whole number',
+    expect(component.productForm.initialQuantity().errors()[0].message).toBe(
+      'Initial quantity must be a positive whole number',
     );
   });
 
@@ -66,10 +66,10 @@ describe('AddProductComponent', () => {
       expect.objectContaining({
         name: 'Widget',
         category: 'Gadgets',
-        comment: null,
+        description: null,
         price: 9.99,
-        inventoryQuantity: 10,
-        depot: 'Cluj',
+        initialQuantity: 10,
+        warehouse: 'Cluj',
       }),
     );
   });

@@ -1,15 +1,15 @@
 CREATE PROCEDURE [dbo].[Customer_Update]
     @CustomerId UNIQUEIDENTIFIER,
-    @FirstName NVARCHAR(50) = NULL,
-    @LastName NVARCHAR(50) = NULL,
+    @FirstName NVARCHAR(100) = NULL,
+    @LastName NVARCHAR(100) = NULL,
     @Email NVARCHAR(254) = NULL,
     @PhoneNumber VARCHAR(15) = NULL,
     @Gender TINYINT = NULL,
     @BirthDate DATE = NULL,
     @Country NVARCHAR(100) = NULL,
     @County NVARCHAR(100) = NULL,
-    @City NVARCHAR(50) = NULL,
-    @PostalCode NVARCHAR(50) = NULL,
+    @City NVARCHAR(100) = NULL,
+    @PostalCode VARCHAR(20) = NULL,
     @Street NVARCHAR(100) = NULL,
     @StreetNumber NVARCHAR(50) = NULL
 AS
@@ -18,7 +18,7 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
-    DECLARE @Now DATETIME2(0) = SYSUTCDATETIME();
+    DECLARE @Now DATETIME2(3) = SYSUTCDATETIME();
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Customer WHERE CustomerId = @CustomerId)
     BEGIN
@@ -48,7 +48,7 @@ BEGIN
     )
     BEGIN
         SET @Result = 400;
-        SET @Message = 'MSISDN already exists.';
+        SET @Message = 'Phone number already exists.';
 
         SELECT @Result AS Result, @Message AS Message;
         RETURN;

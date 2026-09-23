@@ -35,7 +35,7 @@ export const routes: Routes = [
     title: 'Customers',
   },
   {
-    path: 'addCustomer',
+    path: 'add-customer',
     loadComponent: () =>
       import('./components/add-customer/add-customer.component').then(
         (m) => m.AddCustomerComponent,
@@ -45,7 +45,7 @@ export const routes: Routes = [
     title: 'Register customer',
   },
   {
-    path: 'editCustomer',
+    path: 'edit-customer',
     loadComponent: () =>
       import('./components/edit-customer/edit-customer.component').then(
         (m) => m.EditCustomerComponent,
@@ -64,7 +64,7 @@ export const routes: Routes = [
     title: 'About',
   },
   {
-    path: 'customerDetails',
+    path: 'customer-details',
     loadComponent: () =>
       import('./components/customer-details/customer-details.component').then(
         (m) => m.CustomerDetailsComponent,
@@ -82,7 +82,7 @@ export const routes: Routes = [
     title: 'Products',
   },
   {
-    path: 'addProduct',
+    path: 'add-product',
     loadComponent: () =>
       import('./components/add-product/add-product.component').then(
         (m) => m.AddProductComponent,
@@ -92,7 +92,7 @@ export const routes: Routes = [
     title: 'Add product',
   },
   {
-    path: 'productDetails',
+    path: 'product-details',
     loadComponent: () =>
       import('./components/product-details/product-details.component').then(
         (m) => m.ProductDetailsComponent,
@@ -110,7 +110,7 @@ export const routes: Routes = [
     title: 'Charts',
   },
   {
-    path: 'auditLog',
+    path: 'audit-log',
     loadComponent: () =>
       import('./components/global-audit-log/global-audit-log.component').then(
         (m) => m.GlobalAuditLogComponent,

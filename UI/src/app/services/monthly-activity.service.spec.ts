@@ -12,7 +12,7 @@ describe('MonthlyActivityService', () => {
   let service: MonthlyActivityService;
   let httpMock: HttpTestingController;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/monthlyActivity`;
+  const API_URL = `${environment.apiUrl}/api/customer/monthly-activity`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({

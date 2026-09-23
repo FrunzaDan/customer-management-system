@@ -10,8 +10,8 @@ import { HttpHeaderService } from './http-header-service';
 })
 export class VerifyTokenService {
   readonly APIURL =
-    environment.CustomerManagementSystemAPI +
-    '/api/Authentication/verify-token';
+    environment.apiUrl +
+    '/api/authentication/verify-token';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);

@@ -8,14 +8,14 @@ CREATE TABLE [dbo].[Customer]
     -- way a random Guid.NewGuid() key does. Customer_Create hands the new value back.
     [CustomerId] UNIQUEIDENTIFIER NOT NULL
         CONSTRAINT [DF_Customer_CustomerId] DEFAULT NEWSEQUENTIALID(),
-    [FirstName] NVARCHAR (50) NOT NULL,
-    [LastName] NVARCHAR (50) NOT NULL,
+    [FirstName] NVARCHAR (100) NOT NULL,
+    [LastName] NVARCHAR (100) NOT NULL,
     -- NOT NULL (not just the UQ_ constraints below): SQL Server treats every NULL as
     -- distinct under UNIQUE, so a NULL Email/PhoneNumber would silently bypass both the unique
     -- constraint and Customer_Create's own duplicate pre-check (`= NULL` never matches).
     -- 254 is the longest address SMTP can actually deliver to (RFC 5321's path limit).
     [Email] NVARCHAR (254) NOT NULL,
-    -- The MSISDN: digits only (the API's MSISDN regex), so VARCHAR, not NVARCHAR; 15 is
+    -- Digits only (the API's PhoneNumber regex), so VARCHAR, not NVARCHAR; 15 is
     -- E.164's maximum. Anything compared against it must be VARCHAR too — an NVARCHAR
     -- parameter would force a conversion of the column and turn UQ_Customer_PhoneNumber
     -- seeks into scans.
@@ -28,12 +28,13 @@ CREATE TABLE [dbo].[Customer]
     [StatusCode] SMALLINT NOT NULL
         CONSTRAINT [DF_Customer_StatusCode] DEFAULT 1901,
     -- UTC (SYSUTCDATETIME), not server-local GETDATE(): the API marks every timestamp it
-    -- reads as UTC, and the UI converts it to the viewer's own time zone.
-    [CreatedAt] DATETIME2 (0) NOT NULL
+    -- reads as UTC, and the UI converts it to the viewer's own time zone. Millisecond
+    -- precision (3), the same in every table, so events in one second still order correctly.
+    [CreatedAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Customer_CreatedAt] DEFAULT SYSUTCDATETIME(),
-    [LastInteractionAt] DATETIME2 (0) NOT NULL
+    [LastInteractionAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Customer_LastInteractionAt] DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT [PK_Customer] PRIMARY KEY ([CustomerId]),
+    CONSTRAINT [PK_Customer] PRIMARY KEY CLUSTERED ([CustomerId]),
     CONSTRAINT [UQ_Customer_Email] UNIQUE ([Email]),
     CONSTRAINT [UQ_Customer_PhoneNumber] UNIQUE ([PhoneNumber]),
     CONSTRAINT [CK_Customer_Gender] CHECK ([Gender] IN (0, 1, 2)),

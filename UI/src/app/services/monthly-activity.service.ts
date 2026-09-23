@@ -10,7 +10,7 @@ import { HttpHeaderService } from './http-header-service';
   providedIn: 'root',
 })
 export class MonthlyActivityService {
-  private readonly API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/monthlyActivity`;
+  private readonly API_URL = `${environment.apiUrl}/api/customer/monthly-activity`;
   private readonly httpHeaderService = inject(HttpHeaderService);
 
   // No request is made until loadMonthlyActivity() is first called, same reasoning

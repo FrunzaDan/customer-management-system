@@ -40,7 +40,7 @@ export function stockHealthByCategory(products: Product[]): StockHealthRow[] {
   for (const product of products) {
     const entry = totals.get(product.category) ?? { sold: 0, inventory: 0 };
     entry.sold += product.soldQuantity;
-    entry.inventory += product.inventoryQuantity;
+    entry.inventory += product.initialQuantity;
     totals.set(product.category, entry);
   }
 

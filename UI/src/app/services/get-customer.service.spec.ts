@@ -12,26 +12,26 @@ describe('GetCustomerService', () => {
   let service: GetCustomerService;
   let httpMock: HttpTestingController;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/all`;
+  const API_URL = `${environment.apiUrl}/api/customer/all`;
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
-    guid: 'guid-1',
+    customerId: 'customer-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    customerStatus: 1901,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: 1901,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
@@ -168,7 +168,7 @@ describe('GetCustomerService', () => {
       data: { pageNumber: 1, pageSize: 10, totalItems: 1, items: [customer] },
     });
 
-    service.removeCustomerLocally(customer.guid);
+    service.removeCustomerLocally(customer.customerId);
 
     expect(service.customersSignal()).toEqual([]);
   });

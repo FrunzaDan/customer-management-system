@@ -9,7 +9,7 @@ const POLL_INTERVAL_MS = 15000;
   providedIn: 'root',
 })
 export class HealthService {
-  private readonly healthUrl = `${environment.CustomerManagementSystemAPI}/health`;
+  private readonly healthUrl = `${environment.apiUrl}/health`;
 
   private readonly http = inject(HttpClient);
 

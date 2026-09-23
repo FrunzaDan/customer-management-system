@@ -7,23 +7,23 @@ namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
 public class CustomerGettingTests
 {
-    private static readonly Guid CustomerGuid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-    private static readonly Guid ProductGuid = Guid.Parse("2432276c-4ef0-4e50-abc5-8b5f82297844");
+    private static readonly Guid CustomerId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    private static readonly Guid ProductId = Guid.Parse("2432276c-4ef0-4e50-abc5-8b5f82297844");
 
     private static CustomerModel MakeCustomer() => new()
     {
-        Guid = CustomerGuid,
+        CustomerId = CustomerId,
         FirstName = "Dan",
         LastName = "Frunza",
         Email = "dan@example.com",
-        Msisdn = "123456789",
+        PhoneNumber = "123456789",
         Gender = Gender.Male,
-        CustomerStatus = CustomerStatus.Active,
-        CreationDate = DateTime.UtcNow,
-        InteractionDate = DateTime.UtcNow,
+        Status = CustomerStatus.Active,
+        CreatedAt = DateTime.UtcNow,
+        LastInteractionAt = DateTime.UtcNow,
         Address = new AddressModel
         {
-            Country = "Romania", County = "Cluj", Town = "Cluj-Napoca", Zip = "400001", Street = "Main", Number = "1"
+            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main", StreetNumber = "1"
         }
     };
 
@@ -31,19 +31,19 @@ public class CustomerGettingTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GetCustomerFunction_RejectsAnEmptySearchVariable_WithoutTouchingTheDb(string? searchVariable)
+    public async Task GetCustomerFunction_RejectsAnEmptySearchVariable_WithoutTouchingTheDb(string? searchTerm)
     {
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetCustomerFunction(searchVariable, TestContext.Current.CancellationToken);
+        var result = await getting.GetCustomerFunction(searchTerm, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomer(It.IsAny<CustomerLookup>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task GetCustomerFunction_RejectsASearchVariableThatIsNeitherGuidMsisdnNorEmail()
+    public async Task GetCustomerFunction_RejectsASearchVariableThatIsNeitherIdPhoneNumberNorEmail()
     {
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
@@ -60,17 +60,17 @@ public class CustomerGettingTests
     [InlineData("3fa85f64-5717-4562-b3fc-2c963f66afa6")]
     [InlineData("{3FA85F64-5717-4562-B3FC-2C963F66AFA6}")]
     [InlineData("3fa85f6457174562b3fc2c963f66afa6")]
-    public async Task GetCustomerFunction_LooksUpByGuid_ForAnyGuidSpelling(string searchVariable)
+    public async Task GetCustomerFunction_LooksUpByCustomerId_ForAnyGuidSpelling(string searchTerm)
     {
-        var captured = await CaptureLookup(searchVariable);
+        var captured = await CaptureLookup(searchTerm);
 
-        Assert.Equal(new CustomerLookup(Guid: CustomerGuid), captured);
+        Assert.Equal(new CustomerLookup(CustomerId: CustomerId), captured);
     }
 
     [Fact]
-    public async Task GetCustomerFunction_LooksUpByMsisdn_ForADigitsOnlySearchVariable()
+    public async Task GetCustomerFunction_LooksUpByPhoneNumber_ForADigitsOnlySearchTerm()
     {
-        Assert.Equal(new CustomerLookup(Msisdn: "123456789"), await CaptureLookup("123456789"));
+        Assert.Equal(new CustomerLookup(PhoneNumber: "123456789"), await CaptureLookup("123456789"));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class CustomerGettingTests
         Assert.Equal(new CustomerLookup(Email: "dan@example.com"), await CaptureLookup(" dan@example.com "));
     }
 
-    private static async Task<CustomerLookup?> CaptureLookup(string searchVariable)
+    private static async Task<CustomerLookup?> CaptureLookup(string searchTerm)
     {
         var dbUtils = new Mock<IDbUtils>();
         CustomerLookup? captured = null;
@@ -88,7 +88,7 @@ public class CustomerGettingTests
             .ReturnsAsync(new ResponseModel<CustomerModel>(200, "Customer found.", MakeCustomer()));
         var getting = new CustomerGetting(dbUtils.Object);
 
-        await getting.GetCustomerFunction(searchVariable, TestContext.Current.CancellationToken);
+        await getting.GetCustomerFunction(searchTerm, TestContext.Current.CancellationToken);
 
         return captured;
     }
@@ -297,7 +297,7 @@ public class CustomerGettingTests
     }
 
     [Fact]
-    public async Task GetCustomerAuditLogFunction_RejectsAnEmptyGuid_WithoutTouchingTheDb()
+    public async Task GetCustomerAuditLogFunction_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
@@ -309,7 +309,7 @@ public class CustomerGettingTests
     }
 
     [Fact]
-    public async Task GetCustomerPurchasesFunction_RejectsAnEmptyGuid_WithoutTouchingTheDb()
+    public async Task GetCustomerPurchasesFunction_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
@@ -325,17 +325,17 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var expected = new ResponseModel<IReadOnlyList<PurchaseModel>>(200, "0 purchases found.", []);
-        dbUtils.Setup(d => d.GetCustomerPurchases(CustomerGuid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.GetCustomerPurchases(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetCustomerPurchasesFunction(CustomerGuid, TestContext.Current.CancellationToken);
+        var result = await getting.GetCustomerPurchasesFunction(CustomerId, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.GetCustomerPurchases(CustomerGuid, It.IsAny<CancellationToken>()), Times.Once);
+        dbUtils.Verify(d => d.GetCustomerPurchases(CustomerId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task GetProductDetailsFunction_RejectsAnEmptyGuid_WithoutTouchingTheDb()
+    public async Task GetProductDetailsFunction_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var getting = new CustomerGetting(dbUtils.Object);
@@ -351,13 +351,13 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var expected = new ResponseModel<ProductDetailsModel>(404, "Product not found.");
-        dbUtils.Setup(d => d.GetProductDetails(ProductGuid, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        dbUtils.Setup(d => d.GetProductDetails(ProductId, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetProductDetailsFunction(ProductGuid, TestContext.Current.CancellationToken);
+        var result = await getting.GetProductDetailsFunction(ProductId, TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
-        dbUtils.Verify(d => d.GetProductDetails(ProductGuid, It.IsAny<CancellationToken>()), Times.Once);
+        dbUtils.Verify(d => d.GetProductDetails(ProductId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

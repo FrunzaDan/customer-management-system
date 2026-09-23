@@ -14,16 +14,16 @@ public class CustomerGetting(IDbUtils dbUtils)
     // response — generous enough that no real local/demo dataset will ever hit it.
     private const int MaxExportRows = 5000;
 
-    public async Task<ResponseModel<CustomerModel>> GetCustomerFunction(string? searchVariable,
+    public async Task<ResponseModel<CustomerModel>> GetCustomerFunction(string? searchTerm,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(searchVariable))
+        if (string.IsNullOrWhiteSpace(searchTerm))
             return new ResponseModel<CustomerModel>(400, "Search variable cannot be null or empty.");
 
-        var lookup = DetermineLookup(searchVariable.Trim());
+        var lookup = DetermineLookup(searchTerm.Trim());
         if (lookup is null)
             return new ResponseModel<CustomerModel>(404,
-                "No valid search variable was provided! It must be a GUID, MSISDN, or Email.");
+                "No valid search variable was provided! It must be a customer ID, phone number, or email.");
 
         return await dbUtils.GetCustomer(lookup, cancellationToken);
     }
@@ -91,13 +91,13 @@ public class CustomerGetting(IDbUtils dbUtils)
         return null;
     }
 
-    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogFunction(Guid customerGuid,
+    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogFunction(Guid customerId,
         CancellationToken cancellationToken = default)
     {
-        if (customerGuid == Guid.Empty)
-            return new ResponseModel<IReadOnlyList<AuditLogEntry>>(400, "A valid customer GUID is required.");
+        if (customerId == Guid.Empty)
+            return new ResponseModel<IReadOnlyList<AuditLogEntry>>(400, "A valid customer ID is required.");
 
-        return await dbUtils.GetCustomerAuditLog(customerGuid, cancellationToken);
+        return await dbUtils.GetCustomerAuditLog(customerId, cancellationToken);
     }
 
     // Unpaginated on purpose: the catalogue is a fixed set of 50 products.
@@ -105,22 +105,22 @@ public class CustomerGetting(IDbUtils dbUtils)
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetProducts(cancellationToken);
 
-    public async Task<ResponseModel<ProductDetailsModel>> GetProductDetailsFunction(Guid productGuid,
+    public async Task<ResponseModel<ProductDetailsModel>> GetProductDetailsFunction(Guid productId,
         CancellationToken cancellationToken = default)
     {
-        if (productGuid == Guid.Empty)
-            return new ResponseModel<ProductDetailsModel>(400, "A valid product GUID is required.");
+        if (productId == Guid.Empty)
+            return new ResponseModel<ProductDetailsModel>(400, "A valid product ID is required.");
 
-        return await dbUtils.GetProductDetails(productGuid, cancellationToken);
+        return await dbUtils.GetProductDetails(productId, cancellationToken);
     }
 
-    public async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesFunction(Guid customerGuid,
+    public async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesFunction(Guid customerId,
         CancellationToken cancellationToken = default)
     {
-        if (customerGuid == Guid.Empty)
-            return new ResponseModel<IReadOnlyList<PurchaseModel>>(400, "A valid customer GUID is required.");
+        if (customerId == Guid.Empty)
+            return new ResponseModel<IReadOnlyList<PurchaseModel>>(400, "A valid customer ID is required.");
 
-        return await dbUtils.GetCustomerPurchases(customerGuid, cancellationToken);
+        return await dbUtils.GetCustomerPurchases(customerId, cancellationToken);
     }
 
     public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllAuditLogFunction(int pageNumber,
@@ -143,18 +143,18 @@ public class CustomerGetting(IDbUtils dbUtils)
         await dbUtils.GetMonthlyActivity(cancellationToken);
 
     // Picks the one key Customer_Get should seek on, from the search term's shape: GUID
-    // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then MSISDN, then
+    // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then phone number, then
     // email. Null when it's none of the three.
-    private static CustomerLookup? DetermineLookup(string searchVariable)
+    private static CustomerLookup? DetermineLookup(string searchTerm)
     {
-        if (Guid.TryParse(searchVariable, out var guid))
-            return new CustomerLookup(Guid: guid);
+        if (Guid.TryParse(searchTerm, out var customerId))
+            return new CustomerLookup(CustomerId: customerId);
 
-        if (MsisdnValidation.ValidateMsisdn(searchVariable))
-            return new CustomerLookup(Msisdn: searchVariable);
+        if (PhoneNumberValidation.ValidatePhoneNumber(searchTerm))
+            return new CustomerLookup(PhoneNumber: searchTerm);
 
-        if (EmailValidation.ValidateEmail(searchVariable) && searchVariable.Length <= FieldLengthConstants.Email)
-            return new CustomerLookup(Email: searchVariable);
+        if (EmailValidation.ValidateEmail(searchTerm) && searchTerm.Length <= FieldLengthConstants.Email)
+            return new CustomerLookup(Email: searchTerm);
 
         return null;
     }

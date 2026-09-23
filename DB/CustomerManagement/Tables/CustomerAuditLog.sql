@@ -8,9 +8,9 @@ CREATE TABLE [dbo].[CustomerAuditLog]
     -- rather than free text.
     [ActionType] VARCHAR (20) NOT NULL,
     [Details] NVARCHAR (500) NULL,
-    [OccurredAt] DATETIME2 (0) NOT NULL
+    [OccurredAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_CustomerAuditLog_OccurredAt] DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT [PK_CustomerAuditLog] PRIMARY KEY ([CustomerAuditLogId]),
+    CONSTRAINT [PK_CustomerAuditLog] PRIMARY KEY CLUSTERED ([CustomerAuditLogId]),
     CONSTRAINT [CK_CustomerAuditLog_ActionType] CHECK ([ActionType] IN
         ('Created', 'Edited', 'Deactivated', 'Reactivated', 'Deleted', 'Purchased'))
 );

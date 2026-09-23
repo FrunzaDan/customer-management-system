@@ -45,7 +45,7 @@ public enum CustomerSortColumn
 {
     Name,
     Email,
-    Msisdn
+    PhoneNumber
 }
 
 public enum SortDirection

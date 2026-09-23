@@ -16,15 +16,15 @@ export class CustomerFormFieldsComponent {
     { key: 'firstName', label: 'First Name' },
     { key: 'lastName', label: 'Last Name' },
     { key: 'email', label: 'Email' },
-    { key: 'msisdn', label: 'Phone' },
+    { key: 'phoneNumber', label: 'Phone' },
   ] as const;
 
   protected readonly addressFields = [
     { key: 'country', label: 'Country' },
     { key: 'county', label: 'County' },
-    { key: 'town', label: 'Town' },
+    { key: 'city', label: 'City' },
     { key: 'street', label: 'Street' },
-    { key: 'number', label: 'Number' },
-    { key: 'zip', label: 'Zip' },
+    { key: 'streetNumber', label: 'Street number' },
+    { key: 'postalCode', label: 'Postal code' },
   ] as const;
 }

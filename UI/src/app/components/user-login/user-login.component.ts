@@ -43,7 +43,7 @@ export class UserLoginComponent implements OnInit, OnDestroy {
     this.model,
     (p) => {
       required(p.username, { message: 'Username is required.' });
-      pattern(p.username, new RegExp(environment.UserName), {
+      pattern(p.username, new RegExp(environment.usernameRegex), {
         message: 'Invalid username format.',
       });
       required(p.password, { message: 'Password is required.' });
@@ -69,8 +69,8 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   private async login(): Promise<void> {
     const { username, password } = this.model();
     const loginRequest: UserLoginRequest = {
-      merchantId: username,
-      merchantPassword: password,
+      username,
+      password,
     };
 
     try {

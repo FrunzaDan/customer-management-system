@@ -3,10 +3,12 @@ CREATE TABLE [dbo].[CustomerAddress] (
     -- NOT NULL: every address field is required by both the API and the UI.
     [Country]      NVARCHAR (100) NOT NULL,
     [County]       NVARCHAR (100) NOT NULL,
-    [PostalCode]   NVARCHAR (50) NOT NULL,
-    [City]         NVARCHAR (50) NOT NULL,
+    -- Postal codes are ASCII letters/digits/spaces/hyphens worldwide (AddressValidation
+    -- enforces that), so no Unicode needed.
+    [PostalCode]   VARCHAR (20)   NOT NULL,
+    [City]         NVARCHAR (100) NOT NULL,
     [Street]       NVARCHAR (100) NOT NULL,
-    [StreetNumber] NVARCHAR (50) NOT NULL,
+    [StreetNumber] NVARCHAR (50)  NOT NULL,
     -- The customer's key is the natural primary key of a 1:1 child row. As a clustered PK
     -- it both enforces the 1:1 customer-to-address relationship every proc assumes and gives
     -- the FK column its index (a FK doesn't index its own referencing column) — without it
@@ -14,7 +16,7 @@ CREATE TABLE [dbo].[CustomerAddress] (
     -- Customer_Delete) would scan this table. The tighter (seek, not scan) locking also
     -- reduces the deadlock surface between Customer_Create and Customer_Delete's opposite
     -- table-access order.
-    CONSTRAINT [PK_CustomerAddress] PRIMARY KEY ([CustomerId]),
+    CONSTRAINT [PK_CustomerAddress] PRIMARY KEY CLUSTERED ([CustomerId]),
     CONSTRAINT [FK_CustomerAddress_Customer]
         FOREIGN KEY ([CustomerId]) REFERENCES [dbo].[Customer] ([CustomerId])
 );

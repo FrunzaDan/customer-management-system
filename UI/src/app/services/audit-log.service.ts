@@ -10,21 +10,21 @@ import { HttpHeaderService } from './http-header-service';
   providedIn: 'root',
 })
 export class AuditLogService {
-  private readonly API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/auditLog`;
+  private readonly API_URL = `${environment.apiUrl}/api/customer/audit-log`;
   private readonly httpHeaderService = inject(HttpHeaderService);
 
-  private readonly customerGuid = signal<string | undefined>(undefined);
+  private readonly customerId = signal<string | undefined>(undefined);
 
-  // Declarative fetch: the request is a function of `customerGuid`, so a new
-  // guid cancels the in-flight request and starts another, and no request is
-  // made at all until a guid has been set (returning undefined idles it).
+  // Declarative fetch: the request is a function of `customerId`, so a new
+  // customerId cancels the in-flight request and starts another, and no request is
+  // made at all until a customerId has been set (returning undefined idles it).
   private readonly auditLog = httpResource<GenericResponse<AuditLogEntry[]>>(
     () => {
-      const guid = this.customerGuid();
-      if (!guid) return undefined;
+      const customerId = this.customerId();
+      if (!customerId) return undefined;
       return {
         url: this.API_URL,
-        params: { customerGuid: guid },
+        params: { customerId: customerId },
         headers: this.httpHeaderService.getHeadersWithTokenSet(),
       };
     },
@@ -40,13 +40,13 @@ export class AuditLogService {
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
-  loadAuditLog(customerGuid: string): void {
-    if (this.customerGuid() === customerGuid) {
+  loadAuditLog(customerId: string): void {
+    if (this.customerId() === customerId) {
       // Same customer (e.g. after a deactivate/reactivate) — the request itself
       // hasn't changed, so ask for a fresh copy.
       this.auditLog.reload();
     } else {
-      this.customerGuid.set(customerGuid);
+      this.customerId.set(customerId);
     }
   }
 }

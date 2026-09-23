@@ -6,7 +6,7 @@ import {
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { Customer, CustomerActivationStatus } from '../interfaces/customer-response';
+import { Customer, CustomerStatus } from '../interfaces/customer-response';
 import { ActivateCustomerService } from './activate-customer.service';
 import { GetCustomerService } from './get-customer.service';
 import { HttpHeaderService } from './http-header-service';
@@ -20,28 +20,28 @@ describe('ActivateCustomerService', () => {
   let notificationShow: ReturnType<typeof vi.fn>;
 
   const DEACTIVATE_URL =
-    environment.CustomerManagementSystemAPI + '/api/Customer/deactivate';
+    environment.apiUrl + '/api/customer/deactivate';
   const REACTIVATE_URL =
-    environment.CustomerManagementSystemAPI + '/api/Customer/reactivate';
+    environment.apiUrl + '/api/customer/reactivate';
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
-    guid: 'guid-1',
+    customerId: 'customer-1',
     firstName: 'Dan',
     lastName: 'Frunza',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     email: 'dan@example.com',
     gender: 1,
-    customerStatus: CustomerActivationStatus.Active,
-    creationDate: '2026-01-01',
-    interactionDate: '2026-01-01',
-    birthdate: '1990-01-01',
+    status: CustomerStatus.Active,
+    createdAt: '2026-01-01',
+    lastInteractionAt: '2026-01-01',
+    birthDate: '1990-01-01',
     address: {
       country: 'Romania',
       county: 'Cluj',
-      town: 'Cluj-Napoca',
-      zip: '400000',
+      city: 'Cluj-Napoca',
+      postalCode: '400000',
       street: 'Main',
-      number: '1',
+      streetNumber: '1',
     },
     ...overrides,
   });
@@ -78,7 +78,7 @@ describe('ActivateCustomerService', () => {
   });
 
   it('sets loadingSignal true synchronously while deactivation is in flight', () => {
-    service.deactivateCustomer('guid-1');
+    service.deactivateCustomer('customer-1');
 
     expect(service.loadingSignal()).toBe(true);
 
@@ -88,17 +88,17 @@ describe('ActivateCustomerService', () => {
   });
 
   it('deactivateCustomer marks the local customer Deactivated and notifies on success', () => {
-    service.deactivateCustomer('guid-1');
+    service.deactivateCustomer('customer-1');
 
     const req = httpMock.expectOne((r) => r.url === DEACTIVATE_URL);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.params.get('customerGUID')).toBe('guid-1');
+    expect(req.request.params.get('customerId')).toBe('customer-1');
     req.flush({ status: 200, responseMessage: 'ok' });
 
     expect(updateCustomerLocally).toHaveBeenCalledWith(
       expect.objectContaining({
-        guid: 'guid-1',
-        customerStatus: CustomerActivationStatus.Deactivated,
+        customerId: 'customer-1',
+        status: CustomerStatus.Deactivated,
       }),
     );
     expect(notificationShow).toHaveBeenCalledWith(
@@ -109,9 +109,9 @@ describe('ActivateCustomerService', () => {
   });
 
   it('reactivateCustomer marks the local customer Active and hits the reactivate endpoint', () => {
-    customersSignal.set([buildCustomer({ customerStatus: CustomerActivationStatus.Deactivated })]);
+    customersSignal.set([buildCustomer({ status: CustomerStatus.Deactivated })]);
 
-    service.reactivateCustomer('guid-1');
+    service.reactivateCustomer('customer-1');
 
     const req = httpMock.expectOne((r) => r.url === REACTIVATE_URL);
     expect(req.request.method).toBe('PATCH');
@@ -119,8 +119,8 @@ describe('ActivateCustomerService', () => {
 
     expect(updateCustomerLocally).toHaveBeenCalledWith(
       expect.objectContaining({
-        guid: 'guid-1',
-        customerStatus: CustomerActivationStatus.Active,
+        customerId: 'customer-1',
+        status: CustomerStatus.Active,
       }),
     );
     expect(notificationShow).toHaveBeenCalledWith(
@@ -129,7 +129,7 @@ describe('ActivateCustomerService', () => {
   });
 
   it('sets an error and skips the local update/notification when the response status is not 200', () => {
-    service.deactivateCustomer('guid-1');
+    service.deactivateCustomer('customer-1');
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -144,7 +144,7 @@ describe('ActivateCustomerService', () => {
   it('sets a not-found error and skips notification when the customer is not in the local cache', () => {
     customersSignal.set([]);
 
-    service.deactivateCustomer('missing-guid');
+    service.deactivateCustomer('missing-customerId');
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -156,7 +156,7 @@ describe('ActivateCustomerService', () => {
   });
 
   it('does not retry a definitive 4xx error and surfaces the server message', () => {
-    service.deactivateCustomer('guid-1');
+    service.deactivateCustomer('customer-1');
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -173,7 +173,7 @@ describe('ActivateCustomerService', () => {
   it('retries once on a transient (5xx) failure and then succeeds', () => {
     vi.useFakeTimers();
 
-    service.deactivateCustomer('guid-1');
+    service.deactivateCustomer('customer-1');
 
     const firstAttempt = httpMock.expectOne((r) => r.url === DEACTIVATE_URL);
     firstAttempt.flush(null, { status: 500, statusText: 'Server Error' });
@@ -184,7 +184,7 @@ describe('ActivateCustomerService', () => {
     secondAttempt.flush({ status: 200, responseMessage: 'ok' });
 
     expect(updateCustomerLocally).toHaveBeenCalledWith(
-      expect.objectContaining({ customerStatus: CustomerActivationStatus.Deactivated }),
+      expect.objectContaining({ status: CustomerStatus.Deactivated }),
     );
     expect(service.loadingSignal()).toBe(false);
     expect(service.errorSignal()).toBeNull();

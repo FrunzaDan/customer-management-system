@@ -13,7 +13,7 @@ describe('VerifyTokenService', () => {
   let httpMock: HttpTestingController;
   let getHeadersWithTokenSet: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.CustomerManagementSystemAPI}/api/Authentication/verify-token`;
+  const API_URL = `${environment.apiUrl}/api/authentication/verify-token`;
 
   beforeEach(() => {
     getHeadersWithTokenSet = vi.fn().mockReturnValue({});

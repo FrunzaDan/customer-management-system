@@ -48,21 +48,21 @@
           }
         </div>
 
-        @let birthdate = form().birthdate();
-        @let birthdateError = birthdate.touched() && birthdate.invalid();
+        @let birthDate = form().birthDate();
+        @let birthDateError = birthDate.touched() && birthDate.invalid();
         <div class="mb-3">
-          <label class="form-label" for="birthdate">Birthdate</label>
+          <label class="form-label" for="birthDate">Birth date</label>
           <input
-            id="birthdate"
+            id="birthDate"
             type="date"
             class="form-control"
-            [formField]="form().birthdate"
-            [class.is-invalid]="birthdateError"
-            [attr.aria-invalid]="birthdateError"
-            [attr.aria-describedby]="birthdateError ? 'birthdate-error' : null"
+            [formField]="form().birthDate"
+            [class.is-invalid]="birthDateError"
+            [attr.aria-invalid]="birthDateError"
+            [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />
-          @if (birthdateError) {
-          <div class="invalid-feedback" id="birthdate-error">{{ birthdate.errors()[0].message }}</div>
+          @if (birthDateError) {
+          <div class="invalid-feedback" id="birthDate-error">{{ birthDate.errors()[0].message }}</div>
           }
         </div>
       </fieldset>

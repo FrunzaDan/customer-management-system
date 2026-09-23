@@ -9,14 +9,14 @@ import {
 } from './charts-data';
 
 const buildProduct = (overrides: Partial<Product> = {}): Product => ({
-  guid: 'product-1',
+  productId: 'product-1',
   name: 'Aerobook 14 Pro',
   category: 'Laptop',
   price: 1000,
-  inventoryQuantity: 10,
-  stockQuantity: 5,
+  initialQuantity: 10,
+  quantityOnHand: 5,
   soldQuantity: 5,
-  depot: 'Central Depot',
+  warehouse: 'Central Depot',
   ...overrides,
 });
 
@@ -61,8 +61,8 @@ describe('rankByCategory', () => {
 describe('stockHealthByCategory', () => {
   it('sums sold/inventory per category and ranks by percent sold, descending', () => {
     const products = [
-      buildProduct({ category: 'Gaming', soldQuantity: 9, inventoryQuantity: 10 }),
-      buildProduct({ category: 'Audio', soldQuantity: 2, inventoryQuantity: 10 }),
+      buildProduct({ category: 'Gaming', soldQuantity: 9, initialQuantity: 10 }),
+      buildProduct({ category: 'Audio', soldQuantity: 2, initialQuantity: 10 }),
     ];
 
     const result = stockHealthByCategory(products);
@@ -74,7 +74,7 @@ describe('stockHealthByCategory', () => {
   });
 
   it('treats zero inventory as 0% sold rather than dividing by zero', () => {
-    const products = [buildProduct({ category: 'Empty', soldQuantity: 0, inventoryQuantity: 0 })];
+    const products = [buildProduct({ category: 'Empty', soldQuantity: 0, initialQuantity: 0 })];
 
     const result = stockHealthByCategory(products);
 

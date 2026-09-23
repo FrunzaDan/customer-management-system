@@ -11,7 +11,7 @@ import { HttpHeaderService } from './http-header-service';
   providedIn: 'root',
 })
 export class ProductService {
-  private readonly API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/products`;
+  private readonly API_URL = `${environment.apiUrl}/api/customer/products`;
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
 

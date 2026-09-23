@@ -13,6 +13,6 @@ export class ProductFormFieldsComponent {
   protected readonly textFields = [
     { key: 'name', label: 'Product name' },
     { key: 'category', label: 'Category' },
-    { key: 'depot', label: 'Depot' },
+    { key: 'warehouse', label: 'Warehouse' },
   ] as const;
 }

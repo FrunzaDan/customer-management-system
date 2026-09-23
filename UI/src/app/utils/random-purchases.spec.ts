@@ -5,15 +5,15 @@ import {
   chooseProductsToBuy,
 } from './random-purchases';
 
-const buildProduct = (n: number, stockQuantity = 10): Product => ({
-  guid: `p${n}`,
+const buildProduct = (n: number, quantityOnHand = 10): Product => ({
+  productId: `p${n}`,
   name: `Product ${n}`,
   category: 'Laptop',
   price: 100,
-  inventoryQuantity: 10,
-  stockQuantity,
-  soldQuantity: 10 - stockQuantity,
-  depot: 'Central Depot',
+  initialQuantity: 10,
+  quantityOnHand,
+  soldQuantity: 10 - quantityOnHand,
+  warehouse: 'Central Depot',
 });
 
 const catalogue = (size = 50) => Array.from({ length: size }, (_, i) => buildProduct(i));
@@ -38,16 +38,16 @@ describe('chooseProductsToBuy', () => {
 
   it('never picks the same product twice', () => {
     for (let i = 0; i < 200; i++) {
-      const guids = chooseProductsToBuy(catalogue()).map((p) => p.guid);
-      expect(new Set(guids).size).toBe(guids.length);
+      const customerIds = chooseProductsToBuy(catalogue()).map((p) => p.productId);
+      expect(new Set(customerIds).size).toBe(customerIds.length);
     }
   });
 
   it('only picks products that are in stock', () => {
-    const products = [...catalogue(10).map((p) => ({ ...p, stockQuantity: 0 })), buildProduct(99, 3)];
+    const products = [...catalogue(10).map((p) => ({ ...p, quantityOnHand: 0 })), buildProduct(99, 3)];
 
     for (let i = 0; i < 50; i++) {
-      expect(chooseProductsToBuy(products).map((p) => p.guid)).toEqual(['p99']);
+      expect(chooseProductsToBuy(products).map((p) => p.productId)).toEqual(['p99']);
     }
   });
 
@@ -58,16 +58,16 @@ describe('chooseProductsToBuy', () => {
   });
 
   it('returns nothing when the whole catalogue is sold out', () => {
-    expect(chooseProductsToBuy(catalogue(5).map((p) => ({ ...p, stockQuantity: 0 })))).toEqual([]);
+    expect(chooseProductsToBuy(catalogue(5).map((p) => ({ ...p, quantityOnHand: 0 })))).toEqual([]);
     expect(chooseProductsToBuy([])).toEqual([]);
   });
 
   it('does not mutate the list it was given', () => {
     const products = catalogue(10);
-    const snapshot = products.map((p) => p.guid);
+    const snapshot = products.map((p) => p.productId);
 
     chooseProductsToBuy(products);
 
-    expect(products.map((p) => p.guid)).toEqual(snapshot);
+    expect(products.map((p) => p.productId)).toEqual(snapshot);
   });
 });

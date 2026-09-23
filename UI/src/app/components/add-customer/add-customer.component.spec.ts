@@ -16,15 +16,15 @@ describe('AddCustomerComponent', () => {
     firstName: 'Dan',
     lastName: 'Frunza',
     email: 'dan@example.com',
-    msisdn: '123456789',
+    phoneNumber: '123456789',
     gender: '1',
-    birthdate: '1990-01-01',
+    birthDate: '1990-01-01',
     country: 'Romania',
     county: 'Cluj',
-    town: 'Cluj-Napoca',
+    city: 'Cluj-Napoca',
     street: 'Main',
-    number: '1',
-    zip: '400000',
+    streetNumber: '1',
+    postalCode: '400000',
   };
 
   beforeEach(() => {
@@ -53,12 +53,12 @@ describe('AddCustomerComponent', () => {
   });
 
   it('validates the email and phone formats', () => {
-    component.model.set({ ...validModel, email: 'not-an-email', msisdn: '12' });
+    component.model.set({ ...validModel, email: 'not-an-email', phoneNumber: '12' });
 
     expect(component.customerForm.email().errors()[0].message).toBe(
       'The Email should be a valid one',
     );
-    expect(component.customerForm.msisdn().errors()[0].message).toBe(
+    expect(component.customerForm.phoneNumber().errors()[0].message).toBe(
       'The phone number should be a valid one',
     );
   });
@@ -73,16 +73,16 @@ describe('AddCustomerComponent', () => {
         firstName: 'Dan',
         lastName: 'Frunza',
         email: 'dan@example.com',
-        msisdn: '123456789',
+        phoneNumber: '123456789',
         gender: 1,
-        birthdate: '1990-01-01',
+        birthDate: '1990-01-01',
         address: {
           country: 'Romania',
           county: 'Cluj',
-          town: 'Cluj-Napoca',
+          city: 'Cluj-Napoca',
           street: 'Main',
-          number: '1',
-          zip: '400000',
+          streetNumber: '1',
+          postalCode: '400000',
         },
       }),
     );

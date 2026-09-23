@@ -22,8 +22,8 @@ public class JwtCreationTests
 
     private static MerchantCredentials Credentials => new()
     {
-        MerchantId = "TestMerchantID",
-        MerchantPassword = "Merchant123",
+        Username = "TestMerchant",
+        Password = "Merchant123",
     };
 
     [Fact]
@@ -38,9 +38,9 @@ public class JwtCreationTests
 
         Assert.Equal(200, result.Status);
         var data = Assert.IsType<AccessTokenResponse>(result.Data);
-        Assert.Equal(DateTimeKind.Utc, data.ValidUntil.Kind);
+        Assert.Equal(DateTimeKind.Utc, data.ExpiresAt.Kind);
         Assert.False(string.IsNullOrWhiteSpace(data.AccessToken));
-        Assert.True(data.ValidUntil > DateTime.UtcNow);
+        Assert.True(data.ExpiresAt > DateTime.UtcNow);
     }
 
     [Fact]
@@ -78,11 +78,11 @@ public class JwtCreationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GenerateBearerJwt_ReturnsForbidden_WithoutTouchingTheDb_WhenMerchantIdIsMissing(string? merchantId)
+    public async Task GenerateBearerJwt_ReturnsForbidden_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
-        var credentials = new MerchantCredentials { MerchantId = merchantId, MerchantPassword = "Merchant123" };
+        var credentials = new MerchantCredentials { Username = username, Password = "Merchant123" };
 
         var result = await jwtCreation.GenerateBearerJwt(credentials, TestContext.Current.CancellationToken);
 

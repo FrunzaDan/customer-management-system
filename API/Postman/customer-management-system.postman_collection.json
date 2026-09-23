@@ -41,14 +41,14 @@
 					"",
 					"    if (needsLogin) {",
 					"        pm.sendRequest({",
-					"            url: pm.variables.get(\"baseUrl\") + \"/api/Authentication/access-token\",",
+					"            url: pm.variables.get(\"baseUrl\") + \"/api/authentication/access-token\",",
 					"            method: \"POST\",",
 					"            header: { \"Content-Type\": \"application/json\" },",
 					"            body: {",
 					"                mode: \"raw\",",
 					"                raw: JSON.stringify({",
-					"                    merchantId: pm.variables.get(\"merchantId\"),",
-					"                    merchantPassword: pm.variables.get(\"merchantPassword\")",
+					"                    username: pm.variables.get(\"username\"),",
+					"                    password: pm.variables.get(\"password\")",
 					"                })",
 					"            }",
 					"        }, (err, res) => {",
@@ -58,11 +58,11 @@
 					"            }",
 					"            const resBody = res.json();",
 					"            const token = resBody && resBody.data && resBody.data.accessToken;",
-					"            const validUntil = resBody && resBody.data && resBody.data.validUntil;",
+					"            const expiresAt = resBody && resBody.data && resBody.data.expiresAt;",
 					"            if (token) {",
 					"                pm.collectionVariables.set(\"accessToken\", token);",
 					"                pm.collectionVariables.set(\"accessTokenExpiresAt\",",
-					"                    String(validUntil ? Date.parse(validUntil) : Date.now() + 14 * 60 * 1000));",
+					"                    String(expiresAt ? Date.parse(expiresAt) : Date.now() + 14 * 60 * 1000));",
 					"            } else {",
 					"                console.error(\"[auto-login] response had no data.accessToken:\", resBody);",
 					"            }",
@@ -95,12 +95,12 @@
 			"type": "string"
 		},
 		{
-			"key": "merchantId",
+			"key": "username",
 			"value": "TestMerchantID",
 			"type": "string"
 		},
 		{
-			"key": "merchantPassword",
+			"key": "password",
 			"value": "Merchant123",
 			"type": "string"
 		},
@@ -115,7 +115,7 @@
 			"type": "string"
 		},
 		{
-			"key": "customerGuid",
+			"key": "customerId",
 			"value": "",
 			"type": "string"
 		},
@@ -125,12 +125,12 @@
 			"type": "string"
 		},
 		{
-			"key": "customerMsisdn",
+			"key": "customerPhoneNumber",
 			"value": "",
 			"type": "string"
 		},
 		{
-			"key": "productGuid",
+			"key": "productId",
 			"value": "",
 			"type": "string"
 		},
@@ -145,7 +145,7 @@
 			"type": "string"
 		},
 		{
-			"key": "purchaseCustomerGuid",
+			"key": "purchaseCustomerId",
 			"value": "",
 			"type": "string"
 		},
@@ -155,7 +155,7 @@
 			"type": "string"
 		},
 		{
-			"key": "purchaseCustomerMsisdn",
+			"key": "purchaseCustomerPhoneNumber",
 			"value": "",
 			"type": "string"
 		}
@@ -170,19 +170,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Authentication/access-token",
+							"raw": "{{baseUrl}}/api/authentication/access-token",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Authentication",
+								"authentication",
 								"access-token"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"merchantId\": \"{{merchantId}}\",\n    \"merchantPassword\": \"{{merchantPassword}}\"\n}",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -192,7 +192,7 @@
 						"auth": {
 							"type": "noauth"
 						},
-						"description": "Issues a JWT for the seeded demo merchant (`TestMerchantID` / `Merchant123`, see ai_docs/build-and-run.md). You normally never need to run this manually \u2014 every other request in this collection auto-authenticates via the collection-level pre-request script, which calls this same endpoint once and caches the token in collection variables until it's about to expire. Run it yourself to force an immediate refresh, e.g. after changing `merchantId`/`merchantPassword`.\n\nRate-limited to 5 requests/minute per client IP ([EnableRateLimiting(\"login\")]) \u2014 exceeding it returns `429` with a small hand-written JSON body (not the usual envelope)."
+						"description": "Issues a JWT for the seeded demo merchant (`TestMerchantID` / `Merchant123`, see ai_docs/build-and-run.md). You normally never need to run this manually \u2014 every other request in this collection auto-authenticates via the collection-level pre-request script, which calls this same endpoint once and caches the token in collection variables until it's about to expire. Run it yourself to force an immediate refresh, e.g. after changing `username`/`password`.\n\nRate-limited to 5 requests/minute per client IP ([EnableRateLimiting(\"login\")]) \u2014 exceeding it returns `429` with a small hand-written JSON body (not the usual envelope)."
 					},
 					"response": [],
 					"event": [
@@ -211,7 +211,7 @@
 									"if (body.data && body.data.accessToken) {",
 									"    pm.collectionVariables.set(\"accessToken\", body.data.accessToken);",
 									"    pm.collectionVariables.set(\"accessTokenExpiresAt\",",
-									"        String(body.data.validUntil ? Date.parse(body.data.validUntil) : Date.now() + 14 * 60 * 1000));",
+									"        String(body.data.expiresAt ? Date.parse(body.data.expiresAt) : Date.now() + 14 * 60 * 1000));",
 									"}"
 								]
 							}
@@ -224,13 +224,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Authentication/verify-token",
+							"raw": "{{baseUrl}}/api/authentication/verify-token",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Authentication",
+								"authentication",
 								"verify-token"
 							]
 						},
@@ -259,19 +259,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Authentication/access-token",
+							"raw": "{{baseUrl}}/api/authentication/access-token",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Authentication",
+								"authentication",
 								"access-token"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"merchantId\": \"{{merchantId}}\",\n    \"merchantPassword\": \"definitely-wrong-password\"\n}",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"definitely-wrong-password\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -302,19 +302,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Authentication/access-token",
+							"raw": "{{baseUrl}}/api/authentication/access-token",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Authentication",
+								"authentication",
 								"access-token"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"merchantId\": \"\",\n    \"merchantPassword\": \"\"\n}",
+							"raw": "{\n    \"username\": \"\",\n    \"password\": \"\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -351,26 +351,26 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"{{regFirstName}}\",\n    \"lastName\": \"{{regLastName}}\",\n    \"msisdn\": \"{{regMsisdn}}\",\n    \"email\": \"{{regEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"{{regFirstName}}\",\n    \"lastName\": \"{{regLastName}}\",\n    \"phoneNumber\": \"{{regPhoneNumber}}\",\n    \"email\": \"{{regEmail}}\",\n    \"gender\": 1,\n    \"birthDate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"city\": \"Sibiu\",\n        \"postalCode\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"streetNumber\": \"2/25\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"description": "Creates a new **active** customer with a fresh, randomly-generated name/email/MSISDN each run (built in the Pre-request Script) so this step \u2014 and the whole folder \u2014 is safe to re-run without colliding with a previous pass. The GUID is always server-generated (`Guid.NewGuid()`), never client-supplied.\n\nRegistration's response carries no `data` (mutating endpoints don't return the created row, see ai_docs/api.md's Known Gaps) \u2014 the next request looks the new customer up by the email just sent, to capture its GUID for every later step."
+						"description": "Creates a new **active** customer with a fresh, randomly-generated name/email/phone number each run (built in the Pre-request Script) so this step \u2014 and the whole folder \u2014 is safe to re-run without colliding with a previous pass. The ID is always generated by the database (`NEWSEQUENTIALID()`), never client-supplied.\n\nRegistration's `data` is the new customer's `customerId`; the next request still looks the new customer up by the email just sent, both to capture that ID for every later step and to check the lookup-by-email path."
 					},
 					"response": [],
 					"event": [
@@ -383,9 +383,9 @@
 									"pm.collectionVariables.set(\"regFirstName\", \"Test\" + String(rand).slice(-6));",
 									"pm.collectionVariables.set(\"regLastName\", \"Customer\" + String(rand).slice(-4));",
 									"pm.collectionVariables.set(\"regEmail\", \"test.customer.\" + rand + \"@example.com\");",
-									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// A phone number must be 9-12 digits only, no symbols (RegexConstants.PhoneNumberRegex) \u2014 build",
 									"// one from the same timestamp so it's unique but still matches the format.",
-									"pm.collectionVariables.set(\"regMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+									"pm.collectionVariables.set(\"regPhoneNumber\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
 								]
 							}
 						},
@@ -400,7 +400,7 @@
 									"pm.test(\"Response envelope reports success\", () => pm.expect(body.status).to.eql(200));",
 									"",
 									"pm.collectionVariables.set(\"customerEmail\", pm.collectionVariables.get(\"regEmail\"));",
-									"pm.collectionVariables.set(\"customerMsisdn\", pm.collectionVariables.get(\"regMsisdn\"));"
+									"pm.collectionVariables.set(\"customerPhoneNumber\", pm.collectionVariables.get(\"regPhoneNumber\"));"
 								]
 							}
 						}
@@ -412,23 +412,23 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{customerEmail}}",
+							"raw": "{{baseUrl}}/api/customer/get?searchTerm={{customerEmail}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
+									"key": "searchTerm",
 									"value": "{{customerEmail}}"
 								}
 							]
 						},
-						"description": "`GetCustomer` auto-detects the search type \u2014 GUID shape, then MSISDN shape, then email shape (`CustomerGetting.DetermineSearchOption`) \u2014 so searching by the email from step 1 is enough to find the customer and read back its server-generated GUID."
+						"description": "`GetCustomer` auto-detects the search type \u2014 GUID shape, then phone number shape, then email shape (`CustomerGetting.DetermineLookup`) \u2014 so searching by the email from step 1 is enough to find the customer and read back its server-generated GUID."
 					},
 					"response": [],
 					"event": [
@@ -445,8 +445,8 @@
 									"    pm.expect(body.data.email).to.eql(pm.collectionVariables.get(\"customerEmail\"));",
 									"});",
 									"",
-									"if (body.data && body.data.guid) {",
-									"    pm.collectionVariables.set(\"customerGuid\", body.data.guid);",
+									"if (body.data && body.data.customerId) {",
+									"    pm.collectionVariables.set(\"customerId\", body.data.customerId);",
 									"}"
 								]
 							}
@@ -459,19 +459,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/edit",
+							"raw": "{{baseUrl}}/api/customer/edit",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"edit"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"guid\": \"{{customerGuid}}\",\n    \"firstName\": \"Updated\"\n}",
+							"raw": "{\n    \"customerId\": \"{{customerId}}\",\n    \"firstName\": \"Updated\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -499,19 +499,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/get?searchTerm={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
-									"value": "{{customerGuid}}"
+									"key": "searchTerm",
+									"value": "{{customerId}}"
 								}
 							]
 						}
@@ -538,19 +538,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/deactivate?customerId={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{customerGuid}}"
+									"key": "customerId",
+									"value": "{{customerId}}"
 								}
 							]
 						}
@@ -574,19 +574,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/reactivate?customerGuid={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/reactivate?customerId={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"reactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{customerGuid}}"
+									"key": "customerId",
+									"value": "{{customerId}}"
 								}
 							]
 						}
@@ -610,19 +610,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/deactivate?customerId={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{customerGuid}}"
+									"key": "customerId",
+									"value": "{{customerId}}"
 								}
 							]
 						},
@@ -647,19 +647,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/auditLog?customerGuid={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/audit-log?customerId={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
-								"auditLog"
+								"customer",
+								"audit-log"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{customerGuid}}"
+									"key": "customerId",
+									"value": "{{customerId}}"
 								}
 							]
 						},
@@ -689,19 +689,19 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/delete?customerGuid={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/delete?customerId={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"delete"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{customerGuid}}"
+									"key": "customerId",
+									"value": "{{customerId}}"
 								}
 							]
 						}
@@ -725,19 +725,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{customerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/get?searchTerm={{customerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
-									"value": "{{customerGuid}}"
+									"key": "searchTerm",
+									"value": "{{customerId}}"
 								}
 							]
 						}
@@ -767,13 +767,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/all?pageNumber=1&pageSize=20&sortColumn=name&sortDirection=asc",
+							"raw": "{{baseUrl}}/api/customer/all?pageNumber=1&pageSize=20&sortColumn=name&sortDirection=asc",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"all"
 							],
 							"query": [
@@ -800,7 +800,7 @@
 								}
 							]
 						},
-						"description": "`sortColumn` allow-list: `name`/`email`/`msisdn`. `sortDirection`: `asc`/`desc`. `pageSize` must be 1-100. `searchTerm` (disabled by default \u2014 enable it in the Params tab to try it) does a `LIKE '%...%'` match against first/last name, email and MSISDN. See ai_docs/database.md."
+						"description": "`sortColumn` allow-list: `name`/`email`/`phoneNumber`. `sortDirection`: `asc`/`desc`. `pageSize` must be 1-100. `searchTerm` (disabled by default \u2014 enable it in the Params tab to try it) does a `LIKE '%...%'` match against first/last name, email and phone number. See ai_docs/database.md."
 					},
 					"response": [],
 					"event": [
@@ -828,13 +828,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/export?sortColumn=name&sortDirection=asc",
+							"raw": "{{baseUrl}}/api/customer/export?sortColumn=name&sortDirection=asc",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"export"
 							],
 							"query": [
@@ -883,14 +883,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/auditLog/all?pageNumber=1&pageSize=20",
+							"raw": "{{baseUrl}}/api/customer/audit-log/all?pageNumber=1&pageSize=20",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
-								"auditLog",
+								"customer",
+								"audit-log",
 								"all"
 							],
 							"query": [
@@ -930,14 +930,14 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/auditLog/all",
+							"raw": "{{baseUrl}}/api/customer/audit-log/all",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
-								"auditLog",
+								"customer",
+								"audit-log",
 								"all"
 							]
 						},
@@ -969,17 +969,17 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/products",
+							"raw": "{{baseUrl}}/api/customer/products",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"products"
 							]
 						},
-						"description": "The fixed 50-product catalogue, ordered by category then name. Captures the product with the most units left into {{productGuid}} so repeated Collection Runner passes don't run it out of stock."
+						"description": "The fixed 50-product catalogue, ordered by category then name. Captures the product with the most units left into {{productId}} so repeated Collection Runner passes don't run it out of stock."
 					},
 					"response": [],
 					"event": [
@@ -993,11 +993,11 @@
 									"const body = pm.response.json();",
 									"pm.test(\"50 products\", () => pm.expect(body.data).to.be.an(\"array\").with.lengthOf(50));",
 									"pm.test(\"sold + left = inventory for every product\", () => {",
-									"    body.data.forEach(p => pm.expect(p.soldQuantity + p.stockQuantity).to.equal(p.inventoryQuantity));",
+									"    body.data.forEach(p => pm.expect(p.soldQuantity + p.quantityOnHand).to.equal(p.initialQuantity));",
 									"});",
-									"const best = body.data.reduce((a, b) => (b.stockQuantity > a.stockQuantity ? b : a));",
-									"pm.collectionVariables.set(\"productGuid\", best.guid);",
-									"pm.collectionVariables.set(\"productStockBefore\", String(best.stockQuantity));",
+									"const best = body.data.reduce((a, b) => (b.quantityOnHand > a.quantityOnHand ? b : a));",
+									"pm.collectionVariables.set(\"productId\", best.productId);",
+									"pm.collectionVariables.set(\"productStockBefore\", String(best.quantityOnHand));",
 									"pm.collectionVariables.set(\"productSoldBefore\", String(best.soldQuantity));"
 								]
 							}
@@ -1015,19 +1015,19 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Purchase\",\n    \"lastName\": \"Helper\",\n    \"msisdn\": \"{{purchaseCustomerMsisdn}}\",\n    \"email\": \"{{purchaseCustomerEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"Purchase\",\n    \"lastName\": \"Helper\",\n    \"phoneNumber\": \"{{purchaseCustomerPhoneNumber}}\",\n    \"email\": \"{{purchaseCustomerEmail}}\",\n    \"gender\": 1,\n    \"birthDate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"city\": \"Sibiu\",\n        \"postalCode\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"streetNumber\": \"2/25\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1045,7 +1045,7 @@
 								"exec": [
 									"const n = Date.now();",
 									"pm.collectionVariables.set(\"purchaseCustomerEmail\", `purchase.${n}@example.com`);",
-									"pm.collectionVariables.set(\"purchaseCustomerMsisdn\", \"07\" + String(n).slice(-9));"
+									"pm.collectionVariables.set(\"purchaseCustomerPhoneNumber\", \"07\" + String(n).slice(-9));"
 								]
 							}
 						},
@@ -1066,18 +1066,18 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get?searchVariable={{purchaseCustomerEmail}}",
+							"raw": "{{baseUrl}}/api/customer/get?searchTerm={{purchaseCustomerEmail}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
+									"key": "searchTerm",
 									"value": "{{purchaseCustomerEmail}}"
 								}
 							]
@@ -1091,7 +1091,7 @@
 								"type": "text/javascript",
 								"exec": [
 									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
-									"pm.collectionVariables.set(\"purchaseCustomerGuid\", pm.response.json().data.guid);"
+									"pm.collectionVariables.set(\"purchaseCustomerId\", pm.response.json().data.customerId);"
 								]
 							}
 						}
@@ -1103,23 +1103,23 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid={{productGuid}}",
+							"raw": "{{baseUrl}}/api/customer/purchase?customerId={{purchaseCustomerId}}&productId={{productId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"purchase"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								},
 								{
-									"key": "productGuid",
-									"value": "{{productGuid}}"
+									"key": "productId",
+									"value": "{{productId}}"
 								}
 							]
 						},
@@ -1145,19 +1145,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/purchases?customerGuid={{purchaseCustomerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/purchases?customerId={{purchaseCustomerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"purchases"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								}
 							]
 						},
@@ -1174,8 +1174,8 @@
 									"const body = pm.response.json();",
 									"pm.test(\"One purchase, for the product we bought\", () => {",
 									"    pm.expect(body.data).to.have.lengthOf(1);",
-									"    pm.expect(body.data[0].productGuid).to.equal(pm.collectionVariables.get(\"productGuid\"));",
-									"    pm.expect(body.data[0].purchaseDate).to.be.a(\"string\");",
+									"    pm.expect(body.data[0].productId).to.equal(pm.collectionVariables.get(\"productId\"));",
+									"    pm.expect(body.data[0].purchasedAt).to.be.a(\"string\");",
 									"});"
 								]
 							}
@@ -1188,19 +1188,19 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/productDetails?productGuid={{productGuid}}",
+							"raw": "{{baseUrl}}/api/customer/product-details?productId={{productId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
-								"productDetails"
+								"customer",
+								"product-details"
 							],
 							"query": [
 								{
-									"key": "productGuid",
-									"value": "{{productGuid}}"
+									"key": "productId",
+									"value": "{{productId}}"
 								}
 							]
 						},
@@ -1215,11 +1215,11 @@
 								"exec": [
 									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
 									"const d = pm.response.json().data;",
-									"pm.test(\"Helper customer is among the buyers\", () => pm.expect(d.buyers.map(b => b.customerGuid)).to.include(pm.collectionVariables.get(\"purchaseCustomerGuid\")));",
+									"pm.test(\"Helper customer is among the buyers\", () => pm.expect(d.buyers.map(b => b.customerId)).to.include(pm.collectionVariables.get(\"purchaseCustomerId\")));",
 									"pm.test(\"Sold +1, left -1\", () => {",
 									"    pm.expect(d.product.soldQuantity).to.equal(parseInt(pm.collectionVariables.get(\"productSoldBefore\"), 10) + 1);",
-									"    pm.expect(d.product.stockQuantity).to.equal(parseInt(pm.collectionVariables.get(\"productStockBefore\"), 10) - 1);",
-									"    pm.expect(d.product.soldQuantity + d.product.stockQuantity).to.equal(d.product.inventoryQuantity);",
+									"    pm.expect(d.product.quantityOnHand).to.equal(parseInt(pm.collectionVariables.get(\"productStockBefore\"), 10) - 1);",
+									"    pm.expect(d.product.soldQuantity + d.product.quantityOnHand).to.equal(d.product.initialQuantity);",
 									"});"
 								]
 							}
@@ -1232,22 +1232,22 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid=not-a-guid",
+							"raw": "{{baseUrl}}/api/customer/purchase?customerId={{purchaseCustomerId}}&productId=not-a-guid",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"purchase"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								},
 								{
-									"key": "productGuid",
+									"key": "productId",
 									"value": "not-a-guid"
 								}
 							]
@@ -1272,22 +1272,22 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid=00000000-0000-0000-0000-000000000000",
+							"raw": "{{baseUrl}}/api/customer/purchase?customerId={{purchaseCustomerId}}&productId=00000000-0000-0000-0000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"purchase"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								},
 								{
-									"key": "productGuid",
+									"key": "productId",
 									"value": "00000000-0000-0000-0000-000000000000"
 								}
 							]
@@ -1312,18 +1312,18 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/productDetails?productGuid=00000000-0000-0000-0000-000000000000",
+							"raw": "{{baseUrl}}/api/customer/product-details?productId=00000000-0000-0000-0000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
-								"productDetails"
+								"customer",
+								"product-details"
 							],
 							"query": [
 								{
-									"key": "productGuid",
+									"key": "productId",
 									"value": "00000000-0000-0000-0000-000000000000"
 								}
 							]
@@ -1348,19 +1348,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{purchaseCustomerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/deactivate?customerId={{purchaseCustomerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								}
 							]
 						}
@@ -1384,23 +1384,23 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/purchase?customerGuid={{purchaseCustomerGuid}}&productGuid={{productGuid}}",
+							"raw": "{{baseUrl}}/api/customer/purchase?customerId={{purchaseCustomerId}}&productId={{productId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"purchase"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								},
 								{
-									"key": "productGuid",
-									"value": "{{productGuid}}"
+									"key": "productId",
+									"value": "{{productId}}"
 								}
 							]
 						},
@@ -1425,19 +1425,19 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/delete?customerGuid={{purchaseCustomerGuid}}",
+							"raw": "{{baseUrl}}/api/customer/delete?customerId={{purchaseCustomerId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"delete"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{purchaseCustomerGuid}}"
+									"key": "customerId",
+									"value": "{{purchaseCustomerId}}"
 								}
 							]
 						},
@@ -1467,19 +1467,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"lastName\": \"NoFirstName\",\n    \"email\": \"no.first.name@example.com\",\n    \"msisdn\": \"0771234567\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"raw": "{\n    \"lastName\": \"NoFirstName\",\n    \"email\": \"no.first.name@example.com\",\n    \"phoneNumber\": \"0771234567\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"city\": \"Sibiu\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1507,19 +1507,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Bad\",\n    \"lastName\": \"Email\",\n    \"email\": \"not-an-email\",\n    \"msisdn\": \"0771234568\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"Bad\",\n    \"lastName\": \"Email\",\n    \"email\": \"not-an-email\",\n    \"phoneNumber\": \"0771234568\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"city\": \"Sibiu\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1541,31 +1541,31 @@
 					]
 				},
 				{
-					"name": "Register - Invalid MSISDN Format (expect 400)",
+					"name": "Register - Invalid phone number Format (expect 400)",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Bad\",\n    \"lastName\": \"Msisdn\",\n    \"email\": \"bad.msisdn@example.com\",\n    \"msisdn\": \"not-a-phone-number\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"Bad\",\n    \"lastName\": \"PhoneNumber\",\n    \"email\": \"bad.phoneNumber@example.com\",\n    \"phoneNumber\": \"not-a-phone-number\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"city\": \"Sibiu\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"description": "MSISDN must be 9-12 digits only (`RegexConstants.MsisdnRegex`) \u2014 no `+`, spaces or letters."
+						"description": "phone number must be 9-12 digits only (`RegexConstants.PhoneNumberRegex`) \u2014 no `+`, spaces or letters."
 					},
 					"response": [],
 					"event": [
@@ -1586,19 +1586,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"No\",\n    \"lastName\": \"Address\",\n    \"email\": \"no.address@example.com\",\n    \"msisdn\": \"0771234569\"\n}",
+							"raw": "{\n    \"firstName\": \"No\",\n    \"lastName\": \"Address\",\n    \"email\": \"no.address@example.com\",\n    \"phoneNumber\": \"0771234569\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1626,19 +1626,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"{{dupFirstName}}\",\n    \"lastName\": \"{{dupLastName}}\",\n    \"msisdn\": \"{{dupMsisdn}}\",\n    \"email\": \"{{dupEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"{{dupFirstName}}\",\n    \"lastName\": \"{{dupLastName}}\",\n    \"phoneNumber\": \"{{dupPhoneNumber}}\",\n    \"email\": \"{{dupEmail}}\",\n    \"gender\": 1,\n    \"birthDate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"city\": \"Sibiu\",\n        \"postalCode\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"streetNumber\": \"2/25\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1658,9 +1658,9 @@
 									"pm.collectionVariables.set(\"dupFirstName\", \"Test\" + String(rand).slice(-6));",
 									"pm.collectionVariables.set(\"dupLastName\", \"Customer\" + String(rand).slice(-4));",
 									"pm.collectionVariables.set(\"dupEmail\", \"test.customer.\" + rand + \"@example.com\");",
-									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// A phone number must be 9-12 digits only, no symbols (RegexConstants.PhoneNumberRegex) \u2014 build",
 									"// one from the same timestamp so it's unique but still matches the format.",
-									"pm.collectionVariables.set(\"dupMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+									"pm.collectionVariables.set(\"dupPhoneNumber\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
 								]
 							}
 						},
@@ -1681,19 +1681,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"Different\",\n    \"lastName\": \"Person\",\n    \"email\": \"{{dupEmail}}\",\n    \"msisdn\": \"0771234570\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"town\": \"Sibiu\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"Different\",\n    \"lastName\": \"Person\",\n    \"email\": \"{{dupEmail}}\",\n    \"phoneNumber\": \"0771234570\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"city\": \"Sibiu\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1721,24 +1721,24 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get",
+							"raw": "{{baseUrl}}/api/customer/get",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
+									"key": "searchTerm",
 									"value": "",
 									"disabled": true
 								}
 							]
 						},
-						"description": "`CustomerGetting.GetCustomerFunction` rejects a missing/blank search variable before touching the DB, with the usual `{ status, responseMessage }` envelope. Enable the `searchVariable` param (currently disabled, empty) to send this."
+						"description": "`CustomerGetting.GetCustomerFunction` rejects a missing/blank search variable before touching the DB, with the usual `{ status, responseMessage }` envelope. Enable the `searchTerm` param (currently disabled, empty) to send this."
 					},
 					"response": [],
 					"event": [
@@ -1762,23 +1762,23 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get?searchVariable=not-a-guid-msisdn-or-email",
+							"raw": "{{baseUrl}}/api/customer/get?searchTerm=not-an-id-phone-number-or-email",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
-									"value": "not-a-guid-msisdn-or-email"
+									"key": "searchTerm",
+									"value": "not-an-id-phone-number-or-email"
 								}
 							]
 						},
-						"description": "Fails all three `DetermineSearchOption` checks (GUID/MSISDN/email shape) \u2014 returns `404` without ever hitting the DB."
+						"description": "Fails all three `DetermineLookup` checks (GUID/phone number/email shape) \u2014 returns `404` without ever hitting the DB."
 					},
 					"response": [],
 					"event": [
@@ -1799,18 +1799,18 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/get?searchVariable=00000000-0000-0000-0000-000000000000",
+							"raw": "{{baseUrl}}/api/customer/get?searchTerm=00000000-0000-0000-0000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"get"
 							],
 							"query": [
 								{
-									"key": "searchVariable",
+									"key": "searchTerm",
 									"value": "00000000-0000-0000-0000-000000000000"
 								}
 							]
@@ -1835,19 +1835,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/edit",
+							"raw": "{{baseUrl}}/api/customer/edit",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"edit"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"guid\": \"not-a-real-guid\",\n    \"firstName\": \"X\"\n}",
+							"raw": "{\n    \"customerId\": \"not-a-real-guid\",\n    \"firstName\": \"X\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1874,18 +1874,18 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid=00000000-0000-0000-0000-000000000000",
+							"raw": "{{baseUrl}}/api/customer/deactivate?customerId=00000000-0000-0000-0000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
+									"key": "customerId",
 									"value": "00000000-0000-0000-0000-000000000000"
 								}
 							]
@@ -1911,19 +1911,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"{{negAFirstName}}\",\n    \"lastName\": \"{{negALastName}}\",\n    \"msisdn\": \"{{negAMsisdn}}\",\n    \"email\": \"{{negAEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"{{negAFirstName}}\",\n    \"lastName\": \"{{negALastName}}\",\n    \"phoneNumber\": \"{{negAPhoneNumber}}\",\n    \"email\": \"{{negAEmail}}\",\n    \"gender\": 1,\n    \"birthDate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"city\": \"Sibiu\",\n        \"postalCode\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"streetNumber\": \"2/25\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1943,9 +1943,9 @@
 									"pm.collectionVariables.set(\"negAFirstName\", \"Test\" + String(rand).slice(-6));",
 									"pm.collectionVariables.set(\"negALastName\", \"Customer\" + String(rand).slice(-4));",
 									"pm.collectionVariables.set(\"negAEmail\", \"test.customer.\" + rand + \"@example.com\");",
-									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// A phone number must be 9-12 digits only, no symbols (RegexConstants.PhoneNumberRegex) \u2014 build",
 									"// one from the same timestamp so it's unique but still matches the format.",
-									"pm.collectionVariables.set(\"negAMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+									"pm.collectionVariables.set(\"negAPhoneNumber\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
 								]
 							}
 						},
@@ -1957,15 +1957,15 @@
 									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
 									"",
 									"pm.sendRequest({",
-									"    url: pm.variables.get(\"baseUrl\") + \"/api/Customer/get?searchVariable=\" + encodeURIComponent(pm.collectionVariables.get(\"negAEmail\")),",
+									"    url: pm.variables.get(\"baseUrl\") + \"/api/customer/get?searchTerm=\" + encodeURIComponent(pm.collectionVariables.get(\"negAEmail\")),",
 									"    method: \"GET\",",
 									"    header: { \"Authorization\": \"Bearer \" + pm.collectionVariables.get(\"accessToken\") }",
 									"}, (err, res) => {",
 									"    if (err) { console.error(\"[lookup] failed:\", err); return; }",
 									"    const lookupBody = res.json();",
-									"    if (lookupBody && lookupBody.data && lookupBody.data.guid) {",
-									"        pm.collectionVariables.set(\"negHelperGuidA\", lookupBody.data.guid);",
-									"        console.log(\"Captured negHelperGuidA = \" + lookupBody.data.guid);",
+									"    if (lookupBody && lookupBody.data && lookupBody.data.customerId) {",
+									"        pm.collectionVariables.set(\"negHelperIdA\", lookupBody.data.customerId);",
+									"        console.log(\"Captured negHelperIdA = \" + lookupBody.data.customerId);",
 									"    } else {",
 									"        console.error(\"[lookup] customer not found for email:\", lookupBody);",
 									"    }",
@@ -1981,19 +1981,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{negHelperGuidA}}",
+							"raw": "{{baseUrl}}/api/customer/deactivate?customerId={{negHelperIdA}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{negHelperGuidA}}"
+									"key": "customerId",
+									"value": "{{negHelperIdA}}"
 								}
 							]
 						}
@@ -2017,19 +2017,19 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/deactivate?customerGuid={{negHelperGuidA}}",
+							"raw": "{{baseUrl}}/api/customer/deactivate?customerId={{negHelperIdA}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"deactivate"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{negHelperGuidA}}"
+									"key": "customerId",
+									"value": "{{negHelperIdA}}"
 								}
 							]
 						},
@@ -2054,19 +2054,19 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/register",
+							"raw": "{{baseUrl}}/api/customer/register",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"register"
 							]
 						},
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"firstName\": \"{{negBFirstName}}\",\n    \"lastName\": \"{{negBLastName}}\",\n    \"msisdn\": \"{{negBMsisdn}}\",\n    \"email\": \"{{negBEmail}}\",\n    \"gender\": 1,\n    \"birthdate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"town\": \"Sibiu\",\n        \"zip\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"number\": \"2/25\"\n    }\n}",
+							"raw": "{\n    \"firstName\": \"{{negBFirstName}}\",\n    \"lastName\": \"{{negBLastName}}\",\n    \"phoneNumber\": \"{{negBPhoneNumber}}\",\n    \"email\": \"{{negBEmail}}\",\n    \"gender\": 1,\n    \"birthDate\": \"1990-05-14\",\n    \"address\": {\n        \"country\": \"Romania\",\n        \"county\": \"Sibiu\",\n        \"city\": \"Sibiu\",\n        \"postalCode\": \"550331\",\n        \"street\": \"Gutuilor\",\n        \"streetNumber\": \"2/25\"\n    }\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2086,9 +2086,9 @@
 									"pm.collectionVariables.set(\"negBFirstName\", \"Test\" + String(rand).slice(-6));",
 									"pm.collectionVariables.set(\"negBLastName\", \"Customer\" + String(rand).slice(-4));",
 									"pm.collectionVariables.set(\"negBEmail\", \"test.customer.\" + rand + \"@example.com\");",
-									"// MSISDN must be 9-12 digits only, no symbols (RegexConstants.MsisdnRegex) \u2014 build",
+									"// A phone number must be 9-12 digits only, no symbols (RegexConstants.PhoneNumberRegex) \u2014 build",
 									"// one from the same timestamp so it's unique but still matches the format.",
-									"pm.collectionVariables.set(\"negBMsisdn\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
+									"pm.collectionVariables.set(\"negBPhoneNumber\", \"07\" + String(rand).slice(-7).padStart(7, \"0\"));"
 								]
 							}
 						},
@@ -2100,15 +2100,15 @@
 									"pm.test(\"Status code is 200\", () => pm.response.to.have.status(200));",
 									"",
 									"pm.sendRequest({",
-									"    url: pm.variables.get(\"baseUrl\") + \"/api/Customer/get?searchVariable=\" + encodeURIComponent(pm.collectionVariables.get(\"negBEmail\")),",
+									"    url: pm.variables.get(\"baseUrl\") + \"/api/customer/get?searchTerm=\" + encodeURIComponent(pm.collectionVariables.get(\"negBEmail\")),",
 									"    method: \"GET\",",
 									"    header: { \"Authorization\": \"Bearer \" + pm.collectionVariables.get(\"accessToken\") }",
 									"}, (err, res) => {",
 									"    if (err) { console.error(\"[lookup] failed:\", err); return; }",
 									"    const lookupBody = res.json();",
-									"    if (lookupBody && lookupBody.data && lookupBody.data.guid) {",
-									"        pm.collectionVariables.set(\"negHelperGuidB\", lookupBody.data.guid);",
-									"        console.log(\"Captured negHelperGuidB = \" + lookupBody.data.guid);",
+									"    if (lookupBody && lookupBody.data && lookupBody.data.customerId) {",
+									"        pm.collectionVariables.set(\"negHelperIdB\", lookupBody.data.customerId);",
+									"        console.log(\"Captured negHelperIdB = \" + lookupBody.data.customerId);",
 									"    } else {",
 									"        console.error(\"[lookup] customer not found for email:\", lookupBody);",
 									"    }",
@@ -2124,19 +2124,19 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/delete?customerGuid={{negHelperGuidB}}",
+							"raw": "{{baseUrl}}/api/customer/delete?customerId={{negHelperIdB}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"delete"
 							],
 							"query": [
 								{
-									"key": "customerGuid",
-									"value": "{{negHelperGuidB}}"
+									"key": "customerId",
+									"value": "{{negHelperIdB}}"
 								}
 							]
 						},
@@ -2161,13 +2161,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/Customer/all",
+							"raw": "{{baseUrl}}/api/customer/all",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"Customer",
+								"customer",
 								"all"
 							]
 						},

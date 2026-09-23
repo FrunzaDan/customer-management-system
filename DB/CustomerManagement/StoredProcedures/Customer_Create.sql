@@ -1,14 +1,14 @@
 CREATE PROCEDURE [dbo].[Customer_Create]
-    @FirstName NVARCHAR(50),
-    @LastName NVARCHAR(50),
+    @FirstName NVARCHAR(100),
+    @LastName NVARCHAR(100),
     @Email NVARCHAR(254),
     @PhoneNumber VARCHAR(15),
     @Gender TINYINT = 0,
     @BirthDate DATE = NULL,
     @Country NVARCHAR(100),
     @County NVARCHAR(100),
-    @City NVARCHAR(50),
-    @PostalCode NVARCHAR(50),
+    @City NVARCHAR(100),
+    @PostalCode VARCHAR(20),
     @Street NVARCHAR(100),
     @StreetNumber NVARCHAR(50),
     @StatusCode SMALLINT = 1901
@@ -23,8 +23,8 @@ BEGIN
 
     IF EXISTS (SELECT 1 FROM dbo.Customer WHERE PhoneNumber = @PhoneNumber)
     BEGIN
-        SET @Result = 400;  -- MSISDN already exists
-        SET @Message = 'MSISDN already exists.';
+        SET @Result = 400;  -- Phone number already exists
+        SET @Message = 'Phone number already exists.';
     END
     ELSE IF EXISTS (SELECT 1 FROM dbo.Customer WHERE Email = @Email)
     BEGIN

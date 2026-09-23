@@ -20,41 +20,41 @@ public class CustomerService(
     public Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProducts(CancellationToken cancellationToken = default) =>
         customerGetting.GetProductsFunction(cancellationToken);
 
-    public Task<ResponseModel<ProductDetailsModel>> GetProductDetails(Guid productGuid,
+    public Task<ResponseModel<ProductDetailsModel>> GetProductDetails(Guid productId,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetProductDetailsFunction(productGuid, cancellationToken);
+        customerGetting.GetProductDetailsFunction(productId, cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchases(Guid customerGuid,
+    public Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchases(Guid customerId,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomerPurchasesFunction(customerGuid, cancellationToken);
+        customerGetting.GetCustomerPurchasesFunction(customerId, cancellationToken);
 
-    public Task<ResponseModel<object>> PurchaseProduct(Guid customerGuid, Guid productGuid,
-        string merchantId, CancellationToken cancellationToken = default) =>
-        customerPurchasing.PurchaseProduct(customerGuid, productGuid, merchantId, cancellationToken);
+    public Task<ResponseModel<object>> PurchaseProduct(Guid customerId, Guid productId,
+        string performedBy, CancellationToken cancellationToken = default) =>
+        customerPurchasing.PurchaseProduct(customerId, productId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> DeactivateCustomer(Guid customerGuid, string merchantId,
+    public Task<ResponseModel<object>> DeactivateCustomer(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerActivation.DeactivateCustomer(customerGuid, merchantId, cancellationToken);
+        customerActivation.DeactivateCustomer(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> ReactivateCustomer(Guid customerGuid, string merchantId,
+    public Task<ResponseModel<object>> ReactivateCustomer(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerActivation.ReactivateCustomer(customerGuid, merchantId, cancellationToken);
+        customerActivation.ReactivateCustomer(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteCustomer(Guid customerGuid, string merchantId,
+    public Task<ResponseModel<object>> DeleteCustomer(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerDeletion.DeleteCustomer(customerGuid, merchantId, cancellationToken);
+        customerDeletion.DeleteCustomer(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest request, string merchantId,
+    public Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerEditing.EditCustomerFunction(request, merchantId, cancellationToken);
+        customerEditing.EditCustomerFunction(request, performedBy, cancellationToken);
 
-    public Task<ResponseModel<CustomerModel>> GetCustomer(string? searchVariable,
+    public Task<ResponseModel<CustomerModel>> GetCustomer(string? searchTerm,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomerFunction(searchVariable, cancellationToken);
+        customerGetting.GetCustomerFunction(searchTerm, cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLog(Guid customerGuid,
+    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLog(Guid customerId,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomerAuditLogFunction(customerGuid, cancellationToken);
+        customerGetting.GetCustomerAuditLogFunction(customerId, cancellationToken);
 
     public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLog(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default) =>
@@ -71,9 +71,9 @@ public class CustomerService(
         CancellationToken cancellationToken = default) =>
         customerGetting.GetCustomersForExportFunction(request, cancellationToken);
 
-    public Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest request, string merchantId,
+    public Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerRegistration.RegisterCustomerFunction(request, merchantId, cancellationToken);
+        customerRegistration.RegisterCustomerFunction(request, performedBy, cancellationToken);
 
     public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivity(CancellationToken cancellationToken = default) =>
         customerGetting.GetMonthlyActivityFunction(cancellationToken);

@@ -14,14 +14,14 @@ describe('GlobalAuditLogComponent', () => {
   const buildEntry = (
     overrides: Partial<GlobalAuditLogEntry> = {},
   ): GlobalAuditLogEntry => ({
-    auditId: 1,
-    customerGuid: 'guid-1',
+    customerAuditLogId: 1,
+    customerId: 'customer-1',
     customerFirstName: 'Dan',
     customerLastName: 'Frunza',
-    merchantId: 'TestMerchantID',
-    action: 'Created',
+    performedBy: 'TestMerchantID',
+    actionType: 'Created',
     details: '',
-    actionDate: '2026-01-01T00:00:00Z',
+    occurredAt: '2026-01-01T00:00:00Z',
     ...overrides,
   });
 
@@ -105,7 +105,7 @@ describe('GlobalAuditLogComponent', () => {
       });
 
       expect(component.customerLabel(entry)).toBe(
-        '(deleted customer guid-1)',
+        '(deleted customer customer-1)',
       );
     });
   });
