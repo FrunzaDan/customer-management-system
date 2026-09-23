@@ -111,7 +111,7 @@ export class CustomerDetailsComponent {
 
   // Deactivated customers follow the normal deactivate-then-delete lifecycle;
   // Test customers are fictitious data and are exempt from that guardrail
-  // (see usp_deleteCustomer), so they can be deleted straight away too.
+  // (see Customer_Delete), so they can be deleted straight away too.
   canDelete: Signal<boolean> = computed(() => {
     const status = this.customer()?.customerStatus;
     return (
@@ -120,7 +120,7 @@ export class CustomerDetailsComponent {
     );
   });
 
-  // Same rule as usp_purchaseProduct: everything but a deactivated customer may buy.
+  // Same rule as CustomerPurchase_Create: everything but a deactivated customer may buy.
   canPurchase: Signal<boolean> = computed(() => {
     const status = this.customer()?.customerStatus;
     return status !== undefined && status !== CustomerActivationStatus.Deactivated;

@@ -46,7 +46,7 @@ public class CustomerGetting(IDbUtils dbUtils)
     }
 
     // Exports the full search/sort result (capped at MaxExportRows), not just one
-    // page — it reuses usp_getCustomers via the same dbUtils.GetCustomers call the
+    // page — it reuses Customer_List via the same dbUtils.GetCustomers call the
     // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
     // filtering/sorting SQL stays in exactly one place.
     public async Task<ResponseModel<string>> GetCustomersForExportFunction(ExportCustomersRequest request,
@@ -142,7 +142,7 @@ public class CustomerGetting(IDbUtils dbUtils)
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetMonthlyActivity(cancellationToken);
 
-    // Picks the one key usp_getCustomer should seek on, from the search term's shape: GUID
+    // Picks the one key Customer_Get should seek on, from the search term's shape: GUID
     // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then MSISDN, then
     // email. Null when it's none of the three.
     private static CustomerLookup? DetermineLookup(string searchVariable)

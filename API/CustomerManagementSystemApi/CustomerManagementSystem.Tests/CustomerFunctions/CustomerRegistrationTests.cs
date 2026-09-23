@@ -115,7 +115,7 @@ public class CustomerRegistrationTests
     [Fact]
     public async Task RegisterCustomerFunction_RejectsAnAddressWithAMissingField_WithoutTouchingTheDb()
     {
-        // Every tbl_addresses column is NOT NULL, so this would otherwise be a 500 from the insert.
+        // Every CustomerAddress column is NOT NULL, so this would otherwise be a 500 from the insert.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerRegistration(dbUtils.Object, auditLogger.Object);

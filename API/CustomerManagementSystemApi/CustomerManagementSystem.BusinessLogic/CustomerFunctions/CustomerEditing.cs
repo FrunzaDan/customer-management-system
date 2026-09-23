@@ -50,7 +50,7 @@ public class CustomerEditing(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
         return response;
     }
 
-    // usp_editCustomer is a partial update (ISNULL(@param, column)) — only the fields
+    // Customer_Update is a partial update (ISNULL(@param, column)) — only the fields
     // actually present in the request were touched, so list just those.
     private static string DescribeChangedFields(UpdateCustomerRequest request)
     {

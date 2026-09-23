@@ -29,7 +29,7 @@ public class CustomerDeletionTests
     [Fact]
     public async Task DeleteCustomer_PropagatesABusinessRuleRejection_WithoutModifyingIt()
     {
-        // Mirrors the real usp_deleteCustomer rule: an active customer can't be deleted directly.
+        // Mirrors the real Customer_Delete rule: an active customer can't be deleted directly.
         var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();

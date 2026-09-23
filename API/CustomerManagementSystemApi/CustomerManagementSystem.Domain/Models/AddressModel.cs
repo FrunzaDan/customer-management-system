@@ -1,6 +1,6 @@
 namespace CustomerManagementSystem.Domain.Models;
 
-// Response shape: every tbl_addresses column is NOT NULL.
+// Response shape: every CustomerAddress column is NOT NULL.
 public sealed record AddressModel
 {
     public required string Country { get; init; }

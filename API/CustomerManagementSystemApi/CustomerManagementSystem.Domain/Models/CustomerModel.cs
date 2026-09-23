@@ -1,7 +1,7 @@
 namespace CustomerManagementSystem.Domain.Models;
 
-// Response shape: a customer as read back from the DB. Every tbl_customers column except
-// birthdate is NOT NULL, so Birthdate is the only optional member.
+// Response shape: a customer as read back from the DB. Every Customer column except
+// BirthDate is NOT NULL, so Birthdate is the only optional member.
 public sealed record CustomerModel
 {
     public required Guid Guid { get; init; }
@@ -56,7 +56,7 @@ public sealed class CreateCustomerRequest
 }
 
 // Request shape for PATCH edit: a partial update, so every field but Guid is optional and an
-// omitted one is left unchanged (usp_editCustomer's ISNULL(@param, column)). There's no
+// omitted one is left unchanged (Customer_Update's ISNULL(@param, column)). There's no
 // CustomerStatus: edit is not a lifecycle transition (that's deactivate/reactivate/delete),
 // so a status can't even be expressed here.
 public sealed class UpdateCustomerRequest
@@ -78,6 +78,6 @@ public sealed class UpdateCustomerRequest
     public AddressRequest? Address { get; set; }
 }
 
-// The one key usp_getCustomer looks a customer up by — CustomerGetting fills exactly one
+// The one key Customer_Get looks a customer up by — CustomerGetting fills exactly one
 // member, chosen from the search term's shape.
 public sealed record CustomerLookup(Guid? Guid = null, string? Msisdn = null, string? Email = null);

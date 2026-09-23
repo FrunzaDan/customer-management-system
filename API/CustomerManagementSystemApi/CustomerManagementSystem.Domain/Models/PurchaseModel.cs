@@ -1,6 +1,6 @@
 namespace CustomerManagementSystem.Domain.Models;
 
-// One row of a customer's purchase history: the tbl_customer_purchases link row joined to
+// One row of a customer's purchase history: the CustomerPurchase link row joined to
 // the product it points at.
 public sealed record PurchaseModel
 {

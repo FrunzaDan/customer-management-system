@@ -478,7 +478,7 @@
 								}
 							}
 						},
-						"description": "Partial update \u2014 `usp_editCustomer` uses `ISNULL(@param, column)`, so any field left out of the body (like `lastName`/`address` here) is left unchanged, not nulled out."
+						"description": "Partial update \u2014 `Customer_Update` uses `ISNULL(@param, column)`, so any field left out of the body (like `lastName`/`address` here) is left unchanged, not nulled out."
 					},
 					"response": [],
 					"event": [
@@ -626,7 +626,7 @@
 								}
 							]
 						},
-						"description": "`usp_deleteCustomer` requires status `IN (1903, 1904)` (deactivated or test) \u2014 an active customer must be deactivated first, see ai_docs/database.md. Re-deactivating here (after step 6 reactivated it) sets up step 9's delete."
+						"description": "`Customer_Delete` requires status `IN (1903, 1904)` (deactivated or test) \u2014 an active customer must be deactivated first, see ai_docs/database.md. Re-deactivating here (after step 6 reactivated it) sets up step 9's delete."
 					},
 					"response": [],
 					"event": [
@@ -904,7 +904,7 @@
 								}
 							]
 						},
-						"description": "Newest-first across every customer (separate stored proc from the per-customer trail \u2014 see ai_docs/database.md). Rows for a since-deleted customer still show up, with `customerFirstName`/`customerLastName` as `null` rather than disappearing (no FK from the audit table to `tbl_customers`, by design)."
+						"description": "Newest-first across every customer (separate stored proc from the per-customer trail \u2014 see ai_docs/database.md). Rows for a since-deleted customer still show up, with `customerFirstName`/`customerLastName` as `null` rather than disappearing (no FK from the audit table to `Customer`, by design)."
 					},
 					"response": [],
 					"event": [
@@ -941,7 +941,7 @@
 								"all"
 							]
 						},
-						"description": "**Destructive \u2014 permanently wipes every audit-log row for every customer, no soft-delete (`usp_deleteAllCustomerAuditLog`, a plain unconditional `DELETE`).** Carries `[Authorize(Roles = \"1801\")]` on top of the class-level `[Authorize]` \u2014 a no-op today since `1801` is the only role that exists, but it stops a future second role from silently inheriting access. Not wired into any other flow in this collection; run it only when you actually mean to clear the log. See ai_docs/api.md."
+						"description": "**Destructive \u2014 permanently wipes every audit-log row for every customer, no soft-delete (`CustomerAuditLog_DeleteAll`, a plain unconditional `DELETE`).** Carries `[Authorize(Roles = \"1801\")]` on top of the class-level `[Authorize]` \u2014 a no-op today since `1801` is the only role that exists, but it stops a future second role from silently inheriting access. Not wired into any other flow in this collection; run it only when you actually mean to clear the log. See ai_docs/api.md."
 					},
 					"response": [],
 					"event": [
@@ -1404,7 +1404,7 @@
 								}
 							]
 						},
-						"description": "A deactivated customer cannot make purchases (usp_purchaseProduct)."
+						"description": "A deactivated customer cannot make purchases (CustomerPurchase_Create)."
 					},
 					"response": [],
 					"event": [
@@ -1441,7 +1441,7 @@
 								}
 							]
 						},
-						"description": "usp_deleteCustomer deletes the customer's purchase rows first (FK). Product stock is NOT restored."
+						"description": "Customer_Delete deletes the customer's purchase rows first (FK). Product stock is NOT restored."
 					},
 					"response": [],
 					"event": [
@@ -1486,7 +1486,7 @@
 								}
 							}
 						},
-						"description": "`CustomerRegistration.RegisterCustomerFunction` requires `firstName` \u2014 `first_name` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless customer."
+						"description": "`CustomerRegistration.RegisterCustomerFunction` requires `firstName` \u2014 `FirstName` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless customer."
 					},
 					"response": [],
 					"event": [
@@ -1605,7 +1605,7 @@
 								}
 							}
 						},
-						"description": "`usp_createCustomer`'s address parameters have no SQL-side defaults \u2014 without this check, a missing address would surface as an opaque `500` instead of a clean `400`."
+						"description": "`Customer_Create`'s address parameters have no SQL-side defaults \u2014 without this check, a missing address would surface as an opaque `500` instead of a clean `400`."
 					},
 					"response": [],
 					"event": [
@@ -1700,7 +1700,7 @@
 								}
 							}
 						},
-						"description": "`usp_createCustomer` rejects a duplicate email up front with a friendly `400`, even though the rest of this request is otherwise valid."
+						"description": "`Customer_Create` rejects a duplicate email up front with a friendly `400`, even though the rest of this request is otherwise valid."
 					},
 					"response": [],
 					"event": [
@@ -1890,7 +1890,7 @@
 								}
 							]
 						},
-						"description": "Well-formed GUID, but no such row in `tbl_customers` \u2014 `usp_deactivateCustomer` returns `404`, distinct from the `409` used for \"already deactivated\" below."
+						"description": "Well-formed GUID, but no such row in `Customer` \u2014 `Customer_Deactivate` returns `404`, distinct from the `409` used for \"already deactivated\" below."
 					},
 					"response": [],
 					"event": [
@@ -2033,7 +2033,7 @@
 								}
 							]
 						},
-						"description": "`usp_deactivateCustomer` only updates rows where status `<> 1903` \u2014 a second call on an already-deactivated customer updates 0 rows and returns `409`."
+						"description": "`Customer_Deactivate` only updates rows where status `<> 1903` \u2014 a second call on an already-deactivated customer updates 0 rows and returns `409`."
 					},
 					"response": [],
 					"event": [
@@ -2140,7 +2140,7 @@
 								}
 							]
 						},
-						"description": "`usp_deleteCustomer` requires status `IN (1903, 1904)` \u2014 an active customer must be deactivated first. Left active afterwards (not cleaned up) \u2014 harmless demo data."
+						"description": "`Customer_Delete` requires status `IN (1903, 1904)` \u2014 an active customer must be deactivated first. Left active afterwards (not cleaned up) \u2014 harmless demo data."
 					},
 					"response": [],
 					"event": [

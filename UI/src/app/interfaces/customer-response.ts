@@ -1,13 +1,13 @@
 import { IsoDate, IsoDateTime } from './iso-date';
 
-// tbl_customers.gender — serialized by the API as its number.
+// Customer.Gender — serialized by the API as its number.
 export enum Gender {
   NotDeclared = 0,
   Male = 1,
   Female = 2,
 }
 
-// tbl_customers.customer_Status codes — see ai_docs/database.md.
+// Customer.StatusCode values — see ai_docs/database.md.
 export enum CustomerActivationStatus {
   Active = 1901,
   Deactivated = 1903,

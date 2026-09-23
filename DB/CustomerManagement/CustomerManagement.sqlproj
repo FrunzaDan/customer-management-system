@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build">
+  <Sdk Name="Microsoft.Build.Sql" Version="0.1.9-preview" />
+  <PropertyGroup>
+    <Name>CustomerManagement</Name>
+    <ProjectGuid>{EA2F0B19-3F65-4745-A2A1-FC9029AAC37F}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
+    <ModelCollation>1033, CI</ModelCollation>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Scripts" />
+    <Folder Include="Scripts\PostDeployment" />
+    <Folder Include="StoredProcedures" />
+    <Folder Include="Tables" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Scripts\PostDeployment\PostDeployment.sql" />
+    <!-- Pulled into PostDeployment.sql via :r; must not also be compiled as schema objects. -->
+    <None Include="Scripts\PostDeployment\Seed_Merchant.sql" />
+    <None Include="Scripts\PostDeployment\Seed_Product.sql" />
+    <Build Remove="Scripts\PostDeployment\Seed_Merchant.sql" />
+    <Build Remove="Scripts\PostDeployment\Seed_Product.sql" />
+  </ItemGroup>
+  <Target Name="BeforeBuild">
+    <Delete Files="$(BaseIntermediateOutputPath)\project.assets.json" />
+  </Target>
+</Project>

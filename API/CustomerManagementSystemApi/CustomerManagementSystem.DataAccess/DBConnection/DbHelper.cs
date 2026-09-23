@@ -9,21 +9,21 @@ public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, 
 
 public static class DbHelper
 {
-    // usp_createCustomer takes @var_CustomerStatus; usp_editCustomer does not (status is
+    // Customer_Create takes @StatusCode; Customer_Update does not (status is
     // only ever changed via deactivate/reactivate) — so create and edit need separate
     // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
     public static void AddCustomerParametersForCreate(SqlCommand command, CreateCustomerRequest customer)
     {
         AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.Msisdn,
             customer.Gender ?? Gender.NotDeclared, customer.Birthdate);
-        command.Parameters.AddSmallInt("@var_CustomerStatus",
+        command.Parameters.AddSmallInt("@StatusCode",
             (short)(customer.CustomerStatus ?? CustomerStatus.Active));
         AddAddressParameters(command, customer.Address);
     }
 
     public static void AddCustomerParametersForEdit(SqlCommand command, UpdateCustomerRequest customer)
     {
-        command.Parameters.AddGuid("@var_Guid", customer.Guid);
+        command.Parameters.AddGuid("@CustomerId", customer.Guid);
         AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.Msisdn,
             customer.Gender, customer.Birthdate);
         AddAddressParameters(command, customer.Address);
@@ -31,33 +31,33 @@ public static class DbHelper
 
     public static void AddProductParametersForCreate(SqlCommand command, CreateProductRequest product)
     {
-        command.Parameters.AddNVarChar("@var_Name", FieldLengthConstants.ProductName, product.Name);
-        command.Parameters.AddNVarChar("@var_Category", FieldLengthConstants.ProductCategory, product.Category);
-        command.Parameters.AddDecimal("@var_Price", 10, 2, product.Price);
-        command.Parameters.AddInt("@var_InventoryQuantity", product.InventoryQuantity);
-        command.Parameters.AddNVarChar("@var_Depot", FieldLengthConstants.ProductDepot, product.Depot);
-        command.Parameters.AddNVarChar("@var_Comment", FieldLengthConstants.ProductComment, product.Comment);
+        command.Parameters.AddNVarChar("@Name", FieldLengthConstants.ProductName, product.Name);
+        command.Parameters.AddNVarChar("@Category", FieldLengthConstants.ProductCategory, product.Category);
+        command.Parameters.AddDecimal("@Price", 10, 2, product.Price);
+        command.Parameters.AddInt("@InitialQuantity", product.InventoryQuantity);
+        command.Parameters.AddNVarChar("@Warehouse", FieldLengthConstants.ProductDepot, product.Depot);
+        command.Parameters.AddNVarChar("@Description", FieldLengthConstants.ProductComment, product.Comment);
     }
 
     private static void AddCustomerCoreParameters(SqlCommand command, string? firstName, string? lastName,
         string? email, string? msisdn, Gender? gender, DateOnly? birthdate)
     {
-        command.Parameters.AddNVarChar("@var_FirstName", FieldLengthConstants.FirstName, firstName);
-        command.Parameters.AddNVarChar("@var_LastName", FieldLengthConstants.LastName, lastName);
-        command.Parameters.AddNVarChar("@var_Email", FieldLengthConstants.Email, email);
-        command.Parameters.AddVarChar("@var_MSISDN", FieldLengthConstants.Msisdn, msisdn);
-        command.Parameters.AddTinyInt("@var_Gender", (byte?)gender);
-        command.Parameters.AddDate("@var_Birthdate", birthdate);
+        command.Parameters.AddNVarChar("@FirstName", FieldLengthConstants.FirstName, firstName);
+        command.Parameters.AddNVarChar("@LastName", FieldLengthConstants.LastName, lastName);
+        command.Parameters.AddNVarChar("@Email", FieldLengthConstants.Email, email);
+        command.Parameters.AddVarChar("@PhoneNumber", FieldLengthConstants.Msisdn, msisdn);
+        command.Parameters.AddTinyInt("@Gender", (byte?)gender);
+        command.Parameters.AddDate("@BirthDate", birthdate);
     }
 
     private static void AddAddressParameters(SqlCommand command, AddressRequest? address)
     {
-        command.Parameters.AddNVarChar("@var_Country", FieldLengthConstants.Country, address?.Country);
-        command.Parameters.AddNVarChar("@var_County", FieldLengthConstants.County, address?.County);
-        command.Parameters.AddNVarChar("@var_Town", FieldLengthConstants.Town, address?.Town);
-        command.Parameters.AddNVarChar("@var_ZIP", FieldLengthConstants.Zip, address?.Zip);
-        command.Parameters.AddNVarChar("@var_Street", FieldLengthConstants.Street, address?.Street);
-        command.Parameters.AddNVarChar("@var_Number", FieldLengthConstants.Number, address?.Number);
+        command.Parameters.AddNVarChar("@Country", FieldLengthConstants.Country, address?.Country);
+        command.Parameters.AddNVarChar("@County", FieldLengthConstants.County, address?.County);
+        command.Parameters.AddNVarChar("@City", FieldLengthConstants.Town, address?.Town);
+        command.Parameters.AddNVarChar("@PostalCode", FieldLengthConstants.Zip, address?.Zip);
+        command.Parameters.AddNVarChar("@Street", FieldLengthConstants.Street, address?.Street);
+        command.Parameters.AddNVarChar("@StreetNumber", FieldLengthConstants.Number, address?.Number);
     }
 
     public static async Task<ResponseModel<CustomerModel>> HandleResponseWithCustomer(SqlDataReader reader)
@@ -77,7 +77,7 @@ public static class DbHelper
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (items.Count == 0)
-                totalItems = reader.GetInt32("total_count");
+                totalItems = reader.GetInt32("TotalCount");
 
             items.Add(MapCustomerFromReader(reader));
         }
@@ -87,21 +87,21 @@ public static class DbHelper
             new PagedResponse<CustomerModel>(items, totalItems, pageNumber, pageSize));
     }
 
-    // The standard (result, message) row every mutating proc returns: result 0 = success,
+    // The standard (Result, Message) row every mutating proc returns: Result 0 = success,
     // anything else is the HTTP status to reply with.
     public static async Task<ResponseModel<object>> HandleResponseWithMessage(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<object>(500, "No data returned or operation failed.");
 
-        var result = reader.GetInt32("result");
-        var message = reader.GetNullableString("message");
+        var result = reader.GetInt32("Result");
+        var message = reader.GetNullableString("Message");
         return result == 0
             ? new ResponseModel<object>(200, message ?? "Operation successful!")
             : new ResponseModel<object>(result, message ?? "Operation failed.");
     }
 
-    // usp_createCustomer/usp_createProduct return the usual (result, message) row plus the new
+    // Customer_Create/Product_Create return the usual (Result, Message) row plus the new
     // row's DB-generated key in guidColumn, which is handed back as Data on success.
     public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuid(SqlDataReader reader,
         string guidColumn)
@@ -109,14 +109,14 @@ public static class DbHelper
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<Guid?>(500, "No data returned or operation failed.");
 
-        var result = reader.GetInt32("result");
-        var message = reader.GetNullableString("message");
+        var result = reader.GetInt32("Result");
+        var message = reader.GetNullableString("Message");
         return result == 0
             ? new ResponseModel<Guid?>(200, message ?? "Operation successful!", reader.GetNullableGuid(guidColumn))
             : new ResponseModel<Guid?>(result, message ?? "Operation failed.");
     }
 
-    // usp_purchaseProduct returns the usual (result, message) row plus product_name. On
+    // CustomerPurchase_Create returns the usual (Result, Message) row plus ProductName. On
     // success the name comes back as Data (the caller puts it in the audit entry); on any
     // failure it's the plain status + message that HandleResponseWithMessage would give.
     public static async Task<ResponseModel<string>> HandleResponseWithPurchaseResult(SqlDataReader reader)
@@ -124,11 +124,11 @@ public static class DbHelper
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<string>(500, "No data returned or operation failed.");
 
-        var result = reader.GetInt32("result");
-        var message = reader.GetNullableString("message");
+        var result = reader.GetInt32("Result");
+        var message = reader.GetNullableString("Message");
         return result == 0
             ? new ResponseModel<string>(200, message ?? "Operation successful!",
-                reader.GetNullableString("product_name"))
+                reader.GetNullableString("ProductName"))
             : new ResponseModel<string>(result, message ?? "Operation failed.");
     }
 
@@ -152,7 +152,7 @@ public static class DbHelper
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (items.Count == 0)
-                totalItems = reader.GetInt32("total_count");
+                totalItems = reader.GetInt32("TotalCount");
 
             items.Add(MapGlobalAuditLogEntryFromReader(reader));
         }
@@ -173,7 +173,7 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<ProductModel>>(200, $"{items.Count} products found.", items);
     }
 
-    // usp_getProductDetails returns two result sets: the product (zero rows = not found), then
+    // Product_GetDetails returns two result sets: the product (zero rows = not found), then
     // the customers who bought it.
     public static async Task<ResponseModel<ProductDetailsModel>> HandleResponseWithProductDetails(
         SqlDataReader reader)
@@ -203,19 +203,19 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<PurchaseModel>>(200, $"{items.Count} purchases found.", items);
     }
 
-    // usp_getMonthlyActivity returns two result sets: customer registrations by month,
+    // Report_GetMonthlyActivity returns two result sets: customer registrations by month,
     // then product purchases by month (see that proc).
     public static async Task<ResponseModel<MonthlyActivityModel>> HandleResponseWithMonthlyActivity(
         SqlDataReader reader)
     {
         var registrations = new List<MonthlyCountModel>();
         while (await reader.ReadAsync().ConfigureAwait(false))
-            registrations.Add(MapMonthlyCountFromReader(reader, "customer_count"));
+            registrations.Add(MapMonthlyCountFromReader(reader, "CustomerCount"));
 
         var purchases = new List<MonthlyCountModel>();
         await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-            purchases.Add(MapMonthlyCountFromReader(reader, "purchase_count"));
+            purchases.Add(MapMonthlyCountFromReader(reader, "PurchaseCount"));
 
         return new ResponseModel<MonthlyActivityModel>(200, "Monthly activity retrieved.",
             new MonthlyActivityModel { CustomerRegistrations = registrations, ProductPurchases = purchases });
@@ -226,95 +226,95 @@ public static class DbHelper
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
 
         return new MerchantAuthData(
-            reader.GetBytes("password_hash"),
-            reader.GetBytes("password_salt"),
-            (MerchantRole)reader.GetInt16("merchant_role")
+            reader.GetBytes("PasswordHash"),
+            reader.GetBytes("PasswordSalt"),
+            (MerchantRole)reader.GetInt16("RoleCode")
         );
     }
 
     private static CustomerModel MapCustomerFromReader(SqlDataReader reader) => new()
     {
-        Guid = reader.GetGuid("PK_customer_guid"),
-        FirstName = reader.GetString("first_name"),
-        LastName = reader.GetString("last_name"),
-        Email = reader.GetString("email"),
-        Msisdn = reader.GetString("msisdn"),
-        Gender = (Gender)reader.GetByte("gender"),
-        Birthdate = reader.GetNullableDateOnly("birthdate"),
-        CustomerStatus = (CustomerStatus)reader.GetInt16("customer_Status"),
-        CreationDate = reader.GetUtcDateTime("creation_Date"),
-        InteractionDate = reader.GetUtcDateTime("interaction_Date"),
+        Guid = reader.GetGuid("CustomerId"),
+        FirstName = reader.GetString("FirstName"),
+        LastName = reader.GetString("LastName"),
+        Email = reader.GetString("Email"),
+        Msisdn = reader.GetString("PhoneNumber"),
+        Gender = (Gender)reader.GetByte("Gender"),
+        Birthdate = reader.GetNullableDateOnly("BirthDate"),
+        CustomerStatus = (CustomerStatus)reader.GetInt16("StatusCode"),
+        CreationDate = reader.GetUtcDateTime("CreatedAt"),
+        InteractionDate = reader.GetUtcDateTime("LastInteractionAt"),
         Address = new AddressModel
         {
-            Country = reader.GetString("country"),
-            County = reader.GetString("county"),
-            Town = reader.GetString("town"),
-            Zip = reader.GetString("zip_code"),
-            Street = reader.GetString("street"),
-            Number = reader.GetString("number")
+            Country = reader.GetString("Country"),
+            County = reader.GetString("County"),
+            Town = reader.GetString("City"),
+            Zip = reader.GetString("PostalCode"),
+            Street = reader.GetString("Street"),
+            Number = reader.GetString("StreetNumber")
         }
     };
 
     private static AuditLogEntry MapAuditLogEntryFromReader(SqlDataReader reader) => new()
     {
-        AuditId = reader.GetInt32("audit_id"),
-        CustomerGuid = reader.GetGuid("customer_guid"),
-        MerchantId = reader.GetString("merchant_id"),
-        Action = Enum.Parse<AuditAction>(reader.GetString("action")),
-        Details = reader.GetNullableString("details"),
-        ActionDate = reader.GetUtcDateTime("action_Date")
+        AuditId = reader.GetInt32("CustomerAuditLogId"),
+        CustomerGuid = reader.GetGuid("CustomerId"),
+        MerchantId = reader.GetString("PerformedBy"),
+        Action = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
+        Details = reader.GetNullableString("Details"),
+        ActionDate = reader.GetUtcDateTime("OccurredAt")
     };
 
     private static GlobalAuditLogEntry MapGlobalAuditLogEntryFromReader(SqlDataReader reader) => new()
     {
-        AuditId = reader.GetInt32("audit_id"),
-        CustomerGuid = reader.GetGuid("customer_guid"),
+        AuditId = reader.GetInt32("CustomerAuditLogId"),
+        CustomerGuid = reader.GetGuid("CustomerId"),
         // NULL here (deleted customer, via the proc's LEFT JOIN) must come back as a real null.
-        CustomerFirstName = reader.GetNullableString("first_name"),
-        CustomerLastName = reader.GetNullableString("last_name"),
-        MerchantId = reader.GetString("merchant_id"),
-        Action = Enum.Parse<AuditAction>(reader.GetString("action")),
-        Details = reader.GetNullableString("details"),
-        ActionDate = reader.GetUtcDateTime("action_Date")
+        CustomerFirstName = reader.GetNullableString("FirstName"),
+        CustomerLastName = reader.GetNullableString("LastName"),
+        MerchantId = reader.GetString("PerformedBy"),
+        Action = Enum.Parse<AuditAction>(reader.GetString("ActionType")),
+        Details = reader.GetNullableString("Details"),
+        ActionDate = reader.GetUtcDateTime("OccurredAt")
     };
 
     private static ProductModel MapProductFromReader(SqlDataReader reader) => new()
     {
-        Guid = reader.GetGuid("PK_product_guid"),
-        Name = reader.GetString("product_name"),
-        Category = reader.GetString("category"),
-        Comment = reader.GetNullableString("comment"),
-        Price = reader.GetDecimal("price"),
-        InventoryQuantity = reader.GetInt32("inventory_quantity"),
-        StockQuantity = reader.GetInt32("stock_quantity"),
-        SoldQuantity = reader.GetInt32("sold_quantity"),
-        Depot = reader.GetString("depot")
+        Guid = reader.GetGuid("ProductId"),
+        Name = reader.GetString("Name"),
+        Category = reader.GetString("Category"),
+        Comment = reader.GetNullableString("Description"),
+        Price = reader.GetDecimal("Price"),
+        InventoryQuantity = reader.GetInt32("InitialQuantity"),
+        StockQuantity = reader.GetInt32("QuantityOnHand"),
+        SoldQuantity = reader.GetInt32("SoldQuantity"),
+        Depot = reader.GetString("Warehouse")
     };
 
     private static MonthlyCountModel MapMonthlyCountFromReader(SqlDataReader reader, string countColumn) => new()
     {
-        YearMonth = reader.GetDateOnly("month_start").ToString("yyyy-MM", CultureInfo.InvariantCulture),
+        YearMonth = reader.GetDateOnly("MonthStart").ToString("yyyy-MM", CultureInfo.InvariantCulture),
         Count = reader.GetInt32(countColumn)
     };
 
     private static ProductBuyerModel MapProductBuyerFromReader(SqlDataReader reader) => new()
     {
-        PurchaseId = reader.GetInt32("purchase_id"),
-        CustomerGuid = reader.GetGuid("FK_customer_guid"),
-        CustomerFirstName = reader.GetString("first_name"),
-        CustomerLastName = reader.GetString("last_name"),
-        CustomerEmail = reader.GetString("email"),
-        PurchaseDate = reader.GetUtcDateTime("purchase_date")
+        PurchaseId = reader.GetInt32("CustomerPurchaseId"),
+        CustomerGuid = reader.GetGuid("CustomerId"),
+        CustomerFirstName = reader.GetString("FirstName"),
+        CustomerLastName = reader.GetString("LastName"),
+        CustomerEmail = reader.GetString("Email"),
+        PurchaseDate = reader.GetUtcDateTime("PurchasedAt")
     };
 
     private static PurchaseModel MapPurchaseFromReader(SqlDataReader reader) => new()
     {
-        PurchaseId = reader.GetInt32("purchase_id"),
-        CustomerGuid = reader.GetGuid("FK_customer_guid"),
-        ProductGuid = reader.GetGuid("FK_product_guid"),
-        ProductName = reader.GetString("product_name"),
-        Category = reader.GetString("category"),
-        Price = reader.GetDecimal("price"),
-        PurchaseDate = reader.GetUtcDateTime("purchase_date")
+        PurchaseId = reader.GetInt32("CustomerPurchaseId"),
+        CustomerGuid = reader.GetGuid("CustomerId"),
+        ProductGuid = reader.GetGuid("ProductId"),
+        ProductName = reader.GetString("ProductName"),
+        Category = reader.GetString("Category"),
+        Price = reader.GetDecimal("Price"),
+        PurchaseDate = reader.GetUtcDateTime("PurchasedAt")
     };
 }

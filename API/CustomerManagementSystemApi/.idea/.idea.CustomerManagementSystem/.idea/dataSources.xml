@@ -6,7 +6,7 @@
       <synchronize>true</synchronize>
       <configured-by-url>true</configured-by-url>
       <jdbc-driver>com.jetbrains.jdbc.sqlserver.SqlServerDriver</jdbc-driver>
-      <jdbc-url>Data Source=localhost;Initial Catalog=Customer_Management_System_DB;Persist Security Info=True;User ID=SA;Password=password123;Integrated Security=False;TrustServerCertificate=True</jdbc-url>
+      <jdbc-url>Data Source=localhost;Initial Catalog=CustomerManagement;Persist Security Info=True;User ID=SA;Password=password123;Integrated Security=False;TrustServerCertificate=True</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

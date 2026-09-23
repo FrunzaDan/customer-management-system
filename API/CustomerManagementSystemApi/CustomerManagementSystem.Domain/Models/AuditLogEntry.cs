@@ -22,8 +22,8 @@ public sealed record GlobalAuditLogEntry
 
     public required Guid CustomerGuid { get; init; }
 
-    // Null when the customer no longer exists (usp_getAllCustomerAuditLog LEFT
-    // JOINs tbl_customers, since audit history outlives a deleted customer).
+    // Null when the customer no longer exists (CustomerAuditLog_List LEFT
+    // JOINs Customer, since audit history outlives a deleted customer).
     public string? CustomerFirstName { get; init; }
 
     public string? CustomerLastName { get; init; }

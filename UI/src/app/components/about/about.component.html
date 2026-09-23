@@ -112,20 +112,20 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <p class="card-text">The schema has three tables:</p>
           <ul>
             <li>
-              <code>tbl_customers</code> — one row per customer: name, email,
+              <code>Customer</code> — one row per customer: name, email,
               MSISDN, gender, birthdate, a numeric
-              <code>customer_Status</code> (active / deactivated), and
+              <code>StatusCode</code> (active / deactivated), and
               creation/last-interaction timestamps, keyed by a GUID primary key.
               Email and MSISDN each carry a unique constraint, so duplicates are
               rejected by the database itself, not just application logic.
             </li>
             <li>
-              <code>tbl_addresses</code> — one row per customer's address,
-              linked back to <code>tbl_customers</code> by a foreign key on that
+              <code>CustomerAddress</code> — one row per customer's address,
+              linked back to <code>Customer</code> by a foreign key on that
               same GUID.
             </li>
             <li>
-              <code>tbl_merchants</code> — login accounts for the API, keyed by
+              <code>Merchant</code> — login accounts for the API, keyed by
               merchant ID (primary key): a PBKDF2 password hash and its salt
               (never the plaintext password), a role, and a last-interaction
               timestamp.
@@ -137,35 +137,35 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           </p>
           <ul>
             <li>
-              <code>usp_createCustomer</code> — inserts the customer and address
+              <code>Customer_Create</code> — inserts the customer and address
               rows in one transaction, rejecting duplicate email/MSISDN first.
             </li>
             <li>
-              <code>usp_getCustomer</code> — looks up a single customer by GUID,
+              <code>Customer_Get</code> — looks up a single customer by GUID,
               MSISDN, or email.
             </li>
             <li>
-              <code>usp_getCustomers</code> — returns one page of customers
+              <code>Customer_List</code> — returns one page of customers
               joined with their addresses, filtered by an optional search term
               and sorted by name/email/MSISDN, plus a total count for
               pagination.
             </li>
             <li>
-              <code>usp_editCustomer</code> — updates only the fields that were
+              <code>Customer_Update</code> — updates only the fields that were
               actually supplied, leaving the rest untouched.
             </li>
             <li>
-              <code>usp_deactivateCustomer</code> /
-              <code>usp_reactivateCustomer</code> — flip
-              <code>customer_Status</code>, refusing to "change" it to the state
+              <code>Customer_Deactivate</code> /
+              <code>Customer_Reactivate</code> — flip
+              <code>StatusCode</code>, refusing to "change" it to the state
               it's already in.
             </li>
             <li>
-              <code>usp_deleteCustomer</code> — hard-deletes a customer and its
+              <code>Customer_Delete</code> — hard-deletes a customer and its
               address, but only once it's already deactivated.
             </li>
             <li>
-              <code>usp_getMerchantAuthData</code> — returns a merchant's
+              <code>Merchant_GetAuthData</code> — returns a merchant's
               password hash, salt, and role for the login flow, and stamps their
               last-interaction time.
             </li>
@@ -198,7 +198,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               The API fetches only that merchant's stored password hash and salt
-              via a stored procedure (<code>dbo.usp_getMerchantAuthData</code>),
+              via a stored procedure (<code>dbo.Merchant_GetAuthData</code>),
               executed through a parameterized ADO.NET
               <code>SqlCommand</code> — the merchant ID is always bound as a
               command parameter, never concatenated into SQL, so this path is

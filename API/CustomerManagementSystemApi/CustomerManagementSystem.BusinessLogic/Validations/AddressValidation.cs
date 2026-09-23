@@ -5,7 +5,7 @@ namespace CustomerManagementSystem.BusinessLogic.Validations;
 
 public static class AddressValidation
 {
-    // Registration only: every tbl_addresses column is NOT NULL, so a missing field would
+    // Registration only: every CustomerAddress column is NOT NULL, so a missing field would
     // otherwise surface as an opaque 500 from the insert instead of a validation error.
     // (Edit is a partial update — an omitted field there means "leave unchanged".)
     public static string? ValidateRequired(AddressRequest address)

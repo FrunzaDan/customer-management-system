@@ -1,6 +1,6 @@
 import { IsoDateTime } from './iso-date';
 
-// tbl_customer_audit_log.action — serialized by the API by name.
+// CustomerAuditLog.ActionType — serialized by the API by name.
 export type AuditAction =
   | 'Created'
   | 'Edited'

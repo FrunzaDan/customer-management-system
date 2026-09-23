@@ -1,7 +1,7 @@
 namespace CustomerManagementSystem.Domain.Constants;
 
-// Mirrors the column lengths declared in DB/.../Tables/tbl_customers.sql and
-// tbl_addresses.sql. Lives in Domain (not BusinessLogic) because both layers need it:
+// Mirrors the column lengths declared in DB/.../Tables/Customer.sql and
+// CustomerAddress.sql. Lives in Domain (not BusinessLogic) because both layers need it:
 // BusinessLogic rejects an over-length value with a clean 400 instead of an opaque SQL
 // truncation error, and DataAccess sizes its SqlParameters to match the proc parameters.
 public static class FieldLengthConstants
@@ -18,18 +18,18 @@ public static class FieldLengthConstants
     public const int Street = 100;
     public const int Number = 50;
 
-    // Mirrors tbl_products.sql.
+    // Mirrors Product.sql.
     public const int ProductName = 100;
     public const int ProductCategory = 50;
     public const int ProductComment = 500;
     public const int ProductDepot = 100;
 
-    // Mirrors tbl_merchants.sql / tbl_customer_audit_log.sql.
+    // Mirrors Merchant.sql / CustomerAuditLog.sql.
     public const int MerchantId = 50;
     public const int AuditAction = 20;
     public const int AuditDetails = 500;
 
-    // Mirrors usp_getCustomers' parameters.
+    // Mirrors Customer_List' parameters.
     public const int SearchTerm = 254;
     public const int SortColumn = 10;
     public const int SortDirection = 4;

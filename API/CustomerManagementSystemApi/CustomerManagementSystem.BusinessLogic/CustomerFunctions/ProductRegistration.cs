@@ -23,7 +23,7 @@ public class ProductRegistration(IDbUtils dbUtils)
         if (request.Comment is not null && request.Comment.Length > FieldLengthConstants.ProductComment)
             return new ResponseModel<Guid?>(400, "Comment is too long.");
 
-        // tbl_products' CK_tbl_products_price only requires >= 0; a strictly positive price
+        // Product's CK_Product_Price only requires >= 0; a strictly positive price
         // is a business rule for a newly listed product, not a DB-level constraint.
         if (request.Price <= 0)
             return new ResponseModel<Guid?>(400, "Price must be greater than zero.");

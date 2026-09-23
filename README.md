@@ -14,7 +14,7 @@ It's not trying to be a product. It's the project I keep coming back to whenever
 | ----- | ------------------------------------------------------------------------------- | ---------------------------------- |
 | UI    | Angular 22, signals, zoneless change detection, SSR via `@angular/ssr`          | `UI`                               |
 | API   | ASP.NET Core Web API on .NET 10, C#                                             | `API/CustomerManagementSystemApi`  |
-| DB    | SQL Server (SSDT project, built to a `.dacpac` and published with `sqlpackage`) | `DB/Customer_Management_System_DB` |
+| DB    | SQL Server (SSDT project, built to a `.dacpac` and published with `sqlpackage`) | `DB/CustomerManagement` |
 
 Nothing shares process or memory — the three layers only ever talk over HTTP(S)/TCP, so each one can be run, tested, and reasoned about on its own.
 
@@ -70,10 +70,10 @@ Customer_Management_System/
 │       ├── CustomerManagementSystem.DataAccess/     # ADO.NET, stored-proc calls, password hashing
 │       ├── CustomerManagementSystem.Domain/         # models, config interfaces
 │       └── CustomerManagementSystem.Tests/          # xUnit v3 unit tests
-├── DB/Customer_Management_System_DB/
-│   ├── Tables/                    # tbl_customers, tbl_addresses, tbl_merchants, tbl_customer_audit_log, tbl_products, tbl_customer_purchases
-│   ├── Stored_Procedures/         # usp_* — all data access goes through these, no ORM, no inline SQL
-│   └── Post_Deployment_Scripts/   # seeds a test merchant login
+├── DB/CustomerManagement/
+│   ├── Tables/                    # Customer, CustomerAddress, Merchant, CustomerAuditLog, Product, CustomerPurchase
+│   ├── StoredProcedures/          # <Entity>_<Verb> — all data access goes through these, no ORM, no inline SQL
+│   └── Scripts/PostDeployment/    # seeds a test merchant login
 └── UI/
     └── src/app/
         ├── components/            # one folder per route/view

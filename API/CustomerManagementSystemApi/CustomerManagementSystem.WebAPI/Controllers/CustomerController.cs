@@ -108,7 +108,7 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
 
     // Explicit role check (not just the class-level [Authorize]) on top of a destructive,
     // untargeted action — wipes every audit row for every customer in one call. Today this
-    // is a no-op in practice (1801 is the only merchant_role that exists), but it stops a
+    // is a no-op in practice (1801 is the only Merchant.RoleCode that exists), but it stops a
     // future second role from silently inheriting access to this action.
     [Authorize(Roles = "1801")]
     [HttpDelete("auditLog/all")]

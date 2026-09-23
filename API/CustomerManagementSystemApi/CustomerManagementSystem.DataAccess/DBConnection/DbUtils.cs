@@ -17,20 +17,20 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_createCustomer",
+            "dbo.Customer_Create",
             command => DbHelper.AddCustomerParametersForCreate(command, customer),
-            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "customer_guid"),
+            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "CustomerId"),
             cancellationToken);
 
     public Task<ResponseModel<CustomerModel>> GetCustomer(CustomerLookup lookup,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getCustomer",
+            "dbo.Customer_Get",
             command =>
             {
-                command.Parameters.AddGuid("@var_Guid", lookup.Guid);
-                command.Parameters.AddVarChar("@var_MSISDN", FieldLengthConstants.Msisdn, lookup.Msisdn);
-                command.Parameters.AddNVarChar("@var_Email", FieldLengthConstants.Email, lookup.Email);
+                command.Parameters.AddGuid("@CustomerId", lookup.Guid);
+                command.Parameters.AddVarChar("@PhoneNumber", FieldLengthConstants.Msisdn, lookup.Msisdn);
+                command.Parameters.AddNVarChar("@Email", FieldLengthConstants.Email, lookup.Email);
             },
             DbHelper.HandleResponseWithCustomer,
             cancellationToken);
@@ -38,7 +38,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomers(GetCustomersRequest request,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getCustomers",
+            "dbo.Customer_List",
             command =>
             {
                 command.Parameters.AddInt("@PageNumber", request.PageNumber);
@@ -56,7 +56,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_editCustomer",
+            "dbo.Customer_Update",
             command => DbHelper.AddCustomerParametersForEdit(command, customer),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
@@ -64,24 +64,24 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<object>> DeactivateCustomer(Guid customerGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_deactivateCustomer",
-            command => command.Parameters.AddGuid("@var_Guid", customerGuid),
+            "dbo.Customer_Deactivate",
+            command => command.Parameters.AddGuid("@CustomerId", customerGuid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
     public Task<ResponseModel<object>> ReactivateCustomer(Guid customerGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_reactivateCustomer",
-            command => command.Parameters.AddGuid("@var_Guid", customerGuid),
+            "dbo.Customer_Reactivate",
+            command => command.Parameters.AddGuid("@CustomerId", customerGuid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
     public Task<ResponseModel<object>> DeleteCustomer(Guid customerGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteCustomer",
-            command => command.Parameters.AddGuid("@var_Guid", customerGuid),
+            "dbo.Customer_Delete",
+            command => command.Parameters.AddGuid("@CustomerId", customerGuid),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
@@ -89,8 +89,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         MerchantCredentials merchantCredentials, CancellationToken cancellationToken = default)
     {
         var authData = await ExecuteStoredProcedureAsync(
-            "dbo.usp_getMerchantAuthData",
-            command => command.Parameters.AddNVarChar("@var_MerchantID", FieldLengthConstants.MerchantId,
+            "dbo.Merchant_GetAuthData",
+            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.MerchantId,
                 merchantCredentials.MerchantId),
             DbHelper.HandleMerchantAuthDataResponse,
             cancellationToken
@@ -111,13 +111,13 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<object>> LogCustomerAudit(Guid customerGuid, string merchantId, AuditAction action,
         string? details, CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_insertCustomerAuditLog",
+            "dbo.CustomerAuditLog_Create",
             command =>
             {
-                command.Parameters.AddGuid("@var_CustomerGuid", customerGuid);
-                command.Parameters.AddNVarChar("@var_MerchantID", FieldLengthConstants.MerchantId, merchantId);
-                command.Parameters.AddVarChar("@var_Action", FieldLengthConstants.AuditAction, action.ToString());
-                command.Parameters.AddNVarChar("@var_Details", FieldLengthConstants.AuditDetails, details);
+                command.Parameters.AddGuid("@CustomerId", customerGuid);
+                command.Parameters.AddNVarChar("@PerformedBy", FieldLengthConstants.MerchantId, merchantId);
+                command.Parameters.AddVarChar("@ActionType", FieldLengthConstants.AuditAction, action.ToString());
+                command.Parameters.AddNVarChar("@Details", FieldLengthConstants.AuditDetails, details);
             },
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
@@ -125,15 +125,15 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLog(Guid customerGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getCustomerAuditLog",
-            command => command.Parameters.AddGuid("@var_CustomerGuid", customerGuid),
+            "dbo.CustomerAuditLog_ListByCustomer",
+            command => command.Parameters.AddGuid("@CustomerId", customerGuid),
             DbHelper.HandleResponseWithAuditLogList,
             cancellationToken);
 
     public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLog(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getAllCustomerAuditLog",
+            "dbo.CustomerAuditLog_List",
             command =>
             {
                 command.Parameters.AddInt("@PageNumber", pageNumber);
@@ -144,14 +144,14 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
 
     public Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_deleteAllCustomerAuditLog",
+            "dbo.CustomerAuditLog_DeleteAll",
             null,
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 
     public Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProducts(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getProducts",
+            "dbo.Product_List",
             null,
             DbHelper.HandleResponseWithProductList,
             cancellationToken);
@@ -159,27 +159,27 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<ProductDetailsModel>> GetProductDetails(Guid productGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getProductDetails",
-            command => command.Parameters.AddGuid("@var_ProductGuid", productGuid),
+            "dbo.Product_GetDetails",
+            command => command.Parameters.AddGuid("@ProductId", productGuid),
             DbHelper.HandleResponseWithProductDetails,
             cancellationToken);
 
     public Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchases(Guid customerGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getCustomerPurchases",
-            command => command.Parameters.AddGuid("@var_CustomerGuid", customerGuid),
+            "dbo.CustomerPurchase_ListByCustomer",
+            command => command.Parameters.AddGuid("@CustomerId", customerGuid),
             DbHelper.HandleResponseWithPurchaseList,
             cancellationToken);
 
     public Task<ResponseModel<string>> PurchaseProduct(Guid customerGuid, Guid productGuid,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_purchaseProduct",
+            "dbo.CustomerPurchase_Create",
             command =>
             {
-                command.Parameters.AddGuid("@var_CustomerGuid", customerGuid);
-                command.Parameters.AddGuid("@var_ProductGuid", productGuid);
+                command.Parameters.AddGuid("@CustomerId", customerGuid);
+                command.Parameters.AddGuid("@ProductId", productGuid);
             },
             DbHelper.HandleResponseWithPurchaseResult,
             cancellationToken);
@@ -187,14 +187,14 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     public Task<ResponseModel<Guid?>> CreateProduct(CreateProductRequest product,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_createProduct",
+            "dbo.Product_Create",
             command => DbHelper.AddProductParametersForCreate(command, product),
-            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "product_guid"),
+            reader => DbHelper.HandleResponseWithCreatedGuid(reader, "ProductId"),
             cancellationToken);
 
     public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivity(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.usp_getMonthlyActivity",
+            "dbo.Report_GetMonthlyActivity",
             null,
             DbHelper.HandleResponseWithMonthlyActivity,
             cancellationToken);

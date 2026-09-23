@@ -20,7 +20,7 @@ export const emptyProductForm = (): ProductFormModel => ({
 });
 
 // A strictly positive number, at most two decimal places — matches
-// tbl_products' CK_tbl_products_price / DECIMAL(10,2) column.
+// Product's CK_Product_Price / DECIMAL(10,2) column.
 const PricePattern = /^\d+(\.\d{1,2})?$/;
 // A strictly positive whole number.
 const QuantityPattern = /^[1-9]\d*$/;

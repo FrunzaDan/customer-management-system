@@ -8,7 +8,7 @@ How to build and run the DB, API, and UI on a dev machine, and the two recurring
 
 - `build.sh` — repo root, compile/test only, no live services.
 - `run.sh` — repo root, full dev environment orchestration.
-- `DB/Customer_Management_System_DB/Post_Deployment_Scripts/post_deployment_populate_tbl_merchants.sql` — seeds the test login.
+- `DB/CustomerManagement/Scripts/PostDeployment/Seed_Merchant.sql` — seeds the test login.
 - `.run/` — gitignored logs + exported dev TLS cert, written by `run.sh`.
 
 ## How it works
@@ -32,7 +32,7 @@ docker run \
 **`build.sh`** — CI-style, one-shot: `dotnet restore`/`build`/`test` on the API solution, `dotnet build` the DB `.sqlproj`, then `npm ci && npm run build` for Angular. Doesn't start anything; just proves everything compiles and tests pass. Run before committing API/DB/UI changes.
 
 **`run.sh`** — full local dev environment, idempotent (safe to re-run):
-1. Starts Docker Desktop if not running (macOS: `open -a Docker`), starts/creates the `sqlserver` container if needed (existing container is `docker start`ed, not recreated). `SQL_DATABASE` defaults to `Customer_Management_System_DB`, overridable via env var.
+1. Starts Docker Desktop if not running (macOS: `open -a Docker`), starts/creates the `sqlserver` container if needed (existing container is `docker start`ed, not recreated). `SQL_DATABASE` defaults to `CustomerManagement`, overridable via env var.
 2. Installs `sqlpackage` (pinned to `170.3.93` — newer releases can need a .NET runtime patch this machine doesn't have) as a global dotnet tool if missing, builds the DB `.sqlproj`, and publishes the `.dacpac`, retrying with jitter (no `sqlcmd` in the container to probe readiness with, so it retries the *real* publish instead) until SQL Server accepts connections or 180s elapse.
 3. Starts the API in the background (`dotnet run --launch-profile https`, `https://localhost:7145`), waits for `/swagger/index.html` to respond — and now **hard-fails with a clear error** if it doesn't come up within 60s, instead of silently continuing into a broken UI-only session.
 4. Extracts the API's live TLS cert (via `openssl s_client | openssl x509`) into `.run/dev-cert.pem` and sets `NODE_EXTRA_CA_CERTS` to it, so Node's `fetch()` (used during Angular SSR) trusts it.
