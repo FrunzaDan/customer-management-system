@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using CustomerManagementSystem.Domain.Models;
 
@@ -27,22 +28,23 @@ public static class CustomerCsvExporter
         {
             var fields = new[]
             {
-                customer.Guid,
+                customer.Guid.ToString(),
                 customer.FirstName,
                 customer.LastName,
                 customer.Email,
                 customer.Msisdn,
                 GenderLabel(customer.Gender),
-                customer.Birthdate,
+                customer.Birthdate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 StatusLabel(customer.CustomerStatus),
-                customer.CreationDate,
-                customer.InteractionDate,
-                customer.Address?.Country,
-                customer.Address?.County,
-                customer.Address?.Town,
-                customer.Address?.Zip,
-                customer.Address?.Street,
-                customer.Address?.Number
+                // "u" = "yyyy-MM-dd HH:mm:ssZ": sortable, unambiguous, and explicitly UTC.
+                customer.CreationDate.ToString("u", CultureInfo.InvariantCulture),
+                customer.InteractionDate.ToString("u", CultureInfo.InvariantCulture),
+                customer.Address.Country,
+                customer.Address.County,
+                customer.Address.Town,
+                customer.Address.Zip,
+                customer.Address.Street,
+                customer.Address.Number
             };
 
             builder.AppendJoin(',', fields.Select(EscapeField)).Append("\r\n");
@@ -51,20 +53,19 @@ public static class CustomerCsvExporter
         return builder.ToString();
     }
 
-    private static string GenderLabel(int? gender) => gender switch
+    private static string GenderLabel(Gender gender) => gender switch
     {
-        0 => "not declared",
-        1 => "male",
-        2 => "female",
+        Gender.NotDeclared => "not declared",
+        Gender.Male => "male",
+        Gender.Female => "female",
         _ => string.Empty
     };
 
-    // tbl_customers.customer_Status codes — see ai_docs/database.md.
-    private static string StatusLabel(int? status) => status switch
+    private static string StatusLabel(CustomerStatus status) => status switch
     {
-        1901 => "Active",
-        1903 => "Deactivated",
-        1904 => "Test",
+        CustomerStatus.Active => "Active",
+        CustomerStatus.Deactivated => "Deactivated",
+        CustomerStatus.Test => "Test",
         _ => string.Empty
     };
 

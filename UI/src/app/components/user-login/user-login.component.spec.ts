@@ -50,7 +50,7 @@ describe('UserLoginComponent', () => {
     await submit(component.loginForm);
 
     expect(login).toHaveBeenCalledWith({
-      merchantID: 'TestMerchantID',
+      merchantId: 'TestMerchantID',
       merchantPassword: 'Merchant123',
     });
     expect(component.errorMessage()).toBeNull();

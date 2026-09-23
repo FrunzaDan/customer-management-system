@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Configuration;
@@ -30,15 +31,33 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         var data = Assert.IsType<AccessTokenResponse>(result.Data);
+        Assert.Equal(DateTimeKind.Utc, data.ValidUntil.Kind);
         Assert.False(string.IsNullOrWhiteSpace(data.AccessToken));
-        Assert.True(DateTime.Parse(data.ValidUntil!) > DateTime.UtcNow);
+        Assert.True(data.ValidUntil > DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwt_WritesIatAsANumericDate_AndTheRoleAsItsNumericCode()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
+        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(result.Data!.AccessToken);
+
+        // RFC 7519: iat is seconds since the Unix epoch (a JSON number), not a date string.
+        Assert.IsType<long>(token.Payload[JwtRegisteredClaimNames.Iat]);
+        // [Authorize(Roles = "1801")] matches on the code, not the enum member's name.
+        Assert.Contains(token.Claims, c => c.Type == "role" && c.Value == "1801");
     }
 
     [Fact]
@@ -46,7 +65,7 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(403, "Invalid merchant credentials."));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(403, "Invalid merchant credentials."));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
@@ -76,7 +95,7 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
         var jwtCreation = new JwtCreation(CreateConfig(accessTokenTimeout: "not-a-number").Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);

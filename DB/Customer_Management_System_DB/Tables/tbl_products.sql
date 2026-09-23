@@ -1,6 +1,9 @@
 CREATE TABLE [dbo].[tbl_products]
 (
-    [PK_product_guid] NVARCHAR (50) NOT NULL,
+    -- Same reasoning as tbl_customers.PK_customer_guid: a real UNIQUEIDENTIFIER, generated
+    -- sequentially here; usp_createProduct hands the new value back.
+    [PK_product_guid] UNIQUEIDENTIFIER NOT NULL
+        CONSTRAINT [DF_tbl_products_PK_product_guid] DEFAULT NEWSEQUENTIALID(),
     [product_name] NVARCHAR (100) NOT NULL,
     [category] NVARCHAR (50) NOT NULL,
     [comment] NVARCHAR (500) NULL,

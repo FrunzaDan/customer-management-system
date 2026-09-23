@@ -5,7 +5,10 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { Customer } from '../interfaces/customer-response';
+import {
+  CreateCustomerRequest,
+  Gender,
+} from '../interfaces/customer-response';
 import { AddCustomerService } from './add-customer.service';
 import { HttpHeaderService } from './http-header-service';
 import { NotificationService } from './notification.service';
@@ -17,16 +20,12 @@ describe('AddCustomerService', () => {
 
   const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/register`;
 
-  const buildCustomer = (): Customer => ({
-    guid: '',
+  const buildCustomer = (): CreateCustomerRequest => ({
     firstName: 'Dan',
     lastName: 'Frunza',
     msisdn: '123456789',
     email: 'dan@example.com',
-    gender: 1,
-    customerStatus: 1901,
-    creationDate: '',
-    interactionDate: '',
+    gender: Gender.Male,
     birthdate: '1990-01-01',
     address: {
       country: 'Romania',

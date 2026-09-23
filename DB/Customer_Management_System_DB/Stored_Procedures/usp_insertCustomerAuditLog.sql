@@ -1,7 +1,7 @@
 CREATE PROCEDURE [dbo].[usp_insertCustomerAuditLog]
-    @var_CustomerGuid NVARCHAR(50),
+    @var_CustomerGuid UNIQUEIDENTIFIER,
     @var_MerchantID NVARCHAR(50),
-    @var_Action NVARCHAR(50),
+    @var_Action VARCHAR(20),
     @var_Details NVARCHAR(500) = NULL
 AS
 BEGIN
@@ -12,11 +12,11 @@ BEGIN
 
     INSERT INTO dbo.tbl_customer_audit_log
     (
-        customer_guid, merchant_id, action, details, action_Date
+        customer_guid, merchant_id, action, details
     )
     VALUES
     (
-        @var_CustomerGuid, @var_MerchantID, @var_Action, @var_Details, GETDATE()
+        @var_CustomerGuid, @var_MerchantID, @var_Action, @var_Details
     );
 
     SET @result = 0;

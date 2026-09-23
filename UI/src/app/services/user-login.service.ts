@@ -2,10 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import {
-  LoginData,
-  LoginDataResponse,
-} from '../../../src/app/interfaces/user-login-response';
+import { LoginData } from '../../../src/app/interfaces/user-login-response';
 import { UserLoginRequest } from '../../../src/app/interfaces/user-login-request';
 import { environment } from '../../environments/environment';
 import { SessionStorageService } from './session-storage.service';
@@ -32,7 +29,9 @@ export class UserLoginService {
   private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
-  login(userLoginRequest: UserLoginRequest): Observable<LoginDataResponse> {
+  login(
+    userLoginRequest: UserLoginRequest,
+  ): Observable<GenericResponse<LoginData>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http.post<GenericResponse<LoginData>>(
       this.APIURL,
@@ -46,7 +45,7 @@ export class UserLoginService {
   // Keys off response.status, not the response message text — comparing against a
   // literal success string ("Success!") would silently break if that wording ever
   // changed on either side of the API/UI boundary.
-  checkCredentials(response: LoginDataResponse): CredentialsCheckResult {
+  checkCredentials(response: GenericResponse<LoginData>): CredentialsCheckResult {
     const success = response.data?.accessToken != null && response.status === 200;
     if (success) {
       this.sessionStorageService.setSessionAccessToken(

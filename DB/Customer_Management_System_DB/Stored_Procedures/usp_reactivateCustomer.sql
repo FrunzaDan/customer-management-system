@@ -1,5 +1,5 @@
 CREATE PROCEDURE [dbo].[usp_reactivateCustomer]
-    @var_Guid NVARCHAR(50)
+    @var_Guid UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -13,7 +13,7 @@ BEGIN
         WHERE PK_customer_guid = @var_Guid
     )
     BEGIN
-        DECLARE @currDate DATETIME = GETDATE();
+        DECLARE @currDate DATETIME2(0) = SYSUTCDATETIME();
 
         UPDATE tbl_customers
         SET 

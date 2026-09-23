@@ -8,16 +8,16 @@ public class GetCustomersRequest
 
     public string? SearchTerm { get; set; }
 
-    public string SortColumn { get; set; } = "name";
+    public CustomerSortColumn SortColumn { get; set; } = CustomerSortColumn.Name;
 
-    public string SortDirection { get; set; } = "asc";
+    public SortDirection SortDirection { get; set; } = SortDirection.Asc;
 }
 
 public class ExportCustomersRequest
 {
     public string? SearchTerm { get; set; }
 
-    public string SortColumn { get; set; } = "name";
+    public CustomerSortColumn SortColumn { get; set; } = CustomerSortColumn.Name;
 
-    public string SortDirection { get; set; } = "asc";
+    public SortDirection SortDirection { get; set; } = SortDirection.Asc;
 }

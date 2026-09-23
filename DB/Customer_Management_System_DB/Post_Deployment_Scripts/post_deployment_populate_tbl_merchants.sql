@@ -8,7 +8,7 @@ BEGIN
     -- to match CustomerManagementSystem.DataAccess.DBConnection.PasswordHasher.
     DECLARE @merchantPasswordSalt BINARY(16) = 0x4748E8CAF8A747E38E080DC80A9C073E;
     DECLARE @hashedMerchantPassword BINARY(32) = 0x288C1A2D4D125CD76FD19CDC20845133320293788042D09DEFB52EBA49032268;
-    DECLARE @currDate DATETIME = GETDATE();
+    DECLARE @currDate DATETIME2(0) = SYSUTCDATETIME();
 
     INSERT INTO dbo.tbl_merchants (
         merchant_id,
@@ -21,7 +21,7 @@ BEGIN
         'TestMerchantID',
         @hashedMerchantPassword,
         @merchantPasswordSalt,
-        '1801',
+        1801,
         @currDate
     );
 END

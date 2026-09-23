@@ -100,8 +100,8 @@ describe('GlobalAuditLogComponent', () => {
 
     it('labels a deleted customer by GUID instead of a blank name', () => {
       const entry = buildEntry({
-        customerFirstName: null,
-        customerLastName: null,
+        customerFirstName: undefined,
+        customerLastName: undefined,
       });
 
       expect(component.customerLabel(entry)).toBe(

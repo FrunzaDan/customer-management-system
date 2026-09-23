@@ -1,11 +1,11 @@
 CREATE PROCEDURE [dbo].[usp_editCustomer]
-    @var_Guid NVARCHAR(50),
+    @var_Guid UNIQUEIDENTIFIER,
     @var_FirstName NVARCHAR(50) = NULL,
     @var_LastName NVARCHAR(50) = NULL,
-    @var_Email NVARCHAR(50) = NULL,
-    @var_MSISDN NVARCHAR(50) = NULL,
-    @var_Gender INT = NULL,
-    @var_Birthdate NVARCHAR(50) = NULL,
+    @var_Email NVARCHAR(254) = NULL,
+    @var_MSISDN VARCHAR(15) = NULL,
+    @var_Gender TINYINT = NULL,
+    @var_Birthdate DATE = NULL,
     @var_Country NVARCHAR(100) = NULL,
     @var_County NVARCHAR(100) = NULL,
     @var_Town NVARCHAR(50) = NULL,
@@ -18,7 +18,7 @@ BEGIN
 
     DECLARE @result INT;
     DECLARE @message NVARCHAR(255);
-    DECLARE @currDate DATETIME = GETDATE();
+    DECLARE @currDate DATETIME2(0) = SYSUTCDATETIME();
 
     IF NOT EXISTS (SELECT 1 FROM tbl_customers WHERE PK_customer_guid = @var_Guid)
     BEGIN

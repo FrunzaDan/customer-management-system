@@ -1,6 +1,6 @@
 CREATE PROCEDURE [dbo].[usp_purchaseProduct]
-    @var_CustomerGuid NVARCHAR(50),
-    @var_ProductGuid NVARCHAR(50)
+    @var_CustomerGuid UNIQUEIDENTIFIER,
+    @var_ProductGuid UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -63,7 +63,7 @@ BEGIN
             ELSE
             BEGIN
                 INSERT INTO tbl_customer_purchases (FK_customer_guid, FK_product_guid, purchase_date)
-                VALUES (@var_CustomerGuid, @var_ProductGuid, GETDATE());
+                VALUES (@var_CustomerGuid, @var_ProductGuid, SYSUTCDATETIME());
 
                 COMMIT TRANSACTION;
 

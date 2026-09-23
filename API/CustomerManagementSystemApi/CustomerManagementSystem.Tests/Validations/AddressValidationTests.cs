@@ -1,12 +1,12 @@
-using CustomerManagementSystem.BusinessLogic.Constants;
 using CustomerManagementSystem.BusinessLogic.Validations;
+using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.Tests.Validations;
 
 public class AddressValidationTests
 {
-    private static AddressModel ValidAddress() => new()
+    private static AddressRequest ValidAddress() => new()
     {
         Country = new string('a', FieldLengthConstants.Country),
         County = new string('a', FieldLengthConstants.County),
@@ -25,7 +25,7 @@ public class AddressValidationTests
     [Fact]
     public void ValidateLengths_ReturnsNull_WhenAllFieldsAreNull()
     {
-        Assert.Null(AddressValidation.ValidateLengths(new AddressModel()));
+        Assert.Null(AddressValidation.ValidateLengths(new AddressRequest()));
     }
 
     [Fact]
@@ -80,5 +80,23 @@ public class AddressValidationTests
         address.Number = new string('a', FieldLengthConstants.Number + 1);
 
         Assert.Equal("Number is too long.", AddressValidation.ValidateLengths(address));
+    }
+
+    [Fact]
+    public void ValidateRequired_ReturnsNull_WhenEveryFieldIsPresent()
+    {
+        Assert.Null(AddressValidation.ValidateRequired(ValidAddress()));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void ValidateRequired_RejectsAMissingField(string? zip)
+    {
+        var address = ValidAddress();
+        address.Zip = zip;
+
+        Assert.Equal("Zip is required.", AddressValidation.ValidateRequired(address));
     }
 }

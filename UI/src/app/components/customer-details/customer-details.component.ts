@@ -19,8 +19,8 @@ import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
 import {
-  Customer,
   CustomerActivationStatus,
+  Gender,
 } from '../../interfaces/customer-response';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
@@ -44,13 +44,13 @@ export class CustomerDetailsComponent {
   // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
   readonly id = input<string>();
 
-  genderMap = new Map<Customer['gender'], string>([
-    [0, 'not declared'],
-    [1, 'male'],
-    [2, 'female'],
+  genderMap = new Map<Gender, string>([
+    [Gender.NotDeclared, 'not declared'],
+    [Gender.Male, 'male'],
+    [Gender.Female, 'female'],
   ]);
 
-  statusMap = new Map<Customer['customerStatus'], string>([
+  statusMap = new Map<CustomerActivationStatus, string>([
     [CustomerActivationStatus.Active, 'Active'],
     [CustomerActivationStatus.Deactivated, 'Deactivated'],
     [CustomerActivationStatus.Test, 'Test'],
@@ -61,6 +61,7 @@ export class CustomerDetailsComponent {
   readonly errorMessage = this.getCustomerService.errorSignal;
 
   readonly CustomerStatus = CustomerActivationStatus;
+  readonly Gender = Gender;
 
   // Deactivate/reactivate share ActivateCustomerService's loading/error state (it's
   // providedIn: 'root', same instance the customer list uses); delete gets its own,

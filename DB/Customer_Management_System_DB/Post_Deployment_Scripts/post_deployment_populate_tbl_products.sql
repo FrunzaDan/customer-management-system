@@ -16,7 +16,7 @@ INSERT INTO dbo.tbl_products (
     depot
 )
 SELECT
-    v.PK_product_guid,
+    CONVERT(UNIQUEIDENTIFIER, v.PK_product_guid),
     v.product_name,
     v.category,
     v.comment,
@@ -79,5 +79,5 @@ FROM (VALUES
 WHERE NOT EXISTS (
     SELECT 1
     FROM dbo.tbl_products p
-    WHERE p.PK_product_guid = v.PK_product_guid
+    WHERE p.PK_product_guid = CONVERT(UNIQUEIDENTIFIER, v.PK_product_guid)
 );

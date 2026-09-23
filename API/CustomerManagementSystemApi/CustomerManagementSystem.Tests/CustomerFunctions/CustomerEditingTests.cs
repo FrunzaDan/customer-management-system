@@ -7,25 +7,24 @@ namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
 public class CustomerEditingTests
 {
-    private const string ValidGuid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    private static readonly Guid ValidGuid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     private const string MerchantId = "TestMerchantID";
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("not-a-guid")]
-    public async Task EditCustomerFunction_RejectsInvalidGuid_WithoutTouchingTheDb(string? guid)
+    [Fact]
+    public async Task EditCustomerFunction_RejectsAnEmptyGuid_WithoutTouchingTheDb()
     {
+        // A malformed GUID is already rejected by model binding; Guid.Empty is what a missing
+        // one binds to.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Guid = guid };
+        var request = new UpdateCustomerRequest { Guid = Guid.Empty };
 
         var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Guid", result.ResponseMessage);
-        dbUtils.Verify(d => d.EditCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.EditCustomer(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -34,13 +33,13 @@ public class CustomerEditingTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Guid = ValidGuid, Email = "not-an-email" };
+        var request = new UpdateCustomerRequest { Guid = ValidGuid, Email = "not-an-email" };
 
         var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Email", result.ResponseMessage);
-        dbUtils.Verify(d => d.EditCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.EditCustomer(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -49,13 +48,29 @@ public class CustomerEditingTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Guid = ValidGuid, Msisdn = "123" };
+        var request = new UpdateCustomerRequest { Guid = ValidGuid, Msisdn = "123" };
 
         var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("MSISDN", result.ResponseMessage);
-        dbUtils.Verify(d => d.EditCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.EditCustomer(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EditCustomerFunction_RejectsAnUndefinedGender_WithoutTouchingTheDb()
+    {
+        // A JSON number binds to the enum even when it isn't one of its members.
+        var dbUtils = new Mock<IDbUtils>();
+        var auditLogger = new Mock<ICustomerAuditLogger>();
+        var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
+        var request = new UpdateCustomerRequest { Guid = ValidGuid, Gender = (Gender)3 };
+
+        var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        Assert.Contains("Gender", result.ResponseMessage);
+        dbUtils.Verify(d => d.EditCustomer(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -63,16 +78,16 @@ public class CustomerEditingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        dbUtils.Setup(d => d.EditCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.EditCustomer(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Customer updated successfully."));
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Guid = ValidGuid, FirstName = "Dan" };
+        var request = new UpdateCustomerRequest { Guid = ValidGuid, FirstName = "Dan" };
 
         var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         dbUtils.Verify(d => d.EditCustomer(request, It.IsAny<CancellationToken>()), Times.Once);
-        auditLogger.Verify(a => a.Log(ValidGuid, MerchantId, "Edited", "Updated: first name", It.IsAny<CancellationToken>()), Times.Once);
+        auditLogger.Verify(a => a.Log(ValidGuid, MerchantId, AuditAction.Edited, "Updated: first name", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -80,15 +95,18 @@ public class CustomerEditingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        dbUtils.Setup(d => d.EditCustomer(It.IsAny<CustomerModel>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.EditCustomer(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Customer updated successfully."));
         var editing = new CustomerEditing(dbUtils.Object, auditLogger.Object);
-        var request = new CustomerModel { Guid = ValidGuid, Email = "dan@example.com", Msisdn = "123456789" };
+        var request = new UpdateCustomerRequest
+        {
+            Guid = ValidGuid, Email = "dan@example.com", Msisdn = "123456789", Birthdate = new DateOnly(1990, 1, 2)
+        };
 
         var result = await editing.EditCustomerFunction(request, MerchantId, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         dbUtils.Verify(d => d.EditCustomer(request, It.IsAny<CancellationToken>()), Times.Once);
-        auditLogger.Verify(a => a.Log(ValidGuid, MerchantId, "Edited", "Updated: email, MSISDN", It.IsAny<CancellationToken>()), Times.Once);
+        auditLogger.Verify(a => a.Log(ValidGuid, MerchantId, AuditAction.Edited, "Updated: email, MSISDN, birthdate", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

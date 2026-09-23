@@ -12,7 +12,6 @@ const buildProduct = (overrides: Partial<Product> = {}): Product => ({
   guid: 'product-1',
   name: 'Aerobook 14 Pro',
   category: 'Laptop',
-  comment: null,
   price: 1000,
   inventoryQuantity: 10,
   stockQuantity: 5,

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { Customer } from '../interfaces/customer-response';
+import { CreateCustomerRequest } from '../interfaces/customer-response';
 import { GenericResponse } from '../../../src/app/interfaces/generic-response';
 import { environment } from '../../environments/environment';
 import { HttpHeaderService } from './http-header-service';
@@ -17,10 +17,11 @@ export class AddCustomerService {
   readonly APIURL =
     environment.CustomerManagementSystemAPI + '/api/Customer/register';
 
-  addCustomer(customer: Customer): Observable<GenericResponse<object>> {
+  // On success, `data` is the new customer's server-generated GUID.
+  addCustomer(customer: CreateCustomerRequest): Observable<GenericResponse<string>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .post<GenericResponse<object>>(this.APIURL, customer, {
+      .post<GenericResponse<string>>(this.APIURL, customer, {
         headers: headers,
       })
       .pipe(
@@ -35,9 +36,11 @@ export class AddCustomerService {
    * for callers (e.g. bulk test-data generation) that show one summary
    * notification instead of one per request.
    */
-  addCustomerSilently(customer: Customer): Observable<GenericResponse<object>> {
+  addCustomerSilently(
+    customer: CreateCustomerRequest,
+  ): Observable<GenericResponse<string>> {
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    return this.http.post<GenericResponse<object>>(this.APIURL, customer, {
+    return this.http.post<GenericResponse<string>>(this.APIURL, customer, {
       headers: headers,
     });
   }

@@ -12,7 +12,7 @@ public class CustomerDeletionTests
     [Fact]
     public async Task DeleteCustomer_DelegatesToTheDbLayerWithTheGivenGuid_AndLogsAnAuditEntry()
     {
-        const string guid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+        var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(200, "Customer deleted successfully.");
@@ -23,14 +23,14 @@ public class CustomerDeletionTests
 
         Assert.Same(expected, result);
         dbUtils.Verify(d => d.DeleteCustomer(guid, It.IsAny<CancellationToken>()), Times.Once);
-        auditLogger.Verify(a => a.Log(guid, MerchantId, "Deleted", null, It.IsAny<CancellationToken>()), Times.Once);
+        auditLogger.Verify(a => a.Log(guid, MerchantId, AuditAction.Deleted, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task DeleteCustomer_PropagatesABusinessRuleRejection_WithoutModifyingIt()
     {
         // Mirrors the real usp_deleteCustomer rule: an active customer can't be deleted directly.
-        const string guid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+        var guid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var expected = new ResponseModel<object>(409, "Customer must be deactivated before it can be deleted.");
@@ -41,7 +41,7 @@ public class CustomerDeletionTests
 
         Assert.Equal(409, result.Status);
         Assert.Equal(expected.ResponseMessage, result.ResponseMessage);
-        auditLogger.Verify(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
+        auditLogger.Verify(a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 }

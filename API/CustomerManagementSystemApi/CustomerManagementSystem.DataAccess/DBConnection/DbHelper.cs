@@ -1,72 +1,75 @@
-using System.Data;
+using System.Globalization;
+using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
 
 namespace CustomerManagementSystem.DataAccess.DBConnection;
 
-public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, int? MerchantRole);
+public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, MerchantRole MerchantRole);
 
 public static class DbHelper
 {
     // usp_createCustomer takes @var_CustomerStatus; usp_editCustomer does not (status is
     // only ever changed via deactivate/reactivate) — so create and edit need separate
     // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
-    public static void AddCustomerParametersForCreate(SqlCommand command, CustomerModel customer)
+    public static void AddCustomerParametersForCreate(SqlCommand command, CreateCustomerRequest customer)
     {
-        AddCustomerCoreParameters(command, customer);
-        command.Parameters.AddWithValue("@var_CustomerStatus", customer.CustomerStatus ?? CustomerStatusCodes.Active);
+        AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.Msisdn,
+            customer.Gender ?? Gender.NotDeclared, customer.Birthdate);
+        command.Parameters.AddSmallInt("@var_CustomerStatus",
+            (short)(customer.CustomerStatus ?? CustomerStatus.Active));
         AddAddressParameters(command, customer.Address);
     }
 
-    public static void AddProductParametersForCreate(SqlCommand command, ProductModel product)
+    public static void AddCustomerParametersForEdit(SqlCommand command, UpdateCustomerRequest customer)
     {
-        command.Parameters.AddWithValue("@var_Guid", product.Guid);
-        command.Parameters.AddWithValue("@var_Name", product.Name);
-        command.Parameters.AddWithValue("@var_Category", product.Category);
-        command.Parameters.AddWithValue("@var_Price", product.Price);
-        command.Parameters.AddWithValue("@var_InventoryQuantity", product.InventoryQuantity);
-        command.Parameters.AddWithValue("@var_Depot", product.Depot);
-        command.Parameters.AddWithValue("@var_Comment", (object?)product.Comment ?? DBNull.Value);
-    }
-
-    public static void AddCustomerParametersForEdit(SqlCommand command, CustomerModel customer)
-    {
-        AddCustomerCoreParameters(command, customer);
+        command.Parameters.AddGuid("@var_Guid", customer.Guid);
+        AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.Msisdn,
+            customer.Gender, customer.Birthdate);
         AddAddressParameters(command, customer.Address);
     }
 
-    private static void AddCustomerCoreParameters(SqlCommand command, CustomerModel customer)
+    public static void AddProductParametersForCreate(SqlCommand command, CreateProductRequest product)
     {
-        command.Parameters.AddWithValue("@var_Guid", customer.Guid);
-        command.Parameters.AddWithValue("@var_FirstName", customer.FirstName);
-        command.Parameters.AddWithValue("@var_LastName", customer.LastName);
-        command.Parameters.AddWithValue("@var_Email", customer.Email);
-        command.Parameters.AddWithValue("@var_MSISDN", customer.Msisdn);
-        command.Parameters.Add("@var_Gender", SqlDbType.Int).Value = (object?)customer.Gender ?? DBNull.Value;
-        command.Parameters.AddWithValue("@var_Birthdate", customer.Birthdate);
+        command.Parameters.AddNVarChar("@var_Name", FieldLengthConstants.ProductName, product.Name);
+        command.Parameters.AddNVarChar("@var_Category", FieldLengthConstants.ProductCategory, product.Category);
+        command.Parameters.AddDecimal("@var_Price", 10, 2, product.Price);
+        command.Parameters.AddInt("@var_InventoryQuantity", product.InventoryQuantity);
+        command.Parameters.AddNVarChar("@var_Depot", FieldLengthConstants.ProductDepot, product.Depot);
+        command.Parameters.AddNVarChar("@var_Comment", FieldLengthConstants.ProductComment, product.Comment);
     }
 
-    public static async Task<ResponseModel<object>> HandleResponseWithCustomerMapping(SqlDataReader reader,
-        string successMessage, string failureMessage)
+    private static void AddCustomerCoreParameters(SqlCommand command, string? firstName, string? lastName,
+        string? email, string? msisdn, Gender? gender, DateOnly? birthdate)
+    {
+        command.Parameters.AddNVarChar("@var_FirstName", FieldLengthConstants.FirstName, firstName);
+        command.Parameters.AddNVarChar("@var_LastName", FieldLengthConstants.LastName, lastName);
+        command.Parameters.AddNVarChar("@var_Email", FieldLengthConstants.Email, email);
+        command.Parameters.AddVarChar("@var_MSISDN", FieldLengthConstants.Msisdn, msisdn);
+        command.Parameters.AddTinyInt("@var_Gender", (byte?)gender);
+        command.Parameters.AddDate("@var_Birthdate", birthdate);
+    }
+
+    private static void AddAddressParameters(SqlCommand command, AddressRequest? address)
+    {
+        command.Parameters.AddNVarChar("@var_Country", FieldLengthConstants.Country, address?.Country);
+        command.Parameters.AddNVarChar("@var_County", FieldLengthConstants.County, address?.County);
+        command.Parameters.AddNVarChar("@var_Town", FieldLengthConstants.Town, address?.Town);
+        command.Parameters.AddNVarChar("@var_ZIP", FieldLengthConstants.Zip, address?.Zip);
+        command.Parameters.AddNVarChar("@var_Street", FieldLengthConstants.Street, address?.Street);
+        command.Parameters.AddNVarChar("@var_Number", FieldLengthConstants.Number, address?.Number);
+    }
+
+    public static async Task<ResponseModel<CustomerModel>> HandleResponseWithCustomer(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
-            return new ResponseModel<object>(404, failureMessage);
+            return new ResponseModel<CustomerModel>(404, "Customer not found.");
 
-        return new ResponseModel<object>(200, successMessage, MapCustomerFromReader(reader));
+        return new ResponseModel<CustomerModel>(200, "Customer found.", MapCustomerFromReader(reader));
     }
 
-    public static async Task<ResponseModel<object>> HandleResponseWithList(SqlDataReader reader, string entityName)
-    {
-        var items = new List<object>();
-
-        while (await reader.ReadAsync().ConfigureAwait(false))
-            items.Add(MapCustomerFromReader(reader));
-
-        return new ResponseModel<object>(200, $"{items.Count} {entityName} found.", items);
-    }
-
-    public static async Task<ResponseModel<object>> HandleResponseWithPagedList(SqlDataReader reader,
-        int pageNumber, int pageSize, string entityName)
+    public static async Task<ResponseModel<PagedResponse<CustomerModel>>> HandleResponseWithPagedCustomers(
+        SqlDataReader reader, int pageNumber, int pageSize)
     {
         var items = new List<CustomerModel>();
         var totalItems = 0;
@@ -74,39 +77,74 @@ public static class DbHelper
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (items.Count == 0)
-                totalItems = Convert.ToInt32(reader["total_count"]);
+                totalItems = reader.GetInt32("total_count");
 
             items.Add(MapCustomerFromReader(reader));
         }
 
-        var pagedResponse = new PagedResponse<CustomerModel>(items, totalItems, pageNumber, pageSize);
-        return new ResponseModel<object>(200, $"{items.Count} {entityName} found (page {pageNumber}).",
-            pagedResponse);
+        return new ResponseModel<PagedResponse<CustomerModel>>(200,
+            $"{items.Count} customers found (page {pageNumber}).",
+            new PagedResponse<CustomerModel>(items, totalItems, pageNumber, pageSize));
     }
 
+    // The standard (result, message) row every mutating proc returns: result 0 = success,
+    // anything else is the HTTP status to reply with.
     public static async Task<ResponseModel<object>> HandleResponseWithMessage(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<object>(500, "No data returned or operation failed.");
 
-        var message = reader["message"] as string;
-        return reader["result"] is 0
+        var result = reader.GetInt32("result");
+        var message = reader.GetNullableString("message");
+        return result == 0
             ? new ResponseModel<object>(200, message ?? "Operation successful!")
-            : new ResponseModel<object>(Convert.ToInt32(reader["result"]), message ?? "Operation failed.");
+            : new ResponseModel<object>(result, message ?? "Operation failed.");
     }
 
-    public static async Task<ResponseModel<object>> HandleResponseWithAuditLogList(SqlDataReader reader)
+    // usp_createCustomer/usp_createProduct return the usual (result, message) row plus the new
+    // row's DB-generated key in guidColumn, which is handed back as Data on success.
+    public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuid(SqlDataReader reader,
+        string guidColumn)
+    {
+        if (!await reader.ReadAsync().ConfigureAwait(false))
+            return new ResponseModel<Guid?>(500, "No data returned or operation failed.");
+
+        var result = reader.GetInt32("result");
+        var message = reader.GetNullableString("message");
+        return result == 0
+            ? new ResponseModel<Guid?>(200, message ?? "Operation successful!", reader.GetNullableGuid(guidColumn))
+            : new ResponseModel<Guid?>(result, message ?? "Operation failed.");
+    }
+
+    // usp_purchaseProduct returns the usual (result, message) row plus product_name. On
+    // success the name comes back as Data (the caller puts it in the audit entry); on any
+    // failure it's the plain status + message that HandleResponseWithMessage would give.
+    public static async Task<ResponseModel<string>> HandleResponseWithPurchaseResult(SqlDataReader reader)
+    {
+        if (!await reader.ReadAsync().ConfigureAwait(false))
+            return new ResponseModel<string>(500, "No data returned or operation failed.");
+
+        var result = reader.GetInt32("result");
+        var message = reader.GetNullableString("message");
+        return result == 0
+            ? new ResponseModel<string>(200, message ?? "Operation successful!",
+                reader.GetNullableString("product_name"))
+            : new ResponseModel<string>(result, message ?? "Operation failed.");
+    }
+
+    public static async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> HandleResponseWithAuditLogList(
+        SqlDataReader reader)
     {
         var items = new List<AuditLogEntry>();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
             items.Add(MapAuditLogEntryFromReader(reader));
 
-        return new ResponseModel<object>(200, $"{items.Count} audit log entries found.", items);
+        return new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, $"{items.Count} audit log entries found.", items);
     }
 
-    public static async Task<ResponseModel<object>> HandleResponseWithPagedAuditLogList(SqlDataReader reader,
-        int pageNumber, int pageSize)
+    public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogList(
+        SqlDataReader reader, int pageNumber, int pageSize)
     {
         var items = new List<GlobalAuditLogEntry>();
         var totalItems = 0;
@@ -114,221 +152,169 @@ public static class DbHelper
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             if (items.Count == 0)
-                totalItems = Convert.ToInt32(reader["total_count"]);
+                totalItems = reader.GetInt32("total_count");
 
             items.Add(MapGlobalAuditLogEntryFromReader(reader));
         }
 
-        var pagedResponse = new PagedResponse<GlobalAuditLogEntry>(items, totalItems, pageNumber, pageSize);
-        return new ResponseModel<object>(200, $"{items.Count} audit log entries found (page {pageNumber}).",
-            pagedResponse);
+        return new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(200,
+            $"{items.Count} audit log entries found (page {pageNumber}).",
+            new PagedResponse<GlobalAuditLogEntry>(items, totalItems, pageNumber, pageSize));
     }
 
-    public static async Task<ResponseModel<object>> HandleResponseWithProductList(SqlDataReader reader)
+    public static async Task<ResponseModel<IReadOnlyList<ProductModel>>> HandleResponseWithProductList(
+        SqlDataReader reader)
     {
         var items = new List<ProductModel>();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
             items.Add(MapProductFromReader(reader));
 
-        return new ResponseModel<object>(200, $"{items.Count} products found.", items);
+        return new ResponseModel<IReadOnlyList<ProductModel>>(200, $"{items.Count} products found.", items);
     }
 
     // usp_getProductDetails returns two result sets: the product (zero rows = not found), then
     // the customers who bought it.
-    public static async Task<ResponseModel<object>> HandleResponseWithProductDetails(SqlDataReader reader)
+    public static async Task<ResponseModel<ProductDetailsModel>> HandleResponseWithProductDetails(
+        SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
-            return new ResponseModel<object>(404, "Product not found.");
+            return new ResponseModel<ProductDetailsModel>(404, "Product not found.");
 
-        var details = new ProductDetailsModel { Product = MapProductFromReader(reader) };
+        var product = MapProductFromReader(reader);
 
+        var buyers = new List<ProductBuyerModel>();
         await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-            details.Buyers.Add(MapProductBuyerFromReader(reader));
+            buyers.Add(MapProductBuyerFromReader(reader));
 
-        return new ResponseModel<object>(200, "Product found.", details);
+        return new ResponseModel<ProductDetailsModel>(200, "Product found.",
+            new ProductDetailsModel { Product = product, Buyers = buyers });
     }
 
-    public static async Task<ResponseModel<object>> HandleResponseWithPurchaseList(SqlDataReader reader)
+    public static async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> HandleResponseWithPurchaseList(
+        SqlDataReader reader)
     {
         var items = new List<PurchaseModel>();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
             items.Add(MapPurchaseFromReader(reader));
 
-        return new ResponseModel<object>(200, $"{items.Count} purchases found.", items);
-    }
-
-    // usp_purchaseProduct returns the usual (result, message) row plus product_name. On
-    // success the name comes back as Data (the caller puts it in the audit entry); on any
-    // failure it's the plain status + message that HandleResponseWithMessage would give.
-    public static async Task<ResponseModel<object>> HandleResponseWithPurchaseResult(SqlDataReader reader)
-    {
-        if (!await reader.ReadAsync().ConfigureAwait(false))
-            return new ResponseModel<object>(500, "No data returned or operation failed.");
-
-        var message = reader["message"] as string;
-        return reader["result"] is 0
-            ? new ResponseModel<object>(200, message ?? "Operation successful!", reader["product_name"] as string)
-            : new ResponseModel<object>(Convert.ToInt32(reader["result"]), message ?? "Operation failed.");
+        return new ResponseModel<IReadOnlyList<PurchaseModel>>(200, $"{items.Count} purchases found.", items);
     }
 
     // usp_getMonthlyActivity returns two result sets: customer registrations by month,
     // then product purchases by month (see that proc).
-    public static async Task<ResponseModel<object>> HandleResponseWithMonthlyActivity(SqlDataReader reader)
+    public static async Task<ResponseModel<MonthlyActivityModel>> HandleResponseWithMonthlyActivity(
+        SqlDataReader reader)
     {
-        var activity = new MonthlyActivityModel();
-
+        var registrations = new List<MonthlyCountModel>();
         while (await reader.ReadAsync().ConfigureAwait(false))
-            activity.CustomerRegistrations.Add(MapMonthlyCountFromReader(reader, "customer_count"));
+            registrations.Add(MapMonthlyCountFromReader(reader, "customer_count"));
 
+        var purchases = new List<MonthlyCountModel>();
         await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-            activity.ProductPurchases.Add(MapMonthlyCountFromReader(reader, "purchase_count"));
+            purchases.Add(MapMonthlyCountFromReader(reader, "purchase_count"));
 
-        return new ResponseModel<object>(200, "Monthly activity retrieved.", activity);
+        return new ResponseModel<MonthlyActivityModel>(200, "Monthly activity retrieved.",
+            new MonthlyActivityModel { CustomerRegistrations = registrations, ProductPurchases = purchases });
     }
 
     public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponse(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
 
-        if (await reader.IsDBNullAsync(reader.GetOrdinal("password_hash")).ConfigureAwait(false) ||
-            await reader.IsDBNullAsync(reader.GetOrdinal("password_salt")).ConfigureAwait(false))
-            return null;
-
         return new MerchantAuthData(
-            (byte[])reader["password_hash"],
-            (byte[])reader["password_salt"],
-            reader["merchant_role"] as int?
+            reader.GetBytes("password_hash"),
+            reader.GetBytes("password_salt"),
+            (MerchantRole)reader.GetInt16("merchant_role")
         );
     }
 
-    // A real DB NULL must come back as a C# null, not "" — reader["col"].ToString() would
-    // call DBNull.Value.ToString(), silently turning "never set" into "set to empty string".
-    private static string? GetNullableString(SqlDataReader reader, string columnName) =>
-        reader[columnName] as string;
-
-    private static CustomerModel MapCustomerFromReader(SqlDataReader reader)
+    private static CustomerModel MapCustomerFromReader(SqlDataReader reader) => new()
     {
-        var customer = new CustomerModel
+        Guid = reader.GetGuid("PK_customer_guid"),
+        FirstName = reader.GetString("first_name"),
+        LastName = reader.GetString("last_name"),
+        Email = reader.GetString("email"),
+        Msisdn = reader.GetString("msisdn"),
+        Gender = (Gender)reader.GetByte("gender"),
+        Birthdate = reader.GetNullableDateOnly("birthdate"),
+        CustomerStatus = (CustomerStatus)reader.GetInt16("customer_Status"),
+        CreationDate = reader.GetUtcDateTime("creation_Date"),
+        InteractionDate = reader.GetUtcDateTime("interaction_Date"),
+        Address = new AddressModel
         {
-            Guid = GetNullableString(reader, "PK_customer_guid"),
-            FirstName = GetNullableString(reader, "first_name"),
-            LastName = GetNullableString(reader, "last_name"),
-            Email = GetNullableString(reader, "email"),
-            Msisdn = GetNullableString(reader, "msisdn"),
-            CreationDate = GetNullableString(reader, "creation_Date"),
-            InteractionDate = GetNullableString(reader, "interaction_Date"),
-            Birthdate = GetNullableString(reader, "birthDate"),
-            Address = new AddressModel
-            {
-                Country = GetNullableString(reader, "country"),
-                County = GetNullableString(reader, "county"),
-                Town = GetNullableString(reader, "town"),
-                Zip = GetNullableString(reader, "zip_code"),
-                Street = GetNullableString(reader, "street"),
-                Number = GetNullableString(reader, "number")
-            },
-            Gender = int.TryParse(reader["gender"].ToString(), out var gender) ? gender : null,
-            CustomerStatus = int.TryParse(reader["customer_Status"].ToString(), out var status) ? status : null
-        };
+            Country = reader.GetString("country"),
+            County = reader.GetString("county"),
+            Town = reader.GetString("town"),
+            Zip = reader.GetString("zip_code"),
+            Street = reader.GetString("street"),
+            Number = reader.GetString("number")
+        }
+    };
 
-        return customer;
-    }
-
-    private static AuditLogEntry MapAuditLogEntryFromReader(SqlDataReader reader)
+    private static AuditLogEntry MapAuditLogEntryFromReader(SqlDataReader reader) => new()
     {
-        return new AuditLogEntry
-        {
-            AuditId = Convert.ToInt32(reader["audit_id"]),
-            CustomerGuid = GetNullableString(reader, "customer_guid"),
-            MerchantId = GetNullableString(reader, "merchant_id"),
-            Action = GetNullableString(reader, "action"),
-            Details = GetNullableString(reader, "details"),
-            ActionDate = (DateTime)reader["action_Date"]
-        };
-    }
+        AuditId = reader.GetInt32("audit_id"),
+        CustomerGuid = reader.GetGuid("customer_guid"),
+        MerchantId = reader.GetString("merchant_id"),
+        Action = Enum.Parse<AuditAction>(reader.GetString("action")),
+        Details = reader.GetNullableString("details"),
+        ActionDate = reader.GetUtcDateTime("action_Date")
+    };
 
-    private static GlobalAuditLogEntry MapGlobalAuditLogEntryFromReader(SqlDataReader reader)
+    private static GlobalAuditLogEntry MapGlobalAuditLogEntryFromReader(SqlDataReader reader) => new()
     {
-        return new GlobalAuditLogEntry
-        {
-            AuditId = Convert.ToInt32(reader["audit_id"]),
-            CustomerGuid = GetNullableString(reader, "customer_guid"),
-            // A DBNull here (deleted customer, via the proc's LEFT JOIN) must come back
-            // as a real null — see GetNullableString above.
-            CustomerFirstName = GetNullableString(reader, "first_name"),
-            CustomerLastName = GetNullableString(reader, "last_name"),
-            MerchantId = GetNullableString(reader, "merchant_id"),
-            Action = GetNullableString(reader, "action"),
-            Details = GetNullableString(reader, "details"),
-            ActionDate = (DateTime)reader["action_Date"]
-        };
-    }
+        AuditId = reader.GetInt32("audit_id"),
+        CustomerGuid = reader.GetGuid("customer_guid"),
+        // NULL here (deleted customer, via the proc's LEFT JOIN) must come back as a real null.
+        CustomerFirstName = reader.GetNullableString("first_name"),
+        CustomerLastName = reader.GetNullableString("last_name"),
+        MerchantId = reader.GetString("merchant_id"),
+        Action = Enum.Parse<AuditAction>(reader.GetString("action")),
+        Details = reader.GetNullableString("details"),
+        ActionDate = reader.GetUtcDateTime("action_Date")
+    };
 
-    private static ProductModel MapProductFromReader(SqlDataReader reader)
+    private static ProductModel MapProductFromReader(SqlDataReader reader) => new()
     {
-        return new ProductModel
-        {
-            Guid = GetNullableString(reader, "PK_product_guid"),
-            Name = GetNullableString(reader, "product_name"),
-            Category = GetNullableString(reader, "category"),
-            Comment = GetNullableString(reader, "comment"),
-            Price = Convert.ToDecimal(reader["price"]),
-            InventoryQuantity = Convert.ToInt32(reader["inventory_quantity"]),
-            StockQuantity = Convert.ToInt32(reader["stock_quantity"]),
-            SoldQuantity = Convert.ToInt32(reader["sold_quantity"]),
-            Depot = GetNullableString(reader, "depot")
-        };
-    }
+        Guid = reader.GetGuid("PK_product_guid"),
+        Name = reader.GetString("product_name"),
+        Category = reader.GetString("category"),
+        Comment = reader.GetNullableString("comment"),
+        Price = reader.GetDecimal("price"),
+        InventoryQuantity = reader.GetInt32("inventory_quantity"),
+        StockQuantity = reader.GetInt32("stock_quantity"),
+        SoldQuantity = reader.GetInt32("sold_quantity"),
+        Depot = reader.GetString("depot")
+    };
 
-    private static MonthlyCountModel MapMonthlyCountFromReader(SqlDataReader reader, string countColumn)
+    private static MonthlyCountModel MapMonthlyCountFromReader(SqlDataReader reader, string countColumn) => new()
     {
-        return new MonthlyCountModel
-        {
-            YearMonth = GetNullableString(reader, "year_month"),
-            Count = Convert.ToInt32(reader[countColumn])
-        };
-    }
+        YearMonth = reader.GetDateOnly("month_start").ToString("yyyy-MM", CultureInfo.InvariantCulture),
+        Count = reader.GetInt32(countColumn)
+    };
 
-    private static ProductBuyerModel MapProductBuyerFromReader(SqlDataReader reader)
+    private static ProductBuyerModel MapProductBuyerFromReader(SqlDataReader reader) => new()
     {
-        return new ProductBuyerModel
-        {
-            PurchaseId = Convert.ToInt32(reader["purchase_id"]),
-            CustomerGuid = GetNullableString(reader, "FK_customer_guid"),
-            CustomerFirstName = GetNullableString(reader, "first_name"),
-            CustomerLastName = GetNullableString(reader, "last_name"),
-            CustomerEmail = GetNullableString(reader, "email"),
-            PurchaseDate = (DateTime)reader["purchase_date"]
-        };
-    }
+        PurchaseId = reader.GetInt32("purchase_id"),
+        CustomerGuid = reader.GetGuid("FK_customer_guid"),
+        CustomerFirstName = reader.GetString("first_name"),
+        CustomerLastName = reader.GetString("last_name"),
+        CustomerEmail = reader.GetString("email"),
+        PurchaseDate = reader.GetUtcDateTime("purchase_date")
+    };
 
-    private static PurchaseModel MapPurchaseFromReader(SqlDataReader reader)
+    private static PurchaseModel MapPurchaseFromReader(SqlDataReader reader) => new()
     {
-        return new PurchaseModel
-        {
-            PurchaseId = Convert.ToInt32(reader["purchase_id"]),
-            CustomerGuid = GetNullableString(reader, "FK_customer_guid"),
-            ProductGuid = GetNullableString(reader, "FK_product_guid"),
-            ProductName = GetNullableString(reader, "product_name"),
-            Category = GetNullableString(reader, "category"),
-            Price = Convert.ToDecimal(reader["price"]),
-            PurchaseDate = (DateTime)reader["purchase_date"]
-        };
-    }
-
-    private static void AddAddressParameters(SqlCommand command, AddressModel? address)
-    {
-        if (address == null) return;
-
-        command.Parameters.AddWithValue("@var_Country", address.Country ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@var_County", address.County ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@var_Town", address.Town ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@var_ZIP", address.Zip ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@var_Street", address.Street ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@var_Number", address.Number ?? (object)DBNull.Value);
-    }
+        PurchaseId = reader.GetInt32("purchase_id"),
+        CustomerGuid = reader.GetGuid("FK_customer_guid"),
+        ProductGuid = reader.GetGuid("FK_product_guid"),
+        ProductName = reader.GetString("product_name"),
+        Category = reader.GetString("category"),
+        Price = reader.GetDecimal("price"),
+        PurchaseDate = reader.GetUtcDateTime("purchase_date")
+    };
 }

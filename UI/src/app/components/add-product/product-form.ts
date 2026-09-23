@@ -1,5 +1,5 @@
 import { pattern, required, schema } from '@angular/forms/signals';
-import { Product } from '../../interfaces/product';
+import { CreateProductRequest } from '../../interfaces/product';
 
 export interface ProductFormModel {
   name: string;
@@ -40,7 +40,7 @@ export const productFormSchema = schema<ProductFormModel>((p) => {
 });
 
 // Comment is optional, so it's sent as null rather than an empty string.
-export function toProduct(model: ProductFormModel): Partial<Product> {
+export function toProduct(model: ProductFormModel): CreateProductRequest {
   return {
     name: model.name,
     category: model.category,

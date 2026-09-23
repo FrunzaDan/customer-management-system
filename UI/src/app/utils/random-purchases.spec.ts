@@ -9,7 +9,6 @@ const buildProduct = (n: number, stockQuantity = 10): Product => ({
   guid: `p${n}`,
   name: `Product ${n}`,
   category: 'Laptop',
-  comment: null,
   price: 100,
   inventoryQuantity: 10,
   stockQuantity,

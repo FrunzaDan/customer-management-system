@@ -12,11 +12,11 @@ public class AuthenticationController(IAuthService authService) : ControllerBase
 {
     [HttpPost("access-token")]
     [EnableRateLimiting("login")]
-    public async Task<IActionResult> GetAccessToken([FromBody] MerchantCredentials merchantCredentials,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
+        [FromBody] MerchantCredentials merchantCredentials, CancellationToken cancellationToken)
     {
         var response = await authService.GetAccessToken(merchantCredentials, cancellationToken);
-        return StatusCode(response.Status ?? 200, response);
+        return StatusCode(response.Status, response);
     }
 
     [Authorize]

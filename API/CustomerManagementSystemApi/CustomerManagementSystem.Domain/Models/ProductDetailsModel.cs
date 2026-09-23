@@ -1,26 +1,27 @@
 namespace CustomerManagementSystem.Domain.Models;
 
-public class ProductDetailsModel
+public sealed record ProductDetailsModel
 {
-    public ProductModel? Product { get; set; }
+    public required ProductModel Product { get; init; }
 
     // Newest first. Only customers that still exist appear (deleting a customer deletes their
     // purchase rows), so this can hold fewer entries than Product.SoldQuantity.
-    public List<ProductBuyerModel> Buyers { get; set; } = [];
+    public required IReadOnlyList<ProductBuyerModel> Buyers { get; init; }
 }
 
 // One purchase of a product, from the product's side: who bought it and when.
-public class ProductBuyerModel
+public sealed record ProductBuyerModel
 {
-    public int PurchaseId { get; set; }
+    public required int PurchaseId { get; init; }
 
-    public string? CustomerGuid { get; set; }
+    public required Guid CustomerGuid { get; init; }
 
-    public string? CustomerFirstName { get; set; }
+    public required string CustomerFirstName { get; init; }
 
-    public string? CustomerLastName { get; set; }
+    public required string CustomerLastName { get; init; }
 
-    public string? CustomerEmail { get; set; }
+    public required string CustomerEmail { get; init; }
 
-    public DateTime PurchaseDate { get; set; }
+    // UTC.
+    public required DateTime PurchaseDate { get; init; }
 }

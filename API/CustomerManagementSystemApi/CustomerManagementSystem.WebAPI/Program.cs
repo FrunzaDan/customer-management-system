@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using System.Text.Json.Serialization;
+using CustomerManagementSystem.Domain.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
-using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,9 +17,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddBusinessLogic();
 
 // Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddMvc()
-    .AddNewtonsoftJson(options => options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore);
+// System.Text.Json (the ASP.NET Core default; camelCase, case-insensitive reads) — it handles
+// DateOnly, UTC DateTime ("...Z") and Guid natively.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // With typed request members (Guid, DateOnly, enums), a malformed value now fails in
+        // model binding, before the action runs. Reply in the same ResponseModel envelope as
+        // every other 400, instead of ASP.NET's default ValidationProblemDetails shape.
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            // A bad JSON body value is reported twice: once under its JSON path ("$.birthdate")
+            // and once under the action parameter's name ("request") — name the field.
+            var firstError = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .OrderByDescending(entry => entry.Key.StartsWith('$'))
+                .Select(entry => $"Invalid value for '{entry.Key.TrimStart('$', '.')}'.")
+                .FirstOrDefault() ?? "Invalid request.";
+
+            return new BadRequestObjectResult(new ResponseModel<object>(StatusCodes.Status400BadRequest, firstError));
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(setup =>
 {
@@ -96,12 +118,9 @@ builder.Services.AddRateLimiter(options =>
 
     options.OnRejected = async (context, cancellationToken) =>
     {
-        context.HttpContext.Response.ContentType = "application/json";
-        await context.HttpContext.Response.WriteAsync(
-            JsonConvert.SerializeObject(new
-            {
-                Message = "Too many login attempts. Please wait a moment and try again."
-            }), cancellationToken);
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ResponseModel<object>(StatusCodes.Status429TooManyRequests,
+                "Too many login attempts. Please wait a moment and try again."), cancellationToken);
     };
 });
 
@@ -135,16 +154,14 @@ app.UseExceptionHandler(errorApp =>
         if (exception is not null)
             logger.LogError(exception, "Unhandled exception while processing {Path}", context.Request.Path);
 
-        context.Response.ContentType = "application/json";
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        var body = new
-        {
-            Message = "An error occurred while processing your request.",
-            Details = app.Environment.IsDevelopment() ? exception?.Message : null
-        };
+        var message = app.Environment.IsDevelopment() && exception is not null
+            ? $"An error occurred while processing your request: {exception.Message}"
+            : "An error occurred while processing your request.";
 
-        await context.Response.WriteAsync(JsonConvert.SerializeObject(body));
+        await context.Response.WriteAsJsonAsync(
+            new ResponseModel<object>(StatusCodes.Status500InternalServerError, message));
     });
 });
 

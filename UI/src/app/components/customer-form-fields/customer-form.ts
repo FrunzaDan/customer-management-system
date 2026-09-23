@@ -1,6 +1,10 @@
 import { pattern, required, schema } from '@angular/forms/signals';
 import { environment } from '../../../environments/environment';
-import { Customer } from '../../interfaces/customer-response';
+import {
+  CreateCustomerRequest,
+  Customer,
+  Gender,
+} from '../../interfaces/customer-response';
 
 // Shared by add-customer and edit-customer: one model shape, one validation
 // schema, and the two-way mapping between the form and the API's Customer.
@@ -9,7 +13,7 @@ export interface CustomerFormModel {
   lastName: string;
   email: string;
   msisdn: string;
-  gender: string; // <select> emits strings; the API wants an integer (see toCustomer)
+  gender: string; // <select> emits strings; the API wants a Gender number (see toCreateCustomerRequest)
   birthdate: string;
   country: string;
   county: string;
@@ -55,23 +59,16 @@ export const customerFormSchema = schema<CustomerFormModel>((p) => {
   required(p.zip, { message: 'Zip code is required' });
 });
 
-// <input type="date"> requires a strictly zero-padded "YYYY-MM-DD" value to
-// pre-fill correctly. Older records saved via the previous year/month/day
-// text-box form could store unpadded values (e.g. "2020-1-5"), so normalize.
-export function toDateInputValue(birthdate: string): string {
-  const [year, month, day] = birthdate.split('-');
-  if (!year || !month || !day) return '';
-  return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-}
-
 export function toFormModel(customer: Customer): CustomerFormModel {
   return {
     firstName: customer.firstName,
     lastName: customer.lastName,
     email: customer.email,
     msisdn: customer.msisdn,
-    gender: customer.gender?.toString() ?? '',
-    birthdate: toDateInputValue(customer.birthdate),
+    gender: customer.gender.toString(),
+    // Already "YYYY-MM-DD" — the DB column is a real DATE — which is exactly what
+    // <input type="date"> needs to pre-fill.
+    birthdate: customer.birthdate ?? '',
     country: customer.address.country,
     county: customer.address.county,
     town: customer.address.town,
@@ -81,20 +78,16 @@ export function toFormModel(customer: Customer): CustomerFormModel {
   };
 }
 
-// `base` carries the server-owned fields (guid, status, dates) when editing;
-// for a new customer they're simply absent and the server generates them.
-export function toCustomer(
+export function toCreateCustomerRequest(
   model: CustomerFormModel,
-  base: Partial<Customer> = {},
-): Customer {
+): CreateCustomerRequest {
   return {
-    ...base,
     firstName: model.firstName,
     lastName: model.lastName,
     email: model.email,
     msisdn: model.msisdn,
-    gender: Number(model.gender),
-    birthdate: model.birthdate,
+    gender: Number(model.gender) as Gender,
+    birthdate: model.birthdate || undefined,
     address: {
       country: model.country,
       county: model.county,
@@ -103,7 +96,17 @@ export function toCustomer(
       number: model.number,
       zip: model.zip,
     },
-  } as Customer;
+  };
+}
+
+// The loaded customer with the form's values applied — what the edit page saves, and what
+// the local customer list is updated to once the save succeeds. Server-owned fields (guid,
+// status, dates) come from `current` unchanged.
+export function applyFormModel(
+  model: CustomerFormModel,
+  current: Customer,
+): Customer {
+  return { ...current, ...toCreateCustomerRequest(model) };
 }
 
 // True when the user has changed anything relative to `baseline` (the blank

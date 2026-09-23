@@ -1738,7 +1738,7 @@
 								}
 							]
 						},
-						"description": "Unlike every other error in this API, this one short-circuits in the controller itself (`if (string.IsNullOrEmpty(searchVariable)) return BadRequest(...)`) before the usual envelope is built \u2014 the body is a plain `{ message }`, not `{ status, responseMessage, data }`. Enable the `searchVariable` param (currently disabled, empty) to send this."
+						"description": "`CustomerGetting.GetCustomerFunction` rejects a missing/blank search variable before touching the DB, with the usual `{ status, responseMessage }` envelope. Enable the `searchVariable` param (currently disabled, empty) to send this."
 					},
 					"response": [],
 					"event": [

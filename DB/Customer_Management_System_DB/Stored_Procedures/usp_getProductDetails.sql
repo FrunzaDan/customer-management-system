@@ -1,5 +1,5 @@
 CREATE PROCEDURE [dbo].[usp_getProductDetails]
-    @var_ProductGuid NVARCHAR(50)
+    @var_ProductGuid UNIQUEIDENTIFIER
 AS
 BEGIN
     SET NOCOUNT ON;

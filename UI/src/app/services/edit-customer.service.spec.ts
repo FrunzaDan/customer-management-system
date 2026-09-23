@@ -64,13 +64,15 @@ describe('EditCustomerService', () => {
     httpMock.verify();
   });
 
-  it('PATCHes the customer to the edit endpoint', () => {
+  it('PATCHes only the editable fields to the edit endpoint', () => {
     const customer = buildCustomer();
     service.editCustomer(customer).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual(customer);
+    // Server-owned fields (status, dates) aren't part of an edit request.
+    const { customerStatus, creationDate, interactionDate, ...editable } = customer;
+    expect(req.request.body).toEqual(editable);
 
     req.flush({ status: 200, responseMessage: 'Customer updated successfully.' });
   });

@@ -28,7 +28,7 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(200, "Success!", 1801));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new MerchantCredentials
@@ -91,7 +91,7 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<int?>(403, "Invalid Merchant ID or Password."));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(403, "Invalid Merchant ID or Password."));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new MerchantCredentials

@@ -6,7 +6,8 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { LoginDataResponse } from '../interfaces/user-login-response';
+import { GenericResponse } from '../interfaces/generic-response';
+import { LoginData } from '../interfaces/user-login-response';
 import { HttpHeaderService } from './http-header-service';
 import { NotificationService } from './notification.service';
 import { SessionStorageService } from './session-storage.service';
@@ -22,8 +23,8 @@ describe('UserLoginService', () => {
   const API_URL = `${environment.CustomerManagementSystemAPI}/api/Authentication/access-token`;
 
   const buildResponse = (
-    overrides: Partial<LoginDataResponse> = {},
-  ): LoginDataResponse => ({
+    overrides: Partial<GenericResponse<LoginData>> = {},
+  ): GenericResponse<LoginData> => ({
     status: 200,
     responseMessage: 'Success!',
     data: { accessToken: 'jwt-123', validUntil: '2026-01-01T00:15:00' },
@@ -57,13 +58,13 @@ describe('UserLoginService', () => {
 
   it('posts the credentials to the access-token endpoint', () => {
     service
-      .login({ merchantID: 'TestMerchantID', merchantPassword: 'Merchant123' })
+      .login({ merchantId: 'TestMerchantID', merchantPassword: 'Merchant123' })
       .subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
-      merchantID: 'TestMerchantID',
+      merchantId: 'TestMerchantID',
       merchantPassword: 'Merchant123',
     });
 

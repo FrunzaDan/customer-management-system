@@ -5,7 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { Product } from '../interfaces/product';
+import { CreateProductRequest } from '../interfaces/product';
 import { AddProductService } from './add-product.service';
 import { HttpHeaderService } from './http-header-service';
 import { NotificationService } from './notification.service';
@@ -17,7 +17,7 @@ describe('AddProductService', () => {
 
   const API_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/product`;
 
-  const buildProduct = (): Partial<Product> => ({
+  const buildProduct = (): CreateProductRequest => ({
     name: 'Widget',
     category: 'Gadgets',
     comment: null,

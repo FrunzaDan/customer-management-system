@@ -7,7 +7,7 @@ namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
 public class ProductRegistrationTests
 {
-    private static ProductModel ValidRequest() => new()
+    private static CreateProductRequest ValidRequest() => new()
     {
         Name = "Widget",
         Category = "Gadgets",
@@ -31,7 +31,7 @@ public class ProductRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("name", result.ResponseMessage, StringComparison.OrdinalIgnoreCase);
-        dbUtils.Verify(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -49,7 +49,7 @@ public class ProductRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Category", result.ResponseMessage);
-        dbUtils.Verify(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -66,7 +66,7 @@ public class ProductRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Price", result.ResponseMessage);
-        dbUtils.Verify(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -83,7 +83,7 @@ public class ProductRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Inventory", result.ResponseMessage);
-        dbUtils.Verify(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -101,28 +101,39 @@ public class ProductRegistrationTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Depot", result.ResponseMessage);
-        dbUtils.Verify(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [Fact]
-    public async Task RegisterProductFunction_AlwaysGeneratesAFreshServerSideGuid_IgnoringAnyClientSuppliedValue()
+    [Theory]
+    [InlineData("9.999")]
+    [InlineData("100000000")]
+    public async Task RegisterProductFunction_RejectsAPriceTheDecimalColumnCantHold_WithoutTouchingTheDb(string price)
     {
         var dbUtils = new Mock<IDbUtils>();
-        ProductModel? capturedRequest = null;
-        dbUtils.Setup(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()))
-            .Callback<ProductModel, CancellationToken>((p, _) => capturedRequest = p)
-            .ReturnsAsync(new ResponseModel<object>(200, "Product created successfully."));
         var registration = new ProductRegistration(dbUtils.Object);
-        const string clientSuppliedGuid = "11111111-1111-1111-1111-111111111111";
         var request = ValidRequest();
-        request.Guid = clientSuppliedGuid;
+        request.Price = decimal.Parse(price, System.Globalization.CultureInfo.InvariantCulture);
 
         var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
 
+        Assert.Equal(400, result.Status);
+        Assert.Contains("Price", result.ResponseMessage);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RegisterProductFunction_ReturnsTheDbGeneratedGuid()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var newGuid = Guid.Parse("1a52433e-f36b-1410-86a6-008ef0c0e32e");
+        dbUtils.Setup(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<Guid?>(200, "Product created successfully.", newGuid));
+        var registration = new ProductRegistration(dbUtils.Object);
+
+        var result = await registration.RegisterProductFunction(ValidRequest(), TestContext.Current.CancellationToken);
+
         Assert.Equal(200, result.Status);
-        dbUtils.Verify(d => d.CreateProduct(It.IsAny<ProductModel>(), It.IsAny<CancellationToken>()), Times.Once);
-        Assert.NotNull(capturedRequest!.Guid);
-        Assert.NotEqual(clientSuppliedGuid, capturedRequest.Guid);
-        Assert.True(Guid.TryParse(capturedRequest.Guid, out _));
+        Assert.Equal(newGuid, result.Data);
+        dbUtils.Verify(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

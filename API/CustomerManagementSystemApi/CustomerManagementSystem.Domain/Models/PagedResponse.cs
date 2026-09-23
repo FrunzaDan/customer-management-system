@@ -1,12 +1,12 @@
 namespace CustomerManagementSystem.Domain.Models;
 
-public class PagedResponse<T>(IEnumerable<T> items, int totalItems, int pageNumber, int pageSize)
+public sealed class PagedResponse<T>(IReadOnlyList<T> items, int totalItems, int pageNumber, int pageSize)
 {
-    public int PageNumber { get; set; } = pageNumber;
+    public int PageNumber { get; } = pageNumber;
 
-    public int PageSize { get; set; } = pageSize;
+    public int PageSize { get; } = pageSize;
 
-    public int TotalItems { get; set; } = totalItems;
+    public int TotalItems { get; } = totalItems;
 
-    public IEnumerable<T> Items { get; set; } = items;
+    public IReadOnlyList<T> Items { get; } = items;
 }

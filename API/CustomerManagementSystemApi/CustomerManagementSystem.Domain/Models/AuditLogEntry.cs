@@ -1,37 +1,39 @@
 namespace CustomerManagementSystem.Domain.Models;
 
-public class AuditLogEntry
+public sealed record AuditLogEntry
 {
-    public int AuditId { get; set; }
+    public required int AuditId { get; init; }
 
-    public string? CustomerGuid { get; set; }
+    public required Guid CustomerGuid { get; init; }
 
-    public string? MerchantId { get; set; }
+    public required string MerchantId { get; init; }
 
-    public string? Action { get; set; }
+    public required AuditAction Action { get; init; }
 
-    public string? Details { get; set; }
+    public string? Details { get; init; }
 
-    public DateTime ActionDate { get; set; }
+    // UTC.
+    public required DateTime ActionDate { get; init; }
 }
 
-public class GlobalAuditLogEntry
+public sealed record GlobalAuditLogEntry
 {
-    public int AuditId { get; set; }
+    public required int AuditId { get; init; }
 
-    public string? CustomerGuid { get; set; }
+    public required Guid CustomerGuid { get; init; }
 
     // Null when the customer no longer exists (usp_getAllCustomerAuditLog LEFT
     // JOINs tbl_customers, since audit history outlives a deleted customer).
-    public string? CustomerFirstName { get; set; }
+    public string? CustomerFirstName { get; init; }
 
-    public string? CustomerLastName { get; set; }
+    public string? CustomerLastName { get; init; }
 
-    public string? MerchantId { get; set; }
+    public required string MerchantId { get; init; }
 
-    public string? Action { get; set; }
+    public required AuditAction Action { get; init; }
 
-    public string? Details { get; set; }
+    public string? Details { get; init; }
 
-    public DateTime ActionDate { get; set; }
+    // UTC.
+    public required DateTime ActionDate { get; init; }
 }

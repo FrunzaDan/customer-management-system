@@ -69,7 +69,7 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   private async login(): Promise<void> {
     const { username, password } = this.model();
     const loginRequest: UserLoginRequest = {
-      merchantID: username,
+      merchantId: username,
       merchantPassword: password,
     };
 

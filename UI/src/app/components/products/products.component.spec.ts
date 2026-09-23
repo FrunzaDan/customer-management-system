@@ -15,7 +15,6 @@ describe('ProductsComponent', () => {
     guid: 'p1',
     name: 'Aerobook 14 Pro',
     category: 'Laptop',
-    comment: null,
     price: 1299,
     inventoryQuantity: 25,
     stockQuantity: 20,

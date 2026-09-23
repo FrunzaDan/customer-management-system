@@ -5,7 +5,7 @@ BEGIN
     SET NOCOUNT ON;
 
     UPDATE tbl_merchants
-    SET last_interaction = GETDATE()
+    SET last_interaction = SYSUTCDATETIME()
     WHERE merchant_id = @var_MerchantID;
 
     SELECT

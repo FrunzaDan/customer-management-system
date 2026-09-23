@@ -1,9 +1,9 @@
 CREATE PROCEDURE [dbo].[usp_getCustomers]
     @PageNumber INT = 1,
     @PageSize INT = 10,
-    @SearchTerm NVARCHAR(200) = NULL,
-    @SortColumn NVARCHAR(20) = 'name',
-    @SortDirection NVARCHAR(4) = 'asc'
+    @SearchTerm NVARCHAR(254) = NULL,
+    @SortColumn VARCHAR(10) = 'name',
+    @SortDirection VARCHAR(4) = 'asc'
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -12,7 +12,7 @@ BEGIN
     -- more than the user typed (e.g. a search for "_" matching almost every customer).
     -- Still fully parameterized (no string concatenation of SQL) — this only escapes the
     -- pattern characters inside the parameter's own value.
-    DECLARE @EscapedSearchTerm NVARCHAR(200) =
+    DECLARE @EscapedSearchTerm NVARCHAR(508) =
         REPLACE(REPLACE(REPLACE(@SearchTerm, '\', '\\'), '%', '\%'), '_', '\_');
 
     SELECT

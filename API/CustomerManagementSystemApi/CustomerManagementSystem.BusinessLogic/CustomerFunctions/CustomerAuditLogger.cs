@@ -1,4 +1,5 @@
 using CustomerManagementSystem.DataAccess.DBConnection;
+using CustomerManagementSystem.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
@@ -9,7 +10,7 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 // swallowed and logged instead.
 public class CustomerAuditLogger(IDbUtils dbUtils, ILogger<CustomerAuditLogger> logger) : ICustomerAuditLogger
 {
-    public async Task Log(string customerGuid, string merchantId, string action, string? details = null,
+    public async Task Log(Guid customerGuid, string merchantId, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default)
     {
         try

@@ -1,3 +1,4 @@
+import { IsoDateTime } from './iso-date';
 import { Product } from './product';
 
 // One purchase of a product, seen from the product's side.
@@ -7,7 +8,7 @@ export interface ProductBuyer {
   customerFirstName: string;
   customerLastName: string;
   customerEmail: string;
-  purchaseDate: string;
+  purchaseDate: IsoDateTime;
 }
 
 export interface ProductDetails {

@@ -3,14 +3,14 @@ import { firstValueFrom } from 'rxjs';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
 import { AddCustomerService } from '../../services/add-customer.service';
-import { GetCustomerService } from '../../services/get-customer.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
 import { chooseProductsToBuy } from '../../utils/random-purchases';
 import {
-  Customer,
+  CreateCustomerRequest,
   CustomerActivationStatus,
+  Gender,
 } from '../../interfaces/customer-response';
 
 const TEST_CUSTOMER_COUNT = 50;
@@ -192,7 +192,6 @@ export class AboutComponent {
   private readonly apiLoggerService = inject(ApiLoggerService);
   private readonly notificationService = inject(NotificationService);
   private readonly addCustomerService = inject(AddCustomerService);
-  private readonly getCustomerService = inject(GetCustomerService);
   private readonly productService = inject(ProductService);
   private readonly purchaseService = inject(PurchaseService);
 
@@ -245,17 +244,21 @@ export class AboutComponent {
       let purchases = 0;
       let withoutPurchases = 0;
       for (const customer of customers) {
+        let customerGuid: string | undefined;
         try {
-          await firstValueFrom(
+          const response = await firstValueFrom(
             this.addCustomerService.addCustomerSilently(customer),
           );
+          customerGuid = response.data;
         } catch {
           failed++;
           continue;
         }
         added++;
 
-        const bought = await this.buyRandomProducts(customer.email, stock);
+        const bought = customerGuid
+          ? await this.buyRandomProducts(customerGuid, stock)
+          : 0;
         purchases += bought;
         if (bought === 0) withoutPurchases++;
       }
@@ -277,23 +280,13 @@ export class AboutComponent {
   }
 
   /**
-   * Gives a freshly registered test customer 1–5 distinct in-stock products and returns
-   * how many purchases went through. Registration doesn't return the new customer's
-   * server-generated GUID, so it's looked up by email first.
+   * Gives a freshly registered test customer (by the GUID registration returned) 1–5
+   * distinct in-stock products and returns how many purchases went through.
    */
   private async buyRandomProducts(
-    email: string,
+    customerGuid: string,
     stock: Product[],
   ): Promise<number> {
-    let customerGuid: string;
-    try {
-      customerGuid = await firstValueFrom(
-        this.getCustomerService.findCustomerGuid(email),
-      );
-    } catch {
-      return 0;
-    }
-
     let bought = 0;
     for (let round = 0; round < MAX_PURCHASE_ROUNDS && bought === 0; round++) {
       const chosen = chooseProductsToBuy(stock);
@@ -318,7 +311,7 @@ export class AboutComponent {
     return bought;
   }
 
-  private buildRandomCustomer(index: number): Customer {
+  private buildRandomCustomer(index: number): CreateCustomerRequest {
     const firstName = pick(FIRST_NAMES);
     const lastName = pick(LAST_NAMES);
     const { county, town } = pick(COUNTIES_TOWNS);
@@ -329,7 +322,7 @@ export class AboutComponent {
       lastName,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${suffix}@example.com`,
       msisdn: `07${randomDigits(6)}${suffix}`,
-      gender: Math.floor(Math.random() * 3),
+      gender: pick([Gender.NotDeclared, Gender.Male, Gender.Female]),
       birthdate: randomBirthdate(),
       customerStatus: CustomerActivationStatus.Test,
       address: {
@@ -340,6 +333,6 @@ export class AboutComponent {
         number: (Math.floor(Math.random() * 150) + 1).toString(),
         zip: randomDigits(6),
       },
-    } as Customer;
+    };
   }
 }

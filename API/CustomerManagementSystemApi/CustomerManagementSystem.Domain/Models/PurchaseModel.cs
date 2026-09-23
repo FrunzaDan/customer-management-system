@@ -2,20 +2,21 @@ namespace CustomerManagementSystem.Domain.Models;
 
 // One row of a customer's purchase history: the tbl_customer_purchases link row joined to
 // the product it points at.
-public class PurchaseModel
+public sealed record PurchaseModel
 {
-    public int PurchaseId { get; set; }
+    public required int PurchaseId { get; init; }
 
-    public string? CustomerGuid { get; set; }
+    public required Guid CustomerGuid { get; init; }
 
-    public string? ProductGuid { get; set; }
+    public required Guid ProductGuid { get; init; }
 
-    public string? ProductName { get; set; }
+    public required string ProductName { get; init; }
 
-    public string? Category { get; set; }
+    public required string Category { get; init; }
 
     // The product's current price — not a snapshot of what was paid at purchase time.
-    public decimal Price { get; set; }
+    public required decimal Price { get; init; }
 
-    public DateTime PurchaseDate { get; set; }
+    // UTC.
+    public required DateTime PurchaseDate { get; init; }
 }

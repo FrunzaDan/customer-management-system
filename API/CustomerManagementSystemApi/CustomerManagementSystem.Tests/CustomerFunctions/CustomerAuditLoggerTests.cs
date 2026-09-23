@@ -8,22 +8,22 @@ namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
 public class CustomerAuditLoggerTests
 {
-    private const string Guid = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+    private static readonly Guid CustomerGuid = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     private const string MerchantId = "TestMerchantID";
 
     [Fact]
     public async Task Log_PassesTheGivenArgumentsThroughToTheDbLayer()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogCustomerAudit(Guid, MerchantId, "Edited", "Updated: email", It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogCustomerAudit(CustomerGuid, MerchantId, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        await auditLogger.Log(Guid, MerchantId, "Edited", "Updated: email", TestContext.Current.CancellationToken);
+        await auditLogger.Log(CustomerGuid, MerchantId, AuditAction.Edited, "Updated: email", TestContext.Current.CancellationToken);
 
         dbUtils.Verify(
-            d => d.LogCustomerAudit(Guid, MerchantId, "Edited", "Updated: email", It.IsAny<CancellationToken>()),
+            d => d.LogCustomerAudit(CustomerGuid, MerchantId, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -31,15 +31,15 @@ public class CustomerAuditLoggerTests
     public async Task Log_DefaultsDetailsToNull_WhenNotProvided()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogCustomerAudit(Guid, MerchantId, "Deactivated", null, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogCustomerAudit(CustomerGuid, MerchantId, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        await auditLogger.Log(Guid, MerchantId, "Deactivated", cancellationToken: TestContext.Current.CancellationToken);
+        await auditLogger.Log(CustomerGuid, MerchantId, AuditAction.Deactivated, cancellationToken: TestContext.Current.CancellationToken);
 
         dbUtils.Verify(
-            d => d.LogCustomerAudit(Guid, MerchantId, "Deactivated", null, It.IsAny<CancellationToken>()),
+            d => d.LogCustomerAudit(CustomerGuid, MerchantId, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -52,12 +52,12 @@ public class CustomerAuditLoggerTests
     public async Task Log_SwallowsAnyExceptionFromTheDbLayer_InsteadOfPropagatingIt()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogCustomerAudit(Guid, MerchantId, "Created", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogCustomerAudit(CustomerGuid, MerchantId, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        var exception = await Record.ExceptionAsync(() => auditLogger.Log(Guid, MerchantId, "Created", cancellationToken: TestContext.Current.CancellationToken));
+        var exception = await Record.ExceptionAsync(() => auditLogger.Log(CustomerGuid, MerchantId, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Null(exception);
     }
@@ -66,12 +66,12 @@ public class CustomerAuditLoggerTests
     public async Task Log_LogsAnError_WhenTheDbLayerThrows()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.LogCustomerAudit(Guid, MerchantId, "Created", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.LogCustomerAudit(CustomerGuid, MerchantId, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
         var logger = new Mock<ILogger<CustomerAuditLogger>>();
         var auditLogger = new CustomerAuditLogger(dbUtils.Object, logger.Object);
 
-        await auditLogger.Log(Guid, MerchantId, "Created", cancellationToken: TestContext.Current.CancellationToken);
+        await auditLogger.Log(CustomerGuid, MerchantId, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken);
 
         logger.Verify(
             l => l.Log(

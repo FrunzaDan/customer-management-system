@@ -74,7 +74,7 @@
           <div class="profile-header">
             <img
               [src]="
-                customer()?.gender === 2
+                customer()?.gender === Gender.Female
                   ? '/assets/avatar_female.jpg'
                   : '/assets/avatar_male.jpg'
               "
@@ -113,7 +113,7 @@
             </div>
             <div class="detail-row">
               <dt>Birthdate</dt>
-              <dd>{{ customer()?.birthdate || '—' }}</dd>
+              <dd>{{ (customer()?.birthdate | date: 'longDate') || '—' }}</dd>
             </div>
             <div class="detail-row">
               <dt>Internal GUID</dt>
@@ -179,11 +179,11 @@
           <dl class="detail-list">
             <div class="detail-row">
               <dt>Created</dt>
-              <dd>{{ customer()?.creationDate || '—' }}</dd>
+              <dd>{{ (customer()?.creationDate | date: 'medium') || '—' }}</dd>
             </div>
             <div class="detail-row">
               <dt>Last interaction</dt>
-              <dd>{{ customer()?.interactionDate || '—' }}</dd>
+              <dd>{{ (customer()?.interactionDate | date: 'medium') || '—' }}</dd>
             </div>
             <div class="detail-row">
               <dt>Status</dt>

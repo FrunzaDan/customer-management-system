@@ -100,16 +100,16 @@ describe('EditCustomerComponent', () => {
       expect(component.model().country).toBe('Romania');
     });
 
-    it('zero-pads an unpadded stored birthdate for the date input', () => {
+    it('pre-fills the stored birthdate as-is (the API always sends YYYY-MM-DD)', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ birthdate: '2020-1-5' }));
+      selectedCustomer.set(buildCustomer({ birthdate: '2020-01-05' }));
 
       expect(component.model().birthdate).toBe('2020-01-05');
     });
 
-    it('leaves the birthdate blank when the stored value is not a full date', () => {
+    it('leaves the birthdate blank when the customer has none', () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ birthdate: '2020' }));
+      selectedCustomer.set(buildCustomer({ birthdate: undefined }));
 
       expect(component.model().birthdate).toBe('');
     });
@@ -260,7 +260,7 @@ describe('EditCustomerComponent', () => {
       email: customer.email,
       msisdn: customer.msisdn,
       gender: String(customer.gender),
-      birthdate: customer.birthdate,
+      birthdate: customer.birthdate ?? '',
       country: customer.address.country,
       county: customer.address.county,
       town: customer.address.town,

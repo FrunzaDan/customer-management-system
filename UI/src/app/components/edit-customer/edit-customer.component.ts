@@ -19,7 +19,7 @@ import {
   customerFormSchema,
   emptyCustomerForm,
   isCustomerFormDirty,
-  toCustomer,
+  applyFormModel,
   toFormModel,
 } from '../customer-form-fields/customer-form';
 import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-form-fields.component';
@@ -95,7 +95,7 @@ export class EditCustomerComponent {
 
     try {
       await firstValueFrom(
-        this.editCustomerService.editCustomer(toCustomer(this.model(), current)),
+        this.editCustomerService.editCustomer(applyFormModel(this.model(), current)),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);

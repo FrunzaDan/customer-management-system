@@ -10,7 +10,7 @@ import {
   customerFormSchema,
   emptyCustomerForm,
   isCustomerFormDirty,
-  toCustomer,
+  toCreateCustomerRequest,
 } from '../customer-form-fields/customer-form';
 import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-form-fields.component';
 
@@ -58,7 +58,7 @@ export class AddCustomerComponent {
 
     try {
       await firstValueFrom(
-        this.addCustomerService.addCustomer(toCustomer(this.model())),
+        this.addCustomerService.addCustomer(toCreateCustomerRequest(this.model())),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);

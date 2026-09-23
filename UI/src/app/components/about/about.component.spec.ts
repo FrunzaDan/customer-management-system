@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { Product } from '../../interfaces/product';
 import { AddCustomerService } from '../../services/add-customer.service';
-import { GetCustomerService } from '../../services/get-customer.service';
 import { NotificationService } from '../../services/notification.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
@@ -13,7 +12,6 @@ describe('AboutComponent — addTestCustomers', () => {
     guid: `p${n}`,
     name: `Product ${n}`,
     category: 'Laptop',
-    comment: null,
     price: 100,
     inventoryQuantity: stockQuantity,
     stockQuantity,
@@ -27,7 +25,6 @@ describe('AboutComponent — addTestCustomers', () => {
   let fetchProducts: ReturnType<typeof vi.fn>;
   let addCustomerSilently: ReturnType<typeof vi.fn>;
   let purchaseProductSilently: ReturnType<typeof vi.fn>;
-  let findCustomerGuid: ReturnType<typeof vi.fn>;
   let show: ReturnType<typeof vi.fn>;
 
   const createComponent = (products: Product[] = catalogue()) => {
@@ -36,9 +33,8 @@ describe('AboutComponent — addTestCustomers', () => {
     fetchProducts = vi.fn().mockReturnValue(of(products));
     addCustomerSilently = vi.fn((customer: { email: string }) => {
       registered.push(customer.email);
-      return of({ status: 200, responseMessage: 'ok' });
+      return of({ status: 200, responseMessage: 'ok', data: `guid-for-${customer.email}` });
     });
-    findCustomerGuid = vi.fn((email: string) => of(`guid-for-${email}`));
     purchaseProductSilently = vi.fn((customerGuid: string, productGuid: string) => {
       purchases.push({ customerGuid, productGuid });
       return of({ status: 200, responseMessage: 'ok' });
@@ -49,7 +45,6 @@ describe('AboutComponent — addTestCustomers', () => {
       providers: [
         { provide: ProductService, useValue: { fetchProducts } },
         { provide: AddCustomerService, useValue: { addCustomerSilently } },
-        { provide: GetCustomerService, useValue: { findCustomerGuid } },
         { provide: PurchaseService, useValue: { purchaseProductSilently } },
         { provide: NotificationService, useValue: { show } },
       ],
@@ -100,12 +95,13 @@ describe('AboutComponent — addTestCustomers', () => {
     expect(counts.size).toBeGreaterThan(1);
   });
 
-  it('looks each new customer up by the email it was registered with', async () => {
+  it('buys for each new customer by the GUID its registration returned', async () => {
     const component = createComponent();
 
     await component.addTestCustomers();
 
-    expect(findCustomerGuid.mock.calls.map((c) => c[0])).toEqual(registered);
+    const buyers = new Set(purchases.map((p) => p.customerGuid));
+    expect([...buyers].sort()).toEqual(registered.map((email) => `guid-for-${email}`).sort());
   });
 
   it('never buys a product that is out of stock', async () => {
@@ -174,12 +170,12 @@ describe('AboutComponent — addTestCustomers', () => {
     addCustomerSilently.mockImplementation((customer: { email: string }) => {
       if (n++ === 0) return throwError(() => new Error('400'));
       registered.push(customer.email);
-      return of({ status: 200, responseMessage: 'ok' });
+      return of({ status: 200, responseMessage: 'ok', data: `guid-for-${customer.email}` });
     });
 
     await component.addTestCustomers();
 
-    expect(findCustomerGuid).toHaveBeenCalledTimes(49);
+    expect(new Set(purchases.map((p) => p.customerGuid)).size).toBe(49);
     expect(show).toHaveBeenCalledWith(expect.stringContaining('Added 49 test customers'), 'error');
     expect(show).toHaveBeenCalledWith(expect.stringContaining('1 failed'), 'error');
   });

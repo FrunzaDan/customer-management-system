@@ -3,15 +3,18 @@ CREATE TABLE [dbo].[tbl_customer_purchases]
     -- Surrogate key: the same customer can buy the same product more than once, so
     -- (customer, product) is not unique and can't be the primary key.
     [purchase_id] INT IDENTITY (1, 1) NOT NULL,
-    [FK_customer_guid] NVARCHAR (50) NOT NULL,
-    [FK_product_guid] NVARCHAR (50) NOT NULL,
-    [purchase_date] DATETIME NOT NULL,
+    [FK_customer_guid] UNIQUEIDENTIFIER NOT NULL,
+    [FK_product_guid] UNIQUEIDENTIFIER NOT NULL,
+    [purchase_date] DATETIME2 (0) NOT NULL
+        CONSTRAINT [DF_tbl_customer_purchases_purchase_date] DEFAULT SYSUTCDATETIME(),
     PRIMARY KEY (purchase_id),
     -- Unlike tbl_customer_audit_log, purchases are real FKs: a purchase row is meaningless
     -- without its customer, so usp_deleteCustomer deletes them together with the customer
     -- (see that proc) rather than letting them outlive it.
-    FOREIGN KEY (FK_customer_guid) REFERENCES tbl_customers(PK_customer_guid),
-    FOREIGN KEY (FK_product_guid) REFERENCES tbl_products(PK_product_guid)
+    CONSTRAINT [FK_tbl_customer_purchases_tbl_customers]
+        FOREIGN KEY (FK_customer_guid) REFERENCES tbl_customers(PK_customer_guid),
+    CONSTRAINT [FK_tbl_customer_purchases_tbl_products]
+        FOREIGN KEY (FK_product_guid) REFERENCES tbl_products(PK_product_guid)
 );
 GO
 

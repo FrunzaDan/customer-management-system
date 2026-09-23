@@ -136,30 +136,6 @@ export class GetCustomerService {
       });
   }
 
-  /**
-   * Looks a customer up by email and returns its GUID, without touching any of this
-   * service's signals (unlike {@link getCustomer}, which drives the details page's state).
-   * Registration doesn't return the new customer's server-generated GUID, so bulk callers
-   * (test-data generation) use this to find it afterwards.
-   */
-  findCustomerGuid(email: string): Observable<string> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    const params = new HttpParams().set('searchVariable', email);
-
-    return this.http
-      .get<GenericResponse<Customer>>(this.API_URL_GET_SINGLE, {
-        headers,
-        params,
-      })
-      .pipe(
-        map((response) => {
-          const guid = response?.data?.guid;
-          if (!guid) throw new Error(`No customer found for ${email}.`);
-          return guid;
-        }),
-      );
-  }
-
   updateCustomerLocally(updatedCustomer: Customer): void {
     this.state.update((state) => ({
       ...state,

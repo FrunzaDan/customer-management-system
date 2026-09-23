@@ -142,53 +142,6 @@ describe('GetCustomerService', () => {
     );
   });
 
-  describe('findCustomerGuid', () => {
-    const GET_URL = `${environment.CustomerManagementSystemAPI}/api/Customer/get`;
-
-    it('looks the customer up by email and returns its guid', () => {
-      let guid: string | undefined;
-
-      service.findCustomerGuid('dan@example.com').subscribe((g) => (guid = g));
-      const req = httpMock.expectOne((r) => r.url === GET_URL);
-      expect(req.request.params.get('searchVariable')).toBe('dan@example.com');
-      req.flush({ status: 200, responseMessage: 'ok', data: buildCustomer({ guid: 'guid-42' }) });
-
-      expect(guid).toBe('guid-42');
-    });
-
-    it('does not touch the signals the details page relies on', () => {
-      service.findCustomerGuid('dan@example.com').subscribe();
-      httpMock
-        .expectOne((r) => r.url === GET_URL)
-        .flush({ status: 200, responseMessage: 'ok', data: buildCustomer() });
-
-      expect(service.selectedCustomerSignal()).toBeNull();
-      expect(service.loadingSignal()).toBe(false);
-    });
-
-    it('errors when the response carries no customer', () => {
-      const onError = vi.fn();
-
-      service.findCustomerGuid('nobody@example.com').subscribe({ error: onError });
-      httpMock
-        .expectOne((r) => r.url === GET_URL)
-        .flush({ status: 200, responseMessage: 'ok' });
-
-      expect(onError).toHaveBeenCalledTimes(1);
-    });
-
-    it('propagates an HTTP failure', () => {
-      const onError = vi.fn();
-
-      service.findCustomerGuid('dan@example.com').subscribe({ error: onError });
-      httpMock
-        .expectOne((r) => r.url === GET_URL)
-        .flush(null, { status: 404, statusText: 'Not Found' });
-
-      expect(onError).toHaveBeenCalledTimes(1);
-    });
-  });
-
   it('updateCustomerLocally replaces a matching customer in customersSignal', () => {
     const original = buildCustomer();
 
