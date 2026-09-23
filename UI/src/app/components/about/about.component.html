@@ -16,7 +16,7 @@
     <div class="col-12">
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Running It Locally</h2>
+          <h2 class="card-title">Running it locally</h2>
           <p class="card-text">
             The database is a containerized SQL Server (Azure SQL Edge, which
             also runs natively on Apple Silicon). Started by hand, that's:
@@ -60,7 +60,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Build &amp; Run Scripts</h2>
+          <h2 class="card-title">Build &amp; run scripts</h2>
           <p class="card-text">
             Two scripts at the repository root wrap all of the above so nothing
             needs to be pieced together by hand:
@@ -183,7 +183,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Security Flow</h2>
+          <h2 class="card-title">Security flow</h2>
           <p class="card-text">
             Authentication is stateless, bearer-token based — there are no
             server-side sessions and no auth cookies:
@@ -252,7 +252,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Data Access &amp; CRUD Operations</h2>
+          <h2 class="card-title">Data access &amp; CRUD operations</h2>
           <p class="card-text mb-0">
             All customer data access goes through ADO.NET
             <code>SqlCommand</code> objects calling the stored procedures listed
@@ -269,7 +269,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Console-Logged API Calls</h2>
+          <h2 class="card-title">Console-logged API calls</h2>
           <p class="card-text">
             Since this is a showcase app, every HTTP call the Angular frontend
             makes to the API is mirrored to the browser's devtools console via
@@ -316,17 +316,17 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Generate Test Customers</h2>
+          <h2 class="card-title">Generate test customers</h2>
           <p class="card-text">
             <strong>This is test data.</strong> The button below registers 50
             fictitious customers through the same
             <code>POST /api/customer/create</code> endpoint the
-            <em>Add Customer</em> form uses — each with a randomly generated
-            name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), and
-            a home address. Every one of them is created with the
-            <code>Test</code> status (<code>1904</code>) rather than
-            <code>Active</code>, so they're clearly distinguishable from real
-            customers everywhere the status is shown. It exists purely so
+            <em>Register customer</em> form uses — each with a randomly
+            generated name, email, a Romanian mobile number
+            (<code>07xxxxxxxx</code>), and a home address. Every one of them is
+            created with the <code>Test</code> status (<code>1904</code>) rather
+            than <code>Active</code>, so they're clearly distinguishable from
+            real customers everywhere the status is shown. It exists purely so
             there's enough data to try out search, sorting, and pagination
             locally; like an active customer, a test customer can still be
             deactivated and deleted afterwards.
@@ -358,7 +358,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">What You Can Do In The UI</h2>
+          <h2 class="card-title">What you can do in the UI</h2>
           <ul class="mb-0">
             <li>
               Log in with merchant credentials to start a session, and log out

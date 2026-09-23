@@ -26,18 +26,12 @@ Bin/
 obj/
 Obj/
 
-/API/CustomerManagementSystemApi/CustomerManagementSystemApi/bin
-/API/CustomerManagementSystemApi/Customer_Management_System_Library/bin
-/API/CustomerManagementSystemApi/CustomerManagementSystemApi/obj
-/API/CustomerManagementSystemApi/Customer_Management_System_Library/obj
-/API/CustomerManagementSystemApi/CustomerManagementSystemApi/Bin
-/API/CustomerManagementSystemApi/Customer_Management_System_Library/Bin
-/API/CustomerManagementSystemApi/CustomerManagementSystemApi/Obj
-/API/CustomerManagementSystemApi/Customer_Management_System_Library/Obj
-
 
 # Visual Studio 2015 cache/options directory
 .vs/
+
+# JetBrains Rider
+.idea/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

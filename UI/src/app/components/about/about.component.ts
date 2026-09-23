@@ -11,7 +11,7 @@ import {
   CreateCustomerRequest,
   CustomerStatus,
   Gender,
-} from '../../interfaces/customer-response';
+} from '../../interfaces/customer';
 
 const TEST_CUSTOMER_COUNT = 50;
 

@@ -10,7 +10,7 @@ import {
   Customer,
   CustomerStatus,
   Gender,
-} from '../interfaces/customer-response';
+} from '../interfaces/customer';
 import { CustomerService } from './customer.service';
 import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';

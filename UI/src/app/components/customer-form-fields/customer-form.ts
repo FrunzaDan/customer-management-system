@@ -4,7 +4,7 @@ import {
   CreateCustomerRequest,
   Customer,
   Gender,
-} from '../../interfaces/customer-response';
+} from '../../interfaces/customer';
 
 // Shared by create-customer and update-customer: one model shape, one validation
 // schema, and the two-way mapping between the form and the API's Customer.
@@ -39,8 +39,8 @@ export const emptyCustomerForm = (): CustomerFormModel => ({
 });
 
 export const customerFormSchema = schema<CustomerFormModel>((p) => {
-  required(p.firstName, { message: 'First Name is required' });
-  required(p.lastName, { message: 'Last Name is required' });
+  required(p.firstName, { message: 'First name is required' });
+  required(p.lastName, { message: 'Last name is required' });
   required(p.email, { message: 'Email is required' });
   pattern(p.email, new RegExp(environment.emailRegex), {
     message: 'The Email should be a valid one',

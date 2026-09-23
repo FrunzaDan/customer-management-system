@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { CustomerService } from '../../services/customer.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { NotificationService } from '../../services/notification.service';
-import { Customer, CustomerStatus } from '../../interfaces/customer-response';
+import { Customer, CustomerStatus } from '../../interfaces/customer';
 import { CustomerListComponent } from './customer-list.component';
 
 describe('CustomerListComponent', () => {

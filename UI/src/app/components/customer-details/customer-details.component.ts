@@ -8,7 +8,8 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CustomerService } from '../../services/customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
@@ -16,7 +17,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
-import { CustomerStatus, Gender } from '../../interfaces/customer-response';
+import { CustomerStatus, Gender } from '../../interfaces/customer';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import { auditActionLabel } from '../../utils/audit-action-label';
@@ -25,7 +26,7 @@ import { auditActionLabel } from '../../utils/audit-action-label';
   selector: 'app-customer-details',
   templateUrl: './customer-details.component.html',
   styleUrl: './customer-details.component.css',
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [DatePipe, RonPipe, RouterLink],
 })
 export class CustomerDetailsComponent {
   private readonly customerService = inject(CustomerService);

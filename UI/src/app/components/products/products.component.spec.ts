@@ -98,7 +98,7 @@ describe('ProductsComponent', () => {
       'Voltix K1',
       'Laptop',
       'Central Depot',
-      '1,299.00',
+      '1,299.00 RON',
       '3',
       '10',
       '7',

@@ -14,7 +14,7 @@ import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { CustomerService } from '../../services/customer.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { NotificationService } from '../../services/notification.service';
-import { Customer, CustomerStatus } from '../../interfaces/customer-response';
+import { Customer, CustomerStatus } from '../../interfaces/customer';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
@@ -61,7 +61,7 @@ export class CustomerListComponent implements OnInit {
   readonly exportLoading = this.customerService.exportLoading;
   readonly exportError = this.customerService.exportError;
 
-  // Add CustomerStatus enum for better type checking
+  // Register customerStatus enum for better type checking
   readonly CustomerStatus = CustomerStatus;
 
   readonly statusLabels = new Map<Customer['status'], string>([

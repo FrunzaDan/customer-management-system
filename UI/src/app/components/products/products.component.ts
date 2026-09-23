@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { RonPipe } from '../../pipes/ron.pipe';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../interfaces/product';
 import { ProductService } from '../../services/product.service';
@@ -24,7 +24,7 @@ const SORT_VALUES: Record<
 @Component({
   selector: 'app-products',
   templateUrl: './products.component.html',
-  imports: [DecimalPipe, RouterLink],
+  imports: [RonPipe, RouterLink],
 })
 export class ProductsComponent {
   private readonly productService = inject(ProductService);

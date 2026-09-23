@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { Customer } from '../../interfaces/customer-response';
+import { Customer } from '../../interfaces/customer';
 import { CustomerService } from '../../services/customer.service';
 import { UpdateCustomerComponent } from './update-customer.component';
 

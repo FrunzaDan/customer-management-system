@@ -3,7 +3,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { Customer, CustomerStatus } from '../../interfaces/customer-response';
+import { Customer, CustomerStatus } from '../../interfaces/customer';
 import { CustomerService } from '../../services/customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';

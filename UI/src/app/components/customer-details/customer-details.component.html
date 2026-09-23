@@ -269,7 +269,7 @@
                             [disabled]="product.quantityOnHand === 0"
                           >
                             {{ product.name }} —
-                            {{ product.price | number: '1.2-2' }}
+                            {{ product.price | ron }}
                             @if (product.quantityOnHand === 0) {
                               (out of stock)
                             } @else {
@@ -325,7 +325,7 @@
               } @else {
                 <p class="purchase-total">
                   <span>Total spent</span>
-                  <strong>{{ totalSpent() | number: '1.2-2' }}</strong>
+                  <strong>{{ totalSpent() | ron }}</strong>
                 </p>
                 <ul class="purchase-list">
                   @for (
@@ -345,7 +345,7 @@
                         </div>
                       </div>
                       <div class="purchase-price">
-                        {{ purchase.price | number: '1.2-2' }}
+                        {{ purchase.price | ron }}
                       </div>
                     </li>
                   }

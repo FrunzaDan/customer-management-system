@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "customer_management_system": {
+    "customer-management-system": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,17 +13,9 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "optimization": {
-              "styles": true,
-              "fonts": true
-            },
-            "aot": true,
-            "sourceMap": false,
-            "namedChunks": false,
-            "outputPath": "dist/customer_management_system",
+            "outputPath": "dist/customer-management-system",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -44,38 +36,25 @@
           },
           "configurations": {
             "production": {
-              "baseHref": "/",
-              "optimization": {
-                "scripts": true,
-                "styles": true,
-                "fonts": true
-              },
-              "outputHashing": "all",
-              "sourceMap": false,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1mb",
-                  "maximumError": "2mb"
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kb",
-                  "maximumError": "8kb"
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
                 }
               ],
+              "outputHashing": "all",
               "subresourceIntegrity": true
             },
             "development": {
-              "baseHref": "/",
-              "optimization": {
-                "scripts": true,
-                "styles": true,
-                "fonts": true
-              },
+              "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true,
-              "namedChunks": true
+              "sourceMap": true
             }
           },
           "defaultConfiguration": "production"
@@ -87,10 +66,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "customer_management_system:build:production"
+              "buildTarget": "customer-management-system:build:production"
             },
             "development": {
-              "buildTarget": "customer_management_system:build:development"
+              "buildTarget": "customer-management-system:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -13,8 +13,8 @@ export class CustomerFormFieldsComponent {
   readonly form = input.required<FieldTree<CustomerFormModel>>();
 
   protected readonly basicFields = [
-    { key: 'firstName', label: 'First Name' },
-    { key: 'lastName', label: 'Last Name' },
+    { key: 'firstName', label: 'First name' },
+    { key: 'lastName', label: 'Last name' },
     { key: 'email', label: 'Email' },
     { key: 'phoneNumber', label: 'Phone' },
   ] as const;

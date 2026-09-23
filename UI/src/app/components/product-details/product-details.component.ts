@@ -6,7 +6,8 @@ import {
   input,
   untracked,
 } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { RonPipe } from '../../pipes/ron.pipe';
 import { Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 
@@ -14,7 +15,7 @@ import { ProductService } from '../../services/product.service';
   selector: 'app-product-details',
   templateUrl: './product-details.component.html',
   styleUrl: './product-details.component.css',
-  imports: [DatePipe, DecimalPipe, RouterLink],
+  imports: [DatePipe, RonPipe, RouterLink],
 })
 export class ProductDetailsComponent {
   private readonly productService = inject(ProductService);
