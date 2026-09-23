@@ -8,14 +8,13 @@ import { isPlatformBrowser } from '@angular/common';
 import { catchError, tap, throwError } from 'rxjs';
 import { ApiLoggerService } from './api-logger.service';
 
-// Showcase app: every API call is mirrored to the browser console so anyone
-// looking at devtools can see exactly what's being sent/received. Not
-// something you'd want in a real production app.
 const SENSITIVE_FIELDS = ['password'];
 
 function redact(body: unknown): unknown {
   if (!body || typeof body !== 'object') return body;
-  const clone: Record<string, unknown> = { ...(body as Record<string, unknown>) };
+  const clone: Record<string, unknown> = {
+    ...(body as Record<string, unknown>),
+  };
   for (const field of SENSITIVE_FIELDS) {
     if (field in clone) clone[field] = '••••••••';
   }
@@ -26,10 +25,15 @@ function redact(body: unknown): unknown {
 // just as sensitive as the password redacted above, and logging defaults to on.
 function redactResponse(body: unknown): unknown {
   if (!body || typeof body !== 'object') return body;
-  const clone: Record<string, unknown> = { ...(body as Record<string, unknown>) };
+  const clone: Record<string, unknown> = {
+    ...(body as Record<string, unknown>),
+  };
   const data = clone['data'];
   if (data && typeof data === 'object' && 'accessToken' in data) {
-    clone['data'] = { ...(data as Record<string, unknown>), accessToken: '••••••••' };
+    clone['data'] = {
+      ...(data as Record<string, unknown>),
+      accessToken: '••••••••',
+    };
   }
   return clone;
 }
@@ -43,9 +47,13 @@ export const apiLoggerInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const startedAt = performance.now();
-  console.log(`%c→ ${req.method} ${req.urlWithParams}`, 'color:#0a84ff;font-weight:bold', {
-    body: redact(req.body),
-  });
+  console.log(
+    `%c→ ${req.method} ${req.urlWithParams}`,
+    'color:#0a84ff;font-weight:bold',
+    {
+      body: redact(req.body),
+    },
+  );
 
   return next(req).pipe(
     tap((event) => {

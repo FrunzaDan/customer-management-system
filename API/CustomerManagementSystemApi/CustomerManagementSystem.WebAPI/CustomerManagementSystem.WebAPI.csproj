@@ -1,16 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <ImplicitUsings>enable</ImplicitUsings>
-    </PropertyGroup>
+
     <ItemGroup>
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     </ItemGroup>
+
     <ItemGroup>
-        <ProjectReference
-            Include="..\CustomerManagementSystem.BusinessLogic\CustomerManagementSystem.BusinessLogic.csproj" />
+        <ProjectReference Include="..\CustomerManagementSystem.BusinessLogic\CustomerManagementSystem.BusinessLogic.csproj" />
     </ItemGroup>
+
 </Project>

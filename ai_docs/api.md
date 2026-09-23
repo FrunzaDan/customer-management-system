@@ -20,6 +20,8 @@ The ASP.NET Core Web API: request pipeline, controllers, request validation, JWT
 - `API/.../CustomerManagementSystem.DataAccess/DBConnection/PasswordHasher.cs`
 - `global.json` (repo root) — `{ "test": { "runner": "Microsoft.Testing.Platform" } }`
 - `API/.../CustomerManagementSystem.Tests/CustomerManagementSystem.Tests.csproj`
+- `API/.../Directory.Build.props` (shared `net10.0`/nullable/implicit-usings settings, nullable warnings are errors) and `Directory.Packages.props` (Central Package Management — every package version lives there, `.csproj` files have none)
+- `API/.../CustomerManagementSystem.WebAPI/OpenApi/BearerSecuritySchemeTransformer.cs`
 
 ## How it works
 
@@ -27,9 +29,10 @@ The ASP.NET Core Web API: request pipeline, controllers, request validation, JWT
 
 `WebAPI` (controllers/host) → `BusinessLogic` (services, validation, JWT) → `DataAccess` (ADO.NET + stored procs) → `Domain` (models/config). All customer/merchant DB access goes through **stored procedures** — no inline SQL, no ORM. See [database](database.md) for the schema/proc side.
 
-**Middleware order in `Program.cs`** (order matters): `UseExceptionHandler` → `UseCors` → `UseHttpsRedirection` → `UseRateLimiter` → `UseAuthentication` → `UseAuthorization` → `MapGet("/health", ...)` → `MapControllers`. In non-Development environments, `UseHsts()` runs alongside `UseHttpsRedirection`.
+**Middleware order in `Program.cs`** (order matters): `UseExceptionHandler` → `Cache-Control: no-store` middleware → `UseCors` → `UseHttpsRedirection` → `UseRateLimiter` → `UseAuthentication` → `UseAuthorization` → `MapHealthChecks("/health")` → `MapControllers`. In non-Development environments, `UseHsts()` runs alongside `UseHttpsRedirection`; in Development, `MapOpenApi()` serves the built-in OpenAPI document at `/openapi/v1.json` and Swagger UI (`Swashbuckle.AspNetCore.SwaggerUI` only — Swashbuckle no longer generates the document) shows it at `/swagger`, with the JWT bearer scheme added by `BearerSecuritySchemeTransformer`.
 
-- `GET /health` is a bare minimal-API endpoint (not on `CustomerController`, no `[Authorize]`, doesn't return the `ResponseModel` shape — just a 200) added purely so the Angular UI can poll for API liveness and show an "API is not running" banner instead of the app looking broken (see [angular-frontend](angular-frontend.md)). Being unauthenticated is intentional: it needs to answer even when nobody has a token yet.
+- `GET /health` is ASP.NET Core's health-check endpoint (`AddHealthChecks()`/`MapHealthChecks`, no DB probe — liveness only; not on a controller, no `[Authorize]`, answers `200` with the plain-text body `Healthy`, not the `ResponseModel` shape), the same mechanism as the sibling apps. It exists so the Angular UI can poll for API liveness and show an "API is not running" banner instead of the app looking broken (see [angular-frontend](angular-frontend.md)); the UI reads it with `responseType: 'text'`. Being unauthenticated is intentional: it needs to answer even when nobody has a token yet.
+- Every response is sent with `Cache-Control: no-store` (live, per-user data behind a bearer token — no browser or proxy should keep a copy), the same as the sibling apps.
 - A global exception handler middleware catches any unhandled exception, logs it, and returns the usual `ResponseModel` envelope with a `500` (the exception message is only appended in Development) — controllers themselves don't have try/catch blocks.
 - CORS is locked to `Cors:AllowedOrigins` in `appsettings.json` (`http`/`https` on `localhost:4203` and `localhost:4203` — 4203 is the port `UI/angular.json` actually serves on; an origin missing from this list shows up in the browser as a CORS block on `/health` and the "API is not running" banner even though the API is up), methods limited to `GET/POST/PATCH/DELETE`, headers limited to `Content-Type`/`Authorization`. No `AllowCredentials()` — consistent with bearer-token (not cookie) auth.
 - Swagger UI is only wired up in Development, with a Bearer-JWT security scheme so tokens can be pasted in for manual testing.
@@ -99,10 +102,11 @@ The ASP.NET Core Web API: request pipeline, controllers, request validation, JWT
 
 - The test project covers `BusinessLogic` (validations including `AddressValidation`, `JwtCreation`, `AuthService`, `CustomerRegistration`/`Editing`/`Getting`/`Activation`/`Deletion`) and `DataAccess`'s `PasswordHasher` — all pure logic, no live DB or Docker needed. This is why `build.sh` runs `dotnet test` _before_ the DB/Docker steps.
 - `DbHelper` (stored-proc-result → `ResponseModel` mapping, including the `SqlDataReader`-based row mappers) is **not** unit tested — it takes a concrete `SqlDataReader`, not an interface, so exercising it would need a live connection or a structural change to introduce a mockable seam. Covered indirectly today only by manual testing (Postman/Swagger) and the app actually running.
-- Uses `xunit.v3` 4.0.0 (not the older `xunit` v2 meta-package) and `Moq` for mocking `IDbUtils`/`IAppSettingsConfig`.
-- The **.NET 10 SDK dropped VSTest support for xUnit v3** entirely — `dotnet test` fails with "Testing with VSTest target is no longer supported..." unless the project opts into the new **Microsoft Testing Platform (MTP)** runner. That opt-in is the repo-root `global.json`.
-- That `global.json` is discovered by walking **up from the current working directory** `dotnet` is invoked from — not from the project or `.sln` path — so it has to sit somewhere `dotnet test` will actually be run from or below. `build.sh` runs `dotnet test` from the repo root, hence the file living there.
-- This is a **separate, unrelated** `global.json` from `DB/CustomerManagement/global.json`, which only pins the SQL project's SDK version (`8.0.100`) — the two don't conflict, since discovery stops at the nearest one found walking up from wherever the command runs.
+- Packages: `xunit.v3.mtp-v2` (xUnit v3 on **Microsoft Testing Platform v2**), `Moq` for mocking `IDbUtils`/`IAppSettingsConfig`, and `Microsoft.Testing.Extensions.CodeCoverage` (`dotnet test --coverage`). The VSTest-era packages (`Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, `coverlet.collector`) were removed — under MTP they did nothing. The same setup is used by both sibling apps.
+- Tests take the test's cancellation token from `TestContext.Current.CancellationToken` (xUnit v3), never `CancellationToken.None`.
+- The **.NET 10 SDK dropped VSTest support for xUnit v3** — `dotnet test` runs MTP only because the repo-root `global.json` says `{ "test": { "runner": "Microsoft.Testing.Platform" } }`.
+- That `global.json` is discovered by walking **up from the current working directory** `dotnet` is invoked from — not from the project or `.sln` path — so `dotnet test` has to run from inside the repo (`build.sh` `cd`s to the repo root for its test step).
+- `DB/CustomerManagement/global.json` is a separate one that deliberately pins the SQL project's build to the .NET 8 SDK (kept alongside the Docker SQL Server setup); `Microsoft.Build.Sql` 2.3.0 builds under it. Discovery stops at the nearest `global.json`, so the two don't conflict.
 - xUnit v3 test projects compile to a **console executable** (`<OutputType>Exe</OutputType>` in the `.csproj`), not a library — the test assembly is its own runner now, a fundamental v3 architecture change from v2.
 
 ## Known gaps / deliberately deferred

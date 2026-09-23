@@ -1,8 +1,5 @@
 import { Injectable, signal } from '@angular/core';
 
-// Lets the About page toggle apiLoggerInterceptor's console logging on/off,
-// persisted across reloads via localStorage (a showcase preference, not
-// session-scoped data, hence localStorage rather than SessionStorageService).
 const STORAGE_KEY = 'apiLoggingEnabled';
 
 @Injectable({

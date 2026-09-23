@@ -1,0 +1,25 @@
+<Project>
+    <!-- Central Package Management: every package version for this solution lives here;
+         the .csproj files reference packages without a Version. -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <!-- Lets the pin below also apply to packages that only arrive transitively. -->
+        <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+        <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+        <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.0" />
+        <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.12" />
+        <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+        <!-- JwtBearer pulls in an older OpenIdConnect (8.19.x); Microsoft.IdentityModel.* packages
+             must all be the same version, so pin it to match JsonWebTokens. -->
+        <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
+        <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+    </ItemGroup>
+    <ItemGroup Label="Tests">
+        <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
+        <PackageVersion Include="Moq" Version="4.20.72" />
+        <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.1" />
+    </ItemGroup>
+</Project>

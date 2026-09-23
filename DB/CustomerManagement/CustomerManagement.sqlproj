@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build">
-  <Sdk Name="Microsoft.Build.Sql" Version="0.1.9-preview" />
+  <Sdk Name="Microsoft.Build.Sql" Version="2.3.0" />
   <PropertyGroup>
     <Name>CustomerManagement</Name>
     <ProjectGuid>{EA2F0B19-3F65-4745-A2A1-FC9029AAC37F}</ProjectGuid>

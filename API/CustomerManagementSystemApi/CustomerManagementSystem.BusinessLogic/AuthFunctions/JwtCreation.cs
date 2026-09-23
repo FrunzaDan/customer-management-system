@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CustomerManagementSystem.BusinessLogic.AuthFunctions;
@@ -67,9 +67,9 @@ public class JwtCreation
     private string GenerateJwtToken(string username, MerchantRole? merchantRole, DateTime expires)
     {
         var tokenDescriptor = BuildTokenDescriptor(username, merchantRole, expires);
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
+        // JsonWebTokenHandler is the current IdentityModel handler (the one JwtBearer validates
+        // with); it writes claim types as given, so the claims below use the short JWT names.
+        return new JsonWebTokenHandler().CreateToken(tokenDescriptor);
     }
 
     private SecurityTokenDescriptor BuildTokenDescriptor(string username, MerchantRole? merchantRole, DateTime expires)
@@ -77,14 +77,14 @@ public class JwtCreation
         return new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([
-                new Claim(ClaimTypes.Sid, username),
                 new Claim(JwtRegisteredClaimNames.Sub, username),
-                new Claim(ClaimTypes.Name, username),
+                // unique_name/role are mapped back to ClaimTypes.Name/Role when JwtBearer reads the token.
+                new Claim(JwtRegisteredClaimNames.UniqueName, username),
                 // The role claim is the numeric code ("1801"), which is what [Authorize(Roles = "1801")]
                 // checks — not the enum member's name.
-                new Claim(ClaimTypes.Role,
+                new Claim("role",
                     merchantRole is { } role ? ((short)role).ToString(CultureInfo.InvariantCulture) : string.Empty),
-                new Claim("amr", "pwd"),
+                new Claim(JwtRegisteredClaimNames.Amr, "pwd"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             ]),
             // iat is set here rather than as a hand-built claim: RFC 7519 requires a NumericDate

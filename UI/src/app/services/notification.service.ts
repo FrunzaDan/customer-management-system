@@ -6,8 +6,6 @@ export interface Notification {
   type: 'success' | 'error';
 }
 
-// WCAG 2.2.1 (Timing Adjustable): 3s was too short to read reliably, and an
-// error that vanishes on its own can't be acted on — errors stay until dismissed.
 const DEFAULT_DURATION_MS = 6000;
 
 @Injectable({

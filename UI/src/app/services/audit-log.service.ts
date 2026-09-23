@@ -15,9 +15,6 @@ export class AuditLogService {
 
   private readonly customerId = signal<string | undefined>(undefined);
 
-  // Declarative fetch: the request is a function of `customerId`, so a new
-  // customerId cancels the in-flight request and starts another, and no request is
-  // made at all until a customerId has been set (returning undefined idles it).
   private readonly auditLog = httpResource<GenericResponse<AuditLogEntry[]>>(
     () => {
       const customerId = this.customerId();

@@ -44,7 +44,9 @@ echo "==> [4/7] Running .NET tests"
 if [[ "$SKIP_TESTS" -eq 1 ]]; then
   echo "    Skipped (--skip-tests)"
 else
-  dotnet test "$API_SLN" --no-build --configuration Debug
+  # dotnet finds global.json (which selects Microsoft Testing Platform) by walking up
+  # from the current directory, so run from the repo root wherever this script was started.
+  (cd "$ROOT_DIR" && dotnet test "$API_SLN" --no-build --configuration Debug)
 fi
 
 echo "==> [5/7] Building database project"

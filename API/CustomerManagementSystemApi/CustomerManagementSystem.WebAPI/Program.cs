@@ -11,7 +11,7 @@ using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using CustomerManagementSystem.WebAPI.Routing;
-using Microsoft.OpenApi;
+using CustomerManagementSystem.WebAPI.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,30 +45,10 @@ builder.Services.AddControllers(options =>
             return new BadRequestObjectResult(new ResponseModel<object>(StatusCodes.Status400BadRequest, firstError));
         };
     });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(setup =>
-{
-    // Include 'SecurityScheme' to use JWT Authentication
-    var jwtSecurityScheme = new OpenApiSecurityScheme
-    {
-        BearerFormat = "JWT",
-        Name = "JWT Authentication",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = JwtBearerDefaults.AuthenticationScheme,
-        Description = "Put **_ONLY_** your JWT Bearer token on textbox below!"
-    };
+// OpenAPI document from ASP.NET Core's built-in generator (/openapi/v1.json), shown by Swagger UI.
+builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
-    setup.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, jwtSecurityScheme);
-
-    setup.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, document),
-            new List<string>()
-        }
-    });
-});
+builder.Services.AddHealthChecks();
 
 var jwtKey = builder.Configuration["Auth:SecureJWTKey"] ??
              throw new InvalidOperationException("Missing Auth:SecureJWTKey configuration.");
@@ -140,8 +120,8 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "v1"));
 }
 else
 {
@@ -170,6 +150,13 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+// Responses carry live, per-user data: never let a browser or proxy cache them.
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.CacheControl = "no-store";
+    await next();
+});
+
 app.UseCors();
 
 app.UseHttpsRedirection();
@@ -179,8 +166,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Unauthenticated liveness check for the Angular UI's API-availability banner.
-app.MapGet("/health", () => Results.Ok());
+// Unauthenticated liveness check (no DB probe) for the Angular UI's API-availability banner.
+app.MapHealthChecks("/health");
 
 app.MapControllers();
 
