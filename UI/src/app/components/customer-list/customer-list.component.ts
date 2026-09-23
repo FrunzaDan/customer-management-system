@@ -1,18 +1,20 @@
 // customer-list.component.ts
-import { Component, OnInit, computed, effect, signal, Signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  effect,
+  signal,
+  Signal,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
-import { GetCustomerService } from '../../services/get-customer.service';
-import { ActivateCustomerService } from '../../services/activate-customer.service';
+import { CustomerService } from '../../services/customer.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteCustomerService } from '../../services/delete-customer.service';
-import { ExportCustomerService } from '../../services/export-customer.service';
 import { NotificationService } from '../../services/notification.service';
-import {
-  Customer,
-  CustomerStatus,
-} from '../../interfaces/customer-response';
+import { Customer, CustomerStatus } from '../../interfaces/customer-response';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
@@ -23,19 +25,16 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 })
 export class CustomerListComponent implements OnInit {
   // Use dependency injection with inject()
-  private readonly getCustomerService = inject(GetCustomerService);
-  private readonly activateCustomerService = inject(ActivateCustomerService);
+  private readonly customerService = inject(CustomerService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  private readonly deleteCustomerService = inject(DeleteCustomerService);
-  private readonly exportCustomerService = inject(ExportCustomerService);
   private readonly notificationService = inject(NotificationService);
 
   // Public signals for template
-  readonly customers = this.getCustomerService.customers;
-  readonly isLoading = this.getCustomerService.loading;
-  readonly errorMessage = this.getCustomerService.error;
-  readonly activationLoading = this.activateCustomerService.loading;
-  readonly activationError = this.activateCustomerService.error;
+  readonly customers = this.customerService.customers;
+  readonly isLoading = this.customerService.loading;
+  readonly errorMessage = this.customerService.error;
+  readonly activationLoading = this.customerService.activationLoading;
+  readonly activationError = this.customerService.activationError;
 
   // Delete is a separate action from deactivate/reactivate, so it gets its own
   // in-flight/error state rather than being folded into activationLoading/Error.
@@ -52,13 +51,15 @@ export class CustomerListComponent implements OnInit {
   readonly allOnPageSelected = computed(
     () =>
       this.customers().length > 0 &&
-      this.customers().every((c) => this.selectedCustomerIds().has(c.customerId)),
+      this.customers().every((c) =>
+        this.selectedCustomerIds().has(c.customerId),
+      ),
   );
 
   // CSV export exports whatever the list is currently searching/sorted by,
-  // not just the current page — see ExportCustomerService.
-  readonly exportLoading = this.exportCustomerService.loading;
-  readonly exportError = this.exportCustomerService.error;
+  // not just the current page — see CustomerService.
+  readonly exportLoading = this.customerService.exportLoading;
+  readonly exportError = this.customerService.exportError;
 
   // Add CustomerStatus enum for better type checking
   readonly CustomerStatus = CustomerStatus;
@@ -72,7 +73,7 @@ export class CustomerListComponent implements OnInit {
   // Search, sorting, and pagination are all server-side now: every change to
   // any of these re-fetches just the relevant page from the API rather than
   // filtering/sorting an already-loaded full list in memory (see
-  // GetCustomerService.loadCustomers and Customer_List).
+  // CustomerService.loadCustomers and Customer_List).
   readonly searchTerm = signal('');
   readonly sortColumn = signal<'name' | 'email' | 'phoneNumber'>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
@@ -80,7 +81,7 @@ export class CustomerListComponent implements OnInit {
   readonly pageSize = 50;
   readonly currentPage = signal(1);
 
-  readonly totalItems = this.getCustomerService.totalItems;
+  readonly totalItems = this.customerService.totalItems;
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );
@@ -128,7 +129,6 @@ export class CustomerListComponent implements OnInit {
         console.warn('Duplicate GUIDs found:', duplicates);
       }
     });
-
   }
 
   onSearchInput(value: string): void {
@@ -152,7 +152,9 @@ export class CustomerListComponent implements OnInit {
   }
 
   // Exposed on the <th> so assistive tech announces the current sort.
-  ariaSort(column: 'name' | 'email' | 'phoneNumber'): 'ascending' | 'descending' | 'none' {
+  ariaSort(
+    column: 'name' | 'email' | 'phoneNumber',
+  ): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
@@ -173,7 +175,7 @@ export class CustomerListComponent implements OnInit {
   }
 
   exportCsv(): void {
-    this.exportCustomerService.exportCustomers({
+    this.customerService.exportCustomers({
       searchTerm: this.searchTerm().trim() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
@@ -182,7 +184,7 @@ export class CustomerListComponent implements OnInit {
 
   private fetchCustomers(): void {
     this.selectedCustomerIds.set(new Set());
-    this.getCustomerService.loadCustomers({
+    this.customerService.loadCustomers({
       pageNumber: this.currentPage(),
       pageSize: this.pageSize,
       searchTerm: this.searchTerm().trim() || undefined,
@@ -198,11 +200,11 @@ export class CustomerListComponent implements OnInit {
       { title: 'Deactivate customer?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.activateCustomerService.deactivateCustomer(customerId);
+    this.customerService.deactivateCustomer(customerId);
   }
 
   reactivateCustomer(customerId: string): void {
-    this.activateCustomerService.reactivateCustomer(customerId);
+    this.customerService.reactivateCustomer(customerId);
   }
 
   async deleteCustomer(customerId: string): Promise<void> {
@@ -215,10 +217,10 @@ export class CustomerListComponent implements OnInit {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteCustomerService.deleteCustomer(customerId).subscribe({
+    this.customerService.deleteCustomer(customerId).subscribe({
       next: () => {
         this.deleting.set(false);
-        // removeCustomerLocally() (called by DeleteCustomerService) only
+        // deleteCustomer() only
         // drops the row from the in-memory page — totalItems/page count
         // would go stale without a real re-fetch of the current page.
         this.fetchCustomers();
@@ -262,15 +264,15 @@ export class CustomerListComponent implements OnInit {
   // buttons would require.
   async bulkDeleteSelected(): Promise<void> {
     const customerIds = this.selectedCustomerIds();
-    const selected = this.customers().filter((c) => customerIds.has(c.customerId));
+    const selected = this.customers().filter((c) =>
+      customerIds.has(c.customerId),
+    );
     if (selected.length === 0) return;
 
     const toDeactivate = selected.filter(
       (c) => c.status === CustomerStatus.Active,
     );
-    const toDelete = selected.filter(
-      (c) => c.status !== CustomerStatus.Active,
-    );
+    const toDelete = selected.filter((c) => c.status !== CustomerStatus.Active);
 
     const lines = [`Of the ${selected.length} selected customers:`];
     if (toDeactivate.length > 0) {
@@ -285,24 +287,27 @@ export class CustomerListComponent implements OnInit {
     }
     lines.push('Continue?');
 
-    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'), {
-      title: 'Apply bulk action?',
-      confirmLabel: 'Apply',
-      variant: toDelete.length > 0 ? 'danger' : 'default',
-    });
+    const confirmed = await this.confirmDialogService.confirm(
+      lines.join('\n'),
+      {
+        title: 'Apply bulk action?',
+        confirmLabel: 'Apply',
+        variant: toDelete.length > 0 ? 'danger' : 'default',
+      },
+    );
     if (!confirmed) return;
 
     this.bulkActionInProgress.set(true);
 
     const operations = [
       ...toDeactivate.map((c) =>
-        this.activateCustomerService.deactivateCustomerSilently(c.customerId).pipe(
+        this.customerService.deactivateCustomerSilently(c.customerId).pipe(
           map(() => true),
           catchError(() => of(false)),
         ),
       ),
       ...toDelete.map((c) =>
-        this.deleteCustomerService.deleteCustomerSilently(c.customerId).pipe(
+        this.customerService.deleteCustomerSilently(c.customerId).pipe(
           map(() => true),
           catchError(() => of(false)),
         ),

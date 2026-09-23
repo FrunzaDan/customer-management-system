@@ -20,7 +20,9 @@ interface RankedBar extends RankedItem {
 })
 export class RankedBarChartComponent {
   readonly items = input.required<RankedItem[]>();
-  readonly valueFormatter = input<(value: number) => string>((value) => value.toLocaleString());
+  readonly valueFormatter = input<(value: number) => string>((value) =>
+    value.toLocaleString(),
+  );
   readonly ariaLabel = input('Ranked bar chart');
   readonly emptyMessage = input('No data yet.');
 

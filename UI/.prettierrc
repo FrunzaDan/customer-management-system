@@ -12,8 +12,15 @@
   "htmlWhitespaceSensitivity": "css",
   "endOfLine": "lf",
   "vueIndentScriptAndStyle": true,
-  "cssBracketSpacing": true,
   "insertPragma": false,
   "proseWrap": "preserve",
-  "embeddedLanguageFormatting": "auto"
+  "embeddedLanguageFormatting": "auto",
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": {
+        "parser": "angular"
+      }
+    }
+  ]
 }

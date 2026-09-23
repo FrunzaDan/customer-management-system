@@ -15,6 +15,7 @@ describe('ProductsComponent', () => {
     productId: 'p1',
     name: 'Aerobook 14 Pro',
     category: 'Laptop',
+    description: null,
     price: 1299,
     initialQuantity: 25,
     quantityOnHand: 20,
@@ -76,14 +77,32 @@ describe('ProductsComponent', () => {
     const fixture = render();
     products.set([
       buildProduct({ productId: 'p1', name: 'Aerobook 14 Pro' }),
-      buildProduct({ productId: 'p2', name: 'Voltix K1', soldQuantity: 3, initialQuantity: 10, quantityOnHand: 7 }),
+      buildProduct({
+        productId: 'p2',
+        name: 'Voltix K1',
+        soldQuantity: 3,
+        initialQuantity: 10,
+        quantityOnHand: 7,
+      }),
     ]);
     fixture.detectChanges();
 
-    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr');
+    const rows = (fixture.nativeElement as HTMLElement).querySelectorAll(
+      'tbody tr',
+    );
     expect(rows).toHaveLength(2);
-    const cells = Array.from(rows[1].querySelectorAll('th, td')).map((c) => c.textContent?.trim());
-    expect(cells).toEqual(['Voltix K1', 'Laptop', 'Central Depot', '1,299.00', '3', '10', '7']);
+    const cells = Array.from(rows[1].querySelectorAll('th, td')).map((c) =>
+      c.textContent?.trim(),
+    );
+    expect(cells).toEqual([
+      'Voltix K1',
+      'Laptop',
+      'Central Depot',
+      '1,299.00',
+      '3',
+      '10',
+      '7',
+    ]);
   });
 
   it('links each product to its details page by productId', () => {
@@ -91,8 +110,10 @@ describe('ProductsComponent', () => {
     products.set([buildProduct({ productId: 'abc-123' })]);
     fixture.detectChanges();
 
-    const link = (fixture.nativeElement as HTMLElement).querySelector('tbody a') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/product-details?id=abc-123');
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      'tbody a',
+    ) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/products/abc-123');
   });
 
   it('shows "Sold out" instead of 0 when nothing is left', () => {
@@ -100,27 +121,55 @@ describe('ProductsComponent', () => {
     products.set([buildProduct({ quantityOnHand: 0, soldQuantity: 25 })]);
     fixture.detectChanges();
 
-    const lastCell = (fixture.nativeElement as HTMLElement).querySelector('tbody tr td:last-child');
+    const lastCell = (fixture.nativeElement as HTMLElement).querySelector(
+      'tbody tr td:last-child',
+    );
     expect(lastCell?.textContent?.trim()).toBe('Sold out');
   });
   describe('sorting', () => {
     const names = (fixture: ReturnType<typeof render>) =>
-      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr th')).map((c) =>
-        c.textContent?.trim(),
-      );
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('tbody tr th'),
+      ).map((c) => c.textContent?.trim());
     const header = (fixture: ReturnType<typeof render>, label: string) =>
-      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('thead th')).find((th) =>
-        th.textContent?.includes(label),
-      ) as HTMLElement;
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('thead th'),
+      ).find((th) => th.textContent?.includes(label)) as HTMLElement;
     const click = (fixture: ReturnType<typeof render>, label: string) => {
-      (header(fixture, label).querySelector('button') as HTMLButtonElement).click();
+      (
+        header(fixture, label).querySelector('button') as HTMLButtonElement
+      ).click();
       fixture.detectChanges();
     };
     const seed = (fixture: ReturnType<typeof render>) => {
       products.set([
-        buildProduct({ productId: 'a', name: 'Alpha', category: 'Mouse', price: 30, soldQuantity: 2, initialQuantity: 10, quantityOnHand: 8 }),
-        buildProduct({ productId: 'b', name: 'Bravo', category: 'Laptop', price: 1200, soldQuantity: 9, initialQuantity: 10, quantityOnHand: 1 }),
-        buildProduct({ productId: 'c', name: 'Charlie', category: 'Keyboard', price: 99.5, soldQuantity: 5, initialQuantity: 20, quantityOnHand: 15 }),
+        buildProduct({
+          productId: 'a',
+          name: 'Alpha',
+          category: 'Mouse',
+          price: 30,
+          soldQuantity: 2,
+          initialQuantity: 10,
+          quantityOnHand: 8,
+        }),
+        buildProduct({
+          productId: 'b',
+          name: 'Bravo',
+          category: 'Laptop',
+          price: 1200,
+          soldQuantity: 9,
+          initialQuantity: 10,
+          quantityOnHand: 1,
+        }),
+        buildProduct({
+          productId: 'c',
+          name: 'Charlie',
+          category: 'Keyboard',
+          price: 99.5,
+          soldQuantity: 5,
+          initialQuantity: 20,
+          quantityOnHand: 15,
+        }),
       ]);
       fixture.detectChanges();
     };
@@ -139,11 +188,15 @@ describe('ProductsComponent', () => {
 
       click(fixture, 'Category');
       expect(names(fixture)).toEqual(['Charlie', 'Bravo', 'Alpha']); // Keyboard, Laptop, Mouse
-      expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe('ascending');
+      expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe(
+        'ascending',
+      );
 
       click(fixture, 'Category');
       expect(names(fixture)).toEqual(['Alpha', 'Bravo', 'Charlie']);
-      expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe('descending');
+      expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe(
+        'descending',
+      );
     });
 
     it('sorts numeric columns by value, not as text (1200 > 99.5 > 30)', () => {
@@ -179,7 +232,9 @@ describe('ProductsComponent', () => {
       click(fixture, 'Price'); // now descending
       click(fixture, 'Product');
 
-      expect(header(fixture, 'Product').getAttribute('aria-sort')).toBe('ascending');
+      expect(header(fixture, 'Product').getAttribute('aria-sort')).toBe(
+        'ascending',
+      );
       expect(header(fixture, 'Price').getAttribute('aria-sort')).toBe('none');
     });
 
@@ -189,7 +244,11 @@ describe('ProductsComponent', () => {
 
       click(fixture, 'Price');
 
-      expect(products().map((p) => p.name)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+      expect(products().map((p) => p.name)).toEqual([
+        'Alpha',
+        'Bravo',
+        'Charlie',
+      ]);
     });
   });
 });

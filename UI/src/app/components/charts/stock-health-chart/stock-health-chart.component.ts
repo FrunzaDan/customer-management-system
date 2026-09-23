@@ -27,8 +27,13 @@ export class StockHealthChartComponent {
 
   readonly bars = computed<StockHealthBar[]>(() =>
     this.rows().map((row) => {
-      const percent = row.inventory > 0 ? Math.round((row.sold / row.inventory) * 100) : 0;
-      return { ...row, percent, nearSellout: percent >= NEAR_SELLOUT_THRESHOLD };
+      const percent =
+        row.inventory > 0 ? Math.round((row.sold / row.inventory) * 100) : 0;
+      return {
+        ...row,
+        percent,
+        nearSellout: percent >= NEAR_SELLOUT_THRESHOLD,
+      };
     }),
   );
 }

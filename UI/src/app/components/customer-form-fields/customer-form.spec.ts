@@ -2,7 +2,9 @@ import { emptyCustomerForm, isCustomerFormDirty } from './customer-form';
 
 describe('isCustomerFormDirty', () => {
   it('is false when nothing differs from the baseline', () => {
-    expect(isCustomerFormDirty(emptyCustomerForm(), emptyCustomerForm())).toBe(false);
+    expect(isCustomerFormDirty(emptyCustomerForm(), emptyCustomerForm())).toBe(
+      false,
+    );
   });
 
   it('is true when any single field differs', () => {

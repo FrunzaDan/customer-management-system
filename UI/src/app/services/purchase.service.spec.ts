@@ -97,7 +97,10 @@ describe('PurchaseService', () => {
 
       httpMock
         .expectOne((r) => r.url === LIST_URL)
-        .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+        .flush(
+          { message: 'boom' },
+          { status: 500, statusText: 'Server Error' },
+        );
       await settle();
 
       expect(service.error()).toBe('boom');
@@ -113,7 +116,10 @@ describe('PurchaseService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.params.get('customerId')).toBe('customer-1');
       expect(req.request.params.get('productId')).toBe('product-1');
-      req.flush({ status: 200, responseMessage: 'Purchase recorded successfully.' });
+      req.flush({
+        status: 200,
+        responseMessage: 'Purchase recorded successfully.',
+      });
     });
 
     it('shows a success notification once the purchase is recorded', () => {
@@ -144,7 +150,9 @@ describe('PurchaseService', () => {
       const show = vi.spyOn(notificationService, 'show');
       const onError = vi.fn();
 
-      service.purchaseProduct('customer-1', 'product-1').subscribe({ error: onError });
+      service
+        .purchaseProduct('customer-1', 'product-1')
+        .subscribe({ error: onError });
       httpMock
         .expectOne((r) => r.url === PURCHASE_URL)
         .flush(

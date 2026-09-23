@@ -19,9 +19,7 @@ export interface CredentialsCheckResult {
   providedIn: 'root',
 })
 export class UserLoginService {
-  readonly APIURL =
-    environment.apiUrl +
-    '/api/authentication/access-token';
+  readonly APIURL = environment.apiUrl + '/api/authentication/access-token';
 
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
@@ -45,8 +43,11 @@ export class UserLoginService {
   // Keys off response.status, not the response message text — comparing against a
   // literal success string ("Success!") would silently break if that wording ever
   // changed on either side of the API/UI boundary.
-  checkCredentials(response: GenericResponse<LoginData>): CredentialsCheckResult {
-    const success = response.data?.accessToken != null && response.status === 200;
+  checkCredentials(
+    response: GenericResponse<LoginData>,
+  ): CredentialsCheckResult {
+    const success =
+      response.data?.accessToken != null && response.status === 200;
     if (success) {
       this.sessionStorageService.setSessionAccessToken(
         response.data!.accessToken,

@@ -1,11 +1,9 @@
-﻿using System.Net;
-using System.Threading.RateLimiting;
+﻿using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using System.Text.Json.Serialization;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -25,8 +23,6 @@ builder.Services.AddBusinessLogic();
 // DateOnly, UTC DateTime ("...Z") and Guid natively.
 builder.Services.AddControllers(options =>
         options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())))
-    .AddJsonOptions(options =>
-        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)
     .ConfigureApiBehaviorOptions(options =>
     {
         // With typed request members (Guid, DateOnly, enums), a malformed value now fails in
@@ -110,12 +106,6 @@ builder.Services.AddRateLimiter(options =>
             new ResponseModel<object>(StatusCodes.Status429TooManyRequests,
                 "Too many login attempts. Please wait a moment and try again."), cancellationToken);
     };
-});
-
-builder.Services.AddHttpsRedirection(options =>
-{
-    options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
-    options.HttpsPort = 5001;
 });
 
 var app = builder.Build();

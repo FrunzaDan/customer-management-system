@@ -4,124 +4,150 @@
        when the data arrives would drop that focus. -->
   <div class="page-header">
     <div>
-      <a routerLink="/products" class="back-link"><span aria-hidden="true">←</span> Back to products</a>
+      <a routerLink="/products" class="back-link"
+        ><span aria-hidden="true">←</span> Back to products</a
+      >
       <h1 class="page-title">{{ product()?.name ?? 'Product details' }}</h1>
       @if (product(); as product) {
-      <p class="page-subtitle">{{ product.category }} · who bought it, and when.</p>
+        <p class="page-subtitle">
+          {{ product.category }} · who bought it, and when.
+        </p>
       }
     </div>
   </div>
 
   @if (isLoading()) {
-  <div class="app-card loading-state" role="status">
-    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading product…
-  </div>
+    <div class="app-card loading-state" role="status">
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading product…
+    </div>
   } @else if (errorMessage(); as error) {
-  <div class="alert alert-danger" role="alert">{{ error }}</div>
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
   } @else if (product(); as product) {
-  <div class="row g-4">
-    <div class="col-12 col-lg-5 d-flex flex-column gap-4">
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Stock</h2>
-          <dl class="stat-grid">
-            <div class="stat">
-              <dt>Sold</dt>
-              <dd>{{ product.soldQuantity }}</dd>
-            </div>
-            <div class="stat">
-              <dt>Inventory</dt>
-              <dd>{{ product.initialQuantity }}</dd>
-            </div>
-            <div class="stat">
-              <dt>Left</dt>
-              <dd>{{ product.quantityOnHand }}</dd>
-            </div>
-          </dl>
-          @if (product.quantityOnHand === 0) {
-          <p class="form-note mb-0 mt-3">This product is sold out.</p>
-          }
-        </div>
-      </div>
-
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Product</h2>
-          <dl class="detail-list">
-            <div class="detail-row">
-              <dt>Category</dt>
-              <dd>{{ product.category }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Price</dt>
-              <dd>{{ product.price | number: '1.2-2' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Warehouse</dt>
-              <dd>{{ product.warehouse }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Description</dt>
-              <dd>{{ product.description || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Product ID</dt>
-              <dd class="entity-id">{{ product.productId }}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-lg-7">
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Purchases</h2>
-          @if (buyers().length === 0) {
-          <p class="text-muted mb-0">
-            @if (unlistedSales() > 0) { No customers on record have bought this product. } @else { Nobody has bought this product yet. }
-          </p>
-          } @else {
-          <div class="table-responsive" role="region" aria-label="Customers who bought this product" tabindex="0">
-            <table class="table table-themed table-striped table-hover mb-0 buyers-table">
-              <caption class="visually-hidden">
-                Customers who bought {{ product.name }}, newest first
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Customer</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Purchased</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (buyer of buyers(); track buyer.customerPurchaseId) {
-                <tr>
-                  <th scope="row" class="align-middle fw-normal">
-                    <a
-                      class="plain-Links hoverItem"
-                      routerLink="/customer-details"
-                      [queryParams]="{ id: buyer.customerId }"
-                      >{{ buyerName(buyer) }}</a
-                    >
-                  </th>
-                  <td class="align-middle email-cell">{{ buyer.customerEmail }}</td>
-                  <td class="align-middle">{{ buyer.purchasedAt | date: 'medium' }}</td>
-                </tr>
-                }
-              </tbody>
-            </table>
+    <div class="row g-4">
+      <div class="col-12 col-lg-5 d-flex flex-column gap-4">
+        <div class="card app-card">
+          <div class="card-body">
+            <h2 class="card-title">Stock</h2>
+            <dl class="stat-grid">
+              <div class="stat">
+                <dt>Sold</dt>
+                <dd>{{ product.soldQuantity }}</dd>
+              </div>
+              <div class="stat">
+                <dt>Inventory</dt>
+                <dd>{{ product.initialQuantity }}</dd>
+              </div>
+              <div class="stat">
+                <dt>Left</dt>
+                <dd>{{ product.quantityOnHand }}</dd>
+              </div>
+            </dl>
+            @if (product.quantityOnHand === 0) {
+              <p class="form-note mb-0 mt-3">This product is sold out.</p>
+            }
           </div>
-          }
-          @if (unlistedSales() > 0) {
-          <p class="form-note mb-0 mt-3">
-            {{ unlistedSales() }} {{ unlistedSales() === 1 ? 'sale was' : 'sales were' }} made to
-            customers that have since been deleted, so they are not listed.
-          </p>
-          }
+        </div>
+
+        <div class="card app-card">
+          <div class="card-body">
+            <h2 class="card-title">Product</h2>
+            <dl class="detail-list">
+              <div class="detail-row">
+                <dt>Category</dt>
+                <dd>{{ product.category }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Price</dt>
+                <dd>{{ product.price | number: '1.2-2' }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Warehouse</dt>
+                <dd>{{ product.warehouse }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Description</dt>
+                <dd>{{ product.description || '—' }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Product ID</dt>
+                <dd class="entity-id">{{ product.productId }}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-7">
+        <div class="card app-card">
+          <div class="card-body">
+            <h2 class="card-title">Purchases</h2>
+            @if (buyers().length === 0) {
+              <p class="text-muted mb-0">
+                @if (unlistedSales() > 0) {
+                  No customers on record have bought this product.
+                } @else {
+                  Nobody has bought this product yet.
+                }
+              </p>
+            } @else {
+              <div
+                class="table-responsive"
+                role="region"
+                aria-label="Customers who bought this product"
+                tabindex="0"
+              >
+                <table
+                  class="table table-themed table-striped table-hover mb-0 buyers-table"
+                >
+                  <caption class="visually-hidden">
+                    Customers who bought
+                    {{
+                      product.name
+                    }}, newest first
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Customer</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Purchased</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (buyer of buyers(); track buyer.customerPurchaseId) {
+                      <tr>
+                        <th scope="row" class="align-middle fw-normal">
+                          <a
+                            class="plain-Links hoverItem"
+                            [routerLink]="['/customers', buyer.customerId]"
+                            >{{ buyerName(buyer) }}</a
+                          >
+                        </th>
+                        <td class="align-middle email-cell">
+                          {{ buyer.customerEmail }}
+                        </td>
+                        <td class="align-middle">
+                          {{ buyer.purchasedAt | date: 'medium' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            @if (unlistedSales() > 0) {
+              <p class="form-note mb-0 mt-3">
+                {{ unlistedSales() }}
+                {{ unlistedSales() === 1 ? 'sale was' : 'sales were' }} made to
+                customers that have since been deleted, so they are not listed.
+              </p>
+            }
+          </div>
         </div>
       </div>
     </div>
-  </div>
   }
 </div>

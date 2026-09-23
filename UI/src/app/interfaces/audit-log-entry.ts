@@ -14,7 +14,7 @@ export interface AuditLogEntry {
   customerId: string;
   performedBy: string;
   actionType: AuditAction;
-  // Optional in the DB; the API omits it when there are none.
-  details?: string;
+  // NULL in the DB when there are none, sent as null.
+  details: string | null;
   occurredAt: IsoDateTime;
 }

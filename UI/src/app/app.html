@@ -6,15 +6,15 @@
 </header>
 <main id="main" tabindex="-1" #main>
   @if (apiAvailable()) {
-  <router-outlet />
+    <router-outlet />
   } @else {
-  <div class="api-down-card" role="alert">
-    <h1>⚠️ API is not running</h1>
-    <p>
-      Please start the backend server at
-      <code>{{ environment.apiUrl }}</code>
-    </p>
-  </div>
+    <div class="api-down-card" role="alert">
+      <h1>⚠️ API is not running</h1>
+      <p>
+        Please start the backend server at
+        <code>{{ environment.apiUrl }}</code>
+      </p>
+    </div>
   }
 </main>
 <app-footer></app-footer>

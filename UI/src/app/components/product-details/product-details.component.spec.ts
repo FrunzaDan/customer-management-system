@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { ProductDetails } from '../../interfaces/product-details';
-import { ProductDetailsService } from '../../services/product-details.service';
+import { ProductService } from '../../services/product.service';
 import { ProductDetailsComponent } from './product-details.component';
 
 describe('ProductDetailsComponent', () => {
@@ -12,7 +12,10 @@ describe('ProductDetailsComponent', () => {
   let loading: ReturnType<typeof signal<boolean>>;
   let error: ReturnType<typeof signal<string | null>>;
 
-  const buildDetails = (overrides: Partial<ProductDetails['product']> = {}, buyers: ProductDetails['buyers'] = []): ProductDetails => ({
+  const buildDetails = (
+    overrides: Partial<ProductDetails['product']> = {},
+    buyers: ProductDetails['buyers'] = [],
+  ): ProductDetails => ({
     product: {
       productId: 'product-1',
       name: 'Aerobook 14 Pro',
@@ -28,7 +31,11 @@ describe('ProductDetailsComponent', () => {
     buyers,
   });
 
-  const buyer = (id: number, first: string, customerId = `customer-${id}`): ProductDetails['buyers'][number] => ({
+  const buyer = (
+    id: number,
+    first: string,
+    customerId = `customer-${id}`,
+  ): ProductDetails['buyers'][number] => ({
     customerPurchaseId: id,
     customerId: customerId,
     customerFirstName: first,
@@ -48,11 +55,11 @@ describe('ProductDetailsComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         {
-          provide: ProductDetailsService,
+          provide: ProductService,
           useValue: {
             details: details,
-            loading: loading,
-            error: error,
+            detailsLoading: loading,
+            detailsError: error,
             loadProductDetails,
           },
         },
@@ -61,7 +68,7 @@ describe('ProductDetailsComponent', () => {
     });
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
     const fixture = TestBed.createComponent(ProductDetailsComponent);
-    if (routeParamId) fixture.componentRef.setInput('id', routeParamId);
+    if (routeParamId) fixture.componentRef.setInput('productId', routeParamId);
     fixture.detectChanges();
     return fixture;
   };
@@ -102,7 +109,9 @@ describe('ProductDetailsComponent', () => {
     error.set(null);
     details.set(buildDetails());
     fixture.detectChanges();
-    expect(el(fixture).querySelector('h1')?.textContent?.trim()).toBe('Aerobook 14 Pro');
+    expect(el(fixture).querySelector('h1')?.textContent?.trim()).toBe(
+      'Aerobook 14 Pro',
+    );
   });
 
   it('shows the error and a way back when loading failed', () => {
@@ -132,14 +141,21 @@ describe('ProductDetailsComponent', () => {
 
   it('lists who bought it, linking each customer to their details page', () => {
     const fixture = render();
-    details.set(buildDetails({}, [buyer(2, 'Ada', 'customer-ada'), buyer(1, 'Ivan', 'customer-ivan')]));
+    details.set(
+      buildDetails({}, [
+        buyer(2, 'Ada', 'customer-ada'),
+        buyer(1, 'Ivan', 'customer-ivan'),
+      ]),
+    );
     fixture.detectChanges();
 
     const rows = el(fixture).querySelectorAll('tbody tr');
     expect(rows).toHaveLength(2);
     expect(rows[0].textContent).toContain('Ada Shopper');
     expect(rows[0].textContent).toContain('ada@example.com');
-    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/customer-details?id=customer-ada');
+    expect(rows[0].querySelector('a')?.getAttribute('href')).toBe(
+      '/customers/customer-ada',
+    );
   });
 
   it('says nobody has bought it yet when it has no sales', () => {
@@ -147,7 +163,9 @@ describe('ProductDetailsComponent', () => {
     details.set(buildDetails({ soldQuantity: 0, quantityOnHand: 25 }));
     fixture.detectChanges();
 
-    expect(el(fixture).textContent).toContain('Nobody has bought this product yet.');
+    expect(el(fixture).textContent).toContain(
+      'Nobody has bought this product yet.',
+    );
     expect(el(fixture).querySelector('tbody')).toBeNull();
   });
 
@@ -157,7 +175,9 @@ describe('ProductDetailsComponent', () => {
     details.set(buildDetails({}, [buyer(1, 'Ada')]));
     fixture.detectChanges();
 
-    expect(el(fixture).textContent).toContain('1 sale was made to customers that have since been deleted');
+    expect(el(fixture).textContent).toContain(
+      '1 sale was made to customers that have since been deleted',
+    );
   });
 
   it('flags a sold-out product', () => {

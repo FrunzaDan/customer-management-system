@@ -19,7 +19,9 @@ describe('NotificationService', () => {
   it('adds a success notification with an incrementing id by default', () => {
     service.show('Saved');
 
-    expect(service.notifications()).toEqual([{ id: 1, message: 'Saved', type: 'success' }]);
+    expect(service.notifications()).toEqual([
+      { id: 1, message: 'Saved', type: 'success' },
+    ]);
   });
 
   it('assigns distinct, increasing ids across calls', () => {
@@ -44,7 +46,9 @@ describe('NotificationService', () => {
 
     vi.advanceTimersByTime(60_000);
 
-    expect(service.notifications()).toEqual([{ id: 1, message: 'Failed', type: 'error' }]);
+    expect(service.notifications()).toEqual([
+      { id: 1, message: 'Failed', type: 'error' },
+    ]);
   });
 
   it('honors an explicit duration, leaving other notifications intact', () => {
@@ -53,7 +57,9 @@ describe('NotificationService', () => {
 
     vi.advanceTimersByTime(1000);
 
-    expect(service.notifications().map((n) => n.message)).toEqual(['Long-lived']);
+    expect(service.notifications().map((n) => n.message)).toEqual([
+      'Long-lived',
+    ]);
   });
 
   it('dismiss(id) removes only the matching notification', () => {

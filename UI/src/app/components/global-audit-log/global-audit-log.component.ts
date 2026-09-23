@@ -1,10 +1,4 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -76,7 +70,9 @@ export class GlobalAuditLogComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.clearing.set(false);
-        this.clearError.set(extractErrorMessage(error, 'Failed to clear the audit log'));
+        this.clearError.set(
+          extractErrorMessage(error, 'Failed to clear the audit log'),
+        );
       },
     });
   }

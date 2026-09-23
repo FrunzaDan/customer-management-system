@@ -5,8 +5,7 @@ import { submit } from '@angular/forms/signals';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Customer } from '../../interfaces/customer-response';
-import { GetCustomerService } from '../../services/get-customer.service';
-import { UpdateCustomerService } from '../../services/update-customer.service';
+import { CustomerService } from '../../services/customer.service';
 import { UpdateCustomerComponent } from './update-customer.component';
 
 describe('UpdateCustomerComponent', () => {
@@ -37,17 +36,19 @@ describe('UpdateCustomerComponent', () => {
     ...overrides,
   });
 
-  // `id` is what withComponentInputBinding() binds from `?id=`.
+  // `customerId` is what withComponentInputBinding() binds from the `:customerId` route param.
   const createComponent = (id: string | null = 'customer-1') => {
     const fixture = TestBed.createComponent(UpdateCustomerComponent);
-    if (id) fixture.componentRef.setInput('id', id);
+    if (id) fixture.componentRef.setInput('customerId', id);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
 
   beforeEach(() => {
     getCustomer = vi.fn();
-    updateCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    updateCustomer = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
     selectedCustomer = signal<Customer | null>(null);
 
@@ -55,15 +56,15 @@ describe('UpdateCustomerComponent', () => {
       providers: [
         provideRouter([]),
         {
-          provide: GetCustomerService,
+          provide: CustomerService,
           useValue: {
             selectedCustomer: selectedCustomer,
             loading: signal(false),
             error: signal<string | null>(null),
             getCustomer,
+            updateCustomer,
           },
         },
-        { provide: UpdateCustomerService, useValue: { updateCustomer } },
       ],
     });
     // RouterLink in the template needs the real Router; only stub navigate().
@@ -131,7 +132,10 @@ describe('UpdateCustomerComponent', () => {
 
     it('does nothing when no customer has been loaded yet', async () => {
       const component = createComponent();
-      component.model.set({ ...component.model(), ...toModel(buildCustomer()) });
+      component.model.set({
+        ...component.model(),
+        ...toModel(buildCustomer()),
+      });
 
       await submit(component.customerForm);
 
@@ -140,7 +144,9 @@ describe('UpdateCustomerComponent', () => {
 
     it('merges the form values onto the loaded customer and saves', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1', createdAt: '2026-01-01' }));
+      selectedCustomer.set(
+        buildCustomer({ customerId: 'customer-1', createdAt: '2026-01-01' }),
+      );
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       await submit(component.customerForm);
@@ -213,7 +219,9 @@ describe('UpdateCustomerComponent', () => {
     it('keeps them when the save fails', async () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      updateCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      updateCustomer.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 })),
+      );
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       await submit(component.customerForm);
@@ -240,12 +248,16 @@ describe('UpdateCustomerComponent', () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
 
-      const clean = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      const clean = new Event('beforeunload', {
+        cancelable: true,
+      }) as BeforeUnloadEvent;
       component.onBeforeUnload(clean);
       expect(clean.defaultPrevented).toBe(false);
 
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
-      const dirty = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      const dirty = new Event('beforeunload', {
+        cancelable: true,
+      }) as BeforeUnloadEvent;
       component.onBeforeUnload(dirty);
       expect(dirty.defaultPrevented).toBe(true);
     });

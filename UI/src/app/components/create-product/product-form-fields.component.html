@@ -3,23 +3,25 @@
     <legend class="card-title">Product details</legend>
 
     @for (field of textFields; track field.key) {
-    @let state = form()[field.key]();
-    @let showError = state.touched() && state.invalid();
-    <div class="mb-3">
-      <label class="form-label" [for]="field.key">{{ field.label }}</label>
-      <input
-        type="text"
-        class="form-control"
-        [id]="field.key"
-        [formField]="form()[field.key]"
-        [class.is-invalid]="showError"
-        [attr.aria-invalid]="showError"
-        [attr.aria-describedby]="showError ? field.key + '-error' : null"
-      />
-      @if (showError) {
-      <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
-      }
-    </div>
+      @let state = form()[field.key]();
+      @let showError = state.touched() && state.invalid();
+      <div class="mb-3">
+        <label class="form-label" [for]="field.key">{{ field.label }}</label>
+        <input
+          type="text"
+          class="form-control"
+          [id]="field.key"
+          [formField]="form()[field.key]"
+          [class.is-invalid]="showError"
+          [attr.aria-invalid]="showError"
+          [attr.aria-describedby]="showError ? field.key + '-error' : null"
+        />
+        @if (showError) {
+          <div class="invalid-feedback" [id]="field.key + '-error'">
+            {{ state.errors()[0].message }}
+          </div>
+        }
+      </div>
     }
 
     @let price = form().price();
@@ -37,12 +39,15 @@
         [attr.aria-describedby]="priceError ? 'price-error' : null"
       />
       @if (priceError) {
-      <div class="invalid-feedback" id="price-error">{{ price.errors()[0].message }}</div>
+        <div class="invalid-feedback" id="price-error">
+          {{ price.errors()[0].message }}
+        </div>
       }
     </div>
 
     @let initialQuantity = form().initialQuantity();
-    @let initialQuantityError = initialQuantity.touched() && initialQuantity.invalid();
+    @let initialQuantityError =
+      initialQuantity.touched() && initialQuantity.invalid();
     <div class="mb-3">
       <label class="form-label" for="initialQuantity">Initial quantity</label>
       <input
@@ -53,16 +58,25 @@
         [formField]="form().initialQuantity"
         [class.is-invalid]="initialQuantityError"
         [attr.aria-invalid]="initialQuantityError"
-        [attr.aria-describedby]="initialQuantityError ? 'initialQuantity-error' : null"
+        [attr.aria-describedby]="
+          initialQuantityError ? 'initialQuantity-error' : null
+        "
       />
       @if (initialQuantityError) {
-      <div class="invalid-feedback" id="initialQuantity-error">{{ initialQuantity.errors()[0].message }}</div>
+        <div class="invalid-feedback" id="initialQuantity-error">
+          {{ initialQuantity.errors()[0].message }}
+        </div>
       }
     </div>
 
     <div class="mb-3">
       <label class="form-label" for="description">Description (optional)</label>
-      <textarea id="description" class="form-control" rows="3" [formField]="form().description"></textarea>
+      <textarea
+        id="description"
+        class="form-control"
+        rows="3"
+        [formField]="form().description"
+      ></textarea>
     </div>
   </fieldset>
 </div>

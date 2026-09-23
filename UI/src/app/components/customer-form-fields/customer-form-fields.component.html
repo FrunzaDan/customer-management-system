@@ -7,23 +7,27 @@
         <legend class="card-title">Basic information</legend>
 
         @for (field of basicFields; track field.key) {
-        @let state = form()[field.key]();
-        @let showError = state.touched() && state.invalid();
-        <div class="mb-3">
-          <label class="form-label" [for]="field.key">{{ field.label }}</label>
-          <input
-            type="text"
-            class="form-control"
-            [id]="field.key"
-            [formField]="form()[field.key]"
-            [class.is-invalid]="showError"
-            [attr.aria-invalid]="showError"
-            [attr.aria-describedby]="showError ? field.key + '-error' : null"
-          />
-          @if (showError) {
-          <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
-          }
-        </div>
+          @let state = form()[field.key]();
+          @let showError = state.touched() && state.invalid();
+          <div class="mb-3">
+            <label class="form-label" [for]="field.key">{{
+              field.label
+            }}</label>
+            <input
+              type="text"
+              class="form-control"
+              [id]="field.key"
+              [formField]="form()[field.key]"
+              [class.is-invalid]="showError"
+              [attr.aria-invalid]="showError"
+              [attr.aria-describedby]="showError ? field.key + '-error' : null"
+            />
+            @if (showError) {
+              <div class="invalid-feedback" [id]="field.key + '-error'">
+                {{ state.errors()[0].message }}
+              </div>
+            }
+          </div>
         }
 
         @let gender = form().gender();
@@ -44,7 +48,9 @@
             <option value="2">Female</option>
           </select>
           @if (genderError) {
-          <div class="invalid-feedback" id="gender-error">{{ gender.errors()[0].message }}</div>
+            <div class="invalid-feedback" id="gender-error">
+              {{ gender.errors()[0].message }}
+            </div>
           }
         </div>
 
@@ -62,7 +68,9 @@
             [attr.aria-describedby]="birthDateError ? 'birthDate-error' : null"
           />
           @if (birthDateError) {
-          <div class="invalid-feedback" id="birthDate-error">{{ birthDate.errors()[0].message }}</div>
+            <div class="invalid-feedback" id="birthDate-error">
+              {{ birthDate.errors()[0].message }}
+            </div>
           }
         </div>
       </fieldset>
@@ -75,23 +83,27 @@
         <legend class="card-title">Address</legend>
 
         @for (field of addressFields; track field.key) {
-        @let state = form()[field.key]();
-        @let showError = state.touched() && state.invalid();
-        <div class="mb-3">
-          <label class="form-label" [for]="field.key">{{ field.label }}</label>
-          <input
-            type="text"
-            class="form-control"
-            [id]="field.key"
-            [formField]="form()[field.key]"
-            [class.is-invalid]="showError"
-            [attr.aria-invalid]="showError"
-            [attr.aria-describedby]="showError ? field.key + '-error' : null"
-          />
-          @if (showError) {
-          <div class="invalid-feedback" [id]="field.key + '-error'">{{ state.errors()[0].message }}</div>
-          }
-        </div>
+          @let state = form()[field.key]();
+          @let showError = state.touched() && state.invalid();
+          <div class="mb-3">
+            <label class="form-label" [for]="field.key">{{
+              field.label
+            }}</label>
+            <input
+              type="text"
+              class="form-control"
+              [id]="field.key"
+              [formField]="form()[field.key]"
+              [class.is-invalid]="showError"
+              [attr.aria-invalid]="showError"
+              [attr.aria-describedby]="showError ? field.key + '-error' : null"
+            />
+            @if (showError) {
+              <div class="invalid-feedback" [id]="field.key + '-error'">
+                {{ state.errors()[0].message }}
+              </div>
+            }
+          </div>
         }
       </fieldset>
     </div>

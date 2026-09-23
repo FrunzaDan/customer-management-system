@@ -17,7 +17,9 @@ export class MonthlyActivityService {
   // as ProductService.
   private readonly requested = signal(false);
 
-  private readonly activityResource = httpResource<GenericResponse<MonthlyActivity>>(() =>
+  private readonly activityResource = httpResource<
+    GenericResponse<MonthlyActivity>
+  >(() =>
     this.requested()
       ? {
           url: this.API_URL,
@@ -26,10 +28,15 @@ export class MonthlyActivityService {
       : undefined,
   );
 
-  private readonly empty: MonthlyActivity = { customerCreations: [], productPurchases: [] };
+  private readonly empty: MonthlyActivity = {
+    customerCreations: [],
+    productPurchases: [],
+  };
 
   readonly activity = computed(() =>
-    this.activityResource.hasValue() ? (this.activityResource.value().data ?? this.empty) : this.empty,
+    this.activityResource.hasValue()
+      ? (this.activityResource.value().data ?? this.empty)
+      : this.empty,
   );
   readonly loading = this.activityResource.isLoading;
   readonly error = computed(() => {

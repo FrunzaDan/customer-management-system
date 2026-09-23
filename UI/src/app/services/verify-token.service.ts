@@ -9,9 +9,7 @@ import { HttpHeaderService } from './http-header.service';
   providedIn: 'root',
 })
 export class VerifyTokenService {
-  readonly APIURL =
-    environment.apiUrl +
-    '/api/authentication/verify-token';
+  readonly APIURL = environment.apiUrl + '/api/authentication/verify-token';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);

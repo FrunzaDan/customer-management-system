@@ -1,15 +1,15 @@
 @if (bars().length === 0) {
-<p class="ranked-empty">{{ emptyMessage() }}</p>
+  <p class="ranked-empty">{{ emptyMessage() }}</p>
 } @else {
-<ul class="ranked-list" [attr.aria-label]="ariaLabel()">
-  @for (bar of bars(); track bar.label) {
-  <li class="ranked-row">
-    <span class="ranked-label">{{ bar.label }}</span>
-    <span class="ranked-track">
-      <span class="ranked-fill" [style.width.%]="bar.percent"></span>
-    </span>
-    <span class="ranked-value">{{ bar.valueText }}</span>
-  </li>
-  }
-</ul>
+  <ul class="ranked-list" [attr.aria-label]="ariaLabel()">
+    @for (bar of bars(); track bar.label) {
+      <li class="ranked-row">
+        <span class="ranked-label">{{ bar.label }}</span>
+        <span class="ranked-track">
+          <span class="ranked-fill" [style.width.%]="bar.percent"></span>
+        </span>
+        <span class="ranked-value">{{ bar.valueText }}</span>
+      </li>
+    }
+  </ul>
 }

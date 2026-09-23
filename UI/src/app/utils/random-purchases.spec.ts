@@ -9,6 +9,7 @@ const buildProduct = (n: number, quantityOnHand = 10): Product => ({
   productId: `p${n}`,
   name: `Product ${n}`,
   category: 'Laptop',
+  description: null,
   price: 100,
   initialQuantity: 10,
   quantityOnHand,
@@ -16,7 +17,8 @@ const buildProduct = (n: number, quantityOnHand = 10): Product => ({
   warehouse: 'Central Depot',
 });
 
-const catalogue = (size = 50) => Array.from({ length: size }, (_, i) => buildProduct(i));
+const catalogue = (size = 50) =>
+  Array.from({ length: size }, (_, i) => buildProduct(i));
 
 describe('chooseProductsToBuy', () => {
   it('always picks between 1 and 5 products (checked over many random draws)', () => {
@@ -38,16 +40,23 @@ describe('chooseProductsToBuy', () => {
 
   it('never picks the same product twice', () => {
     for (let i = 0; i < 200; i++) {
-      const customerIds = chooseProductsToBuy(catalogue()).map((p) => p.productId);
+      const customerIds = chooseProductsToBuy(catalogue()).map(
+        (p) => p.productId,
+      );
       expect(new Set(customerIds).size).toBe(customerIds.length);
     }
   });
 
   it('only picks products that are in stock', () => {
-    const products = [...catalogue(10).map((p) => ({ ...p, quantityOnHand: 0 })), buildProduct(99, 3)];
+    const products = [
+      ...catalogue(10).map((p) => ({ ...p, quantityOnHand: 0 })),
+      buildProduct(99, 3),
+    ];
 
     for (let i = 0; i < 50; i++) {
-      expect(chooseProductsToBuy(products).map((p) => p.productId)).toEqual(['p99']);
+      expect(chooseProductsToBuy(products).map((p) => p.productId)).toEqual([
+        'p99',
+      ]);
     }
   });
 
@@ -58,7 +67,11 @@ describe('chooseProductsToBuy', () => {
   });
 
   it('returns nothing when the whole catalogue is sold out', () => {
-    expect(chooseProductsToBuy(catalogue(5).map((p) => ({ ...p, quantityOnHand: 0 })))).toEqual([]);
+    expect(
+      chooseProductsToBuy(
+        catalogue(5).map((p) => ({ ...p, quantityOnHand: 0 })),
+      ),
+    ).toEqual([]);
     expect(chooseProductsToBuy([])).toEqual([]);
   });
 

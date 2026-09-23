@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { CreateProductService } from '../../services/create-product.service';
+import { ProductService } from '../../services/product.service';
 import { ProductFormModel } from './product-form';
 import { CreateProductComponent } from './create-product.component';
 
@@ -22,7 +22,9 @@ describe('CreateProductComponent', () => {
   };
 
   beforeEach(() => {
-    createProduct = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    createProduct = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
 
     // The component resolves its dependencies (and builds its signal form) in
@@ -30,11 +32,13 @@ describe('CreateProductComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },
-        { provide: CreateProductService, useValue: { createProduct } },
+        { provide: ProductService, useValue: { createProduct } },
       ],
     });
 
-    component = TestBed.runInInjectionContext(() => new CreateProductComponent());
+    component = TestBed.runInInjectionContext(
+      () => new CreateProductComponent(),
+    );
   });
 
   it('does not call the service and reports the errors when the form is invalid', async () => {
@@ -47,7 +51,11 @@ describe('CreateProductComponent', () => {
   });
 
   it('validates the price and inventory quantity formats', () => {
-    component.model.set({ ...validModel, price: 'free', initialQuantity: '-1' });
+    component.model.set({
+      ...validModel,
+      price: 'free',
+      initialQuantity: '-1',
+    });
 
     expect(component.productForm.price().errors()[0].message).toBe(
       'Price must be a positive number with up to two decimals',
@@ -84,7 +92,9 @@ describe('CreateProductComponent', () => {
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
-    createProduct.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    createProduct.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 0 })),
+    );
     component.model.set(validModel);
 
     await submit(component.productForm);
@@ -138,12 +148,16 @@ describe('CreateProductComponent', () => {
     });
 
     it('asks the browser to confirm closing/reloading the tab only when dirty', () => {
-      const clean = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      const clean = new Event('beforeunload', {
+        cancelable: true,
+      }) as BeforeUnloadEvent;
       component.onBeforeUnload(clean);
       expect(clean.defaultPrevented).toBe(false);
 
       component.model.update((m) => ({ ...m, name: 'Widget' }));
-      const dirty = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+      const dirty = new Event('beforeunload', {
+        cancelable: true,
+      }) as BeforeUnloadEvent;
       component.onBeforeUnload(dirty);
       expect(dirty.defaultPrevented).toBe(true);
     });

@@ -8,22 +8,30 @@
     </div>
 
     @if (invalidSummary(); as summary) {
-    <div class="alert alert-danger" role="alert">{{ summary }}</div>
+      <div class="alert alert-danger" role="alert">{{ summary }}</div>
     }
 
     <app-product-form-fields [form]="productForm" />
 
     <div class="form-actions mt-4">
-      <button type="submit" class="btn btn-primary" [disabled]="productForm().submitting()">
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="productForm().submitting()"
+      >
         @if (productForm().submitting()) {
-        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
-        } Add Product
+          <span
+            class="spinner-border spinner-border-sm me-1"
+            aria-hidden="true"
+          ></span>
+        }
+        Add Product
       </button>
       <a routerLink="/products" class="btn btn-link">Cancel</a>
     </div>
 
     @if (errorMessage(); as error) {
-    <div class="alert alert-danger mt-3" role="alert">{{ error }}</div>
+      <div class="alert alert-danger mt-3" role="alert">{{ error }}</div>
     }
   </div>
 </form>

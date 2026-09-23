@@ -5,16 +5,13 @@ import { Product } from '../../interfaces/product';
 import { ProductService } from '../../services/product.service';
 
 export type ProductSortColumn =
-  | 'name'
-  | 'category'
-  | 'warehouse'
-  | 'price'
-  | 'sold'
-  | 'inventory'
-  | 'left';
+  'name' | 'category' | 'warehouse' | 'price' | 'sold' | 'inventory' | 'left';
 
 // How each column reads a comparable value off a product.
-const SORT_VALUES: Record<ProductSortColumn, (product: Product) => string | number> = {
+const SORT_VALUES: Record<
+  ProductSortColumn,
+  (product: Product) => string | number
+> = {
   name: (p) => p.name,
   category: (p) => p.category,
   warehouse: (p) => p.warehouse,
@@ -54,14 +51,17 @@ export class ProductsComponent {
       const x = value(a);
       const y = value(b);
       const order =
-        typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
+        typeof x === 'number' && typeof y === 'number'
+          ? x - y
+          : String(x).localeCompare(String(y));
       return order * direction;
     });
   });
 
   readonly tableCaption = computed(() => {
     const column = this.sortColumn();
-    const base = 'Products with price, units sold, units originally stocked and units left';
+    const base =
+      'Products with price, units sold, units originally stocked and units left';
     return column
       ? `${base}, sorted by ${column} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`
       : base;

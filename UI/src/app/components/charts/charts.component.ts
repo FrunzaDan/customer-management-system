@@ -21,7 +21,11 @@ export type TimeRange = 'monthly' | 'yearly';
   selector: 'app-charts',
   templateUrl: './charts.component.html',
   styleUrl: './charts.component.css',
-  imports: [RankedBarChartComponent, StockHealthChartComponent, TimeSeriesChartComponent],
+  imports: [
+    RankedBarChartComponent,
+    StockHealthChartComponent,
+    TimeSeriesChartComponent,
+  ],
 })
 export class ChartsComponent {
   private readonly productService = inject(ProductService);
@@ -51,7 +55,11 @@ export class ChartsComponent {
   readonly stockHealth = computed(() => stockHealthByCategory(this.products()));
 
   readonly revenueByCategory = computed(() =>
-    rankByCategory(this.products(), (p) => p.price * p.soldQuantity, TOP_CATEGORY_COUNT),
+    rankByCategory(
+      this.products(),
+      (p) => p.price * p.soldQuantity,
+      TOP_CATEGORY_COUNT,
+    ),
   );
 
   // Time-series charts — off MonthlyActivityService. Each bar chart has its own
@@ -75,7 +83,8 @@ export class ChartsComponent {
     cumulativePoints(this.activity().customerCreations),
   );
 
-  readonly currencyFormatter = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  readonly currencyFormatter = (value: number) =>
+    value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
   constructor() {
     this.productService.loadProducts();

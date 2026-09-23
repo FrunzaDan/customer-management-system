@@ -10,18 +10,13 @@ import {
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { GetCustomerService } from '../../services/get-customer.service';
-import { ActivateCustomerService } from '../../services/activate-customer.service';
+import { CustomerService } from '../../services/customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteCustomerService } from '../../services/delete-customer.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
-import {
-  CustomerStatus,
-  Gender,
-} from '../../interfaces/customer-response';
+import { CustomerStatus, Gender } from '../../interfaces/customer-response';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import { auditActionLabel } from '../../utils/audit-action-label';
@@ -33,17 +28,15 @@ import { auditActionLabel } from '../../utils/audit-action-label';
   imports: [DatePipe, DecimalPipe, RouterLink],
 })
 export class CustomerDetailsComponent {
-  private readonly getCustomerService = inject(GetCustomerService);
-  private readonly activateCustomerService = inject(ActivateCustomerService);
+  private readonly customerService = inject(CustomerService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
-  private readonly deleteCustomerService = inject(DeleteCustomerService);
   private readonly auditLogService = inject(AuditLogService);
   private readonly purchaseService = inject(PurchaseService);
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
 
-  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
-  readonly id = input<string>();
+  // Bound from the `:customerId` route param by withComponentInputBinding() in app.config.ts.
+  readonly customerId = input<string>();
 
   genderMap = new Map<Gender, string>([
     [Gender.NotDeclared, 'not declared'],
@@ -57,18 +50,18 @@ export class CustomerDetailsComponent {
     [CustomerStatus.Test, 'Test'],
   ]);
 
-  readonly customer = this.getCustomerService.selectedCustomer;
-  readonly isLoading = this.getCustomerService.loading;
-  readonly errorMessage = this.getCustomerService.error;
+  readonly customer = this.customerService.selectedCustomer;
+  readonly isLoading = this.customerService.loading;
+  readonly errorMessage = this.customerService.error;
 
   readonly CustomerStatus = CustomerStatus;
   readonly Gender = Gender;
 
-  // Deactivate/reactivate share ActivateCustomerService's loading/error state (it's
+  // Deactivate/reactivate share CustomerService's loading/error state (it's
   // providedIn: 'root', same instance the customer list uses); delete gets its own,
   // same split as customer-list.component.ts.
-  readonly activationLoading = this.activateCustomerService.loading;
-  readonly activationError = this.activateCustomerService.error;
+  readonly activationLoading = this.customerService.activationLoading;
+  readonly activationError = this.customerService.activationError;
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
@@ -85,7 +78,11 @@ export class CustomerDetailsComponent {
   // Sum of the listed purchases' prices. Added up in whole cents so 0.1 + 0.2 style
   // float drift never shows on screen (prices are DECIMAL(12,2) in the DB).
   readonly totalSpent = computed(
-    () => this.purchases().reduce((cents, p) => cents + Math.round(p.price * 100), 0) / 100,
+    () =>
+      this.purchases().reduce(
+        (cents, p) => cents + Math.round(p.price * 100),
+        0,
+      ) / 100,
   );
 
   readonly products = this.productService.products;
@@ -117,8 +114,7 @@ export class CustomerDetailsComponent {
   canDelete: Signal<boolean> = computed(() => {
     const status = this.customer()?.status;
     return (
-      status === CustomerStatus.Deactivated ||
-      status === CustomerStatus.Test
+      status === CustomerStatus.Deactivated || status === CustomerStatus.Test
     );
   });
 
@@ -161,10 +157,10 @@ export class CustomerDetailsComponent {
 
     // (Re)load whenever the id in the URL changes; no id means nothing to show.
     effect(() => {
-      const id = this.id();
+      const id = this.customerId();
       untracked(() => {
         if (id) {
-          this.getCustomerService.getCustomer(id);
+          this.customerService.getCustomer(id);
           this.auditLogService.loadAuditLog(id);
           this.purchaseService.loadPurchases(id);
         } else {
@@ -195,13 +191,13 @@ export class CustomerDetailsComponent {
       { title: 'Deactivate customer?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.activateCustomerService.deactivateCustomer(customerId);
+    this.customerService.deactivateCustomer(customerId);
   }
 
   reactivateCustomer(): void {
     const customerId = this.customer()?.customerId;
     if (!customerId) return;
-    this.activateCustomerService.reactivateCustomer(customerId);
+    this.customerService.reactivateCustomer(customerId);
   }
 
   selectProduct(event: Event): void {
@@ -247,7 +243,7 @@ export class CustomerDetailsComponent {
     this.deleting.set(true);
     this.deleteError.set(null);
 
-    this.deleteCustomerService.deleteCustomer(customerId).subscribe({
+    this.customerService.deleteCustomer(customerId).subscribe({
       next: () => this.router.navigate(['/customers']),
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);

@@ -68,7 +68,8 @@ export class ConfirmDialogComponent {
   trapFocus(event: KeyboardEvent): void {
     if (event.key !== 'Tab') return;
     const buttons = Array.from(
-      this.dialog()?.nativeElement.querySelectorAll<HTMLElement>('button') ?? [],
+      this.dialog()?.nativeElement.querySelectorAll<HTMLElement>('button') ??
+        [],
     );
     if (buttons.length === 0) return;
 

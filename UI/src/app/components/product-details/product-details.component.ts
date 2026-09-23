@@ -1,7 +1,14 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  untracked,
+} from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { ProductDetailsService } from '../../services/product-details.service';
+import { ProductService } from '../../services/product.service';
 
 @Component({
   selector: 'app-product-details',
@@ -10,15 +17,15 @@ import { ProductDetailsService } from '../../services/product-details.service';
   imports: [DatePipe, DecimalPipe, RouterLink],
 })
 export class ProductDetailsComponent {
-  private readonly productDetailsService = inject(ProductDetailsService);
+  private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
 
-  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
-  readonly id = input<string>();
+  // Bound from the `:productId` route param by withComponentInputBinding() in app.config.ts.
+  readonly productId = input<string>();
 
-  readonly details = this.productDetailsService.details;
-  readonly isLoading = this.productDetailsService.loading;
-  readonly errorMessage = this.productDetailsService.error;
+  readonly details = this.productService.details;
+  readonly isLoading = this.productService.detailsLoading;
+  readonly errorMessage = this.productService.detailsError;
 
   readonly product = computed(() => this.details()?.product ?? null);
   readonly buyers = computed(() => this.details()?.buyers ?? []);
@@ -32,10 +39,10 @@ export class ProductDetailsComponent {
   constructor() {
     // (Re)load whenever the id in the URL changes; no id means nothing to show.
     effect(() => {
-      const id = this.id();
+      const id = this.productId();
       untracked(() => {
         if (id) {
-          this.productDetailsService.loadProductDetails(id);
+          this.productService.loadProductDetails(id);
         } else {
           this.router.navigate(['/products']);
         }
@@ -43,7 +50,10 @@ export class ProductDetailsComponent {
     });
   }
 
-  buyerName(buyer: { customerFirstName: string; customerLastName: string }): string {
+  buyerName(buyer: {
+    customerFirstName: string;
+    customerLastName: string;
+  }): string {
     return `${buyer.customerFirstName ?? ''} ${buyer.customerLastName ?? ''}`.trim();
   }
 }

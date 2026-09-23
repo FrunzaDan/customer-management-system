@@ -3,15 +3,10 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import {
-  Customer,
-  CustomerStatus,
-} from '../../interfaces/customer-response';
-import { ActivateCustomerService } from '../../services/activate-customer.service';
+import { Customer, CustomerStatus } from '../../interfaces/customer-response';
+import { CustomerService } from '../../services/customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
-import { DeleteCustomerService } from '../../services/delete-customer.service';
-import { GetCustomerService } from '../../services/get-customer.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
@@ -69,8 +64,8 @@ describe('CustomerDetailsComponent', () => {
     ...overrides,
   });
 
-  // routeParamId is what withComponentInputBinding() would bind to the `id`
-  // input from `?id=`; set it to null before createComponent() for the "no id" case.
+  // routeParamId is what withComponentInputBinding() would bind to the `customerId`
+  // input from the `:customerId` route param; set it to null before createComponent() for the "no id" case.
   let routeParamId: string | null = 'customer-1';
 
   const createComponent = (): CustomerDetailsComponent => {
@@ -78,12 +73,16 @@ describe('CustomerDetailsComponent', () => {
     loadAuditLog = vi.fn();
     loadPurchases = vi.fn();
     loadProducts = vi.fn();
-    purchaseProduct = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    purchaseProduct = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     products = signal<Product[]>([]);
     purchases = signal<Purchase[]>([]);
     deactivateCustomer = vi.fn();
     reactivateCustomer = vi.fn();
-    deleteCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    deleteCustomer = vi
+      .fn()
+      .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     confirm = vi.fn().mockResolvedValue(true);
     navigate = vi.fn().mockResolvedValue(true);
     selectedCustomer = signal<Customer | null>(null);
@@ -96,25 +95,20 @@ describe('CustomerDetailsComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         {
-          provide: GetCustomerService,
+          provide: CustomerService,
           useValue: {
             selectedCustomer: selectedCustomer,
             loading: signal(false),
             error: signal<string | null>(null),
             getCustomer,
-          },
-        },
-        {
-          provide: ActivateCustomerService,
-          useValue: {
-            loading: activationLoading,
-            error: signal<string | null>(null),
+            activationLoading,
+            activationError: signal<string | null>(null),
             deactivateCustomer,
             reactivateCustomer,
+            deleteCustomer,
           },
         },
         { provide: ConfirmDialogService, useValue: { confirm } },
-        { provide: DeleteCustomerService, useValue: { deleteCustomer } },
         {
           provide: AuditLogService,
           useValue: {
@@ -151,7 +145,7 @@ describe('CustomerDetailsComponent', () => {
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
 
     const fixture = TestBed.createComponent(CustomerDetailsComponent);
-    if (routeParamId) fixture.componentRef.setInput('id', routeParamId);
+    if (routeParamId) fixture.componentRef.setInput('customerId', routeParamId);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
@@ -218,9 +212,7 @@ describe('CustomerDetailsComponent', () => {
   describe('canDelete', () => {
     it('is false for an Active customer', () => {
       const component = createComponent();
-      selectedCustomer.set(
-        buildCustomer({ status: CustomerStatus.Active }),
-      );
+      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Active }));
 
       expect(component.canDelete()).toBe(false);
     });
@@ -236,9 +228,7 @@ describe('CustomerDetailsComponent', () => {
 
     it('is true for a Test customer (exempt from the deactivate-first rule)', () => {
       const component = createComponent();
-      selectedCustomer.set(
-        buildCustomer({ status: CustomerStatus.Test }),
-      );
+      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Test }));
 
       expect(component.canDelete()).toBe(true);
     });
@@ -313,7 +303,9 @@ describe('CustomerDetailsComponent', () => {
       await component.deleteCustomer();
 
       expect(component.deleting()).toBe(false);
-      expect(component.deleteError()).toBe('Customer must be deactivated first.');
+      expect(component.deleteError()).toBe(
+        'Customer must be deactivated first.',
+      );
     });
   });
 
@@ -353,7 +345,9 @@ describe('CustomerDetailsComponent', () => {
       selectedCustomer.set(buildCustomer({ status: CustomerStatus.Test }));
       expect(component.canPurchase()).toBe(true);
 
-      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Deactivated }));
+      selectedCustomer.set(
+        buildCustomer({ status: CustomerStatus.Deactivated }),
+      );
       expect(component.canPurchase()).toBe(false);
     });
 
@@ -371,7 +365,11 @@ describe('CustomerDetailsComponent', () => {
 
       expect(component.totalSpent()).toBe(0); // no purchases yet
 
-      purchases.set([buildPurchase(1, 0.1), buildPurchase(2, 0.2), buildPurchase(3, 1299)]);
+      purchases.set([
+        buildPurchase(1, 0.1),
+        buildPurchase(2, 0.2),
+        buildPurchase(3, 1299),
+      ]);
       expect(component.totalSpent()).toBe(1299.3); // plain float addition gives 1299.3000000000002
 
       // The same product bought twice counts twice.
@@ -409,7 +407,9 @@ describe('CustomerDetailsComponent', () => {
       component.selectedProductId.set('in-stock');
       expect(component.canSubmitPurchase()).toBe(true);
 
-      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Deactivated }));
+      selectedCustomer.set(
+        buildCustomer({ status: CustomerStatus.Deactivated }),
+      );
       expect(component.canSubmitPurchase()).toBe(false); // deactivated customer
     });
 
@@ -444,7 +444,9 @@ describe('CustomerDetailsComponent', () => {
     it('recordPurchase does nothing for a product that is out of stock', () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      products.set([buildProduct({ productId: 'sold-out', quantityOnHand: 0 })]);
+      products.set([
+        buildProduct({ productId: 'sold-out', quantityOnHand: 0 }),
+      ]);
       component.selectedProductId.set('sold-out');
 
       component.recordPurchase();

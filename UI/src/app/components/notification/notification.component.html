@@ -1,22 +1,22 @@
 <div class="notification-container" aria-live="polite">
   @for (notification of notifications(); track notification.id) {
-  <div
-    class="notification-toast"
-    animate.enter="notification-enter"
-    animate.leave="notification-leave"
-    [class.notification-success]="notification.type === 'success'"
-    [class.notification-error]="notification.type === 'error'"
-    [attr.role]="notification.type === 'error' ? 'alert' : 'status'"
-  >
-    <span>{{ notification.message }}</span>
-    <button
-      type="button"
-      class="notification-close"
-      (click)="dismiss(notification.id)"
-      aria-label="Dismiss notification"
+    <div
+      class="notification-toast"
+      animate.enter="notification-enter"
+      animate.leave="notification-leave"
+      [class.notification-success]="notification.type === 'success'"
+      [class.notification-error]="notification.type === 'error'"
+      [attr.role]="notification.type === 'error' ? 'alert' : 'status'"
     >
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
+      <span>{{ notification.message }}</span>
+      <button
+        type="button"
+        class="notification-close"
+        (click)="dismiss(notification.id)"
+        aria-label="Dismiss notification"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
   }
 </div>

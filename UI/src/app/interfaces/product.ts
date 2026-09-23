@@ -2,8 +2,8 @@ export interface Product {
   productId: string;
   name: string;
   category: string;
-  // Optional; the API omits it when there is none.
-  description?: string;
+  // null when the product has none.
+  description: string | null;
   price: number;
   // Units originally stocked (never changes).
   initialQuantity: number;

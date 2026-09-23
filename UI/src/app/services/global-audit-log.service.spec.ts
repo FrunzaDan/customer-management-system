@@ -59,11 +59,13 @@ describe('GlobalAuditLogService', () => {
     const entry = buildEntry();
 
     service.loadAllAuditLog({ pageNumber: 1, pageSize: 20 });
-    httpMock.expectOne((r) => r.url === API_URL).flush({
-      status: 200,
-      responseMessage: 'ok',
-      data: { pageNumber: 1, pageSize: 20, totalItems: 1, items: [entry] },
-    });
+    httpMock
+      .expectOne((r) => r.url === API_URL)
+      .flush({
+        status: 200,
+        responseMessage: 'ok',
+        data: { pageNumber: 1, pageSize: 20, totalItems: 1, items: [entry] },
+      });
 
     expect(service.entries()).toEqual([entry]);
     expect(service.totalItems()).toBe(1);
@@ -77,11 +79,13 @@ describe('GlobalAuditLogService', () => {
 
     expect(service.loading()).toBe(true);
 
-    httpMock.expectOne((r) => r.url === API_URL).flush({
-      status: 200,
-      responseMessage: 'ok',
-      data: { pageNumber: 1, pageSize: 20, totalItems: 0, items: [] },
-    });
+    httpMock
+      .expectOne((r) => r.url === API_URL)
+      .flush({
+        status: 200,
+        responseMessage: 'ok',
+        data: { pageNumber: 1, pageSize: 20, totalItems: 0, items: [] },
+      });
 
     expect(service.loading()).toBe(false);
   });
@@ -120,16 +124,26 @@ describe('GlobalAuditLogService', () => {
   it('empties the list and shows a toast once the log is cleared', () => {
     const show = vi.spyOn(TestBed.inject(NotificationService), 'show');
     service.loadAllAuditLog({ pageNumber: 2, pageSize: 20 });
-    httpMock.expectOne((r) => r.url === API_URL).flush({
-      status: 200,
-      responseMessage: 'ok',
-      data: { pageNumber: 2, pageSize: 20, totalItems: 21, items: [buildEntry()] },
-    });
+    httpMock
+      .expectOne((r) => r.url === API_URL)
+      .flush({
+        status: 200,
+        responseMessage: 'ok',
+        data: {
+          pageNumber: 2,
+          pageSize: 20,
+          totalItems: 21,
+          items: [buildEntry()],
+        },
+      });
 
     service.deleteAllAuditLog().subscribe();
     const req = httpMock.expectOne((r) => r.url === API_URL);
     expect(req.request.method).toBe('DELETE');
-    req.flush({ status: 200, responseMessage: 'Audit log cleared successfully.' });
+    req.flush({
+      status: 200,
+      responseMessage: 'Audit log cleared successfully.',
+    });
 
     expect(service.entries()).toEqual([]);
     expect(service.totalItems()).toBe(0);

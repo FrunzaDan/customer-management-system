@@ -15,7 +15,9 @@ describe('AuditLogService', () => {
 
   const API_URL = `${environment.apiUrl}/api/customer/audit-log`;
 
-  const buildEntry = (overrides: Partial<AuditLogEntry> = {}): AuditLogEntry => ({
+  const buildEntry = (
+    overrides: Partial<AuditLogEntry> = {},
+  ): AuditLogEntry => ({
     customerAuditLogId: 1,
     customerId: 'customer-1',
     performedBy: 'TestMerchantID',

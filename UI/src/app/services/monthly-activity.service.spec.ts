@@ -41,7 +41,10 @@ describe('MonthlyActivityService', () => {
     TestBed.tick();
 
     httpMock.expectNone(API_URL);
-    expect(service.activity()).toEqual({ customerCreations: [], productPurchases: [] });
+    expect(service.activity()).toEqual({
+      customerCreations: [],
+      productPurchases: [],
+    });
     expect(service.loading()).toBe(false);
   });
 
@@ -52,7 +55,9 @@ describe('MonthlyActivityService', () => {
     };
 
     load();
-    httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok', data: activity });
+    httpMock
+      .expectOne(API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: activity });
     await settle();
 
     expect(service.activity()).toEqual(activity);
@@ -62,8 +67,13 @@ describe('MonthlyActivityService', () => {
   it('falls back to empty series when the resource has no value', () => {
     load();
     // Not flushed yet — hasValue() is still false.
-    expect(service.activity()).toEqual({ customerCreations: [], productPurchases: [] });
-    httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok', data: undefined });
+    expect(service.activity()).toEqual({
+      customerCreations: [],
+      productPurchases: [],
+    });
+    httpMock
+      .expectOne(API_URL)
+      .flush({ status: 200, responseMessage: 'ok', data: undefined });
   });
 
   it('surfaces the server-provided error message when present', async () => {
@@ -76,6 +86,9 @@ describe('MonthlyActivityService', () => {
 
     expect(service.loading()).toBe(false);
     expect(service.error()).toBe('boom');
-    expect(service.activity()).toEqual({ customerCreations: [], productPurchases: [] });
+    expect(service.activity()).toEqual({
+      customerCreations: [],
+      productPurchases: [],
+    });
   });
 });

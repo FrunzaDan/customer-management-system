@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CreateProductService } from '../../services/create-product.service';
+import { ProductService } from '../../services/product.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   ProductFormModel,
@@ -24,7 +24,7 @@ import { ProductFormFieldsComponent } from './product-form-fields.component';
 })
 export class CreateProductComponent {
   private readonly router = inject(Router);
-  private readonly createProductService = inject(CreateProductService);
+  private readonly productService = inject(ProductService);
 
   readonly model = signal<ProductFormModel>(emptyProductForm());
   private readonly saved = signal(false);
@@ -54,14 +54,19 @@ export class CreateProductComponent {
     this.invalidSummary.set(null);
 
     try {
-      await firstValueFrom(this.createProductService.createProduct(toProduct(this.model())));
+      await firstValueFrom(
+        this.productService.createProduct(toProduct(this.model())),
+      );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/products']);
     } catch (error) {
       // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
       this.errorMessage.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to add product'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to add product',
+        ),
       );
     }
   }

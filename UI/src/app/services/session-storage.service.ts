@@ -14,7 +14,7 @@ export class SessionStorageService {
       return sessionStorage.getItem(this.accessTokenKey);
     } catch (parseError: unknown) {
       console.error(
-        'Error parsing products from session storage:',
+        'Error reading access token from session storage:',
         parseError,
       );
       return null;

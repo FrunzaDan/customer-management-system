@@ -46,9 +46,7 @@ describe('VerifyTokenService', () => {
     let result: boolean | undefined;
     service.isTokenValid().subscribe((value) => (result = value));
 
-    httpMock
-      .expectOne(API_URL)
-      .flush({ status: 200, responseMessage: 'ok' });
+    httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok' });
 
     expect(result).toBe(true);
   });

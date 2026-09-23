@@ -1,32 +1,43 @@
 @if (state(); as dialogState) {
-<div class="confirm-overlay" [class.closing]="closing()" (click)="respond(false)">
   <div
-    #dialog
-    class="confirm-card"
+    class="confirm-overlay"
     [class.closing]="closing()"
-    role="alertdialog"
-    aria-modal="true"
-    aria-labelledby="confirm-title"
-    aria-describedby="confirm-message"
-    (click)="$event.stopPropagation()"
-    (keydown)="trapFocus($event)"
+    (click)="respond(false)"
   >
-    <h2 id="confirm-title" class="confirm-title">{{ dialogState.title }}</h2>
-    <p id="confirm-message" class="confirm-message">{{ dialogState.message }}</p>
-    <div class="confirm-actions">
-      <button #cancelButton type="button" class="btn btn-secondary" (click)="respond(false)">
-        {{ dialogState.cancelLabel }}
-      </button>
-      <button
-        type="button"
-        class="btn"
-        [class.btn-danger]="dialogState.variant === 'danger'"
-        [class.btn-primary]="dialogState.variant === 'default'"
-        (click)="respond(true)"
-      >
-        {{ dialogState.confirmLabel }}
-      </button>
+    <div
+      #dialog
+      class="confirm-card"
+      [class.closing]="closing()"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+      aria-describedby="confirm-message"
+      (click)="$event.stopPropagation()"
+      (keydown)="trapFocus($event)"
+    >
+      <h2 id="confirm-title" class="confirm-title">{{ dialogState.title }}</h2>
+      <p id="confirm-message" class="confirm-message">
+        {{ dialogState.message }}
+      </p>
+      <div class="confirm-actions">
+        <button
+          #cancelButton
+          type="button"
+          class="btn btn-secondary"
+          (click)="respond(false)"
+        >
+          {{ dialogState.cancelLabel }}
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-danger]="dialogState.variant === 'danger'"
+          [class.btn-primary]="dialogState.variant === 'default'"
+          (click)="respond(true)"
+        >
+          {{ dialogState.confirmLabel }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
 }

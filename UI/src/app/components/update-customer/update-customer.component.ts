@@ -12,8 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { UpdateCustomerService } from '../../services/update-customer.service';
-import { GetCustomerService } from '../../services/get-customer.service';
+import { CustomerService } from '../../services/customer.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   customerFormSchema,
@@ -34,15 +33,14 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
 })
 export class UpdateCustomerComponent {
   private readonly router = inject(Router);
-  private readonly getCustomerService = inject(GetCustomerService);
-  private readonly updateCustomerService = inject(UpdateCustomerService);
+  private readonly customerService = inject(CustomerService);
 
-  // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
-  readonly id = input<string>();
+  // Bound from the `:customerId` route param by withComponentInputBinding() in app.config.ts.
+  readonly customerId = input<string>();
 
-  readonly customer = this.getCustomerService.selectedCustomer;
-  readonly isLoading = this.getCustomerService.loading;
-  readonly errorMessage = this.getCustomerService.error;
+  readonly customer = this.customerService.selectedCustomer;
+  readonly isLoading = this.customerService.loading;
+  readonly errorMessage = this.customerService.error;
 
   // The form model *is* the loaded customer, mapped: it re-derives whenever
   // customer() changes and stays writable for the user's edits — no effect +
@@ -81,8 +79,8 @@ export class UpdateCustomerComponent {
 
   constructor() {
     effect(() => {
-      const id = this.id();
-      if (id) untracked(() => this.getCustomerService.getCustomer(id));
+      const id = this.customerId();
+      if (id) untracked(() => this.customerService.getCustomer(id));
     });
   }
 
@@ -95,14 +93,19 @@ export class UpdateCustomerComponent {
 
     try {
       await firstValueFrom(
-        this.updateCustomerService.updateCustomer(applyFormModel(this.model(), current)),
+        this.customerService.updateCustomer(
+          applyFormModel(this.model(), current),
+        ),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/customers']);
     } catch (error) {
       this.saveError.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to save changes'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to save changes',
+        ),
       );
     }
   }

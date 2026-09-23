@@ -1,11 +1,14 @@
 @if (errorMessage(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @if (activationError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @if (deleteError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @if (exportError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+}
+@if (activationError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+}
+@if (deleteError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+}
+@if (exportError(); as error) {
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
 }
 
 <!-- Announced politely to screen readers whenever the result set changes. -->
@@ -39,174 +42,264 @@
     <button
       type="button"
       class="btn btn-danger"
-      [disabled]="selectedCustomerIds().size === 0 || bulkActionInProgress() || activationLoading() || deleting()"
+      [disabled]="
+        selectedCustomerIds().size === 0 ||
+        bulkActionInProgress() ||
+        activationLoading() ||
+        deleting()
+      "
       (click)="bulkDeleteSelected()"
     >
-      {{ bulkActionInProgress() ? 'Processing…' : 'Bulk delete selected (' + selectedCustomerIds().size + ')' }}
+      {{
+        bulkActionInProgress()
+          ? 'Processing…'
+          : 'Bulk delete selected (' + selectedCustomerIds().size + ')'
+      }}
     </button>
   </div>
 </div>
 @if (isLoading() && customers().length === 0) {
-<div class="app-card loading-state">
-  <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading customers…
-</div>
-} @else if (customers().length === 0) {
-<!-- A failed load already shows its alert above; "no customers" would be misleading. -->
-@if (!errorMessage()) {
-<div class="app-card empty-state">
-  @if (searchTerm()) { No customers match "{{ searchTerm() }}". } @else { No
-  customers yet. }
-</div>
-}
-} @else {
-<div class="app-card table-card" [class.is-refreshing]="isLoading()" [attr.aria-busy]="isLoading()">
-  <div class="table-responsive" role="region" aria-label="Customers table" tabindex="0">
-    <table class="table table-themed table-striped table-hover">
-      <caption class="visually-hidden">
-        {{ tableCaption() }}
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col" class="text-center">
-            <input
-              #selectAll
-              type="checkbox"
-              aria-label="Select all customers on this page"
-              [checked]="allOnPageSelected()"
-              (change)="toggleSelectAllOnPage(selectAll.checked)"
-            />
-          </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('name')">
-            <button type="button" class="sort-button" (click)="setSort('name')">
-              Name
-              @if (sortColumn() === 'name') {
-              <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-              }
-            </button>
-          </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('email')">
-            <button type="button" class="sort-button" (click)="setSort('email')">
-              Email
-              @if (sortColumn() === 'email') {
-              <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-              }
-            </button>
-          </th>
-          <th scope="col" class="text-center" [attr.aria-sort]="ariaSort('phoneNumber')">
-            <button type="button" class="sort-button" (click)="setSort('phoneNumber')">
-              phone number
-              @if (sortColumn() === 'phoneNumber') {
-              <span aria-hidden="true">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
-              }
-            </button>
-          </th>
-          <th scope="col" class="text-center">Status</th>
-          <th scope="col" class="w-25 text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (customer of customers(); track customer.customerId) {
-        @let fullName = customer.firstName + ' ' + customer.lastName;
-        <tr>
-          <td class="align-middle text-center">
-            <input
-              #rowCheckbox
-              type="checkbox"
-              [attr.aria-label]="'Select ' + fullName"
-              [checked]="isSelected(customer.customerId)"
-              (change)="toggleSelection(customer.customerId, rowCheckbox.checked)"
-            />
-          </td>
-          <td class="align-middle text-center">
-            <a
-              class="plain-Links hoverItem"
-              routerLink="/customer-details"
-              [queryParams]="{ id: customer.customerId }"
-            >
-              {{ fullName }}
-            </a>
-          </td>
-          <td class="align-middle text-center">{{ customer.email }}</td>
-          <td class="align-middle text-center">{{ customer.phoneNumber }}</td>
-          <td class="align-middle text-center">
-            <span
-              class="badge rounded-pill"
-              [class.bg-success]="customer.status === CustomerStatus.Active"
-              [class.bg-secondary]="customer.status === CustomerStatus.Deactivated"
-              [class.bg-warning]="customer.status === CustomerStatus.Test"
-              [class.text-dark]="customer.status === CustomerStatus.Test"
-            >
-              {{ statusLabels.get(customer.status) }}
-            </span>
-          </td>
-          <td class="align-middle text-center">
-            <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + fullName">
-              <a
-                class="btn btn-primary btn-sm shadow-none"
-                routerLink="/update-customer"
-                [queryParams]="{ id: customer.customerId }"
-                [attr.aria-label]="'Edit ' + fullName"
-                >Edit</a
-              >
-
-              @if (customer.status === CustomerStatus.Active || customer.status === CustomerStatus.Test) {
-              <button
-                (click)="deactivateCustomer(customer.customerId)"
-                type="button"
-                class="btn btn-danger btn-sm"
-                [attr.aria-label]="'Deactivate ' + fullName"
-                [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
-              >
-                Deactivate
-              </button>
-              } @if (customer.status === CustomerStatus.Deactivated) {
-              <button
-                (click)="reactivateCustomer(customer.customerId)"
-                type="button"
-                class="btn btn-primary btn-sm shadow-none"
-                [attr.aria-label]="'Reactivate ' + fullName"
-                [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
-              >
-                Reactivate
-              </button>
-              } @if (customer.status === CustomerStatus.Deactivated || customer.status === CustomerStatus.Test) {
-              <button
-                (click)="deleteCustomer(customer.customerId)"
-                type="button"
-                class="btn btn-danger btn-sm shadow-none"
-                [attr.aria-label]="'Delete ' + fullName"
-                [disabled]="activationLoading() || deleting() || bulkActionInProgress()"
-              >
-                Delete
-              </button>
-              }
-            </div>
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
+  <div class="app-card loading-state">
+    <span
+      class="spinner-border spinner-border-sm me-2"
+      aria-hidden="true"
+    ></span
+    >Loading customers…
   </div>
-</div>
-@if (totalPages() > 1) {
-<nav class="d-flex justify-content-center align-items-center gap-2 mt-4" aria-label="Customer list pages">
-  <button
-    type="button"
-    class="btn btn-primary btn-sm shadow-none"
-    [disabled]="currentPage() === 1"
-    (click)="goToPage(currentPage() - 1)"
+} @else if (customers().length === 0) {
+  <!-- A failed load already shows its alert above; "no customers" would be misleading. -->
+  @if (!errorMessage()) {
+    <div class="app-card empty-state">
+      @if (searchTerm()) {
+        No customers match "{{ searchTerm() }}".
+      } @else {
+        No customers yet.
+      }
+    </div>
+  }
+} @else {
+  <div
+    class="app-card table-card"
+    [class.is-refreshing]="isLoading()"
+    [attr.aria-busy]="isLoading()"
   >
-    Previous
-  </button>
-  <span aria-live="polite">Page {{ currentPage() }} of {{ totalPages() }}</span>
-  <button
-    type="button"
-    class="btn btn-primary btn-sm shadow-none"
-    [disabled]="currentPage() === totalPages()"
-    (click)="goToPage(currentPage() + 1)"
-  >
-    Next
-  </button>
-</nav>
-}
+    <div
+      class="table-responsive"
+      role="region"
+      aria-label="Customers table"
+      tabindex="0"
+    >
+      <table class="table table-themed table-striped table-hover">
+        <caption class="visually-hidden">
+          {{
+            tableCaption()
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class="text-center">
+              <input
+                #selectAll
+                type="checkbox"
+                aria-label="Select all customers on this page"
+                [checked]="allOnPageSelected()"
+                (change)="toggleSelectAllOnPage(selectAll.checked)"
+              />
+            </th>
+            <th
+              scope="col"
+              class="text-center"
+              [attr.aria-sort]="ariaSort('name')"
+            >
+              <button
+                type="button"
+                class="sort-button"
+                (click)="setSort('name')"
+              >
+                Name
+                @if (sortColumn() === 'name') {
+                  <span aria-hidden="true">{{
+                    sortDirection() === 'asc' ? '▲' : '▼'
+                  }}</span>
+                }
+              </button>
+            </th>
+            <th
+              scope="col"
+              class="text-center"
+              [attr.aria-sort]="ariaSort('email')"
+            >
+              <button
+                type="button"
+                class="sort-button"
+                (click)="setSort('email')"
+              >
+                Email
+                @if (sortColumn() === 'email') {
+                  <span aria-hidden="true">{{
+                    sortDirection() === 'asc' ? '▲' : '▼'
+                  }}</span>
+                }
+              </button>
+            </th>
+            <th
+              scope="col"
+              class="text-center"
+              [attr.aria-sort]="ariaSort('phoneNumber')"
+            >
+              <button
+                type="button"
+                class="sort-button"
+                (click)="setSort('phoneNumber')"
+              >
+                phone number
+                @if (sortColumn() === 'phoneNumber') {
+                  <span aria-hidden="true">{{
+                    sortDirection() === 'asc' ? '▲' : '▼'
+                  }}</span>
+                }
+              </button>
+            </th>
+            <th scope="col" class="text-center">Status</th>
+            <th scope="col" class="w-25 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (customer of customers(); track customer.customerId) {
+            @let fullName = customer.firstName + ' ' + customer.lastName;
+            <tr>
+              <td class="align-middle text-center">
+                <input
+                  #rowCheckbox
+                  type="checkbox"
+                  [attr.aria-label]="'Select ' + fullName"
+                  [checked]="isSelected(customer.customerId)"
+                  (change)="
+                    toggleSelection(customer.customerId, rowCheckbox.checked)
+                  "
+                />
+              </td>
+              <td class="align-middle text-center">
+                <a
+                  class="plain-Links hoverItem"
+                  [routerLink]="['/customers', customer.customerId]"
+                >
+                  {{ fullName }}
+                </a>
+              </td>
+              <td class="align-middle text-center">{{ customer.email }}</td>
+              <td class="align-middle text-center">
+                {{ customer.phoneNumber }}
+              </td>
+              <td class="align-middle text-center">
+                <span
+                  class="badge rounded-pill"
+                  [class.bg-success]="customer.status === CustomerStatus.Active"
+                  [class.bg-secondary]="
+                    customer.status === CustomerStatus.Deactivated
+                  "
+                  [class.bg-warning]="customer.status === CustomerStatus.Test"
+                  [class.text-dark]="customer.status === CustomerStatus.Test"
+                >
+                  {{ statusLabels.get(customer.status) }}
+                </span>
+              </td>
+              <td class="align-middle text-center">
+                <div
+                  class="btn-group"
+                  role="group"
+                  [attr.aria-label]="'Actions for ' + fullName"
+                >
+                  <a
+                    class="btn btn-primary btn-sm shadow-none"
+                    [routerLink]="['/customers/update', customer.customerId]"
+                    [attr.aria-label]="'Edit ' + fullName"
+                    >Edit</a
+                  >
+
+                  @if (
+                    customer.status === CustomerStatus.Active ||
+                    customer.status === CustomerStatus.Test
+                  ) {
+                    <button
+                      (click)="deactivateCustomer(customer.customerId)"
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      [attr.aria-label]="'Deactivate ' + fullName"
+                      [disabled]="
+                        activationLoading() ||
+                        deleting() ||
+                        bulkActionInProgress()
+                      "
+                    >
+                      Deactivate
+                    </button>
+                  }
+                  @if (customer.status === CustomerStatus.Deactivated) {
+                    <button
+                      (click)="reactivateCustomer(customer.customerId)"
+                      type="button"
+                      class="btn btn-primary btn-sm shadow-none"
+                      [attr.aria-label]="'Reactivate ' + fullName"
+                      [disabled]="
+                        activationLoading() ||
+                        deleting() ||
+                        bulkActionInProgress()
+                      "
+                    >
+                      Reactivate
+                    </button>
+                  }
+                  @if (
+                    customer.status === CustomerStatus.Deactivated ||
+                    customer.status === CustomerStatus.Test
+                  ) {
+                    <button
+                      (click)="deleteCustomer(customer.customerId)"
+                      type="button"
+                      class="btn btn-danger btn-sm shadow-none"
+                      [attr.aria-label]="'Delete ' + fullName"
+                      [disabled]="
+                        activationLoading() ||
+                        deleting() ||
+                        bulkActionInProgress()
+                      "
+                    >
+                      Delete
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  @if (totalPages() > 1) {
+    <nav
+      class="d-flex justify-content-center align-items-center gap-2 mt-4"
+      aria-label="Customer list pages"
+    >
+      <button
+        type="button"
+        class="btn btn-primary btn-sm shadow-none"
+        [disabled]="currentPage() === 1"
+        (click)="goToPage(currentPage() - 1)"
+      >
+        Previous
+      </button>
+      <span aria-live="polite"
+        >Page {{ currentPage() }} of {{ totalPages() }}</span
+      >
+      <button
+        type="button"
+        class="btn btn-primary btn-sm shadow-none"
+        [disabled]="currentPage() === totalPages()"
+        (click)="goToPage(currentPage() + 1)"
+      >
+        Next
+      </button>
+    </nav>
+  }
 }

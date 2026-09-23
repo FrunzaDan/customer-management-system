@@ -45,13 +45,16 @@ describe('ConfirmDialogService', () => {
     });
   });
 
-  it.each([true, false])('respond(%s) resolves the pending promise with that answer', async (answer) => {
-    const pending = service.confirm('Proceed?');
+  it.each([true, false])(
+    'respond(%s) resolves the pending promise with that answer',
+    async (answer) => {
+      const pending = service.confirm('Proceed?');
 
-    service.respond(answer);
+      service.respond(answer);
 
-    await expect(pending).resolves.toBe(answer);
-  });
+      await expect(pending).resolves.toBe(answer);
+    },
+  );
 
   it('respond() sets closing at once, then clears the state after the close animation', () => {
     void service.confirm('Proceed?');

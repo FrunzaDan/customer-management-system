@@ -49,11 +49,11 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <p class="card-text mb-0">
             Both must be running at the same time — the UI has no data or logic
             of its own beyond forms and validation; everything it shows comes
-            live from the API. If the API isn't reachable, the UI notices
-            within a few seconds (it polls a lightweight
+            live from the API. If the API isn't reachable, the UI notices within
+            a few seconds (it polls a lightweight
             <code>/health</code> endpoint) and shows a plain "API is not
-            running" message in place of the page, instead of failing
-            silently or showing stale data.
+            running" message in place of the page, instead of failing silently
+            or showing stale data.
           </p>
         </div>
       </div>
@@ -112,23 +112,24 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <p class="card-text">The schema has three tables:</p>
           <ul>
             <li>
-              <code>Customer</code> — one row per customer: name, email,
-              phone number, gender, birth date, a numeric
+              <code>Customer</code> — one row per customer: name, email, phone
+              number, gender, birth date, a numeric
               <code>StatusCode</code> (active / deactivated), and
-              creation/last-interaction timestamps, keyed by a <code>CustomerId</code> (GUID) primary key.
-              Email and phone number each carry a unique constraint, so duplicates are
-              rejected by the database itself, not just application logic.
+              creation/last-interaction timestamps, keyed by a
+              <code>CustomerId</code> (GUID) primary key. Email and phone number
+              each carry a unique constraint, so duplicates are rejected by the
+              database itself, not just application logic.
             </li>
             <li>
               <code>CustomerAddress</code> — one row per customer's address,
-              linked back to <code>Customer</code> by a foreign key on that
-              same <code>CustomerId</code>.
+              linked back to <code>Customer</code> by a foreign key on that same
+              <code>CustomerId</code>.
             </li>
             <li>
               <code>Merchant</code> — login accounts for the API, keyed by
-              <code>Username</code> (primary key): a PBKDF2 password hash and its salt
-              (never the plaintext password), a role, and a last-interaction
-              timestamp.
+              <code>Username</code> (primary key): a PBKDF2 password hash and
+              its salt (never the plaintext password), a role, and a
+              last-interaction timestamp.
             </li>
           </ul>
           <p class="card-text">
@@ -138,16 +139,17 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
           <ul>
             <li>
               <code>Customer_Create</code> — inserts the customer and address
-              rows in one transaction, rejecting duplicate email/phone number first.
+              rows in one transaction, rejecting duplicate email/phone number
+              first.
             </li>
             <li>
               <code>Customer_Get</code> — looks up a single customer by ID,
               phone number, or email.
             </li>
             <li>
-              <code>Customer_List</code> — returns one page of customers
-              joined with their addresses, filtered by an optional search term
-              and sorted by name/email/phone number, plus a total count for
+              <code>Customer_List</code> — returns one page of customers joined
+              with their addresses, filtered by an optional search term and
+              sorted by name/email/phone number, plus a total count for
               pagination.
             </li>
             <li>
@@ -156,17 +158,16 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               <code>Customer_Deactivate</code> /
-              <code>Customer_Reactivate</code> — flip
-              <code>StatusCode</code>, refusing to "change" it to the state
-              it's already in.
+              <code>Customer_Reactivate</code> — flip <code>StatusCode</code>,
+              refusing to "change" it to the state it's already in.
             </li>
             <li>
               <code>Customer_Delete</code> — hard-deletes a customer and its
               address, but only once it's already deactivated.
             </li>
             <li>
-              <code>Merchant_GetAuthData</code> — returns a merchant's
-              password hash, salt, and role for the login flow, and stamps their
+              <code>Merchant_GetAuthData</code> — returns a merchant's password
+              hash, salt, and role for the login flow, and stamps their
               last-interaction time.
             </li>
           </ul>
@@ -331,9 +332,9 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             deactivated and deleted afterwards.
           </p>
           <p class="card-text">
-            Each test customer also buys <strong>between 1 and 5 different
-            products</strong> from the catalogue, picked at random from what's
-            still in stock (through
+            Each test customer also buys
+            <strong>between 1 and 5 different products</strong> from the
+            catalogue, picked at random from what's still in stock (through
             <code>POST /api/customer/purchase</code>, the same endpoint as the
             <em>Record purchase</em> control on a customer's page). Those
             purchases are real: they use up product stock, and deleting a test
@@ -389,13 +390,12 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <li>
               Select several customers at once with row checkboxes and run a
               bulk action: active customers in the selection are deactivated,
-              already-deactivated (or test) customers are permanently
-              deleted — a confirmation prompt spells out how many of each
-              before anything happens.
+              already-deactivated (or test) customers are permanently deleted —
+              a confirmation prompt spells out how many of each before anything
+              happens.
             </li>
             <li>
-              Export the currently filtered/sorted customer list to a CSV
-              file.
+              Export the currently filtered/sorted customer list to a CSV file.
             </li>
             <li>
               Browse a global, paginated audit trail of every customer change

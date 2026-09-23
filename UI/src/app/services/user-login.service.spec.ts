@@ -43,7 +43,10 @@ describe('UserLoginService', () => {
         { provide: Router, useValue: { navigateByUrl } },
         {
           provide: SessionStorageService,
-          useValue: { setSessionAccessToken, getSessionAccessToken: () => null },
+          useValue: {
+            setSessionAccessToken,
+            getSessionAccessToken: () => null,
+          },
         },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],

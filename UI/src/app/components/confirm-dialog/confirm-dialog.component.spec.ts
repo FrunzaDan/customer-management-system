@@ -35,12 +35,14 @@ describe('ConfirmDialogComponent accessibility', () => {
 
     const dialog = root.querySelector('[role="alertdialog"]')!;
     expect(dialog.getAttribute('aria-modal')).toBe('true');
-    expect(root.querySelector('#' + dialog.getAttribute('aria-labelledby'))?.textContent).toContain(
-      'Please confirm',
-    );
-    expect(root.querySelector('#' + dialog.getAttribute('aria-describedby'))?.textContent).toContain(
-      'Delete this customer?',
-    );
+    expect(
+      root.querySelector('#' + dialog.getAttribute('aria-labelledby'))
+        ?.textContent,
+    ).toContain('Please confirm');
+    expect(
+      root.querySelector('#' + dialog.getAttribute('aria-describedby'))
+        ?.textContent,
+    ).toContain('Delete this customer?');
   });
 
   it('moves focus to the non-destructive Cancel button when it opens', () => {
@@ -71,11 +73,22 @@ describe('ConfirmDialogComponent accessibility', () => {
     const dialog = fixture.nativeElement.querySelector('[role="alertdialog"]');
 
     confirm.focus();
-    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    dialog.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
     expect(document.activeElement).toBe(cancel); // wrapped forward
 
     dialog.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }),
+      new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
     );
     expect(document.activeElement).toBe(confirm); // wrapped backward
   });
@@ -86,10 +99,11 @@ describe('ConfirmDialogComponent accessibility', () => {
     const el: HTMLElement = fixture.nativeElement;
 
     expect(el.querySelector('h2')?.textContent).toContain('Please confirm');
-    expect(Array.from(el.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual([
-      'Cancel',
-      'Confirm',
-    ]);
+    expect(
+      Array.from(el.querySelectorAll('button')).map((b) =>
+        b.textContent?.trim(),
+      ),
+    ).toEqual(['Cancel', 'Confirm']);
   });
 
   it('shows a custom title and button labels, still focusing the cancel-side button', () => {
@@ -103,10 +117,11 @@ describe('ConfirmDialogComponent accessibility', () => {
     const el: HTMLElement = fixture.nativeElement;
 
     expect(el.querySelector('h2')?.textContent).toContain('Discard changes?');
-    expect(Array.from(el.querySelectorAll('button')).map((b) => b.textContent?.trim())).toEqual([
-      'Keep editing',
-      'Discard changes',
-    ]);
+    expect(
+      Array.from(el.querySelectorAll('button')).map((b) =>
+        b.textContent?.trim(),
+      ),
+    ).toEqual(['Keep editing', 'Discard changes']);
     expect(document.activeElement?.textContent?.trim()).toBe('Keep editing');
   });
 });

@@ -23,8 +23,8 @@ export interface Address {
   streetNumber: string;
 }
 
-// A customer as the API returns it. Every field but birthDate is NOT NULL in the DB; the API
-// omits null properties entirely, so an unset birthDate arrives as a missing key.
+// A customer as the API returns it. Every field but birthDate is NOT NULL in the DB; an unset
+// birthDate arrives as null.
 export interface Customer {
   customerId: string;
   firstName: string;
@@ -35,7 +35,7 @@ export interface Customer {
   status: CustomerStatus;
   createdAt: IsoDateTime;
   lastInteractionAt: IsoDateTime;
-  birthDate?: IsoDate;
+  birthDate: IsoDate | null;
   address: Address;
 }
 
@@ -54,6 +54,8 @@ export interface CreateCustomerRequest {
 
 // PATCH /api/customer/update — a partial update: an omitted field is left unchanged. There's no
 // status: status only changes through deactivate/reactivate/delete.
-export interface UpdateCustomerRequest extends Partial<Omit<CreateCustomerRequest, 'status'>> {
+export interface UpdateCustomerRequest extends Partial<
+  Omit<CreateCustomerRequest, 'status'>
+> {
   customerId: string;
 }

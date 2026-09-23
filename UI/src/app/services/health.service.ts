@@ -19,13 +19,15 @@ export class HealthService {
 
   checkApiHealth(): Observable<boolean> {
     // ASP.NET Core health checks answer with plain text ("Healthy"), not JSON.
-    return this.http.get(this.healthUrl, { observe: 'response', responseType: 'text' }).pipe(
-      map((response: HttpResponse<string>) => response.ok), // cleaner than status check
-      catchError((error) => {
-        this.logHealthError(error);
-        return of(false);
-      }),
-    );
+    return this.http
+      .get(this.healthUrl, { observe: 'response', responseType: 'text' })
+      .pipe(
+        map((response: HttpResponse<string>) => response.ok), // cleaner than status check
+        catchError((error) => {
+          this.logHealthError(error);
+          return of(false);
+        }),
+      );
   }
 
   pollApiHealth(): Observable<boolean> {

@@ -18,7 +18,7 @@ export interface LoadAllAuditLogParams {
   pageSize: number;
 }
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 50;
 
 @Injectable({
   providedIn: 'root',
@@ -43,7 +43,7 @@ export class GlobalAuditLogService {
 
   // Routed through switchMap so a new loadAllAuditLog() call cancels whatever request is
   // still in flight — without this, a slower earlier response can land after a faster
-  // later one and overwrite it with stale data (same fix as GetCustomerService.loadCustomers).
+  // later one and overwrite it with stale data (same fix as CustomerService.loadCustomers).
   private readonly loadParams$ = new Subject<LoadAllAuditLogParams>();
 
   private readonly http = inject(HttpClient);

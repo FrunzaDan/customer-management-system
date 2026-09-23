@@ -5,7 +5,18 @@ import { StockHealthRow } from './stock-health-chart/stock-health-chart.componen
 import { TimeSeriesPoint } from './time-series-chart/time-series-chart.component';
 
 const MONTH_ABBREVIATIONS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ] as const;
 
 // Sums valueFn(product) per category, ranked descending, folding everything past `limit`
@@ -18,7 +29,10 @@ export function rankByCategory(
 ): RankedItem[] {
   const totals = new Map<string, number>();
   for (const product of products) {
-    totals.set(product.category, (totals.get(product.category) ?? 0) + valueFn(product));
+    totals.set(
+      product.category,
+      (totals.get(product.category) ?? 0) + valueFn(product),
+    );
   }
 
   const sorted = [...totals.entries()]
@@ -30,7 +44,10 @@ export function rankByCategory(
   const top = sorted.slice(0, limit);
   const rest = sorted.slice(limit);
   const otherValue = rest.reduce((sum, item) => sum + item.value, 0);
-  return [...top, { label: `Other (${rest.length} categories)`, value: otherValue }];
+  return [
+    ...top,
+    { label: `Other (${rest.length} categories)`, value: otherValue },
+  ];
 }
 
 // Share of each category's originally-stocked units already sold, ranked so the
@@ -88,6 +105,10 @@ export function cumulativePoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
   let running = 0;
   return counts.map((count) => {
     running += count.count;
-    return { key: count.yearMonth, label: formatMonthLabel(count.yearMonth), value: running };
+    return {
+      key: count.yearMonth,
+      label: formatMonthLabel(count.yearMonth),
+      value: running,
+    };
   });
 }

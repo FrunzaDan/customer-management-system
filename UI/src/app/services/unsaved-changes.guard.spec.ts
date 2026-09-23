@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterStateSnapshot } from '@angular/router';
 import { ConfirmDialogService } from './confirm-dialog.service';
-import { HasUnsavedChanges, unsavedChangesGuard } from './unsaved-changes.guard';
+import {
+  HasUnsavedChanges,
+  unsavedChangesGuard,
+} from './unsaved-changes.guard';
 
 describe('unsavedChangesGuard', () => {
   let confirm: ReturnType<typeof vi.fn>;

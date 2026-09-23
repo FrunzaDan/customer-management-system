@@ -51,7 +51,8 @@ function niceMax(raw: number): number {
   if (raw <= 0) return 1;
   const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
   const residual = raw / magnitude;
-  const niceResidual = residual <= 1 ? 1 : residual <= 2 ? 2 : residual <= 5 ? 5 : 10;
+  const niceResidual =
+    residual <= 1 ? 1 : residual <= 2 ? 2 : residual <= 5 ? 5 : 10;
   return niceResidual * magnitude;
 }
 
@@ -63,7 +64,13 @@ function formatTick(value: number): string {
 
 // 4px-rounded top, square baseline — a bar's data-end is the far end from the
 // axis, per the app's chart mark spec.
-function roundedTopPath(x: number, y: number, width: number, height: number, radius: number): string {
+function roundedTopPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+): string {
   const r = Math.min(radius, width / 2, Math.max(height, 0));
   if (height <= 0) return '';
   return (
@@ -83,7 +90,9 @@ function roundedTopPath(x: number, y: number, width: number, height: number, rad
 export class TimeSeriesChartComponent {
   readonly points = input.required<TimeSeriesPoint[]>();
   readonly variant = input<'bar' | 'line'>('bar');
-  readonly valueFormatter = input<(value: number) => string>((value) => value.toLocaleString());
+  readonly valueFormatter = input<(value: number) => string>((value) =>
+    value.toLocaleString(),
+  );
   readonly emptyMessage = input('No data yet.');
 
   readonly hasData = computed(() => this.points().length > 0);
@@ -144,7 +153,8 @@ export class TimeSeriesChartComponent {
 
     return points.map((point, index) => {
       const valueText = formatter(point.value);
-      const labelAnchor = index === 0 ? 'start' : index === points.length - 1 ? 'end' : null;
+      const labelAnchor =
+        index === 0 ? 'start' : index === points.length - 1 ? 'end' : null;
 
       return {
         key: point.key,

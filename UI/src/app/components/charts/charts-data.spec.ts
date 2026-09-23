@@ -12,6 +12,7 @@ const buildProduct = (overrides: Partial<Product> = {}): Product => ({
   productId: 'product-1',
   name: 'Aerobook 14 Pro',
   category: 'Laptop',
+  description: null,
   price: 1000,
   initialQuantity: 10,
   quantityOnHand: 5,
@@ -61,7 +62,11 @@ describe('rankByCategory', () => {
 describe('stockHealthByCategory', () => {
   it('sums sold/inventory per category and ranks by percent sold, descending', () => {
     const products = [
-      buildProduct({ category: 'Gaming', soldQuantity: 9, initialQuantity: 10 }),
+      buildProduct({
+        category: 'Gaming',
+        soldQuantity: 9,
+        initialQuantity: 10,
+      }),
       buildProduct({ category: 'Audio', soldQuantity: 2, initialQuantity: 10 }),
     ];
 
@@ -74,7 +79,9 @@ describe('stockHealthByCategory', () => {
   });
 
   it('treats zero inventory as 0% sold rather than dividing by zero', () => {
-    const products = [buildProduct({ category: 'Empty', soldQuantity: 0, initialQuantity: 0 })];
+    const products = [
+      buildProduct({ category: 'Empty', soldQuantity: 0, initialQuantity: 0 }),
+    ];
 
     const result = stockHealthByCategory(products);
 

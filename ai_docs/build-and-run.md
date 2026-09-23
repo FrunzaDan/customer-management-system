@@ -44,6 +44,7 @@ docker run \
 
 ## Gotchas / conventions
 
+- **Formatting is Prettier**, configured identically in all three apps (`UI/.prettierrc`, with the `angular` parser for `.html`; `UI/.editorconfig` matches too). Run `npm run format` in `UI/` before committing; `npm run format:check` lists files that aren't formatted.
 - **One-time local machine setup, not handled by either script**: the ASP.NET Core HTTPS dev certificate must be trusted at the OS level — `dotnet dev-certs https --trust`.
 - **Browser TLS trust** (`ERR_CERT_AUTHORITY_INVALID` in the browser, login fails with the UI's `status === 0` message, see [angular-frontend](angular-frontend.md)): running `dotnet dev-certs https --export-path` **regenerates** the dev cert rather than exporting the existing one, desyncing "the cert Kestrel serves" from "the cert the OS trusts" (multiple `localhost` dev certs end up in the login keychain). Fix: `dotnet dev-certs https --clean && dotnet dev-certs https --trust`. Never use `--export-path` to "just get the current cert" — it doesn't.
 - **Node/SSR TLS trust** (silent `AbortError`s in the terminal for guarded routes; page still works after client-side hydration): Angular SSR makes real `fetch()` calls from **Node**, whose TLS stack doesn't consult the per-user login keychain the way a browser or `curl` does — so even an OS-trusted cert can fail Node's handshake. This is why `run.sh` step 4 exists. Separate from the browser-trust problem above; fixing one does not fix the other.

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { Product } from '../../interfaces/product';
-import { CreateCustomerService } from '../../services/create-customer.service';
+import { CustomerService } from '../../services/customer.service';
 import { NotificationService } from '../../services/notification.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
@@ -12,13 +12,15 @@ describe('AboutComponent — createTestCustomers', () => {
     productId: `p${n}`,
     name: `Product ${n}`,
     category: 'Laptop',
+    description: null,
     price: 100,
     initialQuantity: quantityOnHand,
     quantityOnHand,
     soldQuantity: 0,
     warehouse: 'Central Depot',
   });
-  const catalogue = (size = 50, stock = 100) => Array.from({ length: size }, (_, i) => buildProduct(i, stock));
+  const catalogue = (size = 50, stock = 100) =>
+    Array.from({ length: size }, (_, i) => buildProduct(i, stock));
 
   let registered: string[]; // emails, in registration order
   let purchases: { customerId: string; productId: string }[];
@@ -33,7 +35,11 @@ describe('AboutComponent — createTestCustomers', () => {
     fetchProducts = vi.fn().mockReturnValue(of(products));
     createCustomerSilently = vi.fn((customer: { email: string }) => {
       registered.push(customer.email);
-      return of({ status: 200, responseMessage: 'ok', data: `customer-for-${customer.email}` });
+      return of({
+        status: 200,
+        responseMessage: 'ok',
+        data: `customer-for-${customer.email}`,
+      });
     });
     purchaseProductSilently = vi.fn((customerId: string, productId: string) => {
       purchases.push({ customerId, productId });
@@ -44,7 +50,7 @@ describe('AboutComponent — createTestCustomers', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ProductService, useValue: { fetchProducts } },
-        { provide: CreateCustomerService, useValue: { createCustomerSilently } },
+        { provide: CustomerService, useValue: { createCustomerSilently } },
         { provide: PurchaseService, useValue: { purchaseProductSilently } },
         { provide: NotificationService, useValue: { show } },
       ],
@@ -55,7 +61,10 @@ describe('AboutComponent — createTestCustomers', () => {
   const purchasesByCustomer = () => {
     const byCustomer = new Map<string, string[]>();
     for (const p of purchases) {
-      byCustomer.set(p.customerId, [...(byCustomer.get(p.customerId) ?? []), p.productId]);
+      byCustomer.set(p.customerId, [
+        ...(byCustomer.get(p.customerId) ?? []),
+        p.productId,
+      ]);
     }
     return byCustomer;
   };
@@ -91,7 +100,9 @@ describe('AboutComponent — createTestCustomers', () => {
 
     await component.createTestCustomers();
 
-    const counts = new Set([...purchasesByCustomer().values()].map((p) => p.length));
+    const counts = new Set(
+      [...purchasesByCustomer().values()].map((p) => p.length),
+    );
     expect(counts.size).toBeGreaterThan(1);
   });
 
@@ -101,11 +112,17 @@ describe('AboutComponent — createTestCustomers', () => {
     await component.createTestCustomers();
 
     const buyers = new Set(purchases.map((p) => p.customerId));
-    expect([...buyers].sort()).toEqual(registered.map((email) => `customer-for-${email}`).sort());
+    expect([...buyers].sort()).toEqual(
+      registered.map((email) => `customer-for-${email}`).sort(),
+    );
   });
 
   it('never buys a product that is out of stock', async () => {
-    const products = [...catalogue(20).map((p) => ({ ...p, quantityOnHand: 0 })), buildProduct(99), buildProduct(98)];
+    const products = [
+      ...catalogue(20).map((p) => ({ ...p, quantityOnHand: 0 })),
+      buildProduct(99),
+      buildProduct(98),
+    ];
     const component = createComponent(products);
 
     await component.createTestCustomers();
@@ -121,23 +138,30 @@ describe('AboutComponent — createTestCustomers', () => {
 
     await component.createTestCustomers();
 
-    expect(purchases.filter((p) => p.productId === 'p0').length).toBeLessThanOrEqual(3);
+    expect(
+      purchases.filter((p) => p.productId === 'p0').length,
+    ).toBeLessThanOrEqual(3);
   });
 
   it('draws again when every product it picked is rejected, so the customer still ends up with one', async () => {
     const component = createComponent(catalogue(50));
     // Reject the first 3 attempts overall (e.g. someone else took the stock), then accept.
     let attempts = 0;
-    purchaseProductSilently.mockImplementation((customerId: string, productId: string) => {
-      if (attempts++ < 3) return throwError(() => new Error('409'));
-      purchases.push({ customerId, productId });
-      return of({ status: 200, responseMessage: 'ok' });
-    });
+    purchaseProductSilently.mockImplementation(
+      (customerId: string, productId: string) => {
+        if (attempts++ < 3) return throwError(() => new Error('409'));
+        purchases.push({ customerId, productId });
+        return of({ status: 200, responseMessage: 'ok' });
+      },
+    );
 
     await component.createTestCustomers();
 
     expect(purchasesByCustomer().size).toBe(50);
-    expect(show).toHaveBeenCalledWith(expect.stringContaining('Added 50 test customers'), 'success');
+    expect(show).toHaveBeenCalledWith(
+      expect.stringContaining('Added 50 test customers'),
+      'success',
+    );
   });
 
   it('reports customers who could not buy anything when the whole catalogue is sold out', async () => {
@@ -160,7 +184,10 @@ describe('AboutComponent — createTestCustomers', () => {
     await component.createTestCustomers();
 
     expect(createCustomerSilently).not.toHaveBeenCalled();
-    expect(show).toHaveBeenCalledWith(expect.stringContaining('Could not load the product catalogue'), 'error');
+    expect(show).toHaveBeenCalledWith(
+      expect.stringContaining('Could not load the product catalogue'),
+      'error',
+    );
     expect(component.addingTestCustomers()).toBe(false);
   });
 
@@ -170,14 +197,24 @@ describe('AboutComponent — createTestCustomers', () => {
     createCustomerSilently.mockImplementation((customer: { email: string }) => {
       if (n++ === 0) return throwError(() => new Error('400'));
       registered.push(customer.email);
-      return of({ status: 200, responseMessage: 'ok', data: `customer-for-${customer.email}` });
+      return of({
+        status: 200,
+        responseMessage: 'ok',
+        data: `customer-for-${customer.email}`,
+      });
     });
 
     await component.createTestCustomers();
 
     expect(new Set(purchases.map((p) => p.customerId)).size).toBe(49);
-    expect(show).toHaveBeenCalledWith(expect.stringContaining('Added 49 test customers'), 'error');
-    expect(show).toHaveBeenCalledWith(expect.stringContaining('1 failed'), 'error');
+    expect(show).toHaveBeenCalledWith(
+      expect.stringContaining('Added 49 test customers'),
+      'error',
+    );
+    expect(show).toHaveBeenCalledWith(
+      expect.stringContaining('1 failed'),
+      'error',
+    );
   });
 
   it('reports the total in the summary and shows a single notification', async () => {
@@ -186,7 +223,10 @@ describe('AboutComponent — createTestCustomers', () => {
     await component.createTestCustomers();
 
     expect(show).toHaveBeenCalledTimes(1);
-    expect(show).toHaveBeenCalledWith(`Added 50 test customers with ${purchases.length} purchases.`, 'success');
+    expect(show).toHaveBeenCalledWith(
+      `Added 50 test customers with ${purchases.length} purchases.`,
+      'success',
+    );
   });
 
   it('ignores a second click while a run is in progress', async () => {

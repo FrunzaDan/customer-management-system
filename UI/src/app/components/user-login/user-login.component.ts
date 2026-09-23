@@ -1,4 +1,11 @@
-import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  input,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   FormField,
@@ -103,7 +110,9 @@ export class UserLoginComponent implements OnInit, OnDestroy {
         );
         break;
       default:
-        this.errorMessage.set(`Server error (${statusCode}). Please try again later.`);
+        this.errorMessage.set(
+          `Server error (${statusCode}). Please try again later.`,
+        );
     }
   }
 

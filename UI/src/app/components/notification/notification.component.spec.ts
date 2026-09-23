@@ -16,9 +16,14 @@ describe('NotificationComponent', () => {
     const fixture = render();
 
     const toasts = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('.notification-toast'),
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.notification-toast',
+      ),
     );
-    expect(toasts.map((t) => t.getAttribute('role'))).toEqual(['status', 'alert']);
+    expect(toasts.map((t) => t.getAttribute('role'))).toEqual([
+      'status',
+      'alert',
+    ]);
     expect(toasts[1].classList).toContain('notification-error');
   });
 
@@ -27,7 +32,9 @@ describe('NotificationComponent', () => {
     const fixture = render();
     const el: HTMLElement = fixture.nativeElement;
 
-    el.querySelector<HTMLButtonElement>('button[aria-label="Dismiss notification"]')!.click();
+    el.querySelector<HTMLButtonElement>(
+      'button[aria-label="Dismiss notification"]',
+    )!.click();
     fixture.detectChanges();
 
     expect(el.querySelector('.notification-toast')).toBeNull();

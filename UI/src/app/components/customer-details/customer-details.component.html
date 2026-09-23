@@ -1,325 +1,404 @@
 @if (!isLoading()) {
-@if (errorMessage(); as error) {
-<div class="page">
-  <div class="alert alert-danger" role="alert">{{ error }}</div>
-  <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
-</div>
-} @else {
-<div class="page">
-  <div class="page-header">
-    <div>
-      <a routerLink="/customers" class="back-link"><span aria-hidden="true">←</span> Back to customers</a>
-      <h1 class="page-title">Customer details</h1>
-      <p class="page-subtitle">Full record and audit history for this customer.</p>
+  @if (errorMessage(); as error) {
+    <div class="page">
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+      <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
     </div>
-
-    <div class="header-actions">
-      <div class="d-flex flex-wrap gap-2" role="group" aria-label="Customer actions">
-        <a
-          class="btn btn-primary shadow-none"
-          routerLink="/update-customer"
-          [queryParams]="{ id: customer()?.customerId }"
-          >Edit</a
-        >
-
-        @if (customer()?.status === CustomerStatus.Active || customer()?.status === CustomerStatus.Test) {
-        <button
-          (click)="deactivateCustomer()"
-          type="button"
-          class="btn btn-danger"
-          [disabled]="activationLoading() || deleting()"
-        >
-          Deactivate
-        </button>
-        } @if (customer()?.status === CustomerStatus.Deactivated) {
-        <button
-          (click)="reactivateCustomer()"
-          type="button"
-          class="btn btn-primary shadow-none"
-          [disabled]="activationLoading() || deleting()"
-        >
-          Reactivate
-        </button>
-        }
-
-        <button
-          (click)="deleteCustomer()"
-          type="button"
-          class="btn btn-danger shadow-none"
-          [disabled]="!canDelete() || activationLoading() || deleting()"
-          [attr.aria-describedby]="!canDelete() ? 'delete-hint' : null"
-        >
-          Delete
-        </button>
-      </div>
-
-      @if (!canDelete()) {
-      <p class="form-note mb-0" id="delete-hint">
-        Deactivate this customer before deleting it.
-      </p>
-      }
-    </div>
-  </div>
-
-  @if (activationError(); as error) {
-  <div class="alert alert-danger" role="alert">{{ error }}</div>
-  } @if (deleteError(); as error) {
-  <div class="alert alert-danger" role="alert">{{ error }}</div>
-  }
-
-  <div class="row g-4">
-    <div class="col-12 col-lg-6 d-flex flex-column gap-4">
-      <div class="card app-card">
-        <div class="card-body">
-          <div class="profile-header">
-            <img
-              [src]="
-                customer()?.gender === Gender.Female
-                  ? '/assets/avatar_female.jpg'
-                  : '/assets/avatar_male.jpg'
-              "
-              class="avatar"
-              alt=""
-            />
-            <div class="profile-heading">
-              <h2 class="profile-name">
-                {{ customer()?.firstName }} {{ customer()?.lastName }}
-              </h2>
-              <span
-                class="badge rounded-pill"
-                [class.bg-success]="customer()?.status === CustomerStatus.Active"
-                [class.bg-secondary]="customer()?.status === CustomerStatus.Deactivated"
-                [class.bg-warning]="customer()?.status === CustomerStatus.Test"
-                [class.text-dark]="customer()?.status === CustomerStatus.Test"
-              >
-                {{ customerStatusLabel() }}
-              </span>
-            </div>
-          </div>
-
-          <h2 class="card-title">Basic info</h2>
-          <dl class="detail-list">
-            <div class="detail-row">
-              <dt>First name</dt>
-              <dd>{{ customer()?.firstName || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Last name</dt>
-              <dd>{{ customer()?.lastName || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Gender</dt>
-              <dd class="text-capitalize">{{ customerGender() || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Birth date</dt>
-              <dd>{{ (customer()?.birthDate | date: 'longDate') || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Customer ID</dt>
-              <dd class="entity-id">{{ customer()?.customerId || '—' }}</dd>
-            </div>
-          </dl>
+  } @else {
+    <div class="page">
+      <div class="page-header">
+        <div>
+          <a routerLink="/customers" class="back-link"
+            ><span aria-hidden="true">←</span> Back to customers</a
+          >
+          <h1 class="page-title">Customer details</h1>
+          <p class="page-subtitle">
+            Full record and audit history for this customer.
+          </p>
         </div>
-      </div>
 
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Contact</h2>
-          <dl class="detail-list">
-            <div class="detail-row">
-              <dt>E-mail</dt>
-              <dd>{{ customer()?.email || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Phone</dt>
-              <dd>{{ customer()?.phoneNumber || '—' }}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </div>
+        <div class="header-actions">
+          <div
+            class="d-flex flex-wrap gap-2"
+            role="group"
+            aria-label="Customer actions"
+          >
+            <a
+              class="btn btn-primary shadow-none"
+              [routerLink]="['/customers/update', customerId()]"
+              >Edit</a
+            >
 
-    <div class="col-12 col-lg-6 d-flex flex-column gap-4">
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Address</h2>
-          <dl class="detail-list">
-            <div class="detail-row">
-              <dt>Country</dt>
-              <dd>{{ customer()?.address?.country || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>County</dt>
-              <dd>{{ customer()?.address?.county || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>City</dt>
-              <dd>{{ customer()?.address?.city || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Street</dt>
-              <dd>{{ customer()?.address?.street || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Street number</dt>
-              <dd>{{ customer()?.address?.streetNumber || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Postal code</dt>
-              <dd>{{ customer()?.address?.postalCode || '—' }}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Account</h2>
-          <dl class="detail-list">
-            <div class="detail-row">
-              <dt>Created</dt>
-              <dd>{{ (customer()?.createdAt | date: 'medium') || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Last interaction</dt>
-              <dd>{{ (customer()?.lastInteractionAt | date: 'medium') || '—' }}</dd>
-            </div>
-            <div class="detail-row">
-              <dt>Status</dt>
-              <dd>
-                {{ customerStatusLabel() }}
-                <span class="text-muted small">({{ customer()?.status }})</span>
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Purchases</h2>
-
-          <div class="purchase-form">
-            <label for="purchase-product" class="form-label">Record a purchase</label>
-            <div class="purchase-form-row">
-              <select
-                id="purchase-product"
-                class="form-select"
-                [disabled]="!canPurchase() || purchasing() || productsLoading() || !!productsError()"
-                [attr.aria-describedby]="'purchase-hint' + (purchaseError() ? ' purchase-error' : '')"
-                (change)="selectProduct($event)"
-              >
-                <option value="" [selected]="!selectedProductId()">
-                  @if (productsLoading() && products().length === 0) { Loading products… } @else { Select a product… }
-                </option>
-                @for (group of productGroups(); track group.category) {
-                <optgroup [label]="group.category">
-                  @for (product of group.products; track product.productId) {
-                  <option
-                    [value]="product.productId"
-                    [selected]="product.productId === selectedProductId()"
-                    [disabled]="product.quantityOnHand === 0"
-                  >
-                    {{ product.name }} — {{ product.price | number: '1.2-2' }}
-                    @if (product.quantityOnHand === 0) { (out of stock) } @else { ({{ product.quantityOnHand }} in stock) }
-                  </option>
-                  }
-                </optgroup>
-                }
-              </select>
+            @if (
+              customer()?.status === CustomerStatus.Active ||
+              customer()?.status === CustomerStatus.Test
+            ) {
               <button
+                (click)="deactivateCustomer()"
+                type="button"
+                class="btn btn-danger"
+                [disabled]="activationLoading() || deleting()"
+              >
+                Deactivate
+              </button>
+            }
+            @if (customer()?.status === CustomerStatus.Deactivated) {
+              <button
+                (click)="reactivateCustomer()"
                 type="button"
                 class="btn btn-primary shadow-none"
-                [disabled]="!canSubmitPurchase()"
-                (click)="recordPurchase()"
+                [disabled]="activationLoading() || deleting()"
               >
-                {{ purchasing() ? 'Recording…' : 'Record purchase' }}
+                Reactivate
               </button>
-            </div>
-
-            <p class="form-note mb-0" id="purchase-hint">
-              @if (!canPurchase()) { A deactivated customer cannot make purchases. }
-              @else if (selectedProduct(); as product) {
-              {{ product.description || 'No description.' }} Stock: {{ product.quantityOnHand }} in {{ product.warehouse }}.
-              } @else { Choose a product to record it against this customer. }
-            </p>
-
-            @if (productsError(); as error) {
-            <p class="text-danger mb-0" role="alert">Could not load products: {{ error }}</p>
-            } @if (purchaseError(); as error) {
-            <p class="text-danger mb-0" id="purchase-error" role="alert">{{ error }}</p>
             }
+
+            <button
+              (click)="deleteCustomer()"
+              type="button"
+              class="btn btn-danger shadow-none"
+              [disabled]="!canDelete() || activationLoading() || deleting()"
+              [attr.aria-describedby]="!canDelete() ? 'delete-hint' : null"
+            >
+              Delete
+            </button>
           </div>
 
-          <h3 class="purchase-heading">History</h3>
-          @if (purchasesLoading()) {
-          <p class="text-muted mb-0" role="status">Loading purchases…</p>
-          } @else if (purchasesError()) {
-          <p class="text-danger mb-0" role="alert">{{ purchasesError() }}</p>
-          } @else if (purchases().length === 0) {
-          <p class="text-muted mb-0">No purchases yet.</p>
-          } @else {
-          <p class="purchase-total">
-            <span>Total spent</span>
-            <strong>{{ totalSpent() | number: '1.2-2' }}</strong>
-          </p>
-          <ul class="purchase-list">
-            @for (purchase of purchases(); track purchase.customerPurchaseId) {
-            <li class="purchase-item">
-              <div>
-                <a
-                  class="purchase-name plain-Links hoverItem"
-                  routerLink="/product-details"
-                  [queryParams]="{ id: purchase.productId }"
-                  >{{ purchase.productName }}</a
-                >
-                <div class="purchase-meta">
-                  {{ purchase.category }} · {{ purchase.purchasedAt | date: 'medium' }}
-                </div>
-              </div>
-              <div class="purchase-price">{{ purchase.price | number: '1.2-2' }}</div>
-            </li>
-            }
-          </ul>
+          @if (!canDelete()) {
+            <p class="form-note mb-0" id="delete-hint">
+              Deactivate this customer before deleting it.
+            </p>
           }
         </div>
       </div>
 
-      <div class="card app-card">
-        <div class="card-body">
-          <h2 class="card-title">Audit trail</h2>
-          @if (auditLogLoading()) {
-          <p class="text-muted mb-0" role="status">Loading audit trail…</p>
-          } @else if (auditLogError()) {
-          <p class="text-danger mb-0" role="alert">{{ auditLogError() }}</p>
-          } @else if (auditLog().length === 0) {
-          <p class="text-muted mb-0">No recorded actions yet.</p>
-          } @else {
-          <ul class="audit-list">
-            @for (entry of auditLog(); track entry.customerAuditLogId) {
-            <li class="audit-item">
-              <div class="audit-action">{{ auditActionLabel(entry.actionType) }}</div>
-              <div class="audit-meta">
-                by {{ entry.performedBy }} · {{ entry.occurredAt | date: 'medium' }}
+      @if (activationError(); as error) {
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      }
+      @if (deleteError(); as error) {
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+      }
+
+      <div class="row g-4">
+        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+          <div class="card app-card">
+            <div class="card-body">
+              <div class="profile-header">
+                <img
+                  [src]="
+                    customer()?.gender === Gender.Female
+                      ? '/assets/avatar_female.jpg'
+                      : '/assets/avatar_male.jpg'
+                  "
+                  class="avatar"
+                  alt=""
+                />
+                <div class="profile-heading">
+                  <h2 class="profile-name">
+                    {{ customer()?.firstName }} {{ customer()?.lastName }}
+                  </h2>
+                  <span
+                    class="badge rounded-pill"
+                    [class.bg-success]="
+                      customer()?.status === CustomerStatus.Active
+                    "
+                    [class.bg-secondary]="
+                      customer()?.status === CustomerStatus.Deactivated
+                    "
+                    [class.bg-warning]="
+                      customer()?.status === CustomerStatus.Test
+                    "
+                    [class.text-dark]="
+                      customer()?.status === CustomerStatus.Test
+                    "
+                  >
+                    {{ customerStatusLabel() }}
+                  </span>
+                </div>
               </div>
-              @if (entry.details) {
-              <div class="audit-details">{{ entry.details }}</div>
+
+              <h2 class="card-title">Basic info</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>First name</dt>
+                  <dd>{{ customer()?.firstName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Last name</dt>
+                  <dd>{{ customer()?.lastName || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Gender</dt>
+                  <dd class="text-capitalize">{{ customerGender() || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Birth date</dt>
+                  <dd>
+                    {{ (customer()?.birthDate | date: 'longDate') || '—' }}
+                  </dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Customer ID</dt>
+                  <dd class="entity-id">{{ customer()?.customerId || '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Contact</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>E-mail</dt>
+                  <dd>{{ customer()?.email || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Phone</dt>
+                  <dd>{{ customer()?.phoneNumber || '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6 d-flex flex-column gap-4">
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Address</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>Country</dt>
+                  <dd>{{ customer()?.address?.country || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>County</dt>
+                  <dd>{{ customer()?.address?.county || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>City</dt>
+                  <dd>{{ customer()?.address?.city || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Street</dt>
+                  <dd>{{ customer()?.address?.street || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Street number</dt>
+                  <dd>{{ customer()?.address?.streetNumber || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Postal code</dt>
+                  <dd>{{ customer()?.address?.postalCode || '—' }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Account</h2>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>Created</dt>
+                  <dd>{{ (customer()?.createdAt | date: 'medium') || '—' }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Last interaction</dt>
+                  <dd>
+                    {{
+                      (customer()?.lastInteractionAt | date: 'medium') || '—'
+                    }}
+                  </dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Status</dt>
+                  <dd>
+                    {{ customerStatusLabel() }}
+                    <span class="text-muted small"
+                      >({{ customer()?.status }})</span
+                    >
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Purchases</h2>
+
+              <div class="purchase-form">
+                <label for="purchase-product" class="form-label"
+                  >Record a purchase</label
+                >
+                <div class="purchase-form-row">
+                  <select
+                    id="purchase-product"
+                    class="form-select"
+                    [disabled]="
+                      !canPurchase() ||
+                      purchasing() ||
+                      productsLoading() ||
+                      !!productsError()
+                    "
+                    [attr.aria-describedby]="
+                      'purchase-hint' +
+                      (purchaseError() ? ' purchase-error' : '')
+                    "
+                    (change)="selectProduct($event)"
+                  >
+                    <option value="" [selected]="!selectedProductId()">
+                      @if (productsLoading() && products().length === 0) {
+                        Loading products…
+                      } @else {
+                        Select a product…
+                      }
+                    </option>
+                    @for (group of productGroups(); track group.category) {
+                      <optgroup [label]="group.category">
+                        @for (
+                          product of group.products;
+                          track product.productId
+                        ) {
+                          <option
+                            [value]="product.productId"
+                            [selected]="
+                              product.productId === selectedProductId()
+                            "
+                            [disabled]="product.quantityOnHand === 0"
+                          >
+                            {{ product.name }} —
+                            {{ product.price | number: '1.2-2' }}
+                            @if (product.quantityOnHand === 0) {
+                              (out of stock)
+                            } @else {
+                              ({{ product.quantityOnHand }} in stock)
+                            }
+                          </option>
+                        }
+                      </optgroup>
+                    }
+                  </select>
+                  <button
+                    type="button"
+                    class="btn btn-primary shadow-none"
+                    [disabled]="!canSubmitPurchase()"
+                    (click)="recordPurchase()"
+                  >
+                    {{ purchasing() ? 'Recording…' : 'Record purchase' }}
+                  </button>
+                </div>
+
+                <p class="form-note mb-0" id="purchase-hint">
+                  @if (!canPurchase()) {
+                    A deactivated customer cannot make purchases.
+                  } @else if (selectedProduct(); as product) {
+                    {{ product.description || 'No description.' }} Stock:
+                    {{ product.quantityOnHand }} in {{ product.warehouse }}.
+                  } @else {
+                    Choose a product to record it against this customer.
+                  }
+                </p>
+
+                @if (productsError(); as error) {
+                  <p class="text-danger mb-0" role="alert">
+                    Could not load products: {{ error }}
+                  </p>
+                }
+                @if (purchaseError(); as error) {
+                  <p class="text-danger mb-0" id="purchase-error" role="alert">
+                    {{ error }}
+                  </p>
+                }
+              </div>
+
+              <h3 class="purchase-heading">History</h3>
+              @if (purchasesLoading()) {
+                <p class="text-muted mb-0" role="status">Loading purchases…</p>
+              } @else if (purchasesError()) {
+                <p class="text-danger mb-0" role="alert">
+                  {{ purchasesError() }}
+                </p>
+              } @else if (purchases().length === 0) {
+                <p class="text-muted mb-0">No purchases yet.</p>
+              } @else {
+                <p class="purchase-total">
+                  <span>Total spent</span>
+                  <strong>{{ totalSpent() | number: '1.2-2' }}</strong>
+                </p>
+                <ul class="purchase-list">
+                  @for (
+                    purchase of purchases();
+                    track purchase.customerPurchaseId
+                  ) {
+                    <li class="purchase-item">
+                      <div>
+                        <a
+                          class="purchase-name plain-Links hoverItem"
+                          [routerLink]="['/products', purchase.productId]"
+                          >{{ purchase.productName }}</a
+                        >
+                        <div class="purchase-meta">
+                          {{ purchase.category }} ·
+                          {{ purchase.purchasedAt | date: 'medium' }}
+                        </div>
+                      </div>
+                      <div class="purchase-price">
+                        {{ purchase.price | number: '1.2-2' }}
+                      </div>
+                    </li>
+                  }
+                </ul>
               }
-            </li>
-            }
-          </ul>
-          }
+            </div>
+          </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Audit trail</h2>
+              @if (auditLogLoading()) {
+                <p class="text-muted mb-0" role="status">
+                  Loading audit trail…
+                </p>
+              } @else if (auditLogError()) {
+                <p class="text-danger mb-0" role="alert">
+                  {{ auditLogError() }}
+                </p>
+              } @else if (auditLog().length === 0) {
+                <p class="text-muted mb-0">No recorded actions yet.</p>
+              } @else {
+                <ul class="audit-list">
+                  @for (entry of auditLog(); track entry.customerAuditLogId) {
+                    <li class="audit-item">
+                      <div class="audit-action">
+                        {{ auditActionLabel(entry.actionType) }}
+                      </div>
+                      <div class="audit-meta">
+                        by {{ entry.performedBy }} ·
+                        {{ entry.occurredAt | date: 'medium' }}
+                      </div>
+                      @if (entry.details) {
+                        <div class="audit-details">{{ entry.details }}</div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
-}
+  }
 } @else {
-<div class="page">
-  <div class="app-card loading-state" role="status">
-    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading customer…
+  <div class="page">
+    <div class="app-card loading-state" role="status">
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading customer…
+    </div>
   </div>
-</div>
 }

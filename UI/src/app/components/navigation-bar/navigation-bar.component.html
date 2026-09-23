@@ -1,80 +1,96 @@
 @if (showNavbar()) {
-<nav class="navbar navbar-expand-sm navbar-dark gradient-custom" aria-label="Main">
-  <div class="container-fluid">
-    <a class="navbar-brand" routerLink="customers" aria-label="Customer Management System, customers">
-      <img id="navbarBrand" class="hoverBrand" src="/assets/DanFrunzaLogo_Mini.png" alt="" />
-    </a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      aria-controls="primary-nav"
-      [attr.aria-expanded]="menuOpen()"
-      aria-label="Toggle navigation"
-      (click)="toggleMenu()"
-    >
-      <span class="toggler-bars" aria-hidden="true"><span></span><span></span><span></span></span>
-    </button>
-    <div
-      class="navbar-collapse justify-content-between"
-      [class.open]="menuOpen()"
-      id="primary-nav"
-    >
-      <div class="navbar-menu">
-        <ul class="navbar-nav">
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              routerLink="customers"
-              routerLinkActive="active"
-              ariaCurrentWhenActive="page"
-              (click)="closeMenu()"
-              >Customers</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              routerLink="products"
-              routerLinkActive="active"
-              ariaCurrentWhenActive="page"
-              (click)="closeMenu()"
-              >Products</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              routerLink="charts"
-              routerLinkActive="active"
-              ariaCurrentWhenActive="page"
-              (click)="closeMenu()"
-              >Charts</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              routerLink="audit-log"
-              routerLinkActive="active"
-              ariaCurrentWhenActive="page"
-              (click)="closeMenu()"
-              >Audit Log</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              routerLink="about"
-              routerLinkActive="active"
-              ariaCurrentWhenActive="page"
-              (click)="closeMenu()"
-              >About</a
-            >
-          </li>
-        </ul>
-        <button type="button" class="nav-link nav-logout" (click)="logout()">Log out</button>
+  <nav
+    class="navbar navbar-expand-sm navbar-dark gradient-custom"
+    aria-label="Main"
+  >
+    <div class="container-fluid">
+      <a
+        class="navbar-brand"
+        routerLink="customers"
+        aria-label="Customer Management System, customers"
+      >
+        <img
+          id="navbarBrand"
+          class="hoverBrand"
+          src="/assets/DanFrunzaLogo_Mini.png"
+          alt=""
+        />
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        aria-controls="primary-nav"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Toggle navigation"
+        (click)="toggleMenu()"
+      >
+        <span class="toggler-bars" aria-hidden="true"
+          ><span></span><span></span><span></span
+        ></span>
+      </button>
+      <div
+        class="navbar-collapse justify-content-between"
+        [class.open]="menuOpen()"
+        id="primary-nav"
+      >
+        <div class="navbar-menu">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="customers"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+                >Customers</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="products"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+                >Products</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="charts"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+                >Charts</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="audit-log"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+                >Audit Log</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="about"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+                >About</a
+              >
+            </li>
+          </ul>
+          <button type="button" class="nav-link nav-logout" (click)="logout()">
+            Log out
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-</nav>
+  </nav>
 }

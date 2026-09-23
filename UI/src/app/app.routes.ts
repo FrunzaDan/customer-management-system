@@ -45,7 +45,7 @@ export const routes: Routes = [
     title: 'Register customer',
   },
   {
-    path: 'update-customer',
+    path: 'customers/update/:customerId',
     loadComponent: () =>
       import('./components/update-customer/update-customer.component').then(
         (m) => m.UpdateCustomerComponent,
@@ -64,7 +64,7 @@ export const routes: Routes = [
     title: 'About',
   },
   {
-    path: 'customer-details',
+    path: 'customers/:customerId',
     loadComponent: () =>
       import('./components/customer-details/customer-details.component').then(
         (m) => m.CustomerDetailsComponent,
@@ -92,7 +92,7 @@ export const routes: Routes = [
     title: 'Add product',
   },
   {
-    path: 'product-details',
+    path: 'products/:productId',
     loadComponent: () =>
       import('./components/product-details/product-details.component').then(
         (m) => m.ProductDetailsComponent,

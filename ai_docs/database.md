@@ -98,7 +98,7 @@ Aligned on 2026-09-23 across all three sibling projects (customer-management-sys
 
 Rules that go with it:
 
-- **One name per value, at every layer.** JSON and TypeScript names are the camelCase column names (`customerId`, `phoneNumber`, `postalCode`, `createdAt`, `grossSalary`). A code column drops its `…Code` suffix once it's an enum (`StatusCode` → `status`), and the login fields are `username`/`password`. URLs are lowercase kebab-case (`/api/customer/audit-log`, `/api/cost-center`, `/customer-details`); query parameters are camelCase (`?customerId=`).
+- **One name per value, at every layer.** JSON and TypeScript names are the camelCase column names (`customerId`, `phoneNumber`, `postalCode`, `createdAt`, `grossSalary`). A code column drops its `…Code` suffix once it's an enum (`StatusCode` → `status`), and the login fields are `username`/`password`. URLs are lowercase kebab-case (`/api/customer/audit-log`, `/api/cost-center`, `/create-customer`); route parameters are named like the id they carry (`/customers/:customerId`); query parameters are camelCase (`?customerId=`).
 - **A parameter has exactly its column's type**, in the proc and in the C# `SqlParameter` that feeds it. A `VARCHAR` column compared with an `NVARCHAR` parameter gets converted, which turns index seeks into scans.
 - **Required means `NOT NULL`.** A value the UI and API require is `NOT NULL` in the DB too. `NULL` means "unknown/not applicable", never a second spelling of an existing code.
 

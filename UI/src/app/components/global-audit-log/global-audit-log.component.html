@@ -2,7 +2,9 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Audit log</h1>
-      <p class="page-subtitle">Every customer change across the system, newest first.</p>
+      <p class="page-subtitle">
+        Every customer change across the system, newest first.
+      </p>
     </div>
     <button
       type="button"
@@ -13,84 +15,105 @@
       {{ clearing() ? 'Clearing…' : 'Clear audit log' }}
     </button>
   </div>
-@if (clearError(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-}
-@if (isLoading()) {
-<div class="app-card loading-state" role="status">
-  <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Loading audit log…
-</div>
-} @else if (errorMessage(); as error) {
-<div class="alert alert-danger" role="alert">{{ error }}</div>
-} @else if (entries().length === 0) {
-<div class="app-card empty-state">No recorded actions yet.</div>
-} @else {
-<div class="app-card table-card">
-<div class="table-responsive" role="region" aria-label="Audit log table" tabindex="0">
-  <table class="table table-themed table-striped table-hover">
-    <caption class="visually-hidden">
-      Audit log, page {{ currentPage() }} of {{ totalPages() }}, newest first
-    </caption>
-    <thead>
-      <tr>
-        <th scope="col" class="text-center">Date</th>
-        <th scope="col" class="text-center">Customer</th>
-        <th scope="col" class="text-center">Performed by</th>
-        <th scope="col" class="text-center">Action</th>
-        <th scope="col" class="text-center">Details</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (entry of entries(); track entry.customerAuditLogId) {
-      <tr>
-        <td class="align-middle text-center">
-          {{ entry.occurredAt | date: 'medium' }}
-        </td>
-        <td class="align-middle text-center">
-          @if (entry.customerFirstName || entry.customerLastName) {
-          <a
-            class="plain-Links hoverItem"
-            routerLink="/customer-details"
-            [queryParams]="{ id: entry.customerId }"
-          >
-            {{ customerLabel(entry) }}
-          </a>
-          } @else {
-          <span class="text-muted">{{ customerLabel(entry) }}</span>
-          }
-        </td>
-        <td class="align-middle text-center">{{ entry.performedBy }}</td>
-        <td class="align-middle text-center">{{ auditActionLabel(entry.actionType) }}</td>
-        <td class="align-middle text-center">{{ entry.details }}</td>
-      </tr>
-      }
-    </tbody>
-  </table>
-</div>
-</div>
-@if (totalPages() > 1) {
-<nav
-  class="d-flex justify-content-center align-items-center gap-2 mt-4"
-  aria-label="Audit log pages"
->
-  <button
-    type="button"
-    class="btn btn-primary btn-sm shadow-none"
-    [disabled]="currentPage() === 1"
-    (click)="goToPage(currentPage() - 1)"
-  >
-    Previous
-  </button>
-  <span aria-live="polite">Page {{ currentPage() }} of {{ totalPages() }}</span>
-  <button
-    type="button"
-    class="btn btn-primary btn-sm shadow-none"
-    [disabled]="currentPage() === totalPages()"
-    (click)="goToPage(currentPage() + 1)"
-  >
-    Next
-  </button>
-</nav>
-}
-}
+  @if (clearError(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
+  @if (isLoading()) {
+    <div class="app-card loading-state" role="status">
+      <span
+        class="spinner-border spinner-border-sm me-2"
+        aria-hidden="true"
+      ></span
+      >Loading audit log…
+    </div>
+  } @else if (errorMessage(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  } @else if (entries().length === 0) {
+    <div class="app-card empty-state">No recorded actions yet.</div>
+  } @else {
+    <div class="app-card table-card">
+      <div
+        class="table-responsive"
+        role="region"
+        aria-label="Audit log table"
+        tabindex="0"
+      >
+        <table class="table table-themed table-striped table-hover">
+          <caption class="visually-hidden">
+            Audit log, page
+            {{
+              currentPage()
+            }}
+            of
+            {{
+              totalPages()
+            }}, newest first
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" class="text-center">Date</th>
+              <th scope="col" class="text-center">Customer</th>
+              <th scope="col" class="text-center">Performed by</th>
+              <th scope="col" class="text-center">Action</th>
+              <th scope="col" class="text-center">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of entries(); track entry.customerAuditLogId) {
+              <tr>
+                <td class="align-middle text-center">
+                  {{ entry.occurredAt | date: 'medium' }}
+                </td>
+                <td class="align-middle text-center">
+                  @if (entry.customerFirstName || entry.customerLastName) {
+                    <a
+                      class="plain-Links hoverItem"
+                      [routerLink]="['/customers', entry.customerId]"
+                    >
+                      {{ customerLabel(entry) }}
+                    </a>
+                  } @else {
+                    <span class="text-muted">{{ customerLabel(entry) }}</span>
+                  }
+                </td>
+                <td class="align-middle text-center">
+                  {{ entry.performedBy }}
+                </td>
+                <td class="align-middle text-center">
+                  {{ auditActionLabel(entry.actionType) }}
+                </td>
+                <td class="align-middle text-center">{{ entry.details }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    @if (totalPages() > 1) {
+      <nav
+        class="d-flex justify-content-center align-items-center gap-2 mt-4"
+        aria-label="Audit log pages"
+      >
+        <button
+          type="button"
+          class="btn btn-primary btn-sm shadow-none"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+        >
+          Previous
+        </button>
+        <span aria-live="polite"
+          >Page {{ currentPage() }} of {{ totalPages() }}</span
+        >
+        <button
+          type="button"
+          class="btn btn-primary btn-sm shadow-none"
+          [disabled]="currentPage() === totalPages()"
+          (click)="goToPage(currentPage() + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
+  }
 </div>

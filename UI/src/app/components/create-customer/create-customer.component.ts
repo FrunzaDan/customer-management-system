@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { CreateCustomerService } from '../../services/create-customer.service';
+import { CustomerService } from '../../services/customer.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
   CustomerFormModel,
@@ -24,14 +24,15 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
 })
 export class CreateCustomerComponent {
   private readonly router = inject(Router);
-  private readonly createCustomerService = inject(CreateCustomerService);
+  private readonly customerService = inject(CustomerService);
 
   readonly model = signal<CustomerFormModel>(emptyCustomerForm());
   private readonly saved = signal(false);
 
   // Read by unsavedChangesGuard: anything typed, and not yet saved.
   readonly hasUnsavedChanges = computed(
-    () => !this.saved() && isCustomerFormDirty(this.model(), emptyCustomerForm()),
+    () =>
+      !this.saved() && isCustomerFormDirty(this.model(), emptyCustomerForm()),
   );
   readonly errorMessage = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
@@ -58,7 +59,9 @@ export class CreateCustomerComponent {
 
     try {
       await firstValueFrom(
-        this.createCustomerService.createCustomer(toCreateCustomerRequest(this.model())),
+        this.customerService.createCustomer(
+          toCreateCustomerRequest(this.model()),
+        ),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
@@ -66,7 +69,10 @@ export class CreateCustomerComponent {
     } catch (error) {
       // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
       this.errorMessage.set(
-        extractErrorMessage(error as HttpErrorResponse, 'Failed to add customer'),
+        extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to add customer',
+        ),
       );
     }
   }

@@ -15,14 +15,25 @@ describe('UserLoginComponent', () => {
 
   beforeEach(() => {
     login = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
-    checkCredentials = vi.fn().mockReturnValue({ success: true, message: 'ok' });
+    checkCredentials = vi
+      .fn()
+      .mockReturnValue({ success: true, message: 'ok' });
 
     TestBed.configureTestingModule({
       providers: [
         { provide: UserLoginService, useValue: { login, checkCredentials } },
-        { provide: NavbarService, useValue: { hideNavbar: vi.fn(), displayNavbar: vi.fn() } },
-        { provide: FooterService, useValue: { hideFooter: vi.fn(), displayFooter: vi.fn() } },
-        { provide: SessionStorageService, useValue: { removeSessionStorage: vi.fn() } },
+        {
+          provide: NavbarService,
+          useValue: { hideNavbar: vi.fn(), displayNavbar: vi.fn() },
+        },
+        {
+          provide: FooterService,
+          useValue: { hideFooter: vi.fn(), displayFooter: vi.fn() },
+        },
+        {
+          provide: SessionStorageService,
+          useValue: { removeSessionStorage: vi.fn() },
+        },
       ],
     });
     component = TestBed.runInInjectionContext(() => new UserLoginComponent());
@@ -32,8 +43,12 @@ describe('UserLoginComponent', () => {
     await submit(component.loginForm);
 
     expect(login).not.toHaveBeenCalled();
-    expect(component.loginForm.username().errors()[0].message).toBe('Username is required.');
-    expect(component.loginForm.password().errors()[0].message).toBe('Password is required.');
+    expect(component.loginForm.username().errors()[0].message).toBe(
+      'Username is required.',
+    );
+    expect(component.loginForm.password().errors()[0].message).toBe(
+      'Password is required.',
+    );
   });
 
   it('rejects a username with disallowed characters', () => {
@@ -45,7 +60,10 @@ describe('UserLoginComponent', () => {
   });
 
   it('sends the username and password and clears any error on success', async () => {
-    component.model.set({ username: 'TestMerchantID', password: 'Merchant123' });
+    component.model.set({
+      username: 'TestMerchantID',
+      password: 'Merchant123',
+    });
 
     await submit(component.loginForm);
 
@@ -86,7 +104,8 @@ describe('UserLoginComponent', () => {
   describe('session-expired notice', () => {
     const render = (sessionExpired?: string) => {
       const fixture = TestBed.createComponent(UserLoginComponent);
-      if (sessionExpired) fixture.componentRef.setInput('sessionExpired', sessionExpired);
+      if (sessionExpired)
+        fixture.componentRef.setInput('sessionExpired', sessionExpired);
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     };

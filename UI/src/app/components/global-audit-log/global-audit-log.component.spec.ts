@@ -104,10 +104,10 @@ describe('GlobalAuditLogComponent', () => {
     });
 
     it('labels a deleted customer by GUID instead of a blank name', () => {
-      // The API omits null properties, so a deleted customer's name is absent.
+      // The API sends a deleted customer's name as null.
       const entry = buildEntry({
-        customerFirstName: undefined,
-        customerLastName: undefined,
+        customerFirstName: null,
+        customerLastName: null,
       });
 
       expect(component.customerLabel(entry)).toBe(
