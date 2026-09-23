@@ -9,13 +9,13 @@ import { environment } from '../../environments/environment';
 import { Customer, CustomerStatus } from '../interfaces/customer-response';
 import { ActivateCustomerService } from './activate-customer.service';
 import { GetCustomerService } from './get-customer.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 describe('ActivateCustomerService', () => {
   let service: ActivateCustomerService;
   let httpMock: HttpTestingController;
-  let customersSignal: ReturnType<typeof signal<Customer[]>>;
+  let customers: ReturnType<typeof signal<Customer[]>>;
   let updateCustomerLocally: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
@@ -49,7 +49,7 @@ describe('ActivateCustomerService', () => {
   beforeEach(() => {
     updateCustomerLocally = vi.fn();
     notificationShow = vi.fn();
-    customersSignal = signal<Customer[]>([buildCustomer()]);
+    customers = signal<Customer[]>([buildCustomer()]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -61,7 +61,7 @@ describe('ActivateCustomerService', () => {
         },
         {
           provide: GetCustomerService,
-          useValue: { customersSignal, updateCustomerLocally },
+          useValue: { customers, updateCustomerLocally },
         },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
@@ -77,10 +77,10 @@ describe('ActivateCustomerService', () => {
     vi.useRealTimers();
   });
 
-  it('sets loadingSignal true synchronously while deactivation is in flight', () => {
+  it('sets loading true synchronously while deactivation is in flight', () => {
     service.deactivateCustomer('customer-1');
 
-    expect(service.loadingSignal()).toBe(true);
+    expect(service.loading()).toBe(true);
 
     httpMock
       .expectOne((r) => r.url === DEACTIVATE_URL)
@@ -104,12 +104,12 @@ describe('ActivateCustomerService', () => {
     expect(notificationShow).toHaveBeenCalledWith(
       'Customer deactivated successfully.',
     );
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 
   it('reactivateCustomer marks the local customer Active and hits the reactivate endpoint', () => {
-    customersSignal.set([buildCustomer({ status: CustomerStatus.Deactivated })]);
+    customers.set([buildCustomer({ status: CustomerStatus.Deactivated })]);
 
     service.reactivateCustomer('customer-1');
 
@@ -137,12 +137,12 @@ describe('ActivateCustomerService', () => {
 
     expect(updateCustomerLocally).not.toHaveBeenCalled();
     expect(notificationShow).not.toHaveBeenCalled();
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('Deactivation failed');
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('Deactivation failed');
   });
 
   it('sets a not-found error and skips notification when the customer is not in the local cache', () => {
-    customersSignal.set([]);
+    customers.set([]);
 
     service.deactivateCustomer('missing-customerId');
 
@@ -152,7 +152,7 @@ describe('ActivateCustomerService', () => {
 
     expect(updateCustomerLocally).not.toHaveBeenCalled();
     expect(notificationShow).not.toHaveBeenCalled();
-    expect(service.errorSignal()).toContain('not found locally');
+    expect(service.error()).toContain('not found locally');
   });
 
   it('does not retry a definitive 4xx error and surfaces the server message', () => {
@@ -165,8 +165,8 @@ describe('ActivateCustomerService', () => {
         { status: 409, statusText: 'Conflict' },
       );
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('Customer is already deactivated.');
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('Customer is already deactivated.');
     // httpMock.verify() in afterEach confirms no retry request was made.
   });
 
@@ -186,7 +186,7 @@ describe('ActivateCustomerService', () => {
     expect(updateCustomerLocally).toHaveBeenCalledWith(
       expect.objectContaining({ status: CustomerStatus.Deactivated }),
     );
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 });

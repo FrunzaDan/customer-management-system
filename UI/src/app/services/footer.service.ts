@@ -4,14 +4,14 @@ import { Injectable, signal } from '@angular/core';
   providedIn: 'root',
 })
 export class FooterService {
-  private readonly showFooterSignal = signal(true);
-  readonly showFooter = this.showFooterSignal.asReadonly();
+  private readonly visible = signal(true);
+  readonly showFooter = this.visible.asReadonly();
 
   hideFooter() {
-    this.showFooterSignal.set(false);
+    this.visible.set(false);
   }
 
   displayFooter() {
-    this.showFooterSignal.set(true);
+    this.visible.set(true);
   }
 }

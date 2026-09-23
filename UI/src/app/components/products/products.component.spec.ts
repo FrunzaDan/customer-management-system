@@ -33,9 +33,9 @@ describe('ProductsComponent', () => {
         {
           provide: ProductService,
           useValue: {
-            productsSignal: products,
-            loadingSignal: loading,
-            errorSignal: error,
+            products: products,
+            loading: loading,
+            error: error,
             loadProducts,
           },
         },

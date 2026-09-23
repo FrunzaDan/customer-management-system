@@ -19,10 +19,10 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
     // (400, via the InvalidModelStateResponseFactory in Program.cs), and a missing one binds
     // to Guid.Empty, which the business logic rejects with its own 400.
 
-    [HttpPost("register")]
-    public async Task<ActionResult<ResponseModel<Guid?>>> RegisterCustomer(
+    [HttpPost("create")]
+    public async Task<ActionResult<ResponseModel<Guid?>>> CreateCustomer(
         [FromBody] CreateCustomerRequest request, CancellationToken cancellationToken) =>
-        Reply(await customerService.RegisterCustomer(request, Username, cancellationToken));
+        Reply(await customerService.CreateCustomer(request, Username, cancellationToken));
 
     [HttpGet("get")]
     public async Task<ActionResult<ResponseModel<CustomerModel>>> GetCustomer([FromQuery] string? searchTerm,
@@ -86,10 +86,10 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
         [FromQuery] Guid productId, CancellationToken cancellationToken) =>
         Reply(await customerService.PurchaseProduct(customerId, productId, Username, cancellationToken));
 
-    [HttpPatch("edit")]
-    public async Task<ActionResult<ResponseModel<object>>> EditCustomer([FromBody] UpdateCustomerRequest request,
+    [HttpPatch("update")]
+    public async Task<ActionResult<ResponseModel<object>>> UpdateCustomer([FromBody] UpdateCustomerRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await customerService.EditCustomer(request, Username, cancellationToken));
+        Reply(await customerService.UpdateCustomer(request, Username, cancellationToken));
 
     [HttpPatch("deactivate")]
     public async Task<ActionResult<ResponseModel<object>>> DeactivateCustomer([FromQuery] Guid customerId,

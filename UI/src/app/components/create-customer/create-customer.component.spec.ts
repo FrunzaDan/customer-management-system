@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AddCustomerService } from '../../services/add-customer.service';
+import { CreateCustomerService } from '../../services/create-customer.service';
 import { CustomerFormModel } from '../customer-form-fields/customer-form';
-import { AddCustomerComponent } from './add-customer.component';
+import { CreateCustomerComponent } from './create-customer.component';
 
-describe('AddCustomerComponent', () => {
-  let addCustomer: ReturnType<typeof vi.fn>;
+describe('CreateCustomerComponent', () => {
+  let createCustomer: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let component: AddCustomerComponent;
+  let component: CreateCustomerComponent;
 
   const validModel: CustomerFormModel = {
     firstName: 'Dan',
@@ -28,7 +28,7 @@ describe('AddCustomerComponent', () => {
   };
 
   beforeEach(() => {
-    addCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    createCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
 
     // The component resolves its dependencies (and builds its signal form) in
@@ -36,17 +36,17 @@ describe('AddCustomerComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },
-        { provide: AddCustomerService, useValue: { addCustomer } },
+        { provide: CreateCustomerService, useValue: { createCustomer } },
       ],
     });
 
-    component = TestBed.runInInjectionContext(() => new AddCustomerComponent());
+    component = TestBed.runInInjectionContext(() => new CreateCustomerComponent());
   });
 
   it('does not call the service and reports the errors when the form is invalid', async () => {
     await submit(component.customerForm);
 
-    expect(addCustomer).not.toHaveBeenCalled();
+    expect(createCustomer).not.toHaveBeenCalled();
     expect(component.invalidSummary()).toBe(
       'The form has 12 errors. Please correct the highlighted fields.',
     );
@@ -68,7 +68,7 @@ describe('AddCustomerComponent', () => {
 
     await submit(component.customerForm);
 
-    expect(addCustomer).toHaveBeenCalledWith(
+    expect(createCustomer).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: 'Dan',
         lastName: 'Frunza',
@@ -98,7 +98,7 @@ describe('AddCustomerComponent', () => {
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
-    addCustomer.mockReturnValue(
+    createCustomer.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 0 })),
     );
     component.model.set(validModel);
@@ -113,7 +113,7 @@ describe('AddCustomerComponent', () => {
   });
 
   it('surfaces the server-provided message on a non-zero error status', async () => {
-    addCustomer.mockReturnValue(
+    createCustomer.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -148,7 +148,7 @@ describe('AddCustomerComponent', () => {
     });
 
     it('keeps them when the save fails, so the user is still warned', async () => {
-      addCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      createCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
       component.model.set(validModel);
 
       await submit(component.customerForm);

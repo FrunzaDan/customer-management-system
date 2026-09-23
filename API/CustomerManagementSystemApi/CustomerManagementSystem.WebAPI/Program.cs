@@ -131,8 +131,11 @@ else
     app.UseHsts();
 }
 
-// Unhandled exceptions: logged once and answered 500 by GlobalExceptionHandler.
-app.UseExceptionHandler();
+// Unhandled exceptions: logged once and answered 500 by GlobalExceptionHandler. The empty
+// fallback pipeline is required: a bare UseExceptionHandler() refuses to start unless
+// AddProblemDetails() is registered, and this API replies in the ResponseModel envelope, not
+// Problem Details. GlobalExceptionHandler always handles the exception, so the fallback never runs.
+app.UseExceptionHandler(_ => { });
 
 // Responses carry live, per-user data: never let a browser or proxy cache them.
 app.Use(async (context, next) =>

@@ -351,14 +351,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -459,14 +459,14 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/edit",
+							"raw": "{{baseUrl}}/api/customer/update",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"edit"
+								"update"
 							]
 						},
 						"body": {
@@ -1015,14 +1015,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1467,14 +1467,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1486,7 +1486,7 @@
 								}
 							}
 						},
-						"description": "`CustomerRegistration.RegisterCustomerFunction` requires `firstName` \u2014 `FirstName` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless customer."
+						"description": "`CustomerCreation.CreateCustomerFunction` requires `firstName` \u2014 `FirstName` has no SQL-side requirement, so this check exists purely to avoid silently creating a nameless customer."
 					},
 					"response": [],
 					"event": [
@@ -1507,14 +1507,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1546,14 +1546,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1586,14 +1586,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1626,14 +1626,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1681,14 +1681,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -1835,14 +1835,14 @@
 						"method": "PATCH",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/edit",
+							"raw": "{{baseUrl}}/api/customer/update",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"edit"
+								"update"
 							]
 						},
 						"body": {
@@ -1911,14 +1911,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {
@@ -2054,14 +2054,14 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/register",
+							"raw": "{{baseUrl}}/api/customer/create",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"customer",
-								"register"
+								"create"
 							]
 						},
 						"body": {

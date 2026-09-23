@@ -63,8 +63,8 @@ describe('ProductDetailsService', () => {
     TestBed.tick();
 
     httpMock.expectNone((r) => r.url === API_URL);
-    expect(service.detailsSignal()).toBeNull();
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.details()).toBeNull();
+    expect(service.loading()).toBe(false);
   });
 
   it('sends the productId as a query param and exposes the product and its buyers', async () => {
@@ -76,8 +76,8 @@ describe('ProductDetailsService', () => {
     req.flush({ status: 200, responseMessage: 'ok', data: details });
     await settle();
 
-    expect(service.detailsSignal()).toEqual(details);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.details()).toEqual(details);
+    expect(service.error()).toBeNull();
   });
 
   it('re-requests when asked to load the same product again', async () => {
@@ -106,7 +106,7 @@ describe('ProductDetailsService', () => {
       );
     await settle();
 
-    expect(service.errorSignal()).toBe('Product not found.');
-    expect(service.detailsSignal()).toBeNull();
+    expect(service.error()).toBe('Product not found.');
+    expect(service.details()).toBeNull();
   });
 });

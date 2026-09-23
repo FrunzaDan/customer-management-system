@@ -24,9 +24,9 @@ public interface ICustomerService
 
     Task<ResponseModel<Guid?>> CreateProduct(CreateProductRequest request, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> UpdateCustomer(UpdateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
 
     Task<ResponseModel<object>> DeactivateCustomer(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
 

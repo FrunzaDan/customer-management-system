@@ -9,16 +9,16 @@ import {
   CreateCustomerRequest,
   Gender,
 } from '../interfaces/customer-response';
-import { AddCustomerService } from './add-customer.service';
-import { HttpHeaderService } from './http-header-service';
+import { CreateCustomerService } from './create-customer.service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
-describe('AddCustomerService', () => {
-  let service: AddCustomerService;
+describe('CreateCustomerService', () => {
+  let service: CreateCustomerService;
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.apiUrl}/api/customer/register`;
+  const API_URL = `${environment.apiUrl}/api/customer/create`;
 
   const buildCustomer = (): CreateCustomerRequest => ({
     firstName: 'Dan',
@@ -51,7 +51,7 @@ describe('AddCustomerService', () => {
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });
-    service = TestBed.inject(AddCustomerService);
+    service = TestBed.inject(CreateCustomerService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -59,8 +59,8 @@ describe('AddCustomerService', () => {
     httpMock.verify();
   });
 
-  it('addCustomer POSTs the customer to the register endpoint', () => {
-    service.addCustomer(buildCustomer()).subscribe();
+  it('createCustomer POSTs the customer to the create endpoint', () => {
+    service.createCustomer(buildCustomer()).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');
@@ -69,8 +69,8 @@ describe('AddCustomerService', () => {
     req.flush({ status: 200, responseMessage: 'Customer created successfully.' });
   });
 
-  it('addCustomer shows a success notification once the request resolves', () => {
-    service.addCustomer(buildCustomer()).subscribe();
+  it('createCustomer shows a success notification once the request resolves', () => {
+    service.createCustomer(buildCustomer()).subscribe();
 
     httpMock
       .expectOne(API_URL)
@@ -79,8 +79,8 @@ describe('AddCustomerService', () => {
     expect(notificationShow).toHaveBeenCalledWith('Customer registered successfully.');
   });
 
-  it('addCustomerSilently POSTs to the same endpoint without showing a notification', () => {
-    service.addCustomerSilently(buildCustomer()).subscribe();
+  it('createCustomerSilently POSTs to the same endpoint without showing a notification', () => {
+    service.createCustomerSilently(buildCustomer()).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');

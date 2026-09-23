@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { SessionStorageService } from './session-storage.service';
 
 describe('HttpHeaderService', () => {

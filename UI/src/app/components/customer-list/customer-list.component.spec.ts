@@ -20,7 +20,7 @@ describe('CustomerListComponent', () => {
   let loadCustomers: ReturnType<typeof vi.fn>;
   let exportCustomers: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
-  let customersSignal: ReturnType<typeof signal<Customer[]>>;
+  let customers: ReturnType<typeof signal<Customer[]>>;
   let deleteCustomer: ReturnType<typeof vi.fn>;
   let deleteCustomerSilently: ReturnType<typeof vi.fn>;
   let deactivateCustomerSilently: ReturnType<typeof vi.fn>;
@@ -53,7 +53,7 @@ describe('CustomerListComponent', () => {
     loadCustomers = vi.fn();
     exportCustomers = vi.fn();
     totalItems = signal(0);
-    customersSignal = signal<Customer[]>([]);
+    customers = signal<Customer[]>([]);
     deleteCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     deleteCustomerSilently = vi
       .fn()
@@ -65,12 +65,12 @@ describe('CustomerListComponent', () => {
     notificationShow = vi.fn();
 
     const getCustomerServiceStub = {
-      customersSignal,
-      loadingSignal: signal(false),
-      errorSignal: signal<string | null>(null),
-      totalItemsSignal: totalItems,
-      pageNumberSignal: signal(1),
-      pageSizeSignal: signal(10),
+      customers,
+      loading: signal(false),
+      error: signal<string | null>(null),
+      totalItems: totalItems,
+      pageNumber: signal(1),
+      pageSize: signal(10),
       loadCustomers,
     };
 
@@ -83,8 +83,8 @@ describe('CustomerListComponent', () => {
         {
           provide: ActivateCustomerService,
           useValue: {
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            loading: signal(false),
+            error: signal<string | null>(null),
             deactivateCustomerSilently,
           },
         },
@@ -95,8 +95,8 @@ describe('CustomerListComponent', () => {
         {
           provide: ExportCustomerService,
           useValue: {
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            loading: signal(false),
+            error: signal<string | null>(null),
             exportCustomers,
           },
         },
@@ -258,12 +258,12 @@ describe('CustomerListComponent', () => {
     });
 
     it('allOnPageSelected is false when the page is empty', () => {
-      customersSignal.set([]);
+      customers.set([]);
       expect(component.allOnPageSelected()).toBe(false);
     });
 
     it('toggleSelectAllOnPage(true) selects every customer on the current page', () => {
-      customersSignal.set([buildCustomer({ customerId: 'g1' }), buildCustomer({ customerId: 'g2' })]);
+      customers.set([buildCustomer({ customerId: 'g1' }), buildCustomer({ customerId: 'g2' })]);
 
       component.toggleSelectAllOnPage(true);
 
@@ -273,7 +273,7 @@ describe('CustomerListComponent', () => {
     });
 
     it('toggleSelectAllOnPage(false) clears the selection for every customer on the current page', () => {
-      customersSignal.set([buildCustomer({ customerId: 'g1' }), buildCustomer({ customerId: 'g2' })]);
+      customers.set([buildCustomer({ customerId: 'g1' }), buildCustomer({ customerId: 'g2' })]);
       component.toggleSelectAllOnPage(true);
 
       component.toggleSelectAllOnPage(false);
@@ -288,7 +288,7 @@ describe('CustomerListComponent', () => {
     it('warns when the current page contains duplicate GUIDs', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      customersSignal.set([
+      customers.set([
         buildCustomer({ customerId: 'dup' }),
         buildCustomer({ customerId: 'dup' }),
       ]);
@@ -301,7 +301,7 @@ describe('CustomerListComponent', () => {
     it('does not warn when every GUID on the page is unique', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      customersSignal.set([buildCustomer({ customerId: 'g1' }), buildCustomer({ customerId: 'g2' })]);
+      customers.set([buildCustomer({ customerId: 'g1' }), buildCustomer({ customerId: 'g2' })]);
       TestBed.flushEffects();
 
       expect(warnSpy).not.toHaveBeenCalled();
@@ -357,7 +357,7 @@ describe('CustomerListComponent', () => {
     });
 
     it('does not call any API when the user cancels the confirmation', async () => {
-      customersSignal.set([buildCustomer({ customerId: 'g1' })]);
+      customers.set([buildCustomer({ customerId: 'g1' })]);
       component.toggleSelection('g1', true);
       confirm.mockResolvedValue(false);
 
@@ -368,7 +368,7 @@ describe('CustomerListComponent', () => {
     });
 
     it('deactivates Active customers and deletes non-Active ones, then shows a success summary and refetches', async () => {
-      customersSignal.set([
+      customers.set([
         buildCustomer({ customerId: 'active-1', status: CustomerStatus.Active }),
         buildCustomer({ customerId: 'deactivated-1', status: CustomerStatus.Deactivated }),
         buildCustomer({ customerId: 'test-1', status: CustomerStatus.Test }),
@@ -394,7 +394,7 @@ describe('CustomerListComponent', () => {
     });
 
     it('reports a failure count and does not stop the batch when one operation fails', async () => {
-      customersSignal.set([
+      customers.set([
         buildCustomer({ customerId: 'active-1', status: CustomerStatus.Active }),
         buildCustomer({ customerId: 'deactivated-1', status: CustomerStatus.Deactivated }),
       ]);

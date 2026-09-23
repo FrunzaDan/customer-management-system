@@ -4,18 +4,18 @@ using CustomerManagementSystem.Domain.Models;
 namespace CustomerManagementSystem.BusinessLogic.Services.Implementation;
 
 public class CustomerService(
-    CustomerRegistration customerRegistration,
+    CustomerCreation customerCreation,
     CustomerGetting customerGetting,
-    CustomerEditing customerEditing,
+    CustomerUpdating customerUpdating,
     CustomerActivation customerActivation,
     CustomerDeletion customerDeletion,
     CustomerPurchasing customerPurchasing,
-    ProductRegistration productRegistration)
+    ProductCreation productCreation)
     : ICustomerService
 {
     public Task<ResponseModel<Guid?>> CreateProduct(CreateProductRequest request,
         CancellationToken cancellationToken = default) =>
-        productRegistration.RegisterProductFunction(request, cancellationToken);
+        productCreation.CreateProductFunction(request, cancellationToken);
 
     public Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProducts(CancellationToken cancellationToken = default) =>
         customerGetting.GetProductsFunction(cancellationToken);
@@ -44,9 +44,9 @@ public class CustomerService(
         CancellationToken cancellationToken = default) =>
         customerDeletion.DeleteCustomer(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest request, string performedBy,
+    public Task<ResponseModel<object>> UpdateCustomer(UpdateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerEditing.EditCustomerFunction(request, performedBy, cancellationToken);
+        customerUpdating.UpdateCustomerFunction(request, performedBy, cancellationToken);
 
     public Task<ResponseModel<CustomerModel>> GetCustomer(string? searchTerm,
         CancellationToken cancellationToken = default) =>
@@ -71,9 +71,9 @@ public class CustomerService(
         CancellationToken cancellationToken = default) =>
         customerGetting.GetCustomersForExportFunction(request, cancellationToken);
 
-    public Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest request, string performedBy,
+    public Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerRegistration.RegisterCustomerFunction(request, performedBy, cancellationToken);
+        customerCreation.CreateCustomerFunction(request, performedBy, cancellationToken);
 
     public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivity(CancellationToken cancellationToken = default) =>
         customerGetting.GetMonthlyActivityFunction(cancellationToken);

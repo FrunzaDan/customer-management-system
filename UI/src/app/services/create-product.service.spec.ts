@@ -6,12 +6,12 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { CreateProductRequest } from '../interfaces/product';
-import { AddProductService } from './add-product.service';
-import { HttpHeaderService } from './http-header-service';
+import { CreateProductService } from './create-product.service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
-describe('AddProductService', () => {
-  let service: AddProductService;
+describe('CreateProductService', () => {
+  let service: CreateProductService;
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
@@ -40,7 +40,7 @@ describe('AddProductService', () => {
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });
-    service = TestBed.inject(AddProductService);
+    service = TestBed.inject(CreateProductService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -48,8 +48,8 @@ describe('AddProductService', () => {
     httpMock.verify();
   });
 
-  it('addProduct POSTs the product to the product endpoint', () => {
-    service.addProduct(buildProduct()).subscribe();
+  it('createProduct POSTs the product to the product endpoint', () => {
+    service.createProduct(buildProduct()).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('POST');
@@ -58,8 +58,8 @@ describe('AddProductService', () => {
     req.flush({ status: 200, responseMessage: 'Product created successfully.' });
   });
 
-  it('addProduct shows a success notification once the request resolves', () => {
-    service.addProduct(buildProduct()).subscribe();
+  it('createProduct shows a success notification once the request resolves', () => {
+    service.createProduct(buildProduct()).subscribe();
 
     httpMock
       .expectOne(API_URL)

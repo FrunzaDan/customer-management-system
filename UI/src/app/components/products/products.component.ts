@@ -32,9 +32,9 @@ const SORT_VALUES: Record<ProductSortColumn, (product: Product) => string | numb
 export class ProductsComponent {
   private readonly productService = inject(ProductService);
 
-  readonly products = this.productService.productsSignal;
-  readonly isLoading = this.productService.loadingSignal;
-  readonly errorMessage = this.productService.errorSignal;
+  readonly products = this.productService.products;
+  readonly isLoading = this.productService.loading;
+  readonly errorMessage = this.productService.error;
 
   // Unlike the customer list (paged, so sorted in SQL), the whole 50-product catalogue is
   // already loaded, so sorting happens here. Until a header is clicked (`null`), rows keep

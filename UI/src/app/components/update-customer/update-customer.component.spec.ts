@@ -6,12 +6,12 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Customer } from '../../interfaces/customer-response';
 import { GetCustomerService } from '../../services/get-customer.service';
-import { EditCustomerService } from '../../services/edit-customer.service';
-import { EditCustomerComponent } from './edit-customer.component';
+import { UpdateCustomerService } from '../../services/update-customer.service';
+import { UpdateCustomerComponent } from './update-customer.component';
 
-describe('EditCustomerComponent', () => {
+describe('UpdateCustomerComponent', () => {
   let getCustomer: ReturnType<typeof vi.fn>;
-  let editCustomer: ReturnType<typeof vi.fn>;
+  let updateCustomer: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
   let selectedCustomer: ReturnType<typeof signal<Customer | null>>;
 
@@ -39,7 +39,7 @@ describe('EditCustomerComponent', () => {
 
   // `id` is what withComponentInputBinding() binds from `?id=`.
   const createComponent = (id: string | null = 'customer-1') => {
-    const fixture = TestBed.createComponent(EditCustomerComponent);
+    const fixture = TestBed.createComponent(UpdateCustomerComponent);
     if (id) fixture.componentRef.setInput('id', id);
     fixture.detectChanges();
     return fixture.componentInstance;
@@ -47,7 +47,7 @@ describe('EditCustomerComponent', () => {
 
   beforeEach(() => {
     getCustomer = vi.fn();
-    editCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    updateCustomer = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
     selectedCustomer = signal<Customer | null>(null);
 
@@ -57,13 +57,13 @@ describe('EditCustomerComponent', () => {
         {
           provide: GetCustomerService,
           useValue: {
-            selectedCustomerSignal: selectedCustomer,
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            selectedCustomer: selectedCustomer,
+            loading: signal(false),
+            error: signal<string | null>(null),
             getCustomer,
           },
         },
-        { provide: EditCustomerService, useValue: { editCustomer } },
+        { provide: UpdateCustomerService, useValue: { updateCustomer } },
       ],
     });
     // RouterLink in the template needs the real Router; only stub navigate().
@@ -123,7 +123,7 @@ describe('EditCustomerComponent', () => {
 
       await submit(component.customerForm);
 
-      expect(editCustomer).not.toHaveBeenCalled();
+      expect(updateCustomer).not.toHaveBeenCalled();
       expect(component.invalidSummary()).toBe(
         'The form has 1 error. Please correct the highlighted fields.',
       );
@@ -135,7 +135,7 @@ describe('EditCustomerComponent', () => {
 
       await submit(component.customerForm);
 
-      expect(editCustomer).not.toHaveBeenCalled();
+      expect(updateCustomer).not.toHaveBeenCalled();
     });
 
     it('merges the form values onto the loaded customer and saves', async () => {
@@ -145,7 +145,7 @@ describe('EditCustomerComponent', () => {
 
       await submit(component.customerForm);
 
-      expect(editCustomer).toHaveBeenCalledWith(
+      expect(updateCustomer).toHaveBeenCalledWith(
         expect.objectContaining({
           customerId: 'customer-1',
           createdAt: '2026-01-01', // preserved from the original record, not in the form
@@ -167,7 +167,7 @@ describe('EditCustomerComponent', () => {
     it('surfaces the error and stops submitting on failure', async () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      editCustomer.mockReturnValue(
+      updateCustomer.mockReturnValue(
         throwError(
           () =>
             new HttpErrorResponse({
@@ -213,7 +213,7 @@ describe('EditCustomerComponent', () => {
     it('keeps them when the save fails', async () => {
       const component = createComponent();
       selectedCustomer.set(buildCustomer());
-      editCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+      updateCustomer.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       await submit(component.customerForm);

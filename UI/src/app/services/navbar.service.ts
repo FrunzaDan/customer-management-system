@@ -4,14 +4,14 @@ import { Injectable, signal } from '@angular/core';
   providedIn: 'root',
 })
 export class NavbarService {
-  private readonly showNavbarSignal = signal(true);
-  readonly showNavbar = this.showNavbarSignal.asReadonly();
+  private readonly visible = signal(true);
+  readonly showNavbar = this.visible.asReadonly();
 
   hideNavbar() {
-    this.showNavbarSignal.set(false);
+    this.visible.set(false);
   }
 
   displayNavbar() {
-    this.showNavbarSignal.set(true);
+    this.visible.set(true);
   }
 }

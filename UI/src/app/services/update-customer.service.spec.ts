@@ -6,18 +6,18 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { Customer } from '../interfaces/customer-response';
-import { EditCustomerService } from './edit-customer.service';
+import { UpdateCustomerService } from './update-customer.service';
 import { GetCustomerService } from './get-customer.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
-describe('EditCustomerService', () => {
-  let service: EditCustomerService;
+describe('UpdateCustomerService', () => {
+  let service: UpdateCustomerService;
   let httpMock: HttpTestingController;
   let updateCustomerLocally: ReturnType<typeof vi.fn>;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.apiUrl}/api/customer/edit`;
+  const API_URL = `${environment.apiUrl}/api/customer/update`;
 
   const buildCustomer = (): Customer => ({
     customerId: 'customer-1',
@@ -56,7 +56,7 @@ describe('EditCustomerService', () => {
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });
-    service = TestBed.inject(EditCustomerService);
+    service = TestBed.inject(UpdateCustomerService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -64,9 +64,9 @@ describe('EditCustomerService', () => {
     httpMock.verify();
   });
 
-  it('PATCHes only the editable fields to the edit endpoint', () => {
+  it('PATCHes only the editable fields to the update endpoint', () => {
     const customer = buildCustomer();
-    service.editCustomer(customer).subscribe();
+    service.updateCustomer(customer).subscribe();
 
     const req = httpMock.expectOne(API_URL);
     expect(req.request.method).toBe('PATCH');
@@ -79,7 +79,7 @@ describe('EditCustomerService', () => {
 
   it('updates the customer in the local cache and notifies on success', () => {
     const customer = buildCustomer();
-    service.editCustomer(customer).subscribe();
+    service.updateCustomer(customer).subscribe();
 
     httpMock
       .expectOne(API_URL)
@@ -90,7 +90,7 @@ describe('EditCustomerService', () => {
   });
 
   it('does not touch the local cache or notify when the request errors', () => {
-    service.editCustomer(buildCustomer()).subscribe({ error: () => {} });
+    service.updateCustomer(buildCustomer()).subscribe({ error: () => {} });
 
     httpMock
       .expectOne(API_URL)

@@ -7,16 +7,16 @@ import {
   Customer,
   UpdateCustomerRequest,
 } from '../interfaces/customer-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { GetCustomerService } from './get-customer.service'; // Inject to update locally
 import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class EditCustomerService {
+export class UpdateCustomerService {
   private readonly APIURL =
-    environment.apiUrl + '/api/customer/edit';
+    environment.apiUrl + '/api/customer/update';
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -25,7 +25,7 @@ export class EditCustomerService {
 
   // Takes the whole edited customer (to update the local list with once saved) but sends
   // only the editable fields — the server-owned ones (status, dates) aren't part of an edit.
-  editCustomer(customer: Customer): Observable<GenericResponse<object>> {
+  updateCustomer(customer: Customer): Observable<GenericResponse<object>> {
     const headers: HttpHeaders =
       this.httpHeaderService.getHeadersWithTokenSet();
 

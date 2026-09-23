@@ -98,17 +98,17 @@ describe('CustomerDetailsComponent', () => {
         {
           provide: GetCustomerService,
           useValue: {
-            selectedCustomerSignal: selectedCustomer,
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            selectedCustomer: selectedCustomer,
+            loading: signal(false),
+            error: signal<string | null>(null),
             getCustomer,
           },
         },
         {
           provide: ActivateCustomerService,
           useValue: {
-            loadingSignal: activationLoading,
-            errorSignal: signal<string | null>(null),
+            loading: activationLoading,
+            error: signal<string | null>(null),
             deactivateCustomer,
             reactivateCustomer,
           },
@@ -118,18 +118,18 @@ describe('CustomerDetailsComponent', () => {
         {
           provide: AuditLogService,
           useValue: {
-            entriesSignal: signal([]),
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            entries: signal([]),
+            loading: signal(false),
+            error: signal<string | null>(null),
             loadAuditLog,
           },
         },
         {
           provide: PurchaseService,
           useValue: {
-            entriesSignal: purchases,
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            entries: purchases,
+            loading: signal(false),
+            error: signal<string | null>(null),
             loadPurchases,
             purchaseProduct,
           },
@@ -137,9 +137,9 @@ describe('CustomerDetailsComponent', () => {
         {
           provide: ProductService,
           useValue: {
-            productsSignal: products,
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
+            products: products,
+            loading: signal(false),
+            error: signal<string | null>(null),
             loadProducts,
           },
         },

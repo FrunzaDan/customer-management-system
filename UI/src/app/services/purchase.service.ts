@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { Purchase } from '../interfaces/purchase';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -37,11 +37,11 @@ export class PurchaseService {
   });
 
   // hasValue() guards the read: value() throws while the resource is in error.
-  public readonly entriesSignal = computed(() =>
+  readonly entries = computed(() =>
     this.purchases.hasValue() ? (this.purchases.value().data ?? []) : [],
   );
-  public readonly loadingSignal = this.purchases.isLoading;
-  public readonly errorSignal = computed(() => {
+  readonly loading = this.purchases.isLoading;
+  readonly error = computed(() => {
     const error = this.purchases.error();
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });

@@ -19,12 +19,12 @@ public static class BusinessLogicDependencyInjection
         services.AddSingleton<JwtCreation>();
 
         services.AddScoped<ICustomerAuditLogger, CustomerAuditLogger>();
-        services.AddScoped<CustomerRegistration>();
+        services.AddScoped<CustomerCreation>();
         services.AddScoped<CustomerGetting>();
-        services.AddScoped<CustomerEditing>();
+        services.AddScoped<CustomerUpdating>();
         services.AddScoped<CustomerActivation>();
         services.AddScoped<CustomerDeletion>();
         services.AddScoped<CustomerPurchasing>();
-        services.AddScoped<ProductRegistration>();
+        services.AddScoped<ProductCreation>();
     }
 }

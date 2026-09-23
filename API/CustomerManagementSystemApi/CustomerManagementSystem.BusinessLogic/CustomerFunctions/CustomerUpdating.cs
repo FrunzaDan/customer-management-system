@@ -5,9 +5,9 @@ using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
-public class CustomerEditing(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
+public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> EditCustomerFunction(UpdateCustomerRequest request, string performedBy,
+    public async Task<ResponseModel<object>> UpdateCustomerFunction(UpdateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default)
     {
         if (request.CustomerId == Guid.Empty)
@@ -40,7 +40,7 @@ public class CustomerEditing(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
                 return new ResponseModel<object>(400, addressLengthError);
         }
 
-        var response = await dbUtils.EditCustomer(request, cancellationToken);
+        var response = await dbUtils.UpdateCustomer(request, cancellationToken);
 
         // Not forwarding cancellationToken: the edit already succeeded, so the audit write
         // should still be attempted even if the client has since disconnected.

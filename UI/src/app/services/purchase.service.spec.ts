@@ -59,11 +59,11 @@ describe('PurchaseService', () => {
       TestBed.tick();
 
       httpMock.expectNone((r) => r.url === LIST_URL);
-      expect(service.entriesSignal()).toEqual([]);
-      expect(service.loadingSignal()).toBe(false);
+      expect(service.entries()).toEqual([]);
+      expect(service.loading()).toBe(false);
     });
 
-    it('sends the customerId as a query param and populates entriesSignal', async () => {
+    it('sends the customerId as a query param and populates entries', async () => {
       const purchase = buildPurchase();
 
       load('customer-1');
@@ -72,8 +72,8 @@ describe('PurchaseService', () => {
       req.flush({ status: 200, responseMessage: 'ok', data: [purchase] });
       await settle();
 
-      expect(service.entriesSignal()).toEqual([purchase]);
-      expect(service.errorSignal()).toBeNull();
+      expect(service.entries()).toEqual([purchase]);
+      expect(service.error()).toBeNull();
     });
 
     it('re-requests when asked to load the same customer again (e.g. after a purchase)', async () => {
@@ -89,7 +89,7 @@ describe('PurchaseService', () => {
         .expectOne((r) => r.url === LIST_URL)
         .flush({ status: 200, responseMessage: 'ok', data: [buildPurchase()] });
       await settle();
-      expect(service.entriesSignal()).toHaveLength(1);
+      expect(service.entries()).toHaveLength(1);
     });
 
     it('surfaces the server-provided error message when present', async () => {
@@ -100,8 +100,8 @@ describe('PurchaseService', () => {
         .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
       await settle();
 
-      expect(service.errorSignal()).toBe('boom');
-      expect(service.entriesSignal()).toEqual([]);
+      expect(service.error()).toBe('boom');
+      expect(service.entries()).toEqual([]);
     });
   });
 

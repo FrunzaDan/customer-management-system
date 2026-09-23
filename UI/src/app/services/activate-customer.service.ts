@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GetCustomerService } from './get-customer.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { CustomerStatus } from '../interfaces/customer-response';
 import { Observable, tap, throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/internal/operators/retry';
@@ -47,8 +47,8 @@ export class ActivateCustomerService {
     error: null,
   });
 
-  public readonly loadingSignal = computed(() => this.state().loading);
-  public readonly errorSignal = computed(() => this.state().error);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -81,7 +81,7 @@ export class ActivateCustomerService {
           }
 
           const existingCustomer = this.getCustomerService
-            .customersSignal()
+            .customers()
             .find((c) => c.customerId === customerId);
 
           if (existingCustomer) {
@@ -129,7 +129,7 @@ export class ActivateCustomerService {
           }
 
           const existingCustomer = this.getCustomerService
-            .customersSignal()
+            .customers()
             .find((c) => c.customerId === customerId);
 
           if (existingCustomer) {
@@ -171,7 +171,7 @@ export class ActivateCustomerService {
       .pipe(
         tap(() => {
           const existingCustomer = this.getCustomerService
-            .customersSignal()
+            .customers()
             .find((c) => c.customerId === customerId);
 
           if (existingCustomer) {

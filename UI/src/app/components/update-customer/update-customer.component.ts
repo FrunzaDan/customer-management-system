@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { EditCustomerService } from '../../services/edit-customer.service';
+import { UpdateCustomerService } from '../../services/update-customer.service';
 import { GetCustomerService } from '../../services/get-customer.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import {
@@ -26,23 +26,23 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
 
 @Component({
   selector: 'app-edit-customer',
-  templateUrl: './edit-customer.component.html',
-  styleUrl: './edit-customer.component.css',
+  templateUrl: './update-customer.component.html',
+  styleUrl: './update-customer.component.css',
   imports: [CustomerFormFieldsComponent, FormRoot, RouterLink],
   // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
-export class EditCustomerComponent {
+export class UpdateCustomerComponent {
   private readonly router = inject(Router);
   private readonly getCustomerService = inject(GetCustomerService);
-  private readonly editCustomerService = inject(EditCustomerService);
+  private readonly updateCustomerService = inject(UpdateCustomerService);
 
   // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
   readonly id = input<string>();
 
-  readonly customer = this.getCustomerService.selectedCustomerSignal;
-  readonly isLoading = this.getCustomerService.loadingSignal;
-  readonly errorMessage = this.getCustomerService.errorSignal;
+  readonly customer = this.getCustomerService.selectedCustomer;
+  readonly isLoading = this.getCustomerService.loading;
+  readonly errorMessage = this.getCustomerService.error;
 
   // The form model *is* the loaded customer, mapped: it re-derives whenever
   // customer() changes and stays writable for the user's edits — no effect +
@@ -95,7 +95,7 @@ export class EditCustomerComponent {
 
     try {
       await firstValueFrom(
-        this.editCustomerService.editCustomer(applyFormModel(this.model(), current)),
+        this.updateCustomerService.updateCustomer(applyFormModel(this.model(), current)),
       );
       // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);

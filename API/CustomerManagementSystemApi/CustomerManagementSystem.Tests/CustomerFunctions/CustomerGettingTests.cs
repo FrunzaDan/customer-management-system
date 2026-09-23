@@ -393,7 +393,7 @@ public class CustomerGettingTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var expected = new ResponseModel<MonthlyActivityModel>(200, "Monthly activity retrieved.",
-            new MonthlyActivityModel { CustomerRegistrations = [], ProductPurchases = [] });
+            new MonthlyActivityModel { CustomerCreations = [], ProductPurchases = [] });
         dbUtils.Setup(d => d.GetMonthlyActivity(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 

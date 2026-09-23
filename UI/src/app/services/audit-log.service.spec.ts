@@ -52,8 +52,8 @@ describe('AuditLogService', () => {
     TestBed.tick();
 
     httpMock.expectNone((r) => r.url === API_URL);
-    expect(service.entriesSignal()).toEqual([]);
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.entries()).toEqual([]);
+    expect(service.loading()).toBe(false);
   });
 
   it('sends the customerId as a query param', async () => {
@@ -69,17 +69,17 @@ describe('AuditLogService', () => {
   it('reports loading while the request is in flight', async () => {
     load('customer-1');
 
-    expect(service.loadingSignal()).toBe(true);
+    expect(service.loading()).toBe(true);
 
     httpMock
       .expectOne((r) => r.url === API_URL)
       .flush({ status: 200, responseMessage: 'ok', data: [] });
     await settle();
 
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.loading()).toBe(false);
   });
 
-  it('populates entriesSignal from a successful response and clears any error', async () => {
+  it('populates entries from a successful response and clears any error', async () => {
     const entry = buildEntry();
 
     load('customer-1');
@@ -88,8 +88,8 @@ describe('AuditLogService', () => {
       .flush({ status: 200, responseMessage: 'ok', data: [entry] });
     await settle();
 
-    expect(service.entriesSignal()).toEqual([entry]);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.entries()).toEqual([entry]);
+    expect(service.error()).toBeNull();
   });
 
   it('surfaces the server-provided error message when present', async () => {
@@ -100,8 +100,8 @@ describe('AuditLogService', () => {
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
     await settle();
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('boom');
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('boom');
   });
 
   it('falls back to a generic message when the error body has no message', async () => {
@@ -112,7 +112,7 @@ describe('AuditLogService', () => {
       .flush(null, { status: 500, statusText: 'Server Error' });
     await settle();
 
-    expect(service.errorSignal()).toBe(
+    expect(service.error()).toBe(
       'Failed to load the audit trail (500). Please try again.',
     );
   });
@@ -130,7 +130,7 @@ describe('AuditLogService', () => {
       .expectOne((r) => r.url === API_URL)
       .flush({ status: 200, responseMessage: 'ok', data: [buildEntry()] });
     await settle();
-    expect(service.entriesSignal()).toHaveLength(1);
+    expect(service.entries()).toHaveLength(1);
   });
 
   it('starts a new request for a different customer', async () => {

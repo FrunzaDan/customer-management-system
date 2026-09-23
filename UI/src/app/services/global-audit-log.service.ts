@@ -10,7 +10,7 @@ import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GlobalAuditLogEntry } from '../interfaces/global-audit-log-entry';
 import { PagedResponse } from '../interfaces/paged-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 export interface LoadAllAuditLogParams {
@@ -35,11 +35,11 @@ export class GlobalAuditLogService {
     totalItems: 0,
   });
 
-  public readonly entriesSignal = computed(() => this.state().entries);
-  public readonly loadingSignal = computed(() => this.state().loading);
-  public readonly errorSignal = computed(() => this.state().error);
-  public readonly pageNumberSignal = computed(() => this.state().pageNumber);
-  public readonly totalItemsSignal = computed(() => this.state().totalItems);
+  readonly entries = computed(() => this.state().entries);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
+  readonly pageNumber = computed(() => this.state().pageNumber);
+  readonly totalItems = computed(() => this.state().totalItems);
 
   // Routed through switchMap so a new loadAllAuditLog() call cancels whatever request is
   // still in flight — without this, a slower earlier response can land after a faster

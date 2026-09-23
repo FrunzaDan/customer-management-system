@@ -31,11 +31,11 @@ export class CustomerListComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
 
   // Public signals for template
-  readonly customers = this.getCustomerService.customersSignal;
-  readonly isLoading = this.getCustomerService.loadingSignal;
-  readonly errorMessage = this.getCustomerService.errorSignal;
-  readonly activationLoading = this.activateCustomerService.loadingSignal;
-  readonly activationError = this.activateCustomerService.errorSignal;
+  readonly customers = this.getCustomerService.customers;
+  readonly isLoading = this.getCustomerService.loading;
+  readonly errorMessage = this.getCustomerService.error;
+  readonly activationLoading = this.activateCustomerService.loading;
+  readonly activationError = this.activateCustomerService.error;
 
   // Delete is a separate action from deactivate/reactivate, so it gets its own
   // in-flight/error state rather than being folded into activationLoading/Error.
@@ -57,8 +57,8 @@ export class CustomerListComponent implements OnInit {
 
   // CSV export exports whatever the list is currently searching/sorted by,
   // not just the current page — see ExportCustomerService.
-  readonly exportLoading = this.exportCustomerService.loadingSignal;
-  readonly exportError = this.exportCustomerService.errorSignal;
+  readonly exportLoading = this.exportCustomerService.loading;
+  readonly exportError = this.exportCustomerService.error;
 
   // Add CustomerStatus enum for better type checking
   readonly CustomerStatus = CustomerStatus;
@@ -80,7 +80,7 @@ export class CustomerListComponent implements OnInit {
   readonly pageSize = 50;
   readonly currentPage = signal(1);
 
-  readonly totalItems = this.getCustomerService.totalItemsSignal;
+  readonly totalItems = this.getCustomerService.totalItems;
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );

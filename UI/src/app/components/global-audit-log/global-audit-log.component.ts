@@ -26,10 +26,10 @@ export class GlobalAuditLogComponent implements OnInit {
 
   readonly auditActionLabel = auditActionLabel;
 
-  readonly entries = this.globalAuditLogService.entriesSignal;
-  readonly isLoading = this.globalAuditLogService.loadingSignal;
-  readonly errorMessage = this.globalAuditLogService.errorSignal;
-  readonly totalItems = this.globalAuditLogService.totalItemsSignal;
+  readonly entries = this.globalAuditLogService.entries;
+  readonly isLoading = this.globalAuditLogService.loading;
+  readonly errorMessage = this.globalAuditLogService.error;
+  readonly totalItems = this.globalAuditLogService.totalItems;
 
   readonly pageSize = 50;
   readonly currentPage = signal(1);

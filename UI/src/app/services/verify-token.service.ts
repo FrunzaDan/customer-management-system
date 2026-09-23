@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { GenericResponse } from '../../../src/app/interfaces/generic-response';
 import { catchError, map, Observable, of } from 'rxjs';
 import { environment } from '../../../src/environments/environment';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 
 @Injectable({
   providedIn: 'root',

@@ -39,7 +39,7 @@ export interface Customer {
   address: Address;
 }
 
-// POST /api/customer/register. No customerId: the DB generates it and the response returns it.
+// POST /api/customer/create. No customerId: the DB generates it and the response returns it.
 export interface CreateCustomerRequest {
   firstName: string;
   lastName: string;
@@ -52,7 +52,7 @@ export interface CreateCustomerRequest {
   address: Address;
 }
 
-// PATCH /api/customer/edit — a partial update: an omitted field is left unchanged. There's no
+// PATCH /api/customer/update — a partial update: an omitted field is left unchanged. There's no
 // status: status only changes through deactivate/reactivate/delete.
 export interface UpdateCustomerRequest extends Partial<Omit<CreateCustomerRequest, 'status'>> {
   customerId: string;

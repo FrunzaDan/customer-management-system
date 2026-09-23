@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, signal, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 
 export interface ExportCustomersParams {
   searchTerm?: string;
@@ -16,8 +16,8 @@ export interface ExportCustomersParams {
 export class ExportCustomerService {
   private readonly API_URL_EXPORT = `${environment.apiUrl}/api/customer/export`;
 
-  readonly loadingSignal = signal(false);
-  readonly errorSignal = signal<string | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
   private readonly http = inject(HttpClient);
   private readonly httpHeaderService = inject(HttpHeaderService);
@@ -28,8 +28,8 @@ export class ExportCustomerService {
   // Content-Disposition header, since that header isn't exposed cross-origin
   // by the API's current CORS policy.
   exportCustomers(params: ExportCustomersParams): void {
-    this.loadingSignal.set(true);
-    this.errorSignal.set(null);
+    this.loading.set(true);
+    this.error.set(null);
 
     const headers = this.httpHeaderService.getHeadersWithTokenSet();
     let httpParams = new HttpParams()
@@ -48,7 +48,7 @@ export class ExportCustomerService {
       })
       .subscribe({
         next: (blob) => {
-          this.loadingSignal.set(false);
+          this.loading.set(false);
           this.triggerDownload(blob, this.buildFilename());
         },
         error: (error: HttpErrorResponse) => this.handleError(error),
@@ -73,7 +73,7 @@ export class ExportCustomerService {
   // too), not parsed JSON, so a 4xx/5xx gets the generic "failed" message
   // rather than the server's specific one.
   private handleError(error: HttpErrorResponse): void {
-    this.loadingSignal.set(false);
-    this.errorSignal.set(extractErrorMessage(error, 'Failed to export customers'));
+    this.loading.set(false);
+    this.error.set(extractErrorMessage(error, 'Failed to export customers'));
   }
 }

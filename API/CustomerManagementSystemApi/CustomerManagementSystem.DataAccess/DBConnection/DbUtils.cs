@@ -14,7 +14,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
     private readonly SemaphoreSlim _connectionStringLock = new(1, 1);
     private string? CurrentConnectionString { get; set; }
 
-    public Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest customer,
+    public Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Customer_Create",
@@ -53,11 +53,11 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             reader => DbHelper.HandleResponseWithPagedCustomers(reader, request.PageNumber, request.PageSize),
             cancellationToken);
 
-    public Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest customer,
+    public Task<ResponseModel<object>> UpdateCustomer(UpdateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.Customer_Update",
-            command => DbHelper.AddCustomerParametersForEdit(command, customer),
+            command => DbHelper.AddCustomerParametersForUpdate(command, customer),
             DbHelper.HandleResponseWithMessage,
             cancellationToken);
 

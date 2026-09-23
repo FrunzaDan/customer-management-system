@@ -16,9 +16,9 @@ export class ProductDetailsComponent {
   // Bound straight from `?id=` by withComponentInputBinding() in app.config.ts.
   readonly id = input<string>();
 
-  readonly details = this.productDetailsService.detailsSignal;
-  readonly isLoading = this.productDetailsService.loadingSignal;
-  readonly errorMessage = this.productDetailsService.errorSignal;
+  readonly details = this.productDetailsService.details;
+  readonly isLoading = this.productDetailsService.loading;
+  readonly errorMessage = this.productDetailsService.error;
 
   readonly product = computed(() => this.details()?.product ?? null);
   readonly buyers = computed(() => this.details()?.buyers ?? []);

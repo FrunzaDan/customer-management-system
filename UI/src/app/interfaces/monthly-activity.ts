@@ -6,6 +6,6 @@ export interface MonthlyCount {
 }
 
 export interface MonthlyActivity {
-  customerRegistrations: MonthlyCount[];
+  customerCreations: MonthlyCount[];
   productPurchases: MonthlyCount[];
 }

@@ -6,7 +6,7 @@ import {
   Gender,
 } from '../../interfaces/customer-response';
 
-// Shared by add-customer and edit-customer: one model shape, one validation
+// Shared by create-customer and update-customer: one model shape, one validation
 // schema, and the two-way mapping between the form and the API's Customer.
 export interface CustomerFormModel {
   firstName: string;

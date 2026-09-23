@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiLoggerService } from '../../services/api-logger.service';
 import { NotificationService } from '../../services/notification.service';
-import { AddCustomerService } from '../../services/add-customer.service';
+import { CreateCustomerService } from '../../services/create-customer.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
 import { Product } from '../../interfaces/product';
@@ -191,7 +191,7 @@ function randomBirthDate(): string {
 export class AboutComponent {
   private readonly apiLoggerService = inject(ApiLoggerService);
   private readonly notificationService = inject(NotificationService);
-  private readonly addCustomerService = inject(AddCustomerService);
+  private readonly createCustomerService = inject(CreateCustomerService);
   private readonly productService = inject(ProductService);
   private readonly purchaseService = inject(PurchaseService);
 
@@ -205,7 +205,7 @@ export class AboutComponent {
     );
   }
 
-  async addTestCustomers(): Promise<void> {
+  async createTestCustomers(): Promise<void> {
     if (this.addingTestCustomers()) {
       return;
     }
@@ -247,7 +247,7 @@ export class AboutComponent {
         let customerId: string | undefined;
         try {
           const response = await firstValueFrom(
-            this.addCustomerService.addCustomerSilently(customer),
+            this.createCustomerService.createCustomerSilently(customer),
           );
           customerId = response.data;
         } catch {

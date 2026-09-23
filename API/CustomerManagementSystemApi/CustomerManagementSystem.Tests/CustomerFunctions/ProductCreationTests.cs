@@ -5,7 +5,7 @@ using Moq;
 
 namespace CustomerManagementSystem.Tests.CustomerFunctions;
 
-public class ProductRegistrationTests
+public class ProductCreationTests
 {
     private static CreateProductRequest ValidRequest() => new()
     {
@@ -20,14 +20,14 @@ public class ProductRegistrationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public async Task RegisterProductFunction_RejectsMissingName_WithoutTouchingTheDb(string? name)
+    public async Task CreateProductFunction_RejectsMissingName_WithoutTouchingTheDb(string? name)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
         var request = ValidRequest();
         request.Name = name;
 
-        var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("name", result.ResponseMessage, StringComparison.OrdinalIgnoreCase);
@@ -38,14 +38,14 @@ public class ProductRegistrationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public async Task RegisterProductFunction_RejectsMissingCategory_WithoutTouchingTheDb(string? category)
+    public async Task CreateProductFunction_RejectsMissingCategory_WithoutTouchingTheDb(string? category)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
         var request = ValidRequest();
         request.Category = category;
 
-        var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Category", result.ResponseMessage);
@@ -55,14 +55,14 @@ public class ProductRegistrationTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public async Task RegisterProductFunction_RejectsNonPositivePrice_WithoutTouchingTheDb(decimal price)
+    public async Task CreateProductFunction_RejectsNonPositivePrice_WithoutTouchingTheDb(decimal price)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
         var request = ValidRequest();
         request.Price = price;
 
-        var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Price", result.ResponseMessage);
@@ -72,14 +72,14 @@ public class ProductRegistrationTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public async Task RegisterProductFunction_RejectsNonPositiveInventoryQuantity_WithoutTouchingTheDb(int quantity)
+    public async Task CreateProductFunction_RejectsNonPositiveInventoryQuantity_WithoutTouchingTheDb(int quantity)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
         var request = ValidRequest();
         request.InitialQuantity = quantity;
 
-        var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Inventory", result.ResponseMessage);
@@ -90,14 +90,14 @@ public class ProductRegistrationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
-    public async Task RegisterProductFunction_RejectsMissingWarehouse_WithoutTouchingTheDb(string? warehouse)
+    public async Task CreateProductFunction_RejectsMissingWarehouse_WithoutTouchingTheDb(string? warehouse)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
         var request = ValidRequest();
         request.Warehouse = warehouse;
 
-        var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Warehouse", result.ResponseMessage);
@@ -107,14 +107,14 @@ public class ProductRegistrationTests
     [Theory]
     [InlineData("9.999")]
     [InlineData("10000000000")]
-    public async Task RegisterProductFunction_RejectsAPriceTheDecimalColumnCantHold_WithoutTouchingTheDb(string price)
+    public async Task CreateProductFunction_RejectsAPriceTheDecimalColumnCantHold_WithoutTouchingTheDb(string price)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
         var request = ValidRequest();
         request.Price = decimal.Parse(price, System.Globalization.CultureInfo.InvariantCulture);
 
-        var result = await registration.RegisterProductFunction(request, TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(request, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Price", result.ResponseMessage);
@@ -122,15 +122,15 @@ public class ProductRegistrationTests
     }
 
     [Fact]
-    public async Task RegisterProductFunction_ReturnsTheDbGeneratedGuid()
+    public async Task CreateProductFunction_ReturnsTheDbGeneratedGuid()
     {
         var dbUtils = new Mock<IDbUtils>();
         var newGuid = Guid.Parse("1a52433e-f36b-1410-86a6-008ef0c0e32e");
         dbUtils.Setup(d => d.CreateProduct(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Product created successfully.", newGuid));
-        var registration = new ProductRegistration(dbUtils.Object);
+        var registration = new ProductCreation(dbUtils.Object);
 
-        var result = await registration.RegisterProductFunction(ValidRequest(), TestContext.Current.CancellationToken);
+        var result = await registration.CreateProductFunction(ValidRequest(), TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.Equal(newGuid, result.Data);

@@ -57,9 +57,9 @@ export class CustomerDetailsComponent {
     [CustomerStatus.Test, 'Test'],
   ]);
 
-  readonly customer = this.getCustomerService.selectedCustomerSignal;
-  readonly isLoading = this.getCustomerService.loadingSignal;
-  readonly errorMessage = this.getCustomerService.errorSignal;
+  readonly customer = this.getCustomerService.selectedCustomer;
+  readonly isLoading = this.getCustomerService.loading;
+  readonly errorMessage = this.getCustomerService.error;
 
   readonly CustomerStatus = CustomerStatus;
   readonly Gender = Gender;
@@ -67,20 +67,20 @@ export class CustomerDetailsComponent {
   // Deactivate/reactivate share ActivateCustomerService's loading/error state (it's
   // providedIn: 'root', same instance the customer list uses); delete gets its own,
   // same split as customer-list.component.ts.
-  readonly activationLoading = this.activateCustomerService.loadingSignal;
-  readonly activationError = this.activateCustomerService.errorSignal;
+  readonly activationLoading = this.activateCustomerService.loading;
+  readonly activationError = this.activateCustomerService.error;
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
   readonly auditActionLabel = auditActionLabel;
-  readonly auditLog = this.auditLogService.entriesSignal;
-  readonly auditLogLoading = this.auditLogService.loadingSignal;
-  readonly auditLogError = this.auditLogService.errorSignal;
+  readonly auditLog = this.auditLogService.entries;
+  readonly auditLogLoading = this.auditLogService.loading;
+  readonly auditLogError = this.auditLogService.error;
   private wasActivationLoading = false;
 
-  readonly purchases = this.purchaseService.entriesSignal;
-  readonly purchasesLoading = this.purchaseService.loadingSignal;
-  readonly purchasesError = this.purchaseService.errorSignal;
+  readonly purchases = this.purchaseService.entries;
+  readonly purchasesLoading = this.purchaseService.loading;
+  readonly purchasesError = this.purchaseService.error;
 
   // Sum of the listed purchases' prices. Added up in whole cents so 0.1 + 0.2 style
   // float drift never shows on screen (prices are DECIMAL(12,2) in the DB).
@@ -88,9 +88,9 @@ export class CustomerDetailsComponent {
     () => this.purchases().reduce((cents, p) => cents + Math.round(p.price * 100), 0) / 100,
   );
 
-  readonly products = this.productService.productsSignal;
-  readonly productsLoading = this.productService.loadingSignal;
-  readonly productsError = this.productService.errorSignal;
+  readonly products = this.productService.products;
+  readonly productsLoading = this.productService.loading;
+  readonly productsError = this.productService.error;
 
   // Which product is picked in the "Record purchase" <select> ('' = none yet).
   readonly selectedProductId = signal('');

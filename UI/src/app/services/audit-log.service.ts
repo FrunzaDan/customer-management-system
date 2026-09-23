@@ -4,7 +4,7 @@ import { environment } from '../../environments/environment';
 import { AuditLogEntry } from '../interfaces/audit-log-entry';
 import { GenericResponse } from '../interfaces/generic-response';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 
 @Injectable({
   providedIn: 'root',
@@ -31,11 +31,11 @@ export class AuditLogService {
   );
 
   // hasValue() guards the read: value() throws while the resource is in error.
-  public readonly entriesSignal = computed(() =>
+  readonly entries = computed(() =>
     this.auditLog.hasValue() ? (this.auditLog.value().data ?? []) : [],
   );
-  public readonly loadingSignal = this.auditLog.isLoading;
-  public readonly errorSignal = computed(() => {
+  readonly loading = this.auditLog.isLoading;
+  readonly error = computed(() => {
     const error = this.auditLog.error();
     return error
       ? extractErrorMessage(error as HttpErrorResponse, 'Failed to load the audit trail')

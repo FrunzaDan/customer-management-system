@@ -5,7 +5,7 @@ namespace CustomerManagementSystem.Domain.Models;
 // no zero-filling for months with no activity, that's a UI concern.
 public sealed record MonthlyActivityModel
 {
-    public required IReadOnlyList<MonthlyCountModel> CustomerRegistrations { get; init; }
+    public required IReadOnlyList<MonthlyCountModel> CustomerCreations { get; init; }
 
     public required IReadOnlyList<MonthlyCountModel> ProductPurchases { get; init; }
 }

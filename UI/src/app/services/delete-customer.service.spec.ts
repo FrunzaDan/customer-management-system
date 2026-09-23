@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { DeleteCustomerService } from './delete-customer.service';
 import { GetCustomerService } from './get-customer.service';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 describe('DeleteCustomerService', () => {

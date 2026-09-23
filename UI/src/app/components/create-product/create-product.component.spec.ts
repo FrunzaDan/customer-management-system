@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AddProductService } from '../../services/add-product.service';
+import { CreateProductService } from '../../services/create-product.service';
 import { ProductFormModel } from './product-form';
-import { AddProductComponent } from './add-product.component';
+import { CreateProductComponent } from './create-product.component';
 
-describe('AddProductComponent', () => {
-  let addProduct: ReturnType<typeof vi.fn>;
+describe('CreateProductComponent', () => {
+  let createProduct: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let component: AddProductComponent;
+  let component: CreateProductComponent;
 
   const validModel: ProductFormModel = {
     name: 'Widget',
@@ -22,7 +22,7 @@ describe('AddProductComponent', () => {
   };
 
   beforeEach(() => {
-    addProduct = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
+    createProduct = vi.fn().mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
 
     // The component resolves its dependencies (and builds its signal form) in
@@ -30,17 +30,17 @@ describe('AddProductComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },
-        { provide: AddProductService, useValue: { addProduct } },
+        { provide: CreateProductService, useValue: { createProduct } },
       ],
     });
 
-    component = TestBed.runInInjectionContext(() => new AddProductComponent());
+    component = TestBed.runInInjectionContext(() => new CreateProductComponent());
   });
 
   it('does not call the service and reports the errors when the form is invalid', async () => {
     await submit(component.productForm);
 
-    expect(addProduct).not.toHaveBeenCalled();
+    expect(createProduct).not.toHaveBeenCalled();
     expect(component.invalidSummary()).toBe(
       'The form has 5 errors. Please correct the highlighted fields.',
     );
@@ -62,7 +62,7 @@ describe('AddProductComponent', () => {
 
     await submit(component.productForm);
 
-    expect(addProduct).toHaveBeenCalledWith(
+    expect(createProduct).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Widget',
         category: 'Gadgets',
@@ -84,7 +84,7 @@ describe('AddProductComponent', () => {
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
-    addProduct.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    createProduct.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
     component.model.set(validModel);
 
     await submit(component.productForm);
@@ -97,7 +97,7 @@ describe('AddProductComponent', () => {
   });
 
   it('surfaces the server-provided message on a non-zero error status', async () => {
-    addProduct.mockReturnValue(
+    createProduct.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({

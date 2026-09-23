@@ -4,10 +4,10 @@ namespace CustomerManagementSystem.DataAccess.DBConnection;
 
 public interface IDbUtils
 {
-    public Task<ResponseModel<Guid?>> RegisterCustomer(CreateCustomerRequest customer, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest customer, CancellationToken cancellationToken = default);
     public Task<ResponseModel<CustomerModel>> GetCustomer(CustomerLookup lookup, CancellationToken cancellationToken = default);
     public Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomers(GetCustomersRequest request, CancellationToken cancellationToken = default);
-    public Task<ResponseModel<object>> EditCustomer(UpdateCustomerRequest customer, CancellationToken cancellationToken = default);
+    public Task<ResponseModel<object>> UpdateCustomer(UpdateCustomerRequest customer, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> DeactivateCustomer(Guid customerId, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> ReactivateCustomer(Guid customerId, CancellationToken cancellationToken = default);
     public Task<ResponseModel<object>> DeleteCustomer(Guid customerId, CancellationToken cancellationToken = default);

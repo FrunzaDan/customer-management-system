@@ -35,20 +35,20 @@ export const routes: Routes = [
     title: 'Customers',
   },
   {
-    path: 'add-customer',
+    path: 'create-customer',
     loadComponent: () =>
-      import('./components/add-customer/add-customer.component').then(
-        (m) => m.AddCustomerComponent,
+      import('./components/create-customer/create-customer.component').then(
+        (m) => m.CreateCustomerComponent,
       ),
     canActivate: [authGuardFn],
     canDeactivate: [unsavedChangesGuard],
     title: 'Register customer',
   },
   {
-    path: 'edit-customer',
+    path: 'update-customer',
     loadComponent: () =>
-      import('./components/edit-customer/edit-customer.component').then(
-        (m) => m.EditCustomerComponent,
+      import('./components/update-customer/update-customer.component').then(
+        (m) => m.UpdateCustomerComponent,
       ),
     canActivate: [authGuardFn],
     canDeactivate: [unsavedChangesGuard],
@@ -82,10 +82,10 @@ export const routes: Routes = [
     title: 'Products',
   },
   {
-    path: 'add-product',
+    path: 'create-product',
     loadComponent: () =>
-      import('./components/add-product/add-product.component').then(
-        (m) => m.AddProductComponent,
+      import('./components/create-product/create-product.component').then(
+        (m) => m.CreateProductComponent,
       ),
     canActivate: [authGuardFn],
     canDeactivate: [unsavedChangesGuard],

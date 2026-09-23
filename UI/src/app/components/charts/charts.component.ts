@@ -27,13 +27,13 @@ export class ChartsComponent {
   private readonly productService = inject(ProductService);
   private readonly monthlyActivityService = inject(MonthlyActivityService);
 
-  readonly products = this.productService.productsSignal;
-  readonly productsLoading = this.productService.loadingSignal;
-  readonly productsError = this.productService.errorSignal;
+  readonly products = this.productService.products;
+  readonly productsLoading = this.productService.loading;
+  readonly productsError = this.productService.error;
 
-  readonly activity = this.monthlyActivityService.activitySignal;
-  readonly activityLoading = this.monthlyActivityService.loadingSignal;
-  readonly activityError = this.monthlyActivityService.errorSignal;
+  readonly activity = this.monthlyActivityService.activity;
+  readonly activityLoading = this.monthlyActivityService.loading;
+  readonly activityError = this.monthlyActivityService.error;
 
   // Product-catalogue charts — plain computeds off ProductService, same source the
   // Products tab already loads.
@@ -61,8 +61,8 @@ export class ChartsComponent {
 
   readonly customerGrowthPoints = computed(() =>
     this.customerGrowthRange() === 'monthly'
-      ? monthlyToPoints(this.activity().customerRegistrations)
-      : yearlyToPoints(this.activity().customerRegistrations),
+      ? monthlyToPoints(this.activity().customerCreations)
+      : yearlyToPoints(this.activity().customerCreations),
   );
 
   readonly productsSoldPoints = computed(() =>
@@ -72,7 +72,7 @@ export class ChartsComponent {
   );
 
   readonly cumulativeGrowthPoints = computed(() =>
-    cumulativePoints(this.activity().customerRegistrations),
+    cumulativePoints(this.activity().customerCreations),
   );
 
   readonly currencyFormatter = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 });

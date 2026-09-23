@@ -41,13 +41,13 @@ describe('MonthlyActivityService', () => {
     TestBed.tick();
 
     httpMock.expectNone(API_URL);
-    expect(service.activitySignal()).toEqual({ customerRegistrations: [], productPurchases: [] });
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.activity()).toEqual({ customerCreations: [], productPurchases: [] });
+    expect(service.loading()).toBe(false);
   });
 
-  it('populates activitySignal from a successful response', async () => {
+  it('populates activity from a successful response', async () => {
     const activity = {
-      customerRegistrations: [{ yearMonth: '2026-01', count: 3 }],
+      customerCreations: [{ yearMonth: '2026-01', count: 3 }],
       productPurchases: [{ yearMonth: '2026-01', count: 12 }],
     };
 
@@ -55,14 +55,14 @@ describe('MonthlyActivityService', () => {
     httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok', data: activity });
     await settle();
 
-    expect(service.activitySignal()).toEqual(activity);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.activity()).toEqual(activity);
+    expect(service.error()).toBeNull();
   });
 
   it('falls back to empty series when the resource has no value', () => {
     load();
     // Not flushed yet — hasValue() is still false.
-    expect(service.activitySignal()).toEqual({ customerRegistrations: [], productPurchases: [] });
+    expect(service.activity()).toEqual({ customerCreations: [], productPurchases: [] });
     httpMock.expectOne(API_URL).flush({ status: 200, responseMessage: 'ok', data: undefined });
   });
 
@@ -74,8 +74,8 @@ describe('MonthlyActivityService', () => {
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
     await settle();
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('boom');
-    expect(service.activitySignal()).toEqual({ customerRegistrations: [], productPurchases: [] });
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('boom');
+    expect(service.activity()).toEqual({ customerCreations: [], productPurchases: [] });
   });
 });

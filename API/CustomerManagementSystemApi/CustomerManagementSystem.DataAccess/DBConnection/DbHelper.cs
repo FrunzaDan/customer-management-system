@@ -21,7 +21,7 @@ public static class DbHelper
         AddAddressParameters(command, customer.Address);
     }
 
-    public static void AddCustomerParametersForEdit(SqlCommand command, UpdateCustomerRequest customer)
+    public static void AddCustomerParametersForUpdate(SqlCommand command, UpdateCustomerRequest customer)
     {
         command.Parameters.AddGuid("@CustomerId", customer.CustomerId);
         AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber,
@@ -217,7 +217,7 @@ public static class DbHelper
             purchases.Add(MapMonthlyCountFromReader(reader, "PurchaseCount"));
 
         return new ResponseModel<MonthlyActivityModel>(200, "Monthly activity retrieved.",
-            new MonthlyActivityModel { CustomerRegistrations = registrations, ProductPurchases = purchases });
+            new MonthlyActivityModel { CustomerCreations = registrations, ProductPurchases = purchases });
     }
 
     public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponse(SqlDataReader reader)

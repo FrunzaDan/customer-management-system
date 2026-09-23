@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { ConfirmDialogService } from './confirm-dialog.service';
 
-// Implemented by pages with a form (add-customer, edit-customer).
+// Implemented by pages with a form (create-customer, update-customer).
 export interface HasUnsavedChanges {
   hasUnsavedChanges(): boolean;
 }

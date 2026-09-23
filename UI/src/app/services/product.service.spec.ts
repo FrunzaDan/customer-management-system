@@ -55,11 +55,11 @@ describe('ProductService', () => {
     TestBed.tick();
 
     httpMock.expectNone(API_URL);
-    expect(service.productsSignal()).toEqual([]);
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.products()).toEqual([]);
+    expect(service.loading()).toBe(false);
   });
 
-  it('populates productsSignal from a successful response', async () => {
+  it('populates products from a successful response', async () => {
     const product = buildProduct();
 
     load();
@@ -68,8 +68,8 @@ describe('ProductService', () => {
       .flush({ status: 200, responseMessage: 'ok', data: [product] });
     await settle();
 
-    expect(service.productsSignal()).toEqual([product]);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.products()).toEqual([product]);
+    expect(service.error()).toBeNull();
   });
 
   it('re-requests when loadProducts() is called again (stock changes with each purchase)', async () => {
@@ -87,7 +87,7 @@ describe('ProductService', () => {
       data: [buildProduct({ quantityOnHand: 4 })],
     });
     await settle();
-    expect(service.productsSignal()[0].quantityOnHand).toBe(4);
+    expect(service.products()[0].quantityOnHand).toBe(4);
   });
 
   it('fetchProducts returns the catalogue as a value, without touching the resource signals', () => {
@@ -100,7 +100,7 @@ describe('ProductService', () => {
       .flush({ status: 200, responseMessage: 'ok', data: [product] });
 
     expect(result).toEqual([product]);
-    expect(service.productsSignal()).toEqual([]); // the resource was never loaded
+    expect(service.products()).toEqual([]); // the resource was never loaded
   });
 
   it('surfaces the server-provided error message when present', async () => {
@@ -111,8 +111,8 @@ describe('ProductService', () => {
       .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
     await settle();
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('boom');
-    expect(service.productsSignal()).toEqual([]);
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('boom');
+    expect(service.products()).toEqual([]);
   });
 });

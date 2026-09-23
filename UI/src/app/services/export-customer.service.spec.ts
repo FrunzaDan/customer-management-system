@@ -61,12 +61,12 @@ describe('ExportCustomerService', () => {
   it('sets loading true synchronously while the request is in flight, then false on success', () => {
     service.exportCustomers({});
 
-    expect(service.loadingSignal()).toBe(true);
+    expect(service.loading()).toBe(true);
 
     httpMock.expectOne((r) => r.url === API_URL).flush(new Blob(['csv content']));
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 
   it('triggers a download with the received blob on success', () => {
@@ -88,8 +88,8 @@ describe('ExportCustomerService', () => {
       .expectOne((r) => r.url === API_URL)
       .error(new ProgressEvent('error'), { status: 0 });
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe(
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe(
       'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
     );
   });
@@ -101,7 +101,7 @@ describe('ExportCustomerService', () => {
       .expectOne((r) => r.url === API_URL)
       .flush(new Blob(['error']), { status: 500, statusText: 'Server Error' });
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe('Failed to export customers (500). Please try again.');
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe('Failed to export customers (500). Please try again.');
   });
 });

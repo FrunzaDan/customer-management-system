@@ -11,7 +11,7 @@ import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { PagedResponse } from '../interfaces/paged-response';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 
 export interface LoadCustomersParams {
   pageNumber: number;
@@ -41,15 +41,15 @@ export class GetCustomerService {
   });
 
   // Computed signals
-  public readonly customersSignal = computed(() => this.state().customers);
-  public readonly selectedCustomerSignal = computed(
+  readonly customers = computed(() => this.state().customers);
+  readonly selectedCustomer = computed(
     () => this.state().selectedCustomer,
   );
-  public readonly loadingSignal = computed(() => this.state().loading);
-  public readonly errorSignal = computed(() => this.state().error);
-  public readonly pageNumberSignal = computed(() => this.state().pageNumber);
-  public readonly pageSizeSignal = computed(() => this.state().pageSize);
-  public readonly totalItemsSignal = computed(() => this.state().totalItems);
+  readonly loading = computed(() => this.state().loading);
+  readonly error = computed(() => this.state().error);
+  readonly pageNumber = computed(() => this.state().pageNumber);
+  readonly pageSize = computed(() => this.state().pageSize);
+  readonly totalItems = computed(() => this.state().totalItems);
 
   // Routed through switchMap so a new loadCustomers() call cancels whatever request is
   // still in flight — without this, a slower earlier response (e.g. a stale page/search)
@@ -108,7 +108,7 @@ export class GetCustomerService {
   // Pagination, search, and sorting are all server-side: each call re-fetches
   // just the requested page from the API rather than filtering/sorting an
   // already-loaded full list in memory.
-  public loadCustomers(params: LoadCustomersParams): void {
+  loadCustomers(params: LoadCustomersParams): void {
     this.setLoading(true);
     this.loadCustomersParams$.next(params);
   }

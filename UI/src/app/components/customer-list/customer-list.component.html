@@ -33,7 +33,7 @@
     >
       {{ exportLoading() ? 'Exporting…' : 'Export CSV' }}
     </button>
-    <a routerLink="/add-customer" class="btn btn-primary shadow-none">
+    <a routerLink="/create-customer" class="btn btn-primary shadow-none">
       Register customer
     </a>
     <button
@@ -143,7 +143,7 @@
             <div class="btn-group" role="group" [attr.aria-label]="'Actions for ' + fullName">
               <a
                 class="btn btn-primary btn-sm shadow-none"
-                routerLink="/edit-customer"
+                routerLink="/update-customer"
                 [queryParams]="{ id: customer.customerId }"
                 [attr.aria-label]="'Edit ' + fullName"
                 >Edit</a

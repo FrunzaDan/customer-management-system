@@ -97,7 +97,7 @@ describe('GetCustomerService', () => {
     });
   });
 
-  it('populates customersSignal/totalItemsSignal/pageNumberSignal/pageSizeSignal from a successful response', () => {
+  it('populates customers/totalItems/pageNumber/pageSize from a successful response', () => {
     const customer = buildCustomer();
 
     service.loadCustomers({ pageNumber: 1, pageSize: 10 });
@@ -107,18 +107,18 @@ describe('GetCustomerService', () => {
       data: { pageNumber: 1, pageSize: 10, totalItems: 1, items: [customer] },
     });
 
-    expect(service.customersSignal()).toEqual([customer]);
-    expect(service.totalItemsSignal()).toBe(1);
-    expect(service.pageNumberSignal()).toBe(1);
-    expect(service.pageSizeSignal()).toBe(10);
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBeNull();
+    expect(service.customers()).toEqual([customer]);
+    expect(service.totalItems()).toBe(1);
+    expect(service.pageNumber()).toBe(1);
+    expect(service.pageSize()).toBe(10);
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBeNull();
   });
 
   it('sets loading true synchronously while the request is in flight', () => {
     service.loadCustomers({ pageNumber: 1, pageSize: 10 });
 
-    expect(service.loadingSignal()).toBe(true);
+    expect(service.loading()).toBe(true);
 
     httpMock.expectOne((r) => r.url === API_URL).flush({
       status: 200,
@@ -126,7 +126,7 @@ describe('GetCustomerService', () => {
       data: { pageNumber: 1, pageSize: 10, totalItems: 0, items: [] },
     });
 
-    expect(service.loadingSignal()).toBe(false);
+    expect(service.loading()).toBe(false);
   });
 
   it('sets a friendly message and clears loading on a network error (status 0)', () => {
@@ -136,13 +136,13 @@ describe('GetCustomerService', () => {
       .expectOne((r) => r.url === API_URL)
       .error(new ProgressEvent('error'), { status: 0 });
 
-    expect(service.loadingSignal()).toBe(false);
-    expect(service.errorSignal()).toBe(
+    expect(service.loading()).toBe(false);
+    expect(service.error()).toBe(
       'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
     );
   });
 
-  it('updateCustomerLocally replaces a matching customer in customersSignal', () => {
+  it('updateCustomerLocally replaces a matching customer in customers', () => {
     const original = buildCustomer();
 
     service.loadCustomers({ pageNumber: 1, pageSize: 10 });
@@ -155,10 +155,10 @@ describe('GetCustomerService', () => {
     const updated = { ...original, firstName: 'Updated' };
     service.updateCustomerLocally(updated);
 
-    expect(service.customersSignal()).toEqual([updated]);
+    expect(service.customers()).toEqual([updated]);
   });
 
-  it('removeCustomerLocally drops a matching customer from customersSignal', () => {
+  it('removeCustomerLocally drops a matching customer from customers', () => {
     const customer = buildCustomer();
 
     service.loadCustomers({ pageNumber: 1, pageSize: 10 });
@@ -170,6 +170,6 @@ describe('GetCustomerService', () => {
 
     service.removeCustomerLocally(customer.customerId);
 
-    expect(service.customersSignal()).toEqual([]);
+    expect(service.customers()).toEqual([]);
   });
 });

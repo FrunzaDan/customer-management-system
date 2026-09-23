@@ -4,7 +4,7 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { MonthlyActivity } from '../interfaces/monthly-activity';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header-service';
+import { HttpHeaderService } from './http-header.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +17,7 @@ export class MonthlyActivityService {
   // as ProductService.
   private readonly requested = signal(false);
 
-  private readonly activity = httpResource<GenericResponse<MonthlyActivity>>(() =>
+  private readonly activityResource = httpResource<GenericResponse<MonthlyActivity>>(() =>
     this.requested()
       ? {
           url: this.API_URL,
@@ -26,14 +26,14 @@ export class MonthlyActivityService {
       : undefined,
   );
 
-  private readonly empty: MonthlyActivity = { customerRegistrations: [], productPurchases: [] };
+  private readonly empty: MonthlyActivity = { customerCreations: [], productPurchases: [] };
 
-  public readonly activitySignal = computed(() =>
-    this.activity.hasValue() ? (this.activity.value().data ?? this.empty) : this.empty,
+  readonly activity = computed(() =>
+    this.activityResource.hasValue() ? (this.activityResource.value().data ?? this.empty) : this.empty,
   );
-  public readonly loadingSignal = this.activity.isLoading;
-  public readonly errorSignal = computed(() => {
-    const error = this.activity.error();
+  readonly loading = this.activityResource.isLoading;
+  readonly error = computed(() => {
+    const error = this.activityResource.error();
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 

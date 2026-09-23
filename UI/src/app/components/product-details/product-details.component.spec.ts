@@ -50,9 +50,9 @@ describe('ProductDetailsComponent', () => {
         {
           provide: ProductDetailsService,
           useValue: {
-            detailsSignal: details,
-            loadingSignal: loading,
-            errorSignal: error,
+            details: details,
+            loading: loading,
+            error: error,
             loadProductDetails,
           },
         },

@@ -39,10 +39,10 @@ describe('GlobalAuditLogComponent', () => {
         {
           provide: GlobalAuditLogService,
           useValue: {
-            entriesSignal: signal([]),
-            loadingSignal: signal(false),
-            errorSignal: signal<string | null>(null),
-            totalItemsSignal: totalItems,
+            entries: signal([]),
+            loading: signal(false),
+            error: signal<string | null>(null),
+            totalItems: totalItems,
             loadAllAuditLog,
             deleteAllAuditLog,
           },
