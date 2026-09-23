@@ -9,21 +9,19 @@ import {
 } from '@angular/core';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
+// WAI-ARIA "alertdialog" pattern: labelled by its title, described by its
+// message, focus moved in on open, kept inside while open, returned on close.
 @Component({
   selector: 'app-confirm-dialog',
   templateUrl: './confirm-dialog.component.html',
-  styleUrls: ['./confirm-dialog.component.css'],
+  styleUrl: './confirm-dialog.component.css',
   host: { '(document:keydown.escape)': 'onEscape()' },
 })
 export class ConfirmDialogComponent {
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly document = inject(DOCUMENT);
 
-  readonly message = this.confirmDialogService.message;
-  readonly title = this.confirmDialogService.title;
-  readonly confirmLabel = this.confirmDialogService.confirmLabel;
-  readonly cancelLabel = this.confirmDialogService.cancelLabel;
-  readonly visible = this.confirmDialogService.visible;
+  readonly state = this.confirmDialogService.state;
   readonly closing = this.confirmDialogService.closing;
 
   private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
@@ -60,7 +58,7 @@ export class ConfirmDialogComponent {
   }
 
   onEscape(): void {
-    if (this.visible() && !this.closing()) {
+    if (this.state() && !this.closing()) {
       this.respond(false);
     }
   }

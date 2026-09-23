@@ -378,7 +378,10 @@ describe('CustomerListComponent', () => {
 
       await component.bulkDeleteSelected();
 
-      expect(confirm).toHaveBeenCalledWith(expect.stringContaining('1 is active'));
+      expect(confirm).toHaveBeenCalledWith(
+        expect.stringContaining('1 is active'),
+        expect.objectContaining({ confirmLabel: 'Apply', variant: 'danger' }),
+      );
       expect(deactivateCustomerSilently).toHaveBeenCalledWith('active-1');
       expect(deleteCustomerSilently).toHaveBeenCalledWith('deactivated-1');
       expect(deleteCustomerSilently).toHaveBeenCalledWith('test-1');

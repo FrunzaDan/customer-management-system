@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http';
 import { computed, Injectable, signal, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GetCustomerService } from './get-customer.service';
 import { HttpHeaderService } from './http-header-service';
@@ -198,26 +199,16 @@ export class ActivateCustomerService {
     }));
   }
 
+  // An Error (not an HttpErrorResponse) is a request that succeeded at the HTTP
+  // level but that the API reported as not done; its message is already user-facing.
   private handleError(error: HttpErrorResponse | Error): void {
-    let errorMessage = 'An unknown error occurred';
-
-    if (error instanceof HttpErrorResponse) {
-      if (error.status === 0) {
-        errorMessage = 'Network error - please check your connection.';
-      } else if (error.status >= 400 && error.status < 500) {
-        errorMessage = error.error?.message || 'Client-side error occurred.';
-      } else if (error.status >= 500) {
-        errorMessage = 'Server error - please try again later.';
-      }
-    } else {
-      errorMessage = error.message;
-    }
-
-    console.error('Activation Service Error:', errorMessage);
     this.state.update((state) => ({
       ...state,
       loading: false,
-      error: errorMessage,
+      error:
+        error instanceof HttpErrorResponse
+          ? extractErrorMessage(error, 'Failed to update the customer status')
+          : error.message,
     }));
   }
 }

@@ -6,6 +6,7 @@ import {
 import { computed, Injectable, signal, inject } from '@angular/core';
 import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GlobalAuditLogEntry } from '../interfaces/global-audit-log-entry';
 import { PagedResponse } from '../interfaces/paged-response';
@@ -113,21 +114,10 @@ export class GlobalAuditLogService {
   }
 
   private handleError(error: HttpErrorResponse): void {
-    let errorMessage = 'An unknown error occurred';
-
-    if (error.status === 0) {
-      errorMessage = 'Network error - please check your connection.';
-    } else if (error.status >= 400 && error.status < 500) {
-      errorMessage = error.error?.message || 'Client-side error occurred.';
-    } else if (error.status >= 500) {
-      errorMessage = 'Server error - please try again later.';
-    }
-
-    console.error('GlobalAuditLogService Error:', errorMessage);
     this.state.update((state) => ({
       ...state,
       loading: false,
-      error: errorMessage,
+      error: extractErrorMessage(error, 'Failed to load the audit log'),
     }));
   }
 }

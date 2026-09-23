@@ -7,7 +7,7 @@ import { Router, RouterModule } from '@angular/router';
 @Component({
   selector: 'app-navigation-bar',
   templateUrl: './navigation-bar.component.html',
-  styleUrls: ['./navigation-bar.component.css'],
+  styleUrl: './navigation-bar.component.css',
   imports: [RouterModule],
 })
 export class NavigationBarComponent {

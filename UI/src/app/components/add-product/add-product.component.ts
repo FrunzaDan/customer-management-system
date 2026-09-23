@@ -17,7 +17,7 @@ import { ProductFormFieldsComponent } from './product-form-fields.component';
 @Component({
   selector: 'app-add-product',
   templateUrl: './add-product.component.html',
-  styleUrls: ['./add-product.component.css'],
+  styleUrl: './add-product.component.css',
   imports: [ProductFormFieldsComponent, FormRoot, RouterLink],
   // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },

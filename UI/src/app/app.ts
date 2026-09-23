@@ -21,7 +21,7 @@ import { HealthService } from './services/health.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
-  styleUrls: ['./app.css'],
+  styleUrl: './app.css',
   imports: [
     ConfirmDialogComponent,
     FooterComponent,
@@ -40,7 +40,7 @@ export class App {
   private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');
 
   // Repeated polling only makes sense in the browser — during SSR/prerendering
-  // it would keep the zone permanently "unstable", which hangs the build's
+  // it would keep the app permanently "unstable", which hangs the build's
   // prerender step waiting for a stability signal that never arrives.
   readonly apiAvailable = toSignal(
     isPlatformBrowser(this.platformId)

@@ -35,6 +35,7 @@ describe('unsavedChangesGuard', () => {
         title: 'Discard changes?',
         confirmLabel: 'Discard changes',
         cancelLabel: 'Keep editing',
+        variant: 'danger',
       },
     );
   });

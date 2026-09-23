@@ -8,8 +8,8 @@ CREATE TABLE [dbo].[CustomerAuditLog]
     -- rather than free text.
     [ActionType] VARCHAR (20) NOT NULL,
     [Details] NVARCHAR (500) NULL,
-    [OccurredAt] DATETIME2 (3) NOT NULL
-        CONSTRAINT [DF_CustomerAuditLog_OccurredAt] DEFAULT SYSUTCDATETIME(),
+    -- UTC; defaulted here so no proc has to remember to supply it.
+    [OccurredAt] DATETIME2 (3) NOT NULL CONSTRAINT [DF_CustomerAuditLog_OccurredAt] DEFAULT SYSUTCDATETIME(),
     CONSTRAINT [PK_CustomerAuditLog] PRIMARY KEY CLUSTERED ([CustomerAuditLogId]),
     CONSTRAINT [CK_CustomerAuditLog_ActionType] CHECK ([ActionType] IN
         ('Created', 'Edited', 'Deactivated', 'Reactivated', 'Deleted', 'Purchased'))
@@ -17,10 +17,11 @@ CREATE TABLE [dbo].[CustomerAuditLog]
 GO
 
 -- No FK to Customer: audit history must survive a customer being hard-deleted
--- (see Customer_Delete / ai_docs/database.md), so it's a plain
--- column, indexed for the per-customer lookup CustomerAuditLog_ListByCustomer does.
-CREATE INDEX [IX_CustomerAuditLog_CustomerId]
-    ON [dbo].[CustomerAuditLog] ([CustomerId]);
+-- (see Customer_Delete / ai_docs/database.md), so it's a plain column, indexed for
+-- the per-customer lookup CustomerAuditLog_ListByCustomer does — keyed in that proc's
+-- ORDER BY order so the "newest first" listing is read straight off the index with no sort.
+CREATE INDEX [IX_CustomerAuditLog_CustomerId_OccurredAt_CustomerAuditLogId]
+    ON [dbo].[CustomerAuditLog] ([CustomerId], [OccurredAt] DESC, [CustomerAuditLogId] DESC);
 GO
 
 -- Supports CustomerAuditLog_List's global, unfiltered "newest first" scan

@@ -28,6 +28,7 @@ export const unsavedChangesGuard: CanDeactivateFn<HasUnsavedChanges> = (
       title: 'Discard changes?',
       confirmLabel: 'Discard changes',
       cancelLabel: 'Keep editing',
+      variant: 'danger',
     },
   );
 };

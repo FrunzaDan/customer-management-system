@@ -15,6 +15,9 @@ export class AuditLogService {
 
   private readonly customerId = signal<string | undefined>(undefined);
 
+  // Declarative fetch: the request is a function of `customerId`, so a new
+  // customerId cancels the in-flight request and starts another, and no request is
+  // made at all until a customerId has been set (returning undefined idles it).
   private readonly auditLog = httpResource<GenericResponse<AuditLogEntry[]>>(
     () => {
       const customerId = this.customerId();
@@ -34,7 +37,9 @@ export class AuditLogService {
   public readonly loadingSignal = this.auditLog.isLoading;
   public readonly errorSignal = computed(() => {
     const error = this.auditLog.error();
-    return error ? extractErrorMessage(error as HttpErrorResponse) : null;
+    return error
+      ? extractErrorMessage(error as HttpErrorResponse, 'Failed to load the audit trail')
+      : null;
   });
 
   loadAuditLog(customerId: string): void {

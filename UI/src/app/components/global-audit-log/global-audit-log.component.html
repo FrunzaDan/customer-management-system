@@ -8,9 +8,9 @@
       type="button"
       class="btn btn-danger shadow-none"
       (click)="clearAuditLog()"
-      [disabled]="isLoading() || clearing() || entries().length === 0"
+      [disabled]="isLoading() || clearing() || totalItems() === 0"
     >
-      Clear Audit Log
+      {{ clearing() ? 'Clearing…' : 'Clear audit log' }}
     </button>
   </div>
 @if (clearError(); as error) {
@@ -60,7 +60,7 @@
           }
         </td>
         <td class="align-middle text-center">{{ entry.performedBy }}</td>
-        <td class="align-middle text-center">{{ entry.actionType }}</td>
+        <td class="align-middle text-center">{{ auditActionLabel(entry.actionType) }}</td>
         <td class="align-middle text-center">{{ entry.details }}</td>
       </tr>
       }

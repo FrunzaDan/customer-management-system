@@ -113,7 +113,7 @@ describe('AuditLogService', () => {
     await settle();
 
     expect(service.errorSignal()).toBe(
-      'Request failed (500). Please try again.',
+      'Failed to load the audit trail (500). Please try again.',
     );
   });
 

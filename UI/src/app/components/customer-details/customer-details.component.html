@@ -299,7 +299,7 @@
           <ul class="audit-list">
             @for (entry of auditLog(); track entry.customerAuditLogId) {
             <li class="audit-item">
-              <div class="audit-action">{{ entry.actionType }}</div>
+              <div class="audit-action">{{ auditActionLabel(entry.actionType) }}</div>
               <div class="audit-meta">
                 by {{ entry.performedBy }} · {{ entry.occurredAt | date: 'medium' }}
               </div>

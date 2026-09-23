@@ -53,7 +53,7 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
 
     [HttpGet("audit-log/all")]
     public async Task<ActionResult<ResponseModel<PagedResponse<GlobalAuditLogEntry>>>> GetAllCustomerAuditLog(
-        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default) =>
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
         Reply(await customerService.GetAllCustomerAuditLog(pageNumber, pageSize, cancellationToken));
 
     [HttpPost("product")]

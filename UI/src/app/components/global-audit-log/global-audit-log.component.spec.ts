@@ -1,6 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { GlobalAuditLogEntry } from '../../interfaces/global-audit-log-entry';
 import { GlobalAuditLogService } from '../../services/global-audit-log.service';
 import { GlobalAuditLogComponent } from './global-audit-log.component';
@@ -8,7 +10,8 @@ import { GlobalAuditLogComponent } from './global-audit-log.component';
 describe('GlobalAuditLogComponent', () => {
   let component: GlobalAuditLogComponent;
   let loadAllAuditLog: ReturnType<typeof vi.fn>;
-  let navigate: ReturnType<typeof vi.fn>;
+  let deleteAllAuditLog: ReturnType<typeof vi.fn>;
+  let confirm: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
 
   const buildEntry = (
@@ -27,7 +30,8 @@ describe('GlobalAuditLogComponent', () => {
 
   beforeEach(() => {
     loadAllAuditLog = vi.fn();
-    navigate = vi.fn();
+    deleteAllAuditLog = vi.fn();
+    confirm = vi.fn();
     totalItems = signal(0);
 
     TestBed.configureTestingModule({
@@ -40,9 +44,10 @@ describe('GlobalAuditLogComponent', () => {
             errorSignal: signal<string | null>(null),
             totalItemsSignal: totalItems,
             loadAllAuditLog,
+            deleteAllAuditLog,
           },
         },
-        { provide: Router, useValue: { navigate } },
+        { provide: ConfirmDialogService, useValue: { confirm } },
       ],
     });
 
@@ -99,6 +104,7 @@ describe('GlobalAuditLogComponent', () => {
     });
 
     it('labels a deleted customer by GUID instead of a blank name', () => {
+      // The API omits null properties, so a deleted customer's name is absent.
       const entry = buildEntry({
         customerFirstName: undefined,
         customerLastName: undefined,
@@ -106,6 +112,47 @@ describe('GlobalAuditLogComponent', () => {
 
       expect(component.customerLabel(entry)).toBe(
         '(deleted customer customer-1)',
+      );
+    });
+  });
+
+  describe('clearAuditLog', () => {
+    it('deletes the log once confirmed and goes back to page 1', async () => {
+      confirm.mockResolvedValue(true);
+      deleteAllAuditLog.mockReturnValue(of({}));
+      component.currentPage.set(3);
+
+      await component.clearAuditLog();
+
+      expect(confirm).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ confirmLabel: 'Delete', variant: 'danger' }),
+      );
+      expect(deleteAllAuditLog).toHaveBeenCalled();
+      expect(component.currentPage()).toBe(1);
+      expect(component.clearing()).toBe(false);
+      expect(component.clearError()).toBeNull();
+    });
+
+    it('does nothing when the confirmation is cancelled', async () => {
+      confirm.mockResolvedValue(false);
+
+      await component.clearAuditLog();
+
+      expect(deleteAllAuditLog).not.toHaveBeenCalled();
+    });
+
+    it('shows a failed clear inline', async () => {
+      confirm.mockResolvedValue(true);
+      deleteAllAuditLog.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 500 })),
+      );
+
+      await component.clearAuditLog();
+
+      expect(component.clearing()).toBe(false);
+      expect(component.clearError()).toBe(
+        'Failed to clear the audit log (500). Please try again.',
       );
     });
   });

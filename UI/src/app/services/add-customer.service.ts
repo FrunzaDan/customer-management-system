@@ -19,16 +19,9 @@ export class AddCustomerService {
 
   // On success, `data` is the new customer's server-generated GUID.
   addCustomer(customer: CreateCustomerRequest): Observable<GenericResponse<string>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-    return this.http
-      .post<GenericResponse<string>>(this.APIURL, customer, {
-        headers: headers,
-      })
-      .pipe(
-        tap(() =>
-          this.notificationService.show('Customer registered successfully.'),
-        ),
-      );
+    return this.addCustomerSilently(customer).pipe(
+      tap(() => this.notificationService.show('Customer registered successfully.')),
+    );
   }
 
   /**

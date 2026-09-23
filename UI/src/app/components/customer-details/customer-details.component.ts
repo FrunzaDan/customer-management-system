@@ -24,11 +24,12 @@ import {
 } from '../../interfaces/customer-response';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { auditActionLabel } from '../../utils/audit-action-label';
 
 @Component({
   selector: 'app-customer-details',
   templateUrl: './customer-details.component.html',
-  styleUrls: ['./customer-details.component.css'],
+  styleUrl: './customer-details.component.css',
   imports: [DatePipe, DecimalPipe, RouterLink],
 })
 export class CustomerDetailsComponent {
@@ -71,6 +72,7 @@ export class CustomerDetailsComponent {
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
+  readonly auditActionLabel = auditActionLabel;
   readonly auditLog = this.auditLogService.entriesSignal;
   readonly auditLogLoading = this.auditLogService.loadingSignal;
   readonly auditLogError = this.auditLogService.errorSignal;
@@ -190,6 +192,7 @@ export class CustomerDetailsComponent {
     if (!customerId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this customer?',
+      { title: 'Deactivate customer?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
     this.activateCustomerService.deactivateCustomer(customerId);
@@ -237,6 +240,7 @@ export class CustomerDetailsComponent {
     if (!customerId) return;
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this customer? This cannot be undone.',
+      { title: 'Delete customer?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 

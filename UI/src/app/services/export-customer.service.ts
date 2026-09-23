@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, signal, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { extractErrorMessage } from '../utils/extract-error-message';
 import { HttpHeaderService } from './http-header-service';
 
 export interface ExportCustomersParams {
@@ -68,22 +69,11 @@ export class ExportCustomerService {
     URL.revokeObjectURL(url);
   }
 
+  // error.error is a Blob here (responseType: 'blob' applies to error bodies
+  // too), not parsed JSON, so a 4xx/5xx gets the generic "failed" message
+  // rather than the server's specific one.
   private handleError(error: HttpErrorResponse): void {
-    let errorMessage = 'An unknown error occurred';
-
-    // error.error is a Blob here (responseType: 'blob' applies to error bodies
-    // too), not parsed JSON, so a 4xx/5xx falls through to the generic message
-    // below rather than the server's specific one.
-    if (error.status === 0) {
-      errorMessage = 'Network error - please check your connection.';
-    } else if (error.status >= 400 && error.status < 500) {
-      errorMessage = error.error?.message || 'Client-side error occurred.';
-    } else if (error.status >= 500) {
-      errorMessage = 'Server error - please try again later.';
-    }
-
-    console.error('ExportCustomerService Error:', errorMessage);
     this.loadingSignal.set(false);
-    this.errorSignal.set(errorMessage);
+    this.errorSignal.set(extractErrorMessage(error, 'Failed to export customers'));
   }
 }

@@ -4,33 +4,22 @@ export interface ConfirmOptions {
   title?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  // 'danger' marks an action that can't be undone (delete, discard edits); the
+  // confirm button is styled to stand out from a routine confirmation.
+  variant?: 'default' | 'danger';
 }
 
-const DEFAULT_TITLE = 'Please confirm';
-const DEFAULT_CONFIRM_LABEL = 'Confirm';
-const DEFAULT_CANCEL_LABEL = 'Cancel';
+export type ConfirmState = Required<ConfirmOptions> & { message: string };
 
-@Injectable({
-  providedIn: 'root',
-})
+// Matches confirm-dialog.component.css's close animation — the dialog stays
+// mounted (with closing() true) this long after respond() before it's removed.
+const CLOSE_ANIMATION_MS = 150;
+
+@Injectable({ providedIn: 'root' })
 export class ConfirmDialogService {
-  // Matches confirm-dialog.component.css's zoom-out/fade-out duration — the
-  // dialog stays mounted (playing the close animation) for this long after
-  // respond() before it's actually removed.
-  private static readonly CLOSE_ANIMATION_MS = 150;
-
-  private readonly _message = signal('');
-  private readonly _title = signal(DEFAULT_TITLE);
-  private readonly _confirmLabel = signal(DEFAULT_CONFIRM_LABEL);
-  private readonly _cancelLabel = signal(DEFAULT_CANCEL_LABEL);
-  private readonly _visible = signal(false);
+  private readonly _state = signal<ConfirmState | null>(null);
   private readonly _closing = signal(false);
-
-  readonly message = this._message.asReadonly();
-  readonly title = this._title.asReadonly();
-  readonly confirmLabel = this._confirmLabel.asReadonly();
-  readonly cancelLabel = this._cancelLabel.asReadonly();
-  readonly visible = this._visible.asReadonly();
+  readonly state = this._state.asReadonly();
   readonly closing = this._closing.asReadonly();
 
   private resolver: ((result: boolean) => void) | null = null;
@@ -38,33 +27,40 @@ export class ConfirmDialogService {
 
   // Replaces window.confirm(): resolves true/false once the user picks an
   // option, instead of blocking the browser thread with a native dialog.
-  // Buttons default to Cancel / Confirm; pass labels that say what will actually
-  // happen when the generic wording would be ambiguous (e.g. "Discard changes").
+  // Buttons default to Cancel / Confirm; pass labels that say what will
+  // actually happen (e.g. "Delete", "Discard changes").
   confirm(message: string, options: ConfirmOptions = {}): Promise<boolean> {
+    // One dialog at a time: a newer question replaces an unanswered one, which
+    // counts as "no" rather than leaving its caller waiting forever.
+    this.resolver?.(false);
     clearTimeout(this.closeTimer);
-    this._message.set(message);
-    this._title.set(options.title ?? DEFAULT_TITLE);
-    this._confirmLabel.set(options.confirmLabel ?? DEFAULT_CONFIRM_LABEL);
-    this._cancelLabel.set(options.cancelLabel ?? DEFAULT_CANCEL_LABEL);
-    this._visible.set(true);
+
     this._closing.set(false);
+    this._state.set({
+      message,
+      title: options.title ?? 'Please confirm',
+      confirmLabel: options.confirmLabel ?? 'Confirm',
+      cancelLabel: options.cancelLabel ?? 'Cancel',
+      variant: options.variant ?? 'default',
+    });
 
     return new Promise<boolean>((resolve) => {
       this.resolver = resolve;
     });
   }
 
+  // Callers get the answer at once; only the dialog's removal from the DOM
+  // waits for the close animation.
   respond(result: boolean): void {
     if (!this.resolver) return;
     const resolve = this.resolver;
     this.resolver = null;
+    resolve(result);
 
     this._closing.set(true);
     this.closeTimer = setTimeout(() => {
-      this._visible.set(false);
+      this._state.set(null);
       this._closing.set(false);
-    }, ConfirmDialogService.CLOSE_ANIMATION_MS);
-
-    resolve(result);
+    }, CLOSE_ANIMATION_MS);
   }
 }

@@ -143,19 +143,18 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, $"{items.Count} audit log entries found.", items);
     }
 
+    // CustomerAuditLog_List returns two result sets: the total (one row), then the page. The total
+    // comes first, on its own, so it's right even when the page is empty.
     public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogList(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
+        await reader.ReadAsync().ConfigureAwait(false);
+        var totalItems = reader.GetInt32("TotalCount");
+
         var items = new List<GlobalAuditLogEntry>();
-        var totalItems = 0;
-
+        await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-        {
-            if (items.Count == 0)
-                totalItems = reader.GetInt32("TotalCount");
-
             items.Add(MapGlobalAuditLogEntryFromReader(reader));
-        }
 
         return new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(200,
             $"{items.Count} audit log entries found (page {pageNumber}).",

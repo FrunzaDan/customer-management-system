@@ -10,7 +10,7 @@
   text-align: center;
 }
 
-.api-down-card h2 {
+.api-down-card h1 {
   margin-bottom: 0.75rem;
   color: var(--spectrumColor1);
   font-size: 1.5rem;

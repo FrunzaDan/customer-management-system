@@ -6,7 +6,7 @@ import { ProductDetailsService } from '../../services/product-details.service';
 @Component({
   selector: 'app-product-details',
   templateUrl: './product-details.component.html',
-  styleUrls: ['./product-details.component.css'],
+  styleUrl: './product-details.component.css',
   imports: [DatePipe, DecimalPipe, RouterLink],
 })
 export class ProductDetailsComponent {

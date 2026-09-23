@@ -17,7 +17,7 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
 @Component({
   selector: 'app-add-customer',
   templateUrl: './add-customer.component.html',
-  styleUrls: ['./add-customer.component.css'],
+  styleUrl: './add-customer.component.css',
   imports: [CustomerFormFieldsComponent, FormRoot, RouterLink],
   // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },

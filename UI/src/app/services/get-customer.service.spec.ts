@@ -138,7 +138,7 @@ describe('GetCustomerService', () => {
 
     expect(service.loadingSignal()).toBe(false);
     expect(service.errorSignal()).toBe(
-      'Network error - please check your connection.',
+      'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
     );
   });
 

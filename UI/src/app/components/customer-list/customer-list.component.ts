@@ -18,7 +18,7 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 @Component({
   selector: 'app-customer-list',
   templateUrl: './customer-list.component.html',
-  styleUrls: ['./customer-list.component.css'],
+  styleUrl: './customer-list.component.css',
   imports: [RouterLink],
 })
 export class CustomerListComponent implements OnInit {
@@ -195,6 +195,7 @@ export class CustomerListComponent implements OnInit {
   async deactivateCustomer(customerId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this customer?',
+      { title: 'Deactivate customer?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
     this.activateCustomerService.deactivateCustomer(customerId);
@@ -207,6 +208,7 @@ export class CustomerListComponent implements OnInit {
   async deleteCustomer(customerId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to permanently delete this customer? This cannot be undone.',
+      { title: 'Delete customer?', confirmLabel: 'Delete', variant: 'danger' },
     );
     if (!confirmed) return;
 
@@ -283,7 +285,11 @@ export class CustomerListComponent implements OnInit {
     }
     lines.push('Continue?');
 
-    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'));
+    const confirmed = await this.confirmDialogService.confirm(lines.join('\n'), {
+      title: 'Apply bulk action?',
+      confirmLabel: 'Apply',
+      variant: toDelete.length > 0 ? 'danger' : 'default',
+    });
     if (!confirmed) return;
 
     this.bulkActionInProgress.set(true);

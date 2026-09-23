@@ -23,7 +23,7 @@ interface LoginModel {
 @Component({
   selector: 'app-user-login',
   templateUrl: './user-login.component.html',
-  styleUrls: ['./user-login.component.css'],
+  styleUrl: './user-login.component.css',
   imports: [FormField, FormRoot],
 })
 export class UserLoginComponent implements OnInit, OnDestroy {
