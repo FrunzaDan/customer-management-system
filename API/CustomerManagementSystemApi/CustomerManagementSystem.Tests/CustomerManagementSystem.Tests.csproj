@@ -25,6 +25,7 @@
         <ProjectReference Include="..\CustomerManagementSystem.BusinessLogic\CustomerManagementSystem.BusinessLogic.csproj" />
         <ProjectReference Include="..\CustomerManagementSystem.DataAccess\CustomerManagementSystem.DataAccess.csproj" />
         <ProjectReference Include="..\CustomerManagementSystem.Domain\CustomerManagementSystem.Domain.csproj" />
+        <ProjectReference Include="..\CustomerManagementSystem.WebAPI\CustomerManagementSystem.WebAPI.csproj" />
     </ItemGroup>
 
 </Project>

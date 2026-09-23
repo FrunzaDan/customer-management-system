@@ -3,7 +3,6 @@ using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
@@ -11,6 +10,7 @@ using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using CustomerManagementSystem.WebAPI.Routing;
+using CustomerManagementSystem.WebAPI.ErrorHandling;
 using CustomerManagementSystem.WebAPI.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +49,9 @@ builder.Services.AddControllers(options =>
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
 builder.Services.AddHealthChecks();
+
+// The one handler for unexpected exceptions — see ErrorHandling/GlobalExceptionHandler.cs.
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var jwtKey = builder.Configuration["Auth:SecureJWTKey"] ??
              throw new InvalidOperationException("Missing Auth:SecureJWTKey configuration.");
@@ -128,27 +131,8 @@ else
     app.UseHsts();
 }
 
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
-
-        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
-            .CreateLogger("GlobalExceptionHandler");
-        if (exception is not null)
-            logger.LogError(exception, "Unhandled exception while processing {Path}", context.Request.Path);
-
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-
-        var message = app.Environment.IsDevelopment() && exception is not null
-            ? $"An error occurred while processing your request: {exception.Message}"
-            : "An error occurred while processing your request.";
-
-        await context.Response.WriteAsJsonAsync(
-            new ResponseModel<object>(StatusCodes.Status500InternalServerError, message));
-    });
-});
+// Unhandled exceptions: logged once and answered 500 by GlobalExceptionHandler.
+app.UseExceptionHandler();
 
 // Responses carry live, per-user data: never let a browser or proxy cache them.
 app.Use(async (context, next) =>
