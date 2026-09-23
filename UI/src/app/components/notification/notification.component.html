@@ -2,6 +2,8 @@
   @for (notification of notifications(); track notification.id) {
   <div
     class="notification-toast"
+    animate.enter="notification-enter"
+    animate.leave="notification-leave"
     [class.notification-success]="notification.type === 'success'"
     [class.notification-error]="notification.type === 'error'"
     [attr.role]="notification.type === 'error' ? 'alert' : 'status'"

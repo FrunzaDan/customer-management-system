@@ -10,6 +10,13 @@
   --focusColor: #133b36;
   --regularFont: 'JostRegular', sans-serif;
   --extralightFont: 'JostExtraLight', sans-serif;
+
+  /* Motion: one set of durations and curves for every transition/animation. */
+  --duration-fast: 0.15s;
+  --duration-base: 0.25s;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @font-face {
@@ -62,7 +69,6 @@ a {
   background-color: var(--spectrumColor2) !important;
   box-shadow: none;
   border-color: var(--spectrumColor2);
-  transition: all 0.3s;
 }
 
 .btn-primary:hover {
@@ -75,7 +81,6 @@ a {
   background-color: var(--secondaryColor) !important;
   box-shadow: none;
   border-color: var(--secondaryColor);
-  transition: all 0.3s;
 }
 
 .btn-secondary:hover {
@@ -88,16 +93,34 @@ a {
   background-color: var(--dangerColor1) !important;
   box-shadow: none;
   border-color: var(--dangerColor1);
-  transition: all 0.3s;
 }
 
 .btn-danger:hover {
   filter: brightness(90%);
 }
 
+/* Buttons lift on hover and press in on click. .btn-link stays flat: it is
+   styled as text, and a moving link reads as a glitch. */
+.btn {
+  transition:
+    filter var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
+}
+
+.btn:not(.btn-link):hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:not(.btn-link):active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
 .hoverItem {
   display: inline-block;
-  transition: transform 0.3s;
+  transition: transform var(--duration-base) var(--ease-out);
   transform-origin: 50% 50%;
 }
 
@@ -227,6 +250,10 @@ app-footer {
   text-decoration: underline;
 }
 
+.sort-button:active {
+  transform: scale(0.96);
+}
+
 .table-themed > thead > tr > th {
   padding: 0.85rem 0.75rem;
   border-bottom: 0;
@@ -238,6 +265,8 @@ app-footer {
 
 .table-themed > tbody > tr > td {
   padding: 0.75rem;
+  /* Bootstrap paints the row hover as an inset box-shadow; fade it in. */
+  transition: box-shadow var(--duration-fast) ease;
 }
 
 .table-themed > caption {
@@ -251,10 +280,14 @@ app-footer {
   text-decoration: underline;
   text-underline-offset: 0.2em;
   cursor: pointer;
+  transition:
+    text-underline-offset var(--duration-fast) ease,
+    text-decoration-thickness var(--duration-fast) ease;
 }
 
 .plain-Links:hover {
   text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
 }
 
 .empty-state {
@@ -308,6 +341,14 @@ app-footer {
   height: 100%;
   border-radius: 999px;
   background-color: var(--spectrumColor2);
+  transform-origin: left center;
+  animation: ranked-fill-grow 0.6s var(--ease-out);
+}
+
+@keyframes ranked-fill-grow {
+  from {
+    transform: scaleX(0);
+  }
 }
 
 .ranked-value {
@@ -371,6 +412,66 @@ code {
 }
 
 /* ---------------------------------------------------------------------
+   Motion
+   --------------------------------------------------------------------- */
+
+/* Alerts slide in when they appear (a failed load or action). */
+.alert {
+  animation: reveal-in var(--duration-base) var(--ease-out);
+}
+
+/* For content that opens and closes, with Angular's animate.enter /
+   animate.leave: animate.enter="reveal-enter" animate.leave="reveal-leave". */
+.reveal-enter {
+  animation: reveal-in var(--duration-base) var(--ease-out);
+}
+
+.reveal-leave {
+  animation: reveal-out var(--duration-fast) var(--ease-in) forwards;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes reveal-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+/* Route changes cross-fade (the router's withViewTransitions). The header
+   gets its own name so it stays put instead of fading with the page. */
+header {
+  view-transition-name: site-header;
+}
+
+::view-transition-old(root) {
+  animation: page-out var(--duration-fast) var(--ease-in) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in var(--duration-base) var(--ease-out) both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+
+/* ---------------------------------------------------------------------
    Accessibility
    --------------------------------------------------------------------- */
 
@@ -426,8 +527,16 @@ main [tabindex='-1']:focus {
   }
 
   .hoverItem:hover,
-  .hoverBrand:hover {
+  .hoverBrand:hover,
+  .btn:hover,
+  .btn:active {
     transform: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 

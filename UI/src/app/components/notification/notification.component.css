@@ -19,7 +19,6 @@
   border-radius: 0.625rem;
   color: #fff;
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
-  animation: notification-slide-in 0.2s ease-out;
   pointer-events: auto;
 }
 
@@ -42,6 +41,9 @@
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
+  transition:
+    opacity var(--duration-fast) ease,
+    transform var(--duration-base) var(--ease-out);
   opacity: 0.9;
   padding: 0;
   min-width: 1.5rem;
@@ -50,15 +52,29 @@
 
 .notification-close:hover {
   opacity: 1;
+  transform: rotate(90deg);
+}
+
+/* Toasts slide in from the right edge and slide back out when they go
+   (animate.enter / animate.leave on each toast). */
+.notification-enter {
+  animation: notification-slide-in var(--duration-base) var(--ease-out);
+}
+
+.notification-leave {
+  animation: notification-slide-out var(--duration-fast) var(--ease-in) forwards;
 }
 
 @keyframes notification-slide-in {
   from {
-    transform: translateY(0.5rem);
+    transform: translateX(calc(100% + 1rem));
     opacity: 0;
   }
+}
+
+@keyframes notification-slide-out {
   to {
-    transform: translateY(0);
-    opacity: 1;
+    transform: translateX(calc(100% + 1rem));
+    opacity: 0;
   }
 }

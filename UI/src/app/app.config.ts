@@ -19,6 +19,7 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
   withRouterConfig,
+  withViewTransitions,
 } from '@angular/router';
 import { routes } from './app.routes';
 import { apiLoggerInterceptor } from './services/api-logger.interceptor';
@@ -39,6 +40,9 @@ export const appConfig: ApplicationConfig = {
       // ('replace') overwrites a history entry when that happens, so a second
       // Back press skips the guard; 'computed' restores history correctly.
       withRouterConfig({ canceledNavigationResolution: 'computed' }),
+      // Pages cross-fade on navigation (animations in styles.css); not on the
+      // first load, which would fade the server-rendered page in again.
+      withViewTransitions({ skipInitialTransition: true }),
     ),
     { provide: TitleStrategy, useClass: AppTitleStrategy },
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
