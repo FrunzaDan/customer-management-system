@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 
 namespace CustomerManagementSystem.Tests.ErrorHandling;
@@ -26,6 +28,8 @@ public class ErrorResponseTests
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment(environment);
+            // Captures what the app logs, next to the console, for the logging assertions below.
+            builder.ConfigureLogging(logging => logging.AddFakeLogging());
             // Program.cs refuses to start without these; nothing here signs or validates a token.
             builder.UseSetting("Auth:SecureJWTKey", "test-signing-key-that-is-at-least-32-bytes-long");
             builder.UseSetting("Auth:JWTIssuer", "test-issuer");
@@ -69,6 +73,13 @@ public class ErrorResponseTests
         Assert.Equal("An error occurred while processing your request.", problem.GetProperty("title").GetString());
         Assert.Equal(exposesMessage, problem.TryGetProperty("detail", out var detail));
         if (exposesMessage) Assert.Equal("Login failed for user 'sa'.", detail.GetString());
+
+        // Logged exactly once, by GlobalExceptionHandler (ExceptionHandlerMiddleware doesn't log an
+        // exception an IExceptionHandler handled).
+        var error = Assert.Single(factory.Services.GetFakeLogCollector().GetSnapshot(),
+            record => record.Level >= LogLevel.Error);
+        Assert.Equal(1, error.Id.Id);
+        Assert.IsType<InvalidOperationException>(error.Exception);
     }
 
     [Fact]
@@ -136,5 +147,24 @@ public class ErrorResponseTests
             TestContext.Current.CancellationToken);
 
         await ReadProblemAsync(response, HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task EveryRequest_WritesOneAccessLogLine_ExceptTheHealthPoll()
+    {
+        await using var factory = CreateFactory(new Mock<IAuthService>());
+        // https, so an HTTP-to-HTTPS redirect doesn't add a second request to the log.
+        var client = factory.CreateClient(
+            new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+
+        var response = await client.GetAsync("/api/no-such-route", TestContext.Current.CancellationToken);
+        await client.GetAsync("/health", TestContext.Current.CancellationToken);
+
+        var accessLog = Assert.Single(factory.Services.GetFakeLogCollector().GetSnapshot(),
+            record => record.Category == "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware");
+        Assert.Equal(LogLevel.Information, accessLog.Level);
+        Assert.Equal("GET", accessLog.GetStructuredStateValue("Method"));
+        Assert.Equal("/api/no-such-route", accessLog.GetStructuredStateValue("Path"));
+        Assert.Equal(((int)response.StatusCode).ToString(), accessLog.GetStructuredStateValue("StatusCode"));
     }
 }

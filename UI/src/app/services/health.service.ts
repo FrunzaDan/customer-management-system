@@ -1,9 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  HttpClient,
-  HttpErrorResponse,
-  HttpResponse,
-} from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { catchError, map, Observable, of, switchMap, timer } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -23,26 +19,15 @@ export class HealthService {
       .get(this.healthUrl, { observe: 'response', responseType: 'text' })
       .pipe(
         map((response: HttpResponse<string>) => response.ok), // cleaner than status check
-        catchError((error) => {
-          this.logHealthError(error);
-          return of(false);
-        }),
+        // A failed poll only flips the banner; apiLoggerInterceptor has already
+        // logged the failed request.
+        catchError(() => of(false)),
       );
   }
 
   pollApiHealth(): Observable<boolean> {
     return timer(0, POLL_INTERVAL_MS).pipe(
       switchMap(() => this.checkApiHealth()),
-    );
-  }
-
-  private logHealthError(error: unknown) {
-    const name = error instanceof Error ? error.name : 'Unknown';
-    const message = error instanceof Error ? error.message : 'No message';
-    const status =
-      error instanceof HttpErrorResponse ? ` | Status: ${error.status}` : '';
-    console.error(
-      `API health check failed! | URL: ${this.healthUrl} | Error: ${name} | Message: ${message}${status}`,
     );
   }
 }

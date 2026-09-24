@@ -10,7 +10,6 @@ import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { GlobalAuditLogEntry } from '../interfaces/global-audit-log-entry';
 import { PagedResponse } from '../interfaces/paged-response';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 export interface LoadAllAuditLogParams {
@@ -47,14 +46,12 @@ export class GlobalAuditLogService {
   private readonly loadParams$ = new Subject<LoadAllAuditLogParams>();
 
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
   constructor() {
     this.loadParams$
       .pipe(
         switchMap((params) => {
-          const headers = this.httpHeaderService.getHeadersWithTokenSet();
           const httpParams = new HttpParams()
             .set('pageNumber', params.pageNumber)
             .set('pageSize', params.pageSize);
@@ -62,7 +59,7 @@ export class GlobalAuditLogService {
           return this.http
             .get<GenericResponse<PagedResponse<GlobalAuditLogEntry>>>(
               this.API_URL,
-              { headers, params: httpParams },
+              { params: httpParams },
             )
             .pipe(
               map((response) => ({ response, requestedParams: params })),
@@ -96,21 +93,17 @@ export class GlobalAuditLogService {
   }
 
   deleteAllAuditLog(): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-
-    return this.http
-      .delete<GenericResponse<object>>(this.API_URL, { headers })
-      .pipe(
-        tap(() => {
-          this.state.update((state) => ({
-            ...state,
-            entries: [],
-            pageNumber: 1,
-            totalItems: 0,
-          }));
-          this.notificationService.show('Audit log cleared successfully.');
-        }),
-      );
+    return this.http.delete<GenericResponse<object>>(this.API_URL).pipe(
+      tap(() => {
+        this.state.update((state) => ({
+          ...state,
+          entries: [],
+          pageNumber: 1,
+          totalItems: 0,
+        }));
+        this.notificationService.show('Audit log cleared successfully.');
+      }),
+    );
   }
 
   private handleError(error: HttpErrorResponse): void {

@@ -300,13 +300,15 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             rendering — only in the browser.
           </p>
           <p class="card-text">
-            Purely a learning/demo aid, so it can be switched off:
+            On by default in development builds and off in production ones; this
+            switch overrides that and is remembered in this browser:
           </p>
           <button
             type="button"
             class="btn"
             [class.btn-primary]="apiLoggingEnabled()"
             [class.btn-secondary]="!apiLoggingEnabled()"
+            [attr.aria-pressed]="apiLoggingEnabled()"
             (click)="toggleApiLogging()"
           >
             API call logging: {{ apiLoggingEnabled() ? 'On' : 'Off' }}

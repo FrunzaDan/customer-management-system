@@ -12,7 +12,6 @@ import {
   Gender,
 } from '../interfaces/customer';
 import { CustomerService } from './customer.service';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 describe('CustomerService', () => {
@@ -68,10 +67,6 @@ describe('CustomerService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        {
-          provide: HttpHeaderService,
-          useValue: { getHeadersWithTokenSet: () => ({}) },
-        },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });

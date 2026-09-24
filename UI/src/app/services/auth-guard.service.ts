@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, map, Observable, of } from 'rxjs';
-import { VerifyTokenService } from '../../../src/app/services/verify-token.service';
+import { VerifyTokenService } from './verify-token.service';
 import { SessionStorageService } from './session-storage.service';
 
 @Injectable({
@@ -17,7 +17,8 @@ export class AuthGuardService {
       map((isTokenValid: boolean) => {
         return isTokenValid ? true : this.redirectToLogin();
       }),
-      catchError((error) => this.handleError(error)),
+      // The failed verification call is already logged by apiLoggerInterceptor.
+      catchError(() => this.handleError()),
     );
   }
 
@@ -31,8 +32,7 @@ export class AuthGuardService {
     this.sessionStorageService.removeSessionStorage();
   }
 
-  private handleError(error: unknown): Observable<boolean> {
-    console.error('Error verifying token:', error);
+  private handleError(): Observable<boolean> {
     this.redirectToLogin();
     return of(false);
   }

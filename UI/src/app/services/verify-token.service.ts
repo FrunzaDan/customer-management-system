@@ -1,18 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { GenericResponse } from '../../../src/app/interfaces/generic-response';
+import { GenericResponse } from '../interfaces/generic-response';
 import { catchError, map, Observable, of } from 'rxjs';
-import { environment } from '../../../src/environments/environment';
-import { HttpHeaderService } from './http-header.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class VerifyTokenService {
-  readonly APIURL = environment.apiUrl + '/api/authentication/verify-token';
+  private readonly API_URL = `${environment.apiUrl}/api/authentication/verify-token`;
 
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
 
   isTokenValid(): Observable<boolean> {
     // Reaching a response at all means the API's [Authorize] middleware accepted the
@@ -24,10 +22,6 @@ export class VerifyTokenService {
   }
 
   verifyTokenViaAPI(): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-
-    return this.http.get<GenericResponse<object>>(this.APIURL, {
-      headers: headers,
-    });
+    return this.http.get<GenericResponse<object>>(this.API_URL);
   }
 }

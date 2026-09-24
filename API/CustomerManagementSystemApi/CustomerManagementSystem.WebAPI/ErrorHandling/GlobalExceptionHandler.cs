@@ -7,7 +7,7 @@ namespace CustomerManagementSystem.WebAPI.ErrorHandling;
 // run by UseExceptionHandler). Controllers, services and DbUtils don't catch-and-log: an
 // exception bubbles up here, is logged once, and the client gets a 500 Problem Details body.
 // A request the client aborted never gets here — UseExceptionHandler answers those with 499.
-public sealed class GlobalExceptionHandler(
+public sealed partial class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
     IHostEnvironment environment,
     ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
@@ -15,8 +15,7 @@ public sealed class GlobalExceptionHandler(
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
     {
-        logger.LogError(exception, "Unhandled exception while processing {Method} {Path}",
-            httpContext.Request.Method, httpContext.Request.Path);
+        LogUnhandledException(logger, exception, httpContext.Request.Method, httpContext.Request.Path);
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
@@ -34,4 +33,10 @@ public sealed class GlobalExceptionHandler(
             },
         });
     }
+
+    // Source-generated (compile-time template parsing, no boxing, level check before any work).
+    [LoggerMessage(EventId = 1, Level = LogLevel.Error,
+        Message = "Unhandled exception while processing {Method} {Path}")]
+    private static partial void LogUnhandledException(ILogger logger, Exception exception, string method,
+        PathString path);
 }

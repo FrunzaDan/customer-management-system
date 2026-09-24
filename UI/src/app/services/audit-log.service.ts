@@ -4,14 +4,12 @@ import { environment } from '../../environments/environment';
 import { AuditLogEntry } from '../interfaces/audit-log-entry';
 import { GenericResponse } from '../interfaces/generic-response';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuditLogService {
   private readonly API_URL = `${environment.apiUrl}/api/customer/audit-log`;
-  private readonly httpHeaderService = inject(HttpHeaderService);
 
   private readonly customerId = signal<string | undefined>(undefined);
 
@@ -25,7 +23,6 @@ export class AuditLogService {
       return {
         url: this.API_URL,
         params: { customerId: customerId },
-        headers: this.httpHeaderService.getHeadersWithTokenSet(),
       };
     },
   );

@@ -8,7 +8,6 @@ import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { LoginData } from '../interfaces/user-login-response';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 import { SessionStorageService } from './session-storage.service';
 import { UserLoginService } from './user-login.service';

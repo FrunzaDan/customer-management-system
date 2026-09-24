@@ -10,7 +10,6 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { Purchase } from '../interfaces/purchase';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -19,7 +18,6 @@ import { NotificationService } from './notification.service';
 export class PurchaseService {
   private readonly API_URL = `${environment.apiUrl}/api/customer`;
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
   private readonly customerId = signal<string | undefined>(undefined);
@@ -32,7 +30,6 @@ export class PurchaseService {
     return {
       url: `${this.API_URL}/purchases`,
       params: { customerId: customerId },
-      headers: this.httpHeaderService.getHeadersWithTokenSet(),
     };
   });
 
@@ -74,7 +71,6 @@ export class PurchaseService {
     customerId: string,
     productId: string,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams()
       .set('customerId', customerId)
       .set('productId', productId);
@@ -82,7 +78,7 @@ export class PurchaseService {
     return this.http.post<GenericResponse<object>>(
       `${this.API_URL}/purchase`,
       null,
-      { headers, params },
+      { params },
     );
   }
 }

@@ -25,6 +25,7 @@ import { routes } from './app.routes';
 import { apiLoggerInterceptor } from './services/api-logger.interceptor';
 import { AppTitleStrategy } from './services/app-title-strategy';
 import { authErrorInterceptor } from './services/auth-error.interceptor';
+import { authTokenInterceptor } from './services/auth-token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -48,7 +49,11 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([apiLoggerInterceptor, authErrorInterceptor]),
+      withInterceptors([
+        apiLoggerInterceptor,
+        authTokenInterceptor,
+        authErrorInterceptor,
+      ]),
     ),
     provideZonelessChangeDetection(),
   ],

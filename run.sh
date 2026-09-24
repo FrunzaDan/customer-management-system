@@ -7,6 +7,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_PROJ_DIR="$ROOT_DIR/API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI"
 API_PROJ="$API_PROJ_DIR/CustomerManagementSystem.WebAPI.csproj"
+API_LAUNCH_PROFILE="https"
 API_LAUNCH_SETTINGS="$API_PROJ_DIR/Properties/launchSettings.json"
 DB_DIR="$ROOT_DIR/DB/CustomerManagement"
 DB_PROJ="CustomerManagement.sqlproj"
@@ -199,7 +200,7 @@ fi
 
 : >"$API_LOG"
 
-ASPNETCORE_ENVIRONMENT=Development dotnet run --project "$API_PROJ" --launch-profile https >"$API_LOG" 2>&1 &
+ASPNETCORE_ENVIRONMENT=Development dotnet run --project "$API_PROJ" --launch-profile "$API_LAUNCH_PROFILE" >"$API_LOG" 2>&1 &
 API_PID=$!
 echo "    API starting in background (pid $API_PID), logs: $API_LOG"
 

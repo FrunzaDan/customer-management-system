@@ -5,25 +5,17 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
-import { HttpHeaderService } from './http-header.service';
 import { VerifyTokenService } from './verify-token.service';
 
 describe('VerifyTokenService', () => {
   let service: VerifyTokenService;
   let httpMock: HttpTestingController;
-  let getHeadersWithTokenSet: ReturnType<typeof vi.fn>;
 
   const API_URL = `${environment.apiUrl}/api/authentication/verify-token`;
 
   beforeEach(() => {
-    getHeadersWithTokenSet = vi.fn().mockReturnValue({});
-
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: HttpHeaderService, useValue: { getHeadersWithTokenSet } },
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(VerifyTokenService);
     httpMock = TestBed.inject(HttpTestingController);

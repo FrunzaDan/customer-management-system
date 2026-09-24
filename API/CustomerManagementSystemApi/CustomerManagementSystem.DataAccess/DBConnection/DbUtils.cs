@@ -8,12 +8,6 @@ namespace CustomerManagementSystem.DataAccess.DBConnection;
 
 public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
 {
-    // DbUtils is registered as a singleton, so this cache is shared across every concurrent
-    // request for the app's lifetime — the lock stops concurrent cold-start (or sustained
-    // DB-unavailability) requests from redundantly re-running connection-string resolution.
-    private readonly SemaphoreSlim _connectionStringLock = new(1, 1);
-    private string? CurrentConnectionString { get; set; }
-
     public Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
@@ -199,24 +193,6 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
             DbHelper.HandleResponseWithMonthlyActivity,
             cancellationToken);
 
-    private async Task CheckConnectionStringAsync(CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrEmpty(CurrentConnectionString)) return;
-
-        await _connectionStringLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            if (!string.IsNullOrEmpty(CurrentConnectionString)) return; // re-check after acquiring the lock
-
-            CurrentConnectionString = await new CurrentSqlConnection(configuration)
-                .GetCorrectSqlConnectionStringAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _connectionStringLock.Release();
-        }
-    }
-
     private async Task<T> ExecuteStoredProcedureAsync<T>(
         string storedProcedure,
         Action<SqlCommand>? configureCommand,
@@ -226,9 +202,8 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         // No try/catch: expected outcomes come back as the proc's (Result, Message) row, and anything
         // thrown here (a SqlException the proc re-THROWs, a lost connection, a cancelled request)
         // propagates unchanged to GlobalExceptionHandler, which logs it once and answers 500.
-        await CheckConnectionStringAsync(cancellationToken).ConfigureAwait(false);
-
-        await using var connection = new SqlConnection(CurrentConnectionString);
+        // A new SqlConnection per call is cheap: SqlClient pools the physical connections.
+        await using var connection = new SqlConnection(configuration.DefaultConnection);
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
         await using var command = new SqlCommand(storedProcedure, connection);

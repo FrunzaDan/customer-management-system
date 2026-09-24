@@ -8,7 +8,6 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { CreateProductRequest, Product } from '../interfaces/product';
 import { ProductDetails } from '../interfaces/product-details';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 import { ProductService } from './product.service';
 
@@ -39,10 +38,6 @@ describe('ProductService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        {
-          provide: HttpHeaderService,
-          useValue: { getHeadersWithTokenSet: () => ({}) },
-        },
         { provide: NotificationService, useValue: { show: notificationShow } },
       ],
     });

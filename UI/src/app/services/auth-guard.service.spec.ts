@@ -52,7 +52,6 @@ describe('AuthGuardService', () => {
 
   it('clears the session and redirects to login when the verification call itself errors', () => {
     isTokenValid.mockReturnValue(throwError(() => new Error('network down')));
-    vi.spyOn(console, 'error').mockImplementation(() => {});
 
     let result: boolean | undefined;
     service.canActivate().subscribe((value) => (result = value));

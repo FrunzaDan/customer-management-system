@@ -4,14 +4,12 @@ import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
 import { MonthlyActivity } from '../interfaces/monthly-activity';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MonthlyActivityService {
   private readonly API_URL = `${environment.apiUrl}/api/customer/monthly-activity`;
-  private readonly httpHeaderService = inject(HttpHeaderService);
 
   // No request is made until loadMonthlyActivity() is first called, same reasoning
   // as ProductService.
@@ -19,14 +17,7 @@ export class MonthlyActivityService {
 
   private readonly activityResource = httpResource<
     GenericResponse<MonthlyActivity>
-  >(() =>
-    this.requested()
-      ? {
-          url: this.API_URL,
-          headers: this.httpHeaderService.getHeadersWithTokenSet(),
-        }
-      : undefined,
-  );
+  >(() => (this.requested() ? this.API_URL : undefined));
 
   private readonly empty: MonthlyActivity = {
     customerCreations: [],

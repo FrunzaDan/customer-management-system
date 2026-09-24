@@ -5,28 +5,21 @@ namespace CustomerManagementSystem.Domain.Configuration;
 public class AppSettingsConfig(IConfiguration configuration) : IAppSettingsConfig
 {
     public string SecureJwtKey => configuration["Auth:SecureJWTKey"] ??
-                                  throw new ArgumentNullException(nameof(SecureJwtKey),
-                                      "The config value SecureJWTKey cannot be null.");
+                                  throw new InvalidOperationException("Missing Auth:SecureJWTKey configuration.");
 
     public string JwtIssuer => configuration["Auth:JWTIssuer"] ??
-                               throw new ArgumentNullException(nameof(JwtIssuer),
-                                   "The config value JWTIssuer cannot be null.");
+                               throw new InvalidOperationException("Missing Auth:JWTIssuer configuration.");
 
     public string JwtAudience => configuration["Auth:JWTAudience"] ??
-                                 throw new ArgumentNullException(nameof(JwtAudience),
-                                     "The config value JWTAudience cannot be null.");
+                                 throw new InvalidOperationException("Missing Auth:JWTAudience configuration.");
 
     public string AccessTokenTimeout => configuration["Auth:AccessTokenTimeout"] ??
-                                        throw new ArgumentNullException(nameof(AccessTokenTimeout),
-                                            "The config value AccessTokenTimeout cannot be null.");
+                                        throw new InvalidOperationException("Missing Auth:AccessTokenTimeout configuration.");
 
-    public string CustomerManagementSystemDbWindows =>
-        configuration["ConnectionStrings:CustomerManagementSystemDB_Windows"] ?? throw new ArgumentNullException(
-            nameof(CustomerManagementSystemDbWindows),
-            "The config value CustomerManagementSystemDB_Windows cannot be null.");
-
-    public string CustomerManagementSystemDbDocker =>
-        configuration["ConnectionStrings:CustomerManagementSystemDB_Docker"] ?? throw new ArgumentNullException(
-            nameof(CustomerManagementSystemDbDocker),
-            "The config value CustomerManagementSystemDB_Docker cannot be null.");
+    // The one database connection (ConnectionStrings:DefaultConnection). appsettings.json holds the
+    // local Docker SQL Server's; override it per machine with user-secrets or the
+    // ConnectionStrings__DefaultConnection environment variable rather than editing the file.
+    public string DefaultConnection => configuration.GetConnectionString("DefaultConnection") ??
+                                       throw new InvalidOperationException(
+                                           "Missing ConnectionStrings:DefaultConnection configuration.");
 }

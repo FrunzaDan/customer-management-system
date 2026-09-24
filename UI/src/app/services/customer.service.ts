@@ -26,7 +26,6 @@ import { environment } from '../../environments/environment';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { GenericResponse } from '../interfaces/generic-response';
 import { PagedResponse } from '../interfaces/paged-response';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 export interface LoadCustomersParams {
@@ -67,7 +66,6 @@ export class CustomerService {
   private readonly API_URL = `${environment.apiUrl}/api/customer`;
 
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
   private readonly state = signal({
@@ -109,7 +107,6 @@ export class CustomerService {
     this.loadCustomersParams$
       .pipe(
         switchMap((params) => {
-          const headers = this.httpHeaderService.getHeadersWithTokenSet();
           let httpParams = new HttpParams()
             .set('pageNumber', params.pageNumber)
             .set('pageSize', params.pageSize)
@@ -123,7 +120,7 @@ export class CustomerService {
           return this.http
             .get<GenericResponse<PagedResponse<Customer>>>(
               `${this.API_URL}/all`,
-              { headers, params: httpParams },
+              { params: httpParams },
             )
             .pipe(
               map((response) => ({ response, requestedParams: params })),
@@ -162,14 +159,10 @@ export class CustomerService {
   getCustomer(customerId: string): void {
     this.setLoading(true);
 
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('searchTerm', customerId);
 
     this.http
-      .get<GenericResponse<Customer>>(`${this.API_URL}/get`, {
-        headers,
-        params,
-      })
+      .get<GenericResponse<Customer>>(`${this.API_URL}/get`, { params })
       .subscribe({
         next: (response) => {
           this.state.update((state) => ({
@@ -202,24 +195,19 @@ export class CustomerService {
   createCustomerSilently(
     customer: CreateCustomerRequest,
   ): Observable<GenericResponse<string>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http.post<GenericResponse<string>>(
       `${this.API_URL}/create`,
       customer,
-      { headers },
     );
   }
 
   // Takes the whole edited customer (to update the local list with once saved) but sends
   // only the editable fields — the server-owned ones (status, dates) aren't part of an edit.
   updateCustomer(customer: Customer): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
-
     return this.http
       .patch<GenericResponse<object>>(
         `${this.API_URL}/update`,
         toUpdateCustomerRequest(customer),
-        { headers },
       )
       .pipe(
         tap(() => {
@@ -245,14 +233,10 @@ export class CustomerService {
   deleteCustomerSilently(
     customerId: string,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('customerId', customerId);
 
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, {
-        headers,
-        params,
-      })
+      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
       .pipe(tap(() => this.removeCustomerLocally(customerId)));
   }
 
@@ -272,12 +256,10 @@ export class CustomerService {
   deactivateCustomerSilently(
     customerId: string,
   ): Observable<GenericResponse<object>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('customerId', customerId);
 
     return this.http
       .patch<GenericResponse<object>>(`${this.API_URL}/deactivate`, null, {
-        headers,
         params,
       })
       .pipe(
@@ -296,7 +278,6 @@ export class CustomerService {
     this.exportLoading.set(true);
     this.exportError.set(null);
 
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     let httpParams = new HttpParams()
       .set('sortColumn', params.sortColumn ?? 'name')
       .set('sortDirection', params.sortDirection ?? 'asc');
@@ -307,7 +288,6 @@ export class CustomerService {
 
     this.http
       .get(`${this.API_URL}/export`, {
-        headers,
         params: httpParams,
         responseType: 'blob',
       })
@@ -334,12 +314,10 @@ export class CustomerService {
     status: CustomerStatus,
   ): void {
     this.activationState.set({ loading: true, error: null });
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     const params = new HttpParams().set('customerId', customerId);
 
     this.http
       .patch<GenericResponse<object>>(`${this.API_URL}/${action}`, null, {
-        headers,
         params,
       })
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))

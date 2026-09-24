@@ -10,7 +10,6 @@ import { GenericResponse } from '../interfaces/generic-response';
 import { CreateProductRequest, Product } from '../interfaces/product';
 import { ProductDetails } from '../interfaces/product-details';
 import { extractErrorMessage } from '../utils/extract-error-message';
-import { HttpHeaderService } from './http-header.service';
 import { NotificationService } from './notification.service';
 
 // Every product call (the catalogue, one product's details, adding a product), in one
@@ -21,7 +20,6 @@ import { NotificationService } from './notification.service';
 export class ProductService {
   private readonly API_URL = `${environment.apiUrl}/api/customer`;
   private readonly http = inject(HttpClient);
-  private readonly httpHeaderService = inject(HttpHeaderService);
   private readonly notificationService = inject(NotificationService);
 
   // No request is made until loadProducts() is first called (returning undefined
@@ -29,13 +27,7 @@ export class ProductService {
   private readonly requested = signal(false);
 
   private readonly productsResource = httpResource<GenericResponse<Product[]>>(
-    () =>
-      this.requested()
-        ? {
-            url: `${this.API_URL}/products`,
-            headers: this.httpHeaderService.getHeadersWithTokenSet(),
-          }
-        : undefined,
+    () => (this.requested() ? `${this.API_URL}/products` : undefined),
   );
 
   // hasValue() guards the read: value() throws while the resource is in error.
@@ -62,7 +54,6 @@ export class ProductService {
     return {
       url: `${this.API_URL}/product-details`,
       params: { productId: productId },
-      headers: this.httpHeaderService.getHeadersWithTokenSet(),
     };
   });
 
@@ -93,9 +84,7 @@ export class ProductService {
    */
   fetchProducts(): Observable<Product[]> {
     return this.http
-      .get<GenericResponse<Product[]>>(`${this.API_URL}/products`, {
-        headers: this.httpHeaderService.getHeadersWithTokenSet(),
-      })
+      .get<GenericResponse<Product[]>>(`${this.API_URL}/products`, {})
       .pipe(map((response) => response?.data ?? []));
   }
 
@@ -111,11 +100,8 @@ export class ProductService {
   createProduct(
     product: CreateProductRequest,
   ): Observable<GenericResponse<string>> {
-    const headers = this.httpHeaderService.getHeadersWithTokenSet();
     return this.http
-      .post<GenericResponse<string>>(`${this.API_URL}/product`, product, {
-        headers,
-      })
+      .post<GenericResponse<string>>(`${this.API_URL}/product`, product)
       .pipe(
         tap(() => this.notificationService.show('Product added successfully.')),
       );

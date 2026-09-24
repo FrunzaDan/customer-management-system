@@ -23,7 +23,7 @@ export class SessionStorageService {
 
   setSessionAccessToken(sessionStorageAccessToken: string): void {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('accessToken', sessionStorageAccessToken);
+      sessionStorage.setItem(this.accessTokenKey, sessionStorageAccessToken);
     }
   }
 
