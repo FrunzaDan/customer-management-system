@@ -6,9 +6,10 @@ How to build, test and run the database, API and UI locally.
 
 ## Key files / paths
 
-- `build.sh` — restores, builds and tests the API, builds the DB project, then runs `npm ci` and `npm run build` for the UI. Starts nothing.
+- `build.sh` — restores, builds and tests the API, builds the DB project, then runs `npm ci`, `npm run format:check`, `npm run build` and `ng test` for the UI. Starts nothing.
 - `run.sh` — the full dev environment. Safe to re-run.
 - `.run/` — logs and the exported dev certificate (gitignored).
+- `.vscode/` — shared VS Code tasks (`run.sh`, `build.sh`, `ng serve`, `ng test`), launch configs (API, `ng serve`, `ng test` in Node, "API + UI") and recommended extensions. Same in all three sibling apps. Open the repo root, not `UI/`.
 - `DB/CustomerManagement/Scripts/PostDeployment/Seed_Merchant.sql` — the test login.
 
 ## How it works

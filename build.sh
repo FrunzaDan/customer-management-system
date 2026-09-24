@@ -56,10 +56,11 @@ echo "==> [5/7] Building database project"
   dotnet build "$DB_PROJ" --no-restore --configuration Debug
 )
 
-echo "==> [6/7] Building Angular app"
+echo "==> [6/7] Checking formatting and building Angular app"
 (
   cd "$UI_DIR"
   npm ci
+  npm run format:check
   npm run build
 )
 
