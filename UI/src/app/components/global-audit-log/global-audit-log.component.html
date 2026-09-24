@@ -60,7 +60,7 @@
           </thead>
           <tbody>
             @for (entry of entries(); track entry.customerAuditLogId) {
-              <tr>
+              <tr animate.enter="row-enter" [style.--row-index]="$index">
                 <td class="align-middle text-center">
                   {{ entry.occurredAt | date: 'medium' }}
                 </td>

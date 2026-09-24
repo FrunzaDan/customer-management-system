@@ -97,6 +97,13 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 - Bootstrap plus `styles.css` tokens (`--spectrumColor1..4`, `--dangerColor1`), and the Jost font.
 - Shared classes: `.page`, `.page-header`, `.app-card`, `.table-themed`, `.sort-button`, `.loading-state`, `.empty-state`.
+- Motion (same in all three apps; tokens `--duration-*` and `--ease-*`, rules in the Motion section of `styles.css`):
+  - cards (`.app-card`) rise in on appearance; sibling cards follow a beat apart;
+  - table body rows carry `animate.enter="row-enter"` and `[style.--row-index]="$index"`, so added rows fade in staggered and re-sorted rows keep still;
+  - hovered rows, and rows marked `is-selected` for a bulk action, show an accent bar on their left edge;
+  - table links grow slightly under the pointer and press in on click; sort buttons and checkboxes press in, and the sort arrow (one `▲`, turned by `.sort-indicator--desc`) pops in and flips;
+  - loading placeholders fade in after 0.2 s, so a fast load never flashes one;
+  - hover transforms sit in `@media (hover: hover)`, so a tap on a phone does not leave them stuck.
 - Display formats: text is sentence case, money uses the `ron` pipe, dates use `longDate`, timestamps use `medium`.
 - Accessibility (WCAG 2.2 AA):
   - one `<h1>` per page, focused after each navigation;

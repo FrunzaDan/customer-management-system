@@ -48,9 +48,12 @@
                 >
                   Product
                   @if (sortColumn() === 'name') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -62,9 +65,12 @@
                 >
                   Category
                   @if (sortColumn() === 'category') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -76,9 +82,12 @@
                 >
                   Warehouse
                   @if (sortColumn() === 'warehouse') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -94,9 +103,12 @@
                 >
                   Price
                   @if (sortColumn() === 'price') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -112,9 +124,12 @@
                 >
                   Sold
                   @if (sortColumn() === 'sold') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -130,9 +145,12 @@
                 >
                   Inventory
                   @if (sortColumn() === 'inventory') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -148,9 +166,12 @@
                 >
                   Left
                   @if (sortColumn() === 'left') {
-                    <span aria-hidden="true">{{
-                      sortDirection() === 'asc' ? '▲' : '▼'
-                    }}</span>
+                    <span
+                      class="sort-indicator"
+                      [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                      aria-hidden="true"
+                      >▲</span
+                    >
                   }
                 </button>
               </th>
@@ -158,7 +179,7 @@
           </thead>
           <tbody>
             @for (product of sortedProducts(); track product.productId) {
-              <tr>
+              <tr animate.enter="row-enter" [style.--row-index]="$index">
                 <th scope="row" class="align-middle fw-normal">
                   <a
                     class="plain-Links hoverItem"

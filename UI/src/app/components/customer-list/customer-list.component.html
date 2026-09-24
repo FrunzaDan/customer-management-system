@@ -118,9 +118,12 @@
               >
                 Name
                 @if (sortColumn() === 'name') {
-                  <span aria-hidden="true">{{
-                    sortDirection() === 'asc' ? '▲' : '▼'
-                  }}</span>
+                  <span
+                    class="sort-indicator"
+                    [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                    aria-hidden="true"
+                    >▲</span
+                  >
                 }
               </button>
             </th>
@@ -136,9 +139,12 @@
               >
                 Email
                 @if (sortColumn() === 'email') {
-                  <span aria-hidden="true">{{
-                    sortDirection() === 'asc' ? '▲' : '▼'
-                  }}</span>
+                  <span
+                    class="sort-indicator"
+                    [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                    aria-hidden="true"
+                    >▲</span
+                  >
                 }
               </button>
             </th>
@@ -154,9 +160,12 @@
               >
                 phone number
                 @if (sortColumn() === 'phoneNumber') {
-                  <span aria-hidden="true">{{
-                    sortDirection() === 'asc' ? '▲' : '▼'
-                  }}</span>
+                  <span
+                    class="sort-indicator"
+                    [class.sort-indicator--desc]="sortDirection() === 'desc'"
+                    aria-hidden="true"
+                    >▲</span
+                  >
                 }
               </button>
             </th>
@@ -167,7 +176,11 @@
         <tbody>
           @for (customer of customers(); track customer.customerId) {
             @let fullName = customer.firstName + ' ' + customer.lastName;
-            <tr>
+            <tr
+              animate.enter="row-enter"
+              [style.--row-index]="$index"
+              [class.is-selected]="isSelected(customer.customerId)"
+            >
               <td class="align-middle text-center">
                 <input
                   #rowCheckbox

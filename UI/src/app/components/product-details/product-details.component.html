@@ -118,7 +118,10 @@
                   </thead>
                   <tbody>
                     @for (buyer of buyers(); track buyer.customerPurchaseId) {
-                      <tr>
+                      <tr
+                        animate.enter="row-enter"
+                        [style.--row-index]="$index"
+                      >
                         <th scope="row" class="align-middle fw-normal">
                           <a
                             class="plain-Links hoverItem"
