@@ -9,7 +9,8 @@ CREATE TABLE [dbo].[CustomerAuditLog]
     [ActionType] VARCHAR (20) NOT NULL,
     [Details] NVARCHAR (500) NULL,
     -- UTC; defaulted here so no proc has to remember to supply it.
-    [OccurredAt] DATETIME2 (3) NOT NULL CONSTRAINT [DF_CustomerAuditLog_OccurredAt] DEFAULT SYSUTCDATETIME(),
+    [OccurredAt] DATETIME2 (3) NOT NULL
+        CONSTRAINT [DF_CustomerAuditLog_OccurredAt] DEFAULT SYSUTCDATETIME(),
     CONSTRAINT [PK_CustomerAuditLog] PRIMARY KEY CLUSTERED ([CustomerAuditLogId]),
     CONSTRAINT [CK_CustomerAuditLog_ActionType] CHECK ([ActionType] IN
         ('Created', 'Edited', 'Deactivated', 'Reactivated', 'Deleted', 'Purchased'))
