@@ -25,14 +25,14 @@ public class JwtCreationTests
     };
 
     [Fact]
-    public async Task GenerateBearerJwt_ReturnsAToken_WhenCredentialsAreValid()
+    public async Task GenerateBearerJwtAsync_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         var data = Assert.IsType<AccessTokenResponse>(result.Data);
@@ -42,14 +42,14 @@ public class JwtCreationTests
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_WritesIatAsANumericDate_AndTheRoleAsItsNumericCode()
+    public async Task GenerateBearerJwtAsync_WritesIatAsANumericDate_AndTheRoleAsItsNumericCode()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
         var token = new JsonWebTokenHandler().ReadJsonWebToken(result.Data!.AccessToken);
 
         // RFC 7519: iat is seconds since the Unix epoch (a JSON number), not a date string.
@@ -59,14 +59,14 @@ public class JwtCreationTests
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_PassesOnTheDbRejection_WhenCredentialsAreWrong()
+    public async Task GenerateBearerJwtAsync_PassesOnTheDbRejection_WhenCredentialsAreWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(401, result.Status);
         Assert.Equal("Invalid username or password.", result.ResponseMessage);
@@ -76,29 +76,29 @@ public class JwtCreationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GenerateBearerJwt_ReturnsBadRequest_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
+    public async Task GenerateBearerJwtAsync_ReturnsBadRequest_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
         var credentials = new MerchantCredentials { Username = username, Password = "Merchant123" };
 
-        var result = await jwtCreation.GenerateBearerJwt(credentials, TestContext.Current.CancellationToken);
+        var result = await jwtCreation.GenerateBearerJwtAsync(credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_LetsADbFailurePropagate_ToTheGlobalExceptionHandler()
+    public async Task GenerateBearerJwtAsync_LetsADbFailurePropagate_ToTheGlobalExceptionHandler()
     {
         var dbUtils = new Mock<IDbUtils>();
         var failure = new InvalidOperationException("The database is unreachable.");
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(failure);
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken));
+            jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken));
         Assert.Same(failure, exception);
     }
 }

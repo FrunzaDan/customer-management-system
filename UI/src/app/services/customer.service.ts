@@ -11,7 +11,7 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { Observable, retry, tap, throwError, timer } from 'rxjs';
+import { Observable, map, retry, tap, throwError, timer } from 'rxjs';
 import {
   CreateCustomerRequest,
   Customer,
@@ -53,13 +53,14 @@ const TRANSIENT_ERROR_RETRY_CONFIG = {
 };
 
 // Every /api/customer call, in one service (like Imalo's ScholarService). It also holds
-// the loaded page of customers and the selected customer, and keeps them in step with
-// each successful update, status change and delete.
+// the loaded page of customers and keeps it in step with each successful update,
+// status change and delete. A single customer is read with getCustomer(), which the details
+// and edit pages key their own rxResource on.
 @Injectable({
   providedIn: 'root',
 })
 export class CustomerService {
-  private readonly API_URL = `${environment.apiUrl}/api/customer`;
+  private readonly apiUrl = `${environment.apiUrl}/api/customer`;
 
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
@@ -79,7 +80,7 @@ export class CustomerService {
     const params = this.listParams();
     if (!params) return undefined;
     return {
-      url: `${this.API_URL}/all`,
+      url: `${this.apiUrl}/all`,
       params: {
         pageNumber: params.pageNumber,
         pageSize: params.pageSize,
@@ -124,33 +125,6 @@ export class CustomerService {
       : null;
   });
 
-  // The customer the details/edit pages show; same shape as ProductService's details.
-  private readonly selectedCustomerId = signal<string | undefined>(undefined);
-
-  private readonly selectedCustomerResource = httpResource<
-    GenericResponse<Customer>
-  >(() => {
-    const customerId = this.selectedCustomerId();
-    if (!customerId) return undefined;
-    return { url: `${this.API_URL}/get`, params: { searchTerm: customerId } };
-  });
-
-  readonly selectedCustomer = computed(() =>
-    this.selectedCustomerResource.hasValue()
-      ? (this.selectedCustomerResource.value().data ?? null)
-      : null,
-  );
-  readonly selectedCustomerLoading = this.selectedCustomerResource.isLoading;
-  readonly selectedCustomerError = computed(() => {
-    const error = this.selectedCustomerResource.error();
-    return error
-      ? extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to load the customer',
-        )
-      : null;
-  });
-
   // Deactivate/reactivate have their own in-flight/error state, separate from the list's.
   private readonly activationState = signal({
     loading: false,
@@ -168,12 +142,18 @@ export class CustomerService {
     this.listParams.set({ ...params });
   }
 
-  getCustomer(customerId: string): void {
-    if (this.selectedCustomerId() === customerId) {
-      this.selectedCustomerResource.reload();
-    } else {
-      this.selectedCustomerId.set(customerId);
-    }
+  // One customer by id, for the details and edit pages (each keys an rxResource on it).
+  getCustomer(customerId: string): Observable<Customer> {
+    return this.http
+      .get<GenericResponse<Customer>>(`${this.apiUrl}/get`, {
+        params: { searchTerm: customerId },
+      })
+      .pipe(
+        map((response) => {
+          if (!response.data) throw new Error('Customer not found.');
+          return response.data;
+        }),
+      );
   }
 
   // On success, `data` is the new customer's server-generated GUID.
@@ -181,9 +161,7 @@ export class CustomerService {
     customer: CreateCustomerRequest,
   ): Observable<GenericResponse<string>> {
     return this.createCustomerSilently(customer).pipe(
-      tap(() =>
-        this.notificationService.show('Customer registered successfully.'),
-      ),
+      tap(() => this.notificationService.show('Customer added successfully.')),
     );
   }
 
@@ -196,7 +174,7 @@ export class CustomerService {
     customer: CreateCustomerRequest,
   ): Observable<GenericResponse<string>> {
     return this.http.post<GenericResponse<string>>(
-      `${this.API_URL}/create`,
+      `${this.apiUrl}/create`,
       customer,
     );
   }
@@ -206,7 +184,7 @@ export class CustomerService {
   updateCustomer(customer: Customer): Observable<GenericResponse<object>> {
     return this.http
       .patch<GenericResponse<object>>(
-        `${this.API_URL}/update`,
+        `${this.apiUrl}/update`,
         toUpdateCustomerRequest(customer),
       )
       .pipe(
@@ -236,7 +214,7 @@ export class CustomerService {
     const params = new HttpParams().set('customerId', customerId);
 
     return this.http
-      .delete<GenericResponse<object>>(`${this.API_URL}/delete`, { params })
+      .delete<GenericResponse<object>>(`${this.apiUrl}/delete`, { params })
       .pipe(tap(() => this.removeCustomerLocally(customerId)));
   }
 
@@ -259,7 +237,7 @@ export class CustomerService {
     const params = new HttpParams().set('customerId', customerId);
 
     return this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/deactivate`, null, {
+      .patch<GenericResponse<object>>(`${this.apiUrl}/deactivate`, null, {
         params,
       })
       .pipe(
@@ -287,7 +265,7 @@ export class CustomerService {
     }
 
     this.http
-      .get(`${this.API_URL}/export`, {
+      .get(`${this.apiUrl}/export`, {
         params: httpParams,
         responseType: 'blob',
       })
@@ -317,7 +295,7 @@ export class CustomerService {
     const params = new HttpParams().set('customerId', customerId);
 
     this.http
-      .patch<GenericResponse<object>>(`${this.API_URL}/${action}`, null, {
+      .patch<GenericResponse<object>>(`${this.apiUrl}/${action}`, null, {
         params,
       })
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
@@ -325,13 +303,7 @@ export class CustomerService {
         // A rejected change (e.g. 409 "already deactivated") arrives as an HTTP
         // error with a Problem Details body, so reaching next() means it was done.
         next: () => {
-          if (!this.setStatusLocally(customerId, status)) {
-            this.handleActivationError(
-              new Error(`Customer with GUID ${customerId} not found locally.`),
-            );
-            return;
-          }
-
+          this.setStatusLocally(customerId, status);
           this.activationState.set({ loading: false, error: null });
           this.notificationService.show(`Customer ${action}d successfully.`);
         },
@@ -339,46 +311,30 @@ export class CustomerService {
       });
   }
 
-  // Returns false when the customer is neither in the loaded list nor the one selected.
-  private setStatusLocally(
-    customerId: string,
-    status: CustomerStatus,
-  ): boolean {
-    const existingCustomer =
-      this.customers().find((c) => c.customerId === customerId) ??
-      (this.selectedCustomer()?.customerId === customerId
-        ? this.selectedCustomer()
-        : null);
-    if (!existingCustomer) return false;
-
-    this.updateCustomerLocally({ ...existingCustomer, status });
-    return true;
+  // Shows the new status in the loaded list straight away. A details page
+  // reloads its own copy once activationLoading() turns false.
+  private setStatusLocally(customerId: string, status: CustomerStatus): void {
+    const existingCustomer = this.customers().find(
+      (c) => c.customerId === customerId,
+    );
+    if (existingCustomer)
+      this.updateCustomerLocally({ ...existingCustomer, status });
   }
 
-  // Edits the loaded values in place (no refetch), so the list and the selected
-  // customer keep in step with a change the API just confirmed.
+  // Edits the loaded list in place (no refetch), so it keeps in step with a
+  // change the API just confirmed.
   private updateCustomerLocally(updatedCustomer: Customer): void {
     this.updateLoadedPage((items) =>
       items.map((c) =>
         c.customerId === updatedCustomer.customerId ? updatedCustomer : c,
       ),
     );
-    if (this.selectedCustomer()?.customerId === updatedCustomer.customerId) {
-      this.selectedCustomerResource.update(
-        (response) => response && { ...response, data: updatedCustomer },
-      );
-    }
   }
 
   private removeCustomerLocally(customerId: string): void {
     this.updateLoadedPage((items) =>
       items.filter((c) => c.customerId !== customerId),
     );
-    if (this.selectedCustomer()?.customerId === customerId) {
-      this.selectedCustomerResource.update(
-        (response) => response && { ...response, data: null },
-      );
-    }
   }
 
   private updateLoadedPage(update: (items: Customer[]) => Customer[]): void {
@@ -399,15 +355,10 @@ export class CustomerService {
     URL.revokeObjectURL(url);
   }
 
-  // An Error (not an HttpErrorResponse) is a change the API made that this page
-  // couldn't reflect (the row isn't in the loaded list); its message is already user-facing.
-  private handleActivationError(error: HttpErrorResponse | Error): void {
+  private handleActivationError(error: HttpErrorResponse): void {
     this.activationState.set({
       loading: false,
-      error:
-        error instanceof HttpErrorResponse
-          ? extractErrorMessage(error, 'Failed to update the customer status')
-          : error.message,
+      error: extractErrorMessage(error, 'Failed to update the customer status'),
     });
   }
 }

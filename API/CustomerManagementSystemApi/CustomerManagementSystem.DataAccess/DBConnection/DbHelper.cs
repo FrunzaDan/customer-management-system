@@ -60,7 +60,7 @@ public static class DbHelper
         command.Parameters.AddNVarChar("@StreetNumber", FieldLengthConstants.StreetNumber, address?.StreetNumber);
     }
 
-    public static async Task<ResponseModel<CustomerModel>> HandleResponseWithCustomer(SqlDataReader reader)
+    public static async Task<ResponseModel<CustomerModel>> HandleResponseWithCustomerAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             return new ResponseModel<CustomerModel>(404, "Customer not found.");
@@ -68,7 +68,7 @@ public static class DbHelper
         return new ResponseModel<CustomerModel>(200, "Customer found.", MapCustomerFromReader(reader));
     }
 
-    public static async Task<ResponseModel<PagedResponse<CustomerModel>>> HandleResponseWithPagedCustomers(
+    public static async Task<ResponseModel<PagedResponse<CustomerModel>>> HandleResponseWithPagedCustomersAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
         var items = new List<CustomerModel>();
@@ -89,7 +89,7 @@ public static class DbHelper
 
     // The standard (Result, Message) row every mutating proc returns: Result 0 = success,
     // anything else is the HTTP status to reply with.
-    public static async Task<ResponseModel<object>> HandleResponseWithMessage(SqlDataReader reader)
+    public static async Task<ResponseModel<object>> HandleResponseWithMessageAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             throw new InvalidOperationException("The stored procedure returned no (Result, Message) row.");
@@ -103,7 +103,7 @@ public static class DbHelper
 
     // Customer_Create/Product_Create return the usual (Result, Message) row plus the new
     // row's DB-generated key in guidColumn, which is handed back as Data on success.
-    public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuid(SqlDataReader reader,
+    public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuidAsync(SqlDataReader reader,
         string guidColumn)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
@@ -119,7 +119,7 @@ public static class DbHelper
     // CustomerPurchase_Create returns the usual (Result, Message) row plus ProductName. On
     // success the name comes back as Data (the caller puts it in the audit entry); on any
     // failure it's the plain status + message that HandleResponseWithMessage would give.
-    public static async Task<ResponseModel<string>> HandleResponseWithPurchaseResult(SqlDataReader reader)
+    public static async Task<ResponseModel<string>> HandleResponseWithPurchaseResultAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
             throw new InvalidOperationException("The stored procedure returned no (Result, Message) row.");
@@ -132,7 +132,7 @@ public static class DbHelper
             : new ResponseModel<string>(result, message ?? "Operation failed.");
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> HandleResponseWithAuditLogList(
+    public static async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> HandleResponseWithAuditLogListAsync(
         SqlDataReader reader)
     {
         var items = new List<AuditLogEntry>();
@@ -145,7 +145,7 @@ public static class DbHelper
 
     // CustomerAuditLog_List returns two result sets: the total (one row), then the page. The total
     // comes first, on its own, so it's right even when the page is empty.
-    public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogList(
+    public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogListAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
         await reader.ReadAsync().ConfigureAwait(false);
@@ -161,7 +161,7 @@ public static class DbHelper
             new PagedResponse<GlobalAuditLogEntry>(items, totalItems, pageNumber, pageSize));
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<ProductModel>>> HandleResponseWithProductList(
+    public static async Task<ResponseModel<IReadOnlyList<ProductModel>>> HandleResponseWithProductListAsync(
         SqlDataReader reader)
     {
         var items = new List<ProductModel>();
@@ -174,7 +174,7 @@ public static class DbHelper
 
     // Product_GetDetails returns two result sets: the product (zero rows = not found), then
     // the customers who bought it.
-    public static async Task<ResponseModel<ProductDetailsModel>> HandleResponseWithProductDetails(
+    public static async Task<ResponseModel<ProductDetailsModel>> HandleResponseWithProductDetailsAsync(
         SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
@@ -191,7 +191,7 @@ public static class DbHelper
             new ProductDetailsModel { Product = product, Buyers = buyers });
     }
 
-    public static async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> HandleResponseWithPurchaseList(
+    public static async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> HandleResponseWithPurchaseListAsync(
         SqlDataReader reader)
     {
         var items = new List<PurchaseModel>();
@@ -204,7 +204,7 @@ public static class DbHelper
 
     // Report_GetMonthlyActivity returns two result sets: customer registrations by month,
     // then product purchases by month (see that proc).
-    public static async Task<ResponseModel<MonthlyActivityModel>> HandleResponseWithMonthlyActivity(
+    public static async Task<ResponseModel<MonthlyActivityModel>> HandleResponseWithMonthlyActivityAsync(
         SqlDataReader reader)
     {
         var registrations = new List<MonthlyCountModel>();
@@ -220,7 +220,7 @@ public static class DbHelper
             new MonthlyActivityModel { CustomerCreations = registrations, ProductPurchases = purchases });
     }
 
-    public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponse(SqlDataReader reader)
+    public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponseAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false)) return null;
 

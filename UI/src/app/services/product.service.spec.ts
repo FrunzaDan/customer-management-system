@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { CreateProductRequest, Product } from '../interfaces/product';
 import { ProductDetails } from '../interfaces/product-details';
@@ -16,7 +17,7 @@ describe('ProductService', () => {
   let httpMock: HttpTestingController;
   let notificationShow: ReturnType<typeof vi.fn>;
 
-  const API_URL = `${environment.apiUrl}/api/customer`;
+  const API_URL = `${environment.apiUrl}/api/product`;
 
   const buildProduct = (overrides: Partial<Product> = {}): Product => ({
     productId: 'product-1',
@@ -54,7 +55,7 @@ describe('ProductService', () => {
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   describe('products', () => {
-    const PRODUCTS_URL = `${API_URL}/products`;
+    const PRODUCTS_URL = `${API_URL}/all`;
 
     // httpResource issues its request from an effect, so flush effects after
     // calling loadProducts() before expecting the HTTP call.
@@ -132,8 +133,8 @@ describe('ProductService', () => {
     });
   });
 
-  describe('product details', () => {
-    const DETAILS_URL = `${API_URL}/product-details`;
+  describe('getProductDetails', () => {
+    const DETAILS_URL = `${API_URL}/get`;
 
     const buildDetails = (): ProductDetails => ({
       product: buildProduct({ description: null }),
@@ -149,61 +150,27 @@ describe('ProductService', () => {
       ],
     });
 
-    // httpResource issues its request from an effect, so flush effects after loading.
-    const load = (productId: string) => {
-      service.loadProductDetails(productId);
-      TestBed.tick();
-    };
-
-    it('makes no request until a product is loaded', () => {
-      TestBed.tick();
-
-      httpMock.expectNone((r) => r.url === DETAILS_URL);
-      expect(service.details()).toBeNull();
-      expect(service.detailsLoading()).toBe(false);
-    });
-
-    it('sends the productId as a query param and exposes the product and its buyers', async () => {
+    it('sends the productId as a query param and emits the product and its buyers', async () => {
       const details = buildDetails();
 
-      load('product-1');
+      const result = firstValueFrom(service.getProductDetails('product-1'));
       const req = httpMock.expectOne((r) => r.url === DETAILS_URL);
       expect(req.request.params.get('productId')).toBe('product-1');
       req.flush({ status: 200, responseMessage: 'ok', data: details });
-      await settle();
 
-      expect(service.details()).toEqual(details);
-      expect(service.detailsError()).toBeNull();
+      expect(await result).toEqual(details);
     });
 
-    it('re-requests when asked to load the same product again', async () => {
-      load('product-1');
-      httpMock
-        .expectOne((r) => r.url === DETAILS_URL)
-        .flush({ status: 200, responseMessage: 'ok', data: buildDetails() });
-      await settle();
-
-      load('product-1');
-
-      httpMock
-        .expectOne((r) => r.url === DETAILS_URL)
-        .flush({ status: 200, responseMessage: 'ok', data: buildDetails() });
-      await settle();
-    });
-
-    it('surfaces the server message for an unknown product', async () => {
-      load('missing');
-
+    it('errors with the server response for an unknown product', async () => {
+      const result = firstValueFrom(service.getProductDetails('missing'));
       httpMock
         .expectOne((r) => r.url === DETAILS_URL)
         .flush(
           { title: 'Error', status: 404, detail: 'Product not found.' },
           { status: 404, statusText: 'Not Found' },
         );
-      await settle();
 
-      expect(service.detailsError()).toBe('Product not found.');
-      expect(service.details()).toBeNull();
+      await expect(result).rejects.toMatchObject({ status: 404 });
     });
   });
 
@@ -217,10 +184,10 @@ describe('ProductService', () => {
       warehouse: 'Cluj',
     });
 
-    it('POSTs the product to the product endpoint', () => {
+    it('POSTs the product to the create endpoint', () => {
       service.createProduct(buildRequest()).subscribe();
 
-      const req = httpMock.expectOne(`${API_URL}/product`);
+      const req = httpMock.expectOne(`${API_URL}/create`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(buildRequest());
 
@@ -233,7 +200,7 @@ describe('ProductService', () => {
     it('shows a success notification once the request resolves', () => {
       service.createProduct(buildRequest()).subscribe();
 
-      httpMock.expectOne(`${API_URL}/product`).flush({
+      httpMock.expectOne(`${API_URL}/create`).flush({
         status: 200,
         responseMessage: 'Product created successfully.',
       });

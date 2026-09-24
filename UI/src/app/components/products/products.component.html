@@ -12,7 +12,7 @@
     >
   </div>
 
-  @if (isLoading() && products().length === 0) {
+  @if (loading() && products().length === 0) {
     <div class="app-card loading-state" role="status">
       <span
         class="spinner-border spinner-border-sm me-2"
@@ -20,7 +20,7 @@
       ></span
       >Loading products…
     </div>
-  } @else if (errorMessage(); as error) {
+  } @else if (loadError(); as error) {
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   } @else if (products().length === 0) {
     <div class="app-card empty-state">No products yet.</div>

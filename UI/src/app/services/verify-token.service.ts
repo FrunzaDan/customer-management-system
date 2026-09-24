@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class VerifyTokenService {
-  private readonly API_URL = `${environment.apiUrl}/api/authentication/verify-token`;
+  private readonly apiUrl = `${environment.apiUrl}/api/authentication/verify-token`;
 
   private readonly http = inject(HttpClient);
 
@@ -22,6 +22,6 @@ export class VerifyTokenService {
   }
 
   verifyTokenViaAPI(): Observable<GenericResponse<object>> {
-    return this.http.get<GenericResponse<object>>(this.API_URL);
+    return this.http.get<GenericResponse<object>>(this.apiUrl);
   }
 }

@@ -1,4 +1,5 @@
 ﻿using CustomerManagementSystem.BusinessLogic.AuthFunctions;
+using CustomerManagementSystem.BusinessLogic.CatalogFunctions;
 using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 using CustomerManagementSystem.BusinessLogic.Services;
 using CustomerManagementSystem.BusinessLogic.Services.Implementation;
@@ -13,6 +14,7 @@ public static class BusinessLogicDependencyInjection
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IProductService, ProductService>();
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddSingleton<IDbUtils, DbUtils>();
         services.AddSingleton<JwtCreation>();
@@ -24,6 +26,7 @@ public static class BusinessLogicDependencyInjection
         services.AddScoped<CustomerActivation>();
         services.AddScoped<CustomerDeletion>();
         services.AddScoped<CustomerPurchasing>();
-        services.AddScoped<ProductCreation>();
+
+        services.AddScoped<ProductFunctions>();
     }
 }

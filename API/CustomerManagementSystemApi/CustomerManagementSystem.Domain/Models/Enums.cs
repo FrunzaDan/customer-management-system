@@ -39,7 +39,7 @@ public enum AuditAction
     Purchased
 }
 
-// Customer_List' @SortColumn/@SortDirection. Bound from the query string by name,
+// Customer_List's @SortColumn/@SortDirection. Bound from the query string by name,
 // case-insensitively ("name", "Email", ...).
 public enum CustomerSortColumn
 {

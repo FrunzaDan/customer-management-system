@@ -9,7 +9,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `src/environments/environment.ts` — `apiUrl` (`https://localhost:7145`) plus the email, phone number and username regexes.
 - `src/app/app.config.ts`, `app.routes.ts`, `app.ts` (the shell).
 - `src/app/services/` — one service per API area, plus:
-  - the auth pieces (`auth-guard`, `verify-token`, `auth-token.interceptor`, `auth-error.interceptor`, `session-storage`);
+  - the auth pieces (`auth.guard`, `verify-token`, `auth-token.interceptor`, `auth-error.interceptor`, `session-storage`);
   - the shared helpers (`notification`, `confirm-dialog`, `api-logger`, `health`, `unsaved-changes.guard`).
 - `src/app/components/` — one folder per page or widget.
 - `src/app/interfaces/` — mirrors of the API's JSON.
@@ -40,7 +40,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 | Route | Component |
 |---|---|
 | `/login` | `user-login` |
-| `/`, `/customers` | `home` → `customer-list` |
+| `/customers` (`/` redirects here) | `home` → `customer-list` |
 | `/customers/:customerId` | `customer-details` (record, purchases, audit trail) |
 | `/create-customer`, `/customers/update/:customerId` | `create-customer`, `update-customer` |
 | `/products`, `/products/:productId`, `/create-product` | `products`, `product-details`, `create-product` |
@@ -57,9 +57,10 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - **`CustomerService`:**
   - **List:** `loadCustomers(params)` sets a params signal, and `customersResource` refetches on each change. A newer request cancels the older one.
   - **While loading:** a `linkedSignal` keeps the last page on screen during a load and after a failed one.
-  - **Selected customer:** `getCustomer(id)` drives `selectedCustomerResource`, which has its own `selectedCustomerLoading`/`selectedCustomerError`.
-  - **After a change:** an update, status change or delete is written straight into the loaded values, with no refetch.
-- `GlobalAuditLogService`, `AuditLogService`, `ProductService`, `PurchaseService` and `MonthlyActivityService` follow the same pattern.
+  - **One customer:** `getCustomer(id)` returns an Observable. `customer-details` and `update-customer` each key an `rxResource` on the route id; the details page reloads it after a deactivate or reactivate.
+  - **After a change:** an update, status change or delete is written straight into the loaded list, with no refetch.
+- `GlobalAuditLogService`, `AuditLogService`, `PurchaseService` and `MonthlyActivityService` follow the same pattern.
+- **`ProductService`** is shaped like the employee app's `OfficeService`: `loadProducts()` feeds an `httpResource`, while `fetchProducts()` and `getProductDetails(id)` are one-off Observables. `product-details` keys an `rxResource` on the route id.
 - **Retries:** deactivate and reactivate retry only on status 0 or ≥500, with backoff.
 - **Customer list:**
   - search (debounced 300 ms), sort and paging all happen on the server;
@@ -81,9 +82,18 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 - `form()`, `[formField]` and `[formRoot]` with `submission: { action, onInvalid }`. There's no `FormGroup` or `ngModel`.
 - `customer-form-fields/customer-form.ts` holds the model, the schema and the mappers.
-- `update-customer`'s model is a `linkedSignal` from the selected customer.
+- `update-customer`'s model is a `linkedSignal` from the customer its `rxResource` loads.
 - **Unsaved changes:** `unsavedChangesGuard` plus `beforeunload`. "Dirty" means the values differ from the baseline.
 - **Birth date:** `<input type="date">`, whose value is `YYYY-MM-DD` both ways.
+
+### Naming (same in all three apps)
+
+- **Page state:** `loading` and `loadError` for the data the page itself loads. Actions get their own: `saveError`, `deleteError`, `loginError`.
+- **Service verbs:** `loadX()` starts a resource the service holds and returns nothing. `getX()` and `fetchX()` return an Observable. Writes are `createX`, `updateX` and `deleteX`, plus `…Silently` variants.
+- **Service fields:** private resources end in `Resource`, and the base URL field is `apiUrl`.
+- **Lists:** `sortColumn` and `sortDirection` (`'asc' | 'desc'`), with `SORT_LABELS` for the table caption. Bulk selection uses `selectedXIds`, `isSelected`, `toggleSelection`, `allSelected`, `toggleSelectAll` and `bulkActionInProgress`.
+- **Status labels:** `customerStatusLabel()` in `utils/customer-status-label.ts` is the only place a status code becomes text.
+- **Page titles and buttons:** "Add customer" and "Edit customer"; the edit form's button is "Save changes".
 
 ### User feedback (same in all three apps)
 

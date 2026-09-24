@@ -9,31 +9,33 @@ import { extractErrorMessage } from '../utils/extract-error-message';
   providedIn: 'root',
 })
 export class AuditLogService {
-  private readonly API_URL = `${environment.apiUrl}/api/customer/audit-log`;
+  private readonly apiUrl = `${environment.apiUrl}/api/customer/audit-log`;
 
   private readonly customerId = signal<string | undefined>(undefined);
 
   // Declarative fetch: the request is a function of `customerId`, so a new
   // customerId cancels the in-flight request and starts another, and no request is
   // made at all until a customerId has been set (returning undefined idles it).
-  private readonly auditLog = httpResource<GenericResponse<AuditLogEntry[]>>(
-    () => {
-      const customerId = this.customerId();
-      if (!customerId) return undefined;
-      return {
-        url: this.API_URL,
-        params: { customerId: customerId },
-      };
-    },
-  );
+  private readonly auditLogResource = httpResource<
+    GenericResponse<AuditLogEntry[]>
+  >(() => {
+    const customerId = this.customerId();
+    if (!customerId) return undefined;
+    return {
+      url: this.apiUrl,
+      params: { customerId: customerId },
+    };
+  });
 
   // hasValue() guards the read: value() throws while the resource is in error.
   readonly entries = computed(() =>
-    this.auditLog.hasValue() ? (this.auditLog.value().data ?? []) : [],
+    this.auditLogResource.hasValue()
+      ? (this.auditLogResource.value().data ?? [])
+      : [],
   );
-  readonly loading = this.auditLog.isLoading;
+  readonly loading = this.auditLogResource.isLoading;
   readonly error = computed(() => {
-    const error = this.auditLog.error();
+    const error = this.auditLogResource.error();
     return error
       ? extractErrorMessage(
           error as HttpErrorResponse,
@@ -46,7 +48,7 @@ export class AuditLogService {
     if (this.customerId() === customerId) {
       // Same customer (e.g. after a deactivate/reactivate) — the request itself
       // hasn't changed, so ask for a fresh copy.
-      this.auditLog.reload();
+      this.auditLogResource.reload();
     } else {
       this.customerId.set(customerId);
     }

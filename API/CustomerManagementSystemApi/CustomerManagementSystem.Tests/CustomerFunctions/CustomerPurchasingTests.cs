@@ -12,54 +12,54 @@ public class CustomerPurchasingTests
     private const string PerformedBy = "TestMerchant";
 
     [Fact]
-    public async Task PurchaseProduct_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
+    public async Task PurchaseProductAsync_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(Guid.Empty, ProductId, PerformedBy,
+        var result = await purchasing.PurchaseProductAsync(Guid.Empty, ProductId, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(
-            d => d.PurchaseProduct(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            d => d.PurchaseProductAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task PurchaseProduct_RejectsAnEmptyProductId_WithoutTouchingTheDb()
+    public async Task PurchaseProductAsync_RejectsAnEmptyProductId_WithoutTouchingTheDb()
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(CustomerId, Guid.Empty, PerformedBy,
+        var result = await purchasing.PurchaseProductAsync(CustomerId, Guid.Empty, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(
-            d => d.PurchaseProduct(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            d => d.PurchaseProductAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task PurchaseProduct_LogsAnAuditEntryNamingTheProduct_AndDropsTheNameFromTheResponse()
+    public async Task PurchaseProductAsync_LogsAnAuditEntryNamingTheProduct_AndDropsTheNameFromTheResponse()
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        dbUtils.Setup(d => d.PurchaseProduct(CustomerId, ProductId, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.PurchaseProductAsync(CustomerId, ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<string>(200, "Purchase recorded successfully.", "Aerobook 14 Pro"));
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(CustomerId, ProductId, PerformedBy,
+        var result = await purchasing.PurchaseProductAsync(CustomerId, ProductId, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         Assert.Equal("Purchase recorded successfully.", result.ResponseMessage);
         Assert.Null(result.Data);
         auditLogger.Verify(
-            a => a.Log(CustomerId, PerformedBy, AuditAction.Purchased, "Product: Aerobook 14 Pro",
+            a => a.LogAsync(CustomerId, PerformedBy, AuditAction.Purchased, "Product: Aerobook 14 Pro",
                 It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -67,22 +67,22 @@ public class CustomerPurchasingTests
     [InlineData(404)] // customer or product not found
     [InlineData(409)] // deactivated customer, or out of stock
     [InlineData(500)]
-    public async Task PurchaseProduct_PassesThroughADbLayerRejectionUnchanged_WithoutLoggingAnAuditEntry(int status)
+    public async Task PurchaseProductAsync_PassesThroughADbLayerRejectionUnchanged_WithoutLoggingAnAuditEntry(int status)
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        dbUtils.Setup(d => d.PurchaseProduct(CustomerId, ProductId, It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.PurchaseProductAsync(CustomerId, ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<string>(status, "Rejected."));
         var purchasing = new CustomerPurchasing(dbUtils.Object, auditLogger.Object);
 
-        var result = await purchasing.PurchaseProduct(CustomerId, ProductId, PerformedBy,
+        var result = await purchasing.PurchaseProductAsync(CustomerId, ProductId, PerformedBy,
             TestContext.Current.CancellationToken);
 
         Assert.Equal(status, result.Status);
         Assert.Equal("Rejected.", result.ResponseMessage);
         Assert.Null(result.Data);
         auditLogger.Verify(
-            a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(),
+            a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()), Times.Never);
     }
 }

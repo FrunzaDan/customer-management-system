@@ -1,6 +1,7 @@
 import {
   HttpClient,
   HttpErrorResponse,
+  HttpParams,
   httpResource,
 } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
@@ -12,13 +13,13 @@ import { ProductDetails } from '../interfaces/product-details';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
 
-// Every product call (the catalogue, one product's details, adding a product), in one
-// service like CustomerService.
+// Every /api/product call (the catalogue, one product's details, adding a product),
+// in one service like OfficeService in the employee app.
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
-  private readonly API_URL = `${environment.apiUrl}/api/customer`;
+  private readonly apiUrl = `${environment.apiUrl}/api/product`;
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
@@ -27,7 +28,7 @@ export class ProductService {
   private readonly requested = signal(false);
 
   private readonly productsResource = httpResource<GenericResponse<Product[]>>(
-    () => (this.requested() ? `${this.API_URL}/products` : undefined),
+    () => (this.requested() ? `${this.apiUrl}/all` : undefined),
   );
 
   // hasValue() guards the read: value() throws while the resource is in error.
@@ -39,32 +40,6 @@ export class ProductService {
   readonly loading = this.productsResource.isLoading;
   readonly error = computed(() => {
     const error = this.productsResource.error();
-    return error ? extractErrorMessage(error as HttpErrorResponse) : null;
-  });
-
-  private readonly productId = signal<string | undefined>(undefined);
-
-  // Same shape as AuditLogService: the request is a function of `productId`, so a new
-  // productId cancels the in-flight request, and nothing is fetched until one is set.
-  private readonly detailsResource = httpResource<
-    GenericResponse<ProductDetails>
-  >(() => {
-    const productId = this.productId();
-    if (!productId) return undefined;
-    return {
-      url: `${this.API_URL}/product-details`,
-      params: { productId: productId },
-    };
-  });
-
-  readonly details = computed(() =>
-    this.detailsResource.hasValue()
-      ? (this.detailsResource.value().data ?? null)
-      : null,
-  );
-  readonly detailsLoading = this.detailsResource.isLoading;
-  readonly detailsError = computed(() => {
-    const error = this.detailsResource.error();
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
@@ -84,16 +59,21 @@ export class ProductService {
    */
   fetchProducts(): Observable<Product[]> {
     return this.http
-      .get<GenericResponse<Product[]>>(`${this.API_URL}/products`)
+      .get<GenericResponse<Product[]>>(`${this.apiUrl}/all`)
       .pipe(map((response) => response?.data ?? []));
   }
 
-  loadProductDetails(productId: string): void {
-    if (this.productId() === productId) {
-      this.detailsResource.reload();
-    } else {
-      this.productId.set(productId);
-    }
+  /** One product and its buyers — for the product details page, reached directly by URL. */
+  getProductDetails(productId: string): Observable<ProductDetails> {
+    const params = new HttpParams().set('productId', productId);
+    return this.http
+      .get<GenericResponse<ProductDetails>>(`${this.apiUrl}/get`, { params })
+      .pipe(
+        map((response) => {
+          if (!response.data) throw new Error('Product not found.');
+          return response.data;
+        }),
+      );
   }
 
   // On success, `data` is the new product's server-generated GUID.
@@ -101,7 +81,7 @@ export class ProductService {
     product: CreateProductRequest,
   ): Observable<GenericResponse<string>> {
     return this.http
-      .post<GenericResponse<string>>(`${this.API_URL}/product`, product)
+      .post<GenericResponse<string>>(`${this.apiUrl}/create`, product)
       .pipe(
         tap(() => this.notificationService.show('Product added successfully.')),
       );

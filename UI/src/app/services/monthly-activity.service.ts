@@ -9,7 +9,7 @@ import { extractErrorMessage } from '../utils/extract-error-message';
   providedIn: 'root',
 })
 export class MonthlyActivityService {
-  private readonly API_URL = `${environment.apiUrl}/api/customer/monthly-activity`;
+  private readonly apiUrl = `${environment.apiUrl}/api/customer/monthly-activity`;
 
   // No request is made until loadMonthlyActivity() is first called, same reasoning
   // as ProductService.
@@ -17,7 +17,7 @@ export class MonthlyActivityService {
 
   private readonly activityResource = httpResource<
     GenericResponse<MonthlyActivity>
-  >(() => (this.requested() ? this.API_URL : undefined));
+  >(() => (this.requested() ? this.apiUrl : undefined));
 
   private readonly empty: MonthlyActivity = {
     customerCreations: [],

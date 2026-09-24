@@ -1,16 +1,16 @@
-import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { ProductDetails } from '../../interfaces/product-details';
 import { ProductService } from '../../services/product.service';
+import { Subject } from 'rxjs';
 import { ProductDetailsComponent } from './product-details.component';
 
 describe('ProductDetailsComponent', () => {
-  let loadProductDetails: ReturnType<typeof vi.fn>;
+  let getProductDetails: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let details: ReturnType<typeof signal<ProductDetails | null>>;
-  let loading: ReturnType<typeof signal<boolean>>;
-  let error: ReturnType<typeof signal<string | null>>;
+  // What the page's rxResource streams: nothing yet (loading), a value, or an error.
+  let productDetails$: Subject<ProductDetails>;
 
   const buildDetails = (
     overrides: Partial<ProductDetails['product']> = {},
@@ -47,20 +47,15 @@ describe('ProductDetailsComponent', () => {
   let routeParamId: string | null = 'product-1';
 
   const render = () => {
-    loadProductDetails = vi.fn();
+    productDetails$ = new Subject<ProductDetails>();
+    getProductDetails = vi.fn(() => productDetails$);
     navigate = vi.fn().mockResolvedValue(true);
-    details = signal<ProductDetails | null>(null);
-    loading = signal(false);
-    error = signal<string | null>(null);
     TestBed.configureTestingModule({
       providers: [
         {
           provide: ProductService,
           useValue: {
-            details: details,
-            detailsLoading: loading,
-            detailsError: error,
-            loadProductDetails,
+            getProductDetails,
           },
         },
         provideRouter([]),
@@ -75,6 +70,27 @@ describe('ProductDetailsComponent', () => {
 
   const el = (f: ReturnType<typeof render>) => f.nativeElement as HTMLElement;
 
+  const show = async (
+    fixture: ComponentFixture<ProductDetailsComponent>,
+    details: ProductDetails,
+  ) => {
+    productDetails$.next(details);
+    await fixture.whenStable();
+  };
+
+  const fail = async (
+    fixture: ComponentFixture<ProductDetailsComponent>,
+    detail: string,
+  ) => {
+    productDetails$.error(
+      new HttpErrorResponse({
+        status: 404,
+        error: { title: 'Not Found', status: 404, detail },
+      }),
+    );
+    await fixture.whenStable();
+  };
+
   beforeEach(() => {
     routeParamId = 'product-1';
   });
@@ -82,51 +98,45 @@ describe('ProductDetailsComponent', () => {
   it('loads the product using the id input', () => {
     render();
 
-    expect(loadProductDetails).toHaveBeenCalledWith('product-1');
+    expect(getProductDetails).toHaveBeenCalledWith('product-1');
   });
 
   it('goes back to the products list when there is no id', () => {
     routeParamId = null;
     render();
 
-    expect(loadProductDetails).not.toHaveBeenCalled();
+    expect(getProductDetails).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(['/products']);
   });
 
-  it('always renders exactly one <h1>, so focus and page structure survive every state', () => {
-    const fixture = render();
-    expect(el(fixture).querySelectorAll('h1')).toHaveLength(1); // nothing loaded yet
+  it('always renders exactly one <h1>, so focus and page structure survive every state', async () => {
+    const loading = render();
+    expect(el(loading).querySelectorAll('h1')).toHaveLength(1);
+    TestBed.resetTestingModule();
 
-    loading.set(true);
-    fixture.detectChanges();
-    expect(el(fixture).querySelectorAll('h1')).toHaveLength(1);
+    const failed = render();
+    await fail(failed, 'Product not found.');
+    expect(el(failed).querySelectorAll('h1')).toHaveLength(1);
+    TestBed.resetTestingModule();
 
-    loading.set(false);
-    error.set('Product not found.');
-    fixture.detectChanges();
-    expect(el(fixture).querySelectorAll('h1')).toHaveLength(1);
-
-    error.set(null);
-    details.set(buildDetails());
-    fixture.detectChanges();
-    expect(el(fixture).querySelector('h1')?.textContent?.trim()).toBe(
+    const loaded = render();
+    await show(loaded, buildDetails());
+    expect(el(loaded).querySelector('h1')?.textContent?.trim()).toBe(
       'Aerobook 14 Pro',
     );
   });
 
-  it('shows the error and a way back when loading failed', () => {
+  it('shows the error and a way back when loading failed', async () => {
     const fixture = render();
-    error.set('Product not found.');
-    fixture.detectChanges();
+    await fail(fixture, 'Product not found.');
 
     expect(el(fixture).textContent).toContain('Product not found.');
     expect(el(fixture).querySelector('a[href="/products"]')).not.toBeNull();
   });
 
-  it('shows sold, inventory and left', () => {
+  it('shows sold, inventory and left', async () => {
     const fixture = render();
-    details.set(buildDetails());
-    fixture.detectChanges();
+    await show(fixture, buildDetails());
 
     const stats = Array.from(el(fixture).querySelectorAll('.stat')).map((s) => [
       s.querySelector('dt')?.textContent?.trim(),
@@ -139,15 +149,15 @@ describe('ProductDetailsComponent', () => {
     ]);
   });
 
-  it('lists who bought it, linking each customer to their details page', () => {
+  it('lists who bought it, linking each customer to their details page', async () => {
     const fixture = render();
-    details.set(
+    await show(
+      fixture,
       buildDetails({}, [
         buyer(2, 'Ada', 'customer-ada'),
         buyer(1, 'Ivan', 'customer-ivan'),
       ]),
     );
-    fixture.detectChanges();
 
     const rows = el(fixture).querySelectorAll('tbody tr');
     expect(rows).toHaveLength(2);
@@ -158,10 +168,9 @@ describe('ProductDetailsComponent', () => {
     );
   });
 
-  it('says nobody has bought it yet when it has no sales', () => {
+  it('says nobody has bought it yet when it has no sales', async () => {
     const fixture = render();
-    details.set(buildDetails({ soldQuantity: 0, quantityOnHand: 25 }));
-    fixture.detectChanges();
+    await show(fixture, buildDetails({ soldQuantity: 0, quantityOnHand: 25 }));
 
     expect(el(fixture).textContent).toContain(
       'Nobody has bought this product yet.',
@@ -169,21 +178,19 @@ describe('ProductDetailsComponent', () => {
     expect(el(fixture).querySelector('tbody')).toBeNull();
   });
 
-  it('explains the gap when some sales were to since-deleted customers', () => {
+  it('explains the gap when some sales were to since-deleted customers', async () => {
     const fixture = render();
     // 2 sold, but only 1 buyer still on record
-    details.set(buildDetails({}, [buyer(1, 'Ada')]));
-    fixture.detectChanges();
+    await show(fixture, buildDetails({}, [buyer(1, 'Ada')]));
 
     expect(el(fixture).textContent).toContain(
       '1 sale was made to customers that have since been deleted',
     );
   });
 
-  it('flags a sold-out product', () => {
+  it('flags a sold-out product', async () => {
     const fixture = render();
-    details.set(buildDetails({ quantityOnHand: 0, soldQuantity: 25 }));
-    fixture.detectChanges();
+    await show(fixture, buildDetails({ quantityOnHand: 0, soldQuantity: 25 }));
 
     expect(el(fixture).textContent).toContain('This product is sold out.');
   });

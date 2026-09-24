@@ -323,12 +323,12 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <strong>This is test data.</strong> The button below registers 50
             fictitious customers through the same
             <code>POST /api/customer/create</code> endpoint the
-            <em>Register customer</em> form uses — each with a randomly
-            generated name, email, a Romanian mobile number
-            (<code>07xxxxxxxx</code>), and a home address. Every one of them is
-            created with the <code>Test</code> status (<code>1904</code>) rather
-            than <code>Active</code>, so they're clearly distinguishable from
-            real customers everywhere the status is shown. It exists purely so
+            <em>Add customer</em> form uses — each with a randomly generated
+            name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), and
+            a home address. Every one of them is created with the
+            <code>Test</code> status (<code>1904</code>) rather than
+            <code>Active</code>, so they're clearly distinguishable from real
+            customers everywhere the status is shown. It exists purely so
             there's enough data to try out search, sorting, and pagination
             locally; like an active customer, a test customer can still be
             deactivated and deleted afterwards.
@@ -373,7 +373,7 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               rather than filtering an already-loaded list.
             </li>
             <li>
-              Register a new customer through a validated form (name, contact
+              Add a new customer through a validated form (name, contact
               details, address, birth date via a native date picker, etc.).
             </li>
             <li>

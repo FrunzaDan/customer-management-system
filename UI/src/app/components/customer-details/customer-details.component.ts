@@ -1,6 +1,5 @@
 import {
   Component,
-  Signal,
   computed,
   effect,
   inject,
@@ -9,6 +8,7 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CustomerService } from '../../services/customer.service';
@@ -21,6 +21,13 @@ import { CustomerStatus, Gender } from '../../interfaces/customer';
 import { Router, RouterLink } from '@angular/router';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 import { auditActionLabel } from '../../utils/audit-action-label';
+import { customerStatusLabel } from '../../utils/customer-status-label';
+
+const GENDER_LABELS = new Map<Gender, string>([
+  [Gender.NotDeclared, 'not declared'],
+  [Gender.Male, 'male'],
+  [Gender.Female, 'female'],
+]);
 
 @Component({
   selector: 'app-customer-details',
@@ -39,21 +46,31 @@ export class CustomerDetailsComponent {
   // Bound from the `:customerId` route param by withComponentInputBinding() in app.config.ts.
   readonly customerId = input<string>();
 
-  genderMap = new Map<Gender, string>([
-    [Gender.NotDeclared, 'not declared'],
-    [Gender.Male, 'male'],
-    [Gender.Female, 'female'],
-  ]);
-
-  statusMap = new Map<CustomerStatus, string>([
-    [CustomerStatus.Active, 'Active'],
-    [CustomerStatus.Deactivated, 'Deactivated'],
-    [CustomerStatus.Test, 'Test'],
-  ]);
-
-  readonly customer = this.customerService.selectedCustomer;
-  readonly isLoading = this.customerService.selectedCustomerLoading;
-  readonly errorMessage = this.customerService.selectedCustomerError;
+  // Keyed on the route's id, like Imalo's ScholarDetailsComponent: a new id
+  // cancels whatever is still in flight. hasValue() guards the read, since
+  // value() throws while the resource is in error.
+  private readonly customerResource = rxResource({
+    params: () => this.customerId(),
+    stream: ({ params: customerId }) =>
+      this.customerService.getCustomer(customerId),
+  });
+  readonly customer = computed(() =>
+    this.customerResource.hasValue() ? this.customerResource.value() : null,
+  );
+  // The first load only: a reload (after a status change) keeps the page on
+  // screen until the fresh copy arrives.
+  readonly loading = computed(
+    () => this.customerResource.status() === 'loading',
+  );
+  readonly loadError = computed(() => {
+    const error = this.customerResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load the customer',
+        )
+      : null;
+  });
 
   readonly CustomerStatus = CustomerStatus;
   readonly Gender = Gender;
@@ -95,24 +112,20 @@ export class CustomerDetailsComponent {
   readonly purchasing = signal(false);
   readonly purchaseError = signal<string | null>(null);
 
-  customerGender: Signal<string | undefined> = computed(() => {
-    const c = this.customer();
-    return c && c.gender !== undefined
-      ? this.genderMap.get(c.gender)
-      : undefined;
+  readonly genderLabel = computed(() => {
+    const customer = this.customer();
+    return customer ? GENDER_LABELS.get(customer.gender) : undefined;
   });
 
-  customerStatusLabel: Signal<string | undefined> = computed(() => {
-    const c = this.customer();
-    return c && c.status !== undefined
-      ? this.statusMap.get(c.status)
-      : undefined;
+  readonly statusLabel = computed(() => {
+    const customer = this.customer();
+    return customer ? customerStatusLabel(customer.status) : undefined;
   });
 
   // Deactivated customers follow the normal deactivate-then-delete lifecycle;
   // Test customers are fictitious data and are exempt from that guardrail
   // (see Customer_Delete), so they can be deleted straight away too.
-  canDelete: Signal<boolean> = computed(() => {
+  readonly canDelete = computed(() => {
     const status = this.customer()?.status;
     return (
       status === CustomerStatus.Deactivated || status === CustomerStatus.Test
@@ -120,7 +133,7 @@ export class CustomerDetailsComponent {
   });
 
   // Same rule as CustomerPurchase_Create: everything but a deactivated customer may buy.
-  canPurchase: Signal<boolean> = computed(() => {
+  readonly canPurchase = computed(() => {
     const status = this.customer()?.status;
     return status !== undefined && status !== CustomerStatus.Deactivated;
   });
@@ -161,26 +174,26 @@ export class CustomerDetailsComponent {
       const id = this.customerId();
       untracked(() => {
         if (id) {
-          this.customerService.getCustomer(id);
           this.auditLogService.loadAuditLog(id);
           this.purchaseService.loadPurchases(id);
         } else {
-          this.router.navigate(['']);
+          this.router.navigate(['/customers']);
         }
       });
     });
 
-    // The rest of the page (e.g. Account Status) updates live via
-    // updateCustomerLocally() as soon as a deactivate/reactivate call
-    // resolves; the audit trail can only be refreshed by re-fetching, so
-    // this re-loads it whenever activationLoading() flips back to false.
+    // A deactivate/reactivate changes the status and adds an audit entry, so
+    // both are re-fetched once activationLoading() flips back to false.
     effect(() => {
-      const isLoading = this.activationLoading();
-      if (this.wasActivationLoading && !isLoading) {
+      const loading = this.activationLoading();
+      if (this.wasActivationLoading && !loading) {
         const customerId = this.customer()?.customerId;
-        if (customerId) this.auditLogService.loadAuditLog(customerId);
+        if (customerId) {
+          this.customerResource.reload();
+          this.auditLogService.loadAuditLog(customerId);
+        }
       }
-      this.wasActivationLoading = isLoading;
+      this.wasActivationLoading = loading;
     });
   }
 

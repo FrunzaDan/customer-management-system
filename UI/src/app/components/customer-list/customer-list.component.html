@@ -1,4 +1,4 @@
-@if (errorMessage(); as error) {
+@if (loadError(); as error) {
   <div class="alert alert-danger" role="alert">{{ error }}</div>
 }
 @if (activationError(); as error) {
@@ -37,7 +37,7 @@
       {{ exportLoading() ? 'Exporting…' : 'Export CSV' }}
     </button>
     <a routerLink="/create-customer" class="btn btn-primary shadow-none">
-      Register customer
+      Add customer
     </a>
     <button
       type="button"
@@ -58,7 +58,7 @@
     </button>
   </div>
 </div>
-@if (isLoading() && customers().length === 0) {
+@if (loading() && customers().length === 0) {
   <div class="app-card loading-state">
     <span
       class="spinner-border spinner-border-sm me-2"
@@ -68,7 +68,7 @@
   </div>
 } @else if (customers().length === 0) {
   <!-- A failed load already shows its alert above; "no customers" would be misleading. -->
-  @if (!errorMessage()) {
+  @if (!loadError()) {
     <div class="app-card empty-state">
       @if (searchTerm()) {
         No customers match "{{ searchTerm() }}".
@@ -80,8 +80,8 @@
 } @else {
   <div
     class="app-card table-card"
-    [class.is-refreshing]="isLoading()"
-    [attr.aria-busy]="isLoading()"
+    [class.is-refreshing]="loading()"
+    [attr.aria-busy]="loading()"
   >
     <div
       class="table-responsive"
@@ -102,8 +102,8 @@
                 #selectAll
                 type="checkbox"
                 aria-label="Select all customers on this page"
-                [checked]="allOnPageSelected()"
-                (change)="toggleSelectAllOnPage(selectAll.checked)"
+                [checked]="allSelected()"
+                (change)="toggleSelectAll(selectAll.checked)"
               />
             </th>
             <th
@@ -158,7 +158,7 @@
                 class="sort-button"
                 (click)="setSort('phoneNumber')"
               >
-                phone number
+                Phone number
                 @if (sortColumn() === 'phoneNumber') {
                   <span
                     class="sort-indicator"
@@ -214,7 +214,7 @@
                   [class.bg-warning]="customer.status === CustomerStatus.Test"
                   [class.text-dark]="customer.status === CustomerStatus.Test"
                 >
-                  {{ statusLabels.get(customer.status) }}
+                  {{ customerStatusLabel(customer.status) }}
                 </span>
               </td>
               <td class="align-middle text-center">

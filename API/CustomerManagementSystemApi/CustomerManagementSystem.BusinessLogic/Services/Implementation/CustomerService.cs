@@ -9,72 +9,60 @@ public class CustomerService(
     CustomerUpdating customerUpdating,
     CustomerActivation customerActivation,
     CustomerDeletion customerDeletion,
-    CustomerPurchasing customerPurchasing,
-    ProductCreation productCreation)
+    CustomerPurchasing customerPurchasing)
     : ICustomerService
 {
-    public Task<ResponseModel<Guid?>> CreateProduct(CreateProductRequest request,
+    public Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesAsync(Guid customerId,
         CancellationToken cancellationToken = default) =>
-        productCreation.CreateProductFunction(request, cancellationToken);
+        customerGetting.GetCustomerPurchasesAsync(customerId, cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProducts(CancellationToken cancellationToken = default) =>
-        customerGetting.GetProductsFunction(cancellationToken);
-
-    public Task<ResponseModel<ProductDetailsModel>> GetProductDetails(Guid productId,
-        CancellationToken cancellationToken = default) =>
-        customerGetting.GetProductDetailsFunction(productId, cancellationToken);
-
-    public Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchases(Guid customerId,
-        CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomerPurchasesFunction(customerId, cancellationToken);
-
-    public Task<ResponseModel<object>> PurchaseProduct(Guid customerId, Guid productId,
+    public Task<ResponseModel<object>> PurchaseProductAsync(Guid customerId, Guid productId,
         string performedBy, CancellationToken cancellationToken = default) =>
-        customerPurchasing.PurchaseProduct(customerId, productId, performedBy, cancellationToken);
+        customerPurchasing.PurchaseProductAsync(customerId, productId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> DeactivateCustomer(Guid customerId, string performedBy,
+    public Task<ResponseModel<object>> DeactivateCustomerAsync(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerActivation.DeactivateCustomer(customerId, performedBy, cancellationToken);
+        customerActivation.DeactivateCustomerAsync(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> ReactivateCustomer(Guid customerId, string performedBy,
+    public Task<ResponseModel<object>> ReactivateCustomerAsync(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerActivation.ReactivateCustomer(customerId, performedBy, cancellationToken);
+        customerActivation.ReactivateCustomerAsync(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteCustomer(Guid customerId, string performedBy,
+    public Task<ResponseModel<object>> DeleteCustomerAsync(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerDeletion.DeleteCustomer(customerId, performedBy, cancellationToken);
+        customerDeletion.DeleteCustomerAsync(customerId, performedBy, cancellationToken);
 
-    public Task<ResponseModel<object>> UpdateCustomer(UpdateCustomerRequest request, string performedBy,
+    public Task<ResponseModel<object>> UpdateCustomerAsync(UpdateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerUpdating.UpdateCustomerFunction(request, performedBy, cancellationToken);
+        customerUpdating.UpdateCustomerAsync(request, performedBy, cancellationToken);
 
-    public Task<ResponseModel<CustomerModel>> GetCustomer(string? searchTerm,
+    public Task<ResponseModel<CustomerModel>> GetCustomerAsync(string? searchTerm,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomerFunction(searchTerm, cancellationToken);
+        customerGetting.GetCustomerAsync(searchTerm, cancellationToken);
 
-    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLog(Guid customerId,
+    public Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogAsync(Guid customerId,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomerAuditLogFunction(customerId, cancellationToken);
+        customerGetting.GetCustomerAuditLogAsync(customerId, cancellationToken);
 
-    public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLog(int pageNumber,
+    public Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLogAsync(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default) =>
-        customerGetting.GetAllAuditLogFunction(pageNumber, pageSize, cancellationToken);
+        customerGetting.GetAllCustomerAuditLogAsync(pageNumber, pageSize, cancellationToken);
 
-    public Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default) =>
-        customerDeletion.DeleteAllAuditLogFunction(cancellationToken);
+    public Task<ResponseModel<object>> DeleteAllCustomerAuditLogAsync(CancellationToken cancellationToken = default) =>
+        customerDeletion.DeleteAllCustomerAuditLogAsync(cancellationToken);
 
-    public Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomers(GetCustomersRequest request,
+    public Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomersAsync(GetCustomersRequest request,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomersFunction(request, cancellationToken);
+        customerGetting.GetCustomersAsync(request, cancellationToken);
 
-    public Task<ResponseModel<string>> GetCustomersForExport(ExportCustomersRequest request,
+    public Task<ResponseModel<string>> GetCustomersForExportAsync(ExportCustomersRequest request,
         CancellationToken cancellationToken = default) =>
-        customerGetting.GetCustomersForExportFunction(request, cancellationToken);
+        customerGetting.GetCustomersForExportAsync(request, cancellationToken);
 
-    public Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest request, string performedBy,
+    public Task<ResponseModel<Guid?>> CreateCustomerAsync(CreateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default) =>
-        customerCreation.CreateCustomerFunction(request, performedBy, cancellationToken);
+        customerCreation.CreateCustomerAsync(request, performedBy, cancellationToken);
 
-    public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivity(CancellationToken cancellationToken = default) =>
-        customerGetting.GetMonthlyActivityFunction(cancellationToken);
+    public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(CancellationToken cancellationToken = default) =>
+        customerGetting.GetMonthlyActivityAsync(cancellationToken);
 }

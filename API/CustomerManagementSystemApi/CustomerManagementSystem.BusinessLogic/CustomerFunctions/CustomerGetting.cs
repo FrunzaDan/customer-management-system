@@ -14,7 +14,7 @@ public class CustomerGetting(IDbUtils dbUtils)
     // response — generous enough that no real local/demo dataset will ever hit it.
     private const int MaxExportRows = 5000;
 
-    public async Task<ResponseModel<CustomerModel>> GetCustomerFunction(string? searchTerm,
+    public async Task<ResponseModel<CustomerModel>> GetCustomerAsync(string? searchTerm,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
@@ -25,10 +25,10 @@ public class CustomerGetting(IDbUtils dbUtils)
             return new ResponseModel<CustomerModel>(404,
                 "No valid search variable was provided! It must be a customer ID, phone number, or email.");
 
-        return await dbUtils.GetCustomer(lookup, cancellationToken);
+        return await dbUtils.GetCustomerAsync(lookup, cancellationToken);
     }
 
-    public async Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomersFunction(GetCustomersRequest request,
+    public async Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomersAsync(GetCustomersRequest request,
         CancellationToken cancellationToken = default)
     {
         if (request.PageNumber < 1)
@@ -42,14 +42,14 @@ public class CustomerGetting(IDbUtils dbUtils)
         if (validationError != null)
             return new ResponseModel<PagedResponse<CustomerModel>>(400, validationError);
 
-        return await dbUtils.GetCustomers(request, cancellationToken);
+        return await dbUtils.GetCustomersAsync(request, cancellationToken);
     }
 
     // Exports the full search/sort result (capped at MaxExportRows), not just one
     // page — it reuses Customer_List via the same dbUtils.GetCustomers call the
     // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
     // filtering/sorting SQL stays in exactly one place.
-    public async Task<ResponseModel<string>> GetCustomersForExportFunction(ExportCustomersRequest request,
+    public async Task<ResponseModel<string>> GetCustomersForExportAsync(ExportCustomersRequest request,
         CancellationToken cancellationToken = default)
     {
         var pagedRequest = new GetCustomersRequest
@@ -65,7 +65,7 @@ public class CustomerGetting(IDbUtils dbUtils)
         if (validationError != null)
             return new ResponseModel<string>(400, validationError);
 
-        var response = await dbUtils.GetCustomers(pagedRequest, cancellationToken);
+        var response = await dbUtils.GetCustomersAsync(pagedRequest, cancellationToken);
         if (response is not { Status: 200, Data: { } paged })
             return new ResponseModel<string>(response.Status, response.ResponseMessage);
 
@@ -91,39 +91,25 @@ public class CustomerGetting(IDbUtils dbUtils)
         return null;
     }
 
-    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogFunction(Guid customerId,
+    public async Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogAsync(Guid customerId,
         CancellationToken cancellationToken = default)
     {
         if (customerId == Guid.Empty)
             return new ResponseModel<IReadOnlyList<AuditLogEntry>>(400, "A valid customer ID is required.");
 
-        return await dbUtils.GetCustomerAuditLog(customerId, cancellationToken);
+        return await dbUtils.GetCustomerAuditLogAsync(customerId, cancellationToken);
     }
 
-    // Unpaginated on purpose: the catalogue is a fixed set of 50 products.
-    public async Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProductsFunction(
-        CancellationToken cancellationToken = default) =>
-        await dbUtils.GetProducts(cancellationToken);
-
-    public async Task<ResponseModel<ProductDetailsModel>> GetProductDetailsFunction(Guid productId,
-        CancellationToken cancellationToken = default)
-    {
-        if (productId == Guid.Empty)
-            return new ResponseModel<ProductDetailsModel>(400, "A valid product ID is required.");
-
-        return await dbUtils.GetProductDetails(productId, cancellationToken);
-    }
-
-    public async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesFunction(Guid customerId,
+    public async Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesAsync(Guid customerId,
         CancellationToken cancellationToken = default)
     {
         if (customerId == Guid.Empty)
             return new ResponseModel<IReadOnlyList<PurchaseModel>>(400, "A valid customer ID is required.");
 
-        return await dbUtils.GetCustomerPurchases(customerId, cancellationToken);
+        return await dbUtils.GetCustomerPurchasesAsync(customerId, cancellationToken);
     }
 
-    public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllAuditLogFunction(int pageNumber,
+    public async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLogAsync(int pageNumber,
         int pageSize, CancellationToken cancellationToken = default)
     {
         if (pageNumber < 1)
@@ -133,14 +119,14 @@ public class CustomerGetting(IDbUtils dbUtils)
             return new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(400,
                 $"Page size must be between 1 and {MaxPageSize}.");
 
-        return await dbUtils.GetAllCustomerAuditLog(pageNumber, pageSize, cancellationToken);
+        return await dbUtils.GetAllCustomerAuditLogAsync(pageNumber, pageSize, cancellationToken);
     }
 
     // Feeds the Charts tab's time-series charts. No paging/filtering — both series
-    // are small (one row per month with any activity), same reasoning as GetProductsFunction.
-    public async Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityFunction(
+    // are small (one row per month with any activity), same reasoning as ProductFunctions.GetProductsAsync.
+    public async Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(
         CancellationToken cancellationToken = default) =>
-        await dbUtils.GetMonthlyActivity(cancellationToken);
+        await dbUtils.GetMonthlyActivityAsync(cancellationToken);
 
     // Picks the one key Customer_Get should seek on, from the search term's shape: GUID
     // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then phone number, then

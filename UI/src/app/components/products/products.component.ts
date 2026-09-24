@@ -21,6 +21,17 @@ const SORT_VALUES: Record<
   left: (p) => p.quantityOnHand,
 };
 
+// How each sort column reads in the table caption.
+const SORT_LABELS: Record<ProductSortColumn, string> = {
+  name: 'product',
+  category: 'category',
+  warehouse: 'warehouse',
+  price: 'price',
+  sold: 'units sold',
+  inventory: 'units originally stocked',
+  left: 'units left',
+};
+
 @Component({
   selector: 'app-products',
   templateUrl: './products.component.html',
@@ -30,8 +41,8 @@ export class ProductsComponent {
   private readonly productService = inject(ProductService);
 
   readonly products = this.productService.products;
-  readonly isLoading = this.productService.loading;
-  readonly errorMessage = this.productService.error;
+  readonly loading = this.productService.loading;
+  readonly loadError = this.productService.error;
 
   // Unlike the customer list (paged, so sorted in SQL), the whole 50-product catalogue is
   // already loaded, so sorting happens here. Until a header is clicked (`null`), rows keep
@@ -63,7 +74,7 @@ export class ProductsComponent {
     const base =
       'Products with price, units sold, units originally stocked and units left';
     return column
-      ? `${base}, sorted by ${column} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`
+      ? `${base}, sorted by ${SORT_LABELS[column]} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`
       : base;
   });
 

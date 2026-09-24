@@ -5,7 +5,7 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
 public class CustomerPurchasing(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> PurchaseProduct(Guid customerId, Guid productId,
+    public async Task<ResponseModel<object>> PurchaseProductAsync(Guid customerId, Guid productId,
         string performedBy, CancellationToken cancellationToken = default)
     {
         if (customerId == Guid.Empty)
@@ -14,7 +14,7 @@ public class CustomerPurchasing(IDbUtils dbUtils, ICustomerAuditLogger auditLogg
         if (productId == Guid.Empty)
             return new ResponseModel<object>(400, "A valid product ID is required.");
 
-        var response = await dbUtils.PurchaseProduct(customerId, productId, cancellationToken);
+        var response = await dbUtils.PurchaseProductAsync(customerId, productId, cancellationToken);
 
         // Mutations carry no Data (see ai_docs/api.md): on success the DB layer hands back the
         // product's name purely so it can go into the audit entry, and it's dropped here.
@@ -23,7 +23,7 @@ public class CustomerPurchasing(IDbUtils dbUtils, ICustomerAuditLogger auditLogg
 
         // Not forwarding cancellationToken to the audit write: the purchase already
         // succeeded, so the log entry should still be attempted.
-        await auditLogger.Log(customerId, performedBy, AuditAction.Purchased,
+        await auditLogger.LogAsync(customerId, performedBy, AuditAction.Purchased,
             response.Data is { } productName ? $"Product: {productName}" : $"Product ID: {productId}");
 
         return new ResponseModel<object>(response.Status, response.ResponseMessage);

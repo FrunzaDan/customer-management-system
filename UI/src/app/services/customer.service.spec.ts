@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   CreateCustomerRequest,
@@ -243,60 +244,24 @@ describe('CustomerService', () => {
   });
 
   describe('getCustomer', () => {
-    const select = async (customer: Customer) => {
-      service.getCustomer(customer.customerId);
-      TestBed.tick();
+    it('GETs one customer by id and emits it', async () => {
+      const customer = buildCustomer();
+
+      const result = firstValueFrom(service.getCustomer(customer.customerId));
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/get`);
       expect(req.request.params.get('searchTerm')).toBe(customer.customerId);
       req.flush({ status: 200, responseMessage: 'ok', data: customer });
-      await settle();
-    };
 
-    it('loads the selected customer by id', async () => {
-      const customer = buildCustomer();
-
-      await select(customer);
-
-      expect(service.selectedCustomer()).toEqual(customer);
-      expect(service.selectedCustomerLoading()).toBe(false);
-      expect(service.selectedCustomerError()).toBeNull();
+      expect(await result).toEqual(customer);
     });
 
-    it('fetches again when asked for the customer already selected', async () => {
-      await select(buildCustomer());
-
-      await select(buildCustomer({ firstName: 'Fresh' }));
-
-      expect(service.selectedCustomer()?.firstName).toBe('Fresh');
-    });
-
-    it('names the failed load on a server error', async () => {
-      service.getCustomer('customer-1');
-      TestBed.tick();
+    it('errors when the response carries no customer', async () => {
+      const result = firstValueFrom(service.getCustomer('customer-1'));
       httpMock
         .expectOne((r) => r.url === `${API_URL}/get`)
-        .flush(null, { status: 500, statusText: 'Server Error' });
-      await settle();
+        .flush({ status: 200, responseMessage: 'ok', data: null });
 
-      expect(service.selectedCustomer()).toBeNull();
-      expect(service.selectedCustomerError()).toBe(
-        'Failed to load the customer (500). Please try again.',
-      );
-    });
-
-    it('deactivating the selected customer updates it even when no list is loaded', async () => {
-      vi.spyOn(console, 'error').mockImplementation(() => {});
-      await select(buildCustomer());
-
-      service.deactivateCustomer('customer-1');
-      httpMock
-        .expectOne((r) => r.url === `${API_URL}/deactivate`)
-        .flush({ status: 200, responseMessage: 'ok' });
-
-      expect(service.selectedCustomer()?.status).toBe(
-        CustomerStatus.Deactivated,
-      );
-      expect(service.activationError()).toBeNull();
+      await expect(result).rejects.toThrow('Customer not found.');
     });
   });
 
@@ -340,7 +305,7 @@ describe('CustomerService', () => {
       });
 
       expect(notificationShow).toHaveBeenCalledWith(
-        'Customer registered successfully.',
+        'Customer added successfully.',
       );
     });
 
@@ -525,14 +490,14 @@ describe('CustomerService', () => {
       );
     });
 
-    it('sets a not-found error and skips notification when the customer is not in the loaded list', () => {
+    it('succeeds and notifies even when the customer is not in the loaded list (e.g. from the details page)', () => {
       service.deactivateCustomer('missing-customerId');
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush({ status: 200, responseMessage: 'ok' });
 
-      expect(notificationShow).not.toHaveBeenCalled();
-      expect(service.activationError()).toContain('not found locally');
+      expect(notificationShow).toHaveBeenCalled();
+      expect(service.activationError()).toBeNull();
     });
 
     it('does not retry a definitive 4xx error and surfaces the server message', () => {

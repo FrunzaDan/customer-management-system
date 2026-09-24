@@ -41,7 +41,7 @@ public class ErrorResponseTests
 
     private static void SetupAccessToken(Mock<IAuthService> authService,
         ResponseModel<AccessTokenResponse> response) =>
-        authService.Setup(a => a.GetAccessToken(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        authService.Setup(a => a.GetAccessTokenAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
     private static async Task<JsonElement> ReadProblemAsync(HttpResponseMessage response, HttpStatusCode expected)
@@ -62,7 +62,7 @@ public class ErrorResponseTests
         bool exposesMessage)
     {
         var authService = new Mock<IAuthService>();
-        authService.Setup(a => a.GetAccessToken(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        authService.Setup(a => a.GetAccessTokenAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Login failed for user 'sa'."));
         await using var factory = CreateFactory(authService, environment);
 
@@ -123,7 +123,7 @@ public class ErrorResponseTests
 
         var problem = await ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.True(problem.TryGetProperty("errors", out _));
-        authService.Verify(a => a.GetAccessToken(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()),
+        authService.Verify(a => a.GetAccessTokenAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

@@ -16,7 +16,7 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class PurchaseService {
-  private readonly API_URL = `${environment.apiUrl}/api/customer`;
+  private readonly apiUrl = `${environment.apiUrl}/api/customer`;
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
@@ -24,22 +24,26 @@ export class PurchaseService {
 
   // Same shape as AuditLogService: the request is a function of `customerId`, so a
   // new customerId cancels the in-flight request, and nothing is fetched until one is set.
-  private readonly purchases = httpResource<GenericResponse<Purchase[]>>(() => {
+  private readonly purchasesResource = httpResource<
+    GenericResponse<Purchase[]>
+  >(() => {
     const customerId = this.customerId();
     if (!customerId) return undefined;
     return {
-      url: `${this.API_URL}/purchases`,
+      url: `${this.apiUrl}/purchases`,
       params: { customerId: customerId },
     };
   });
 
   // hasValue() guards the read: value() throws while the resource is in error.
   readonly entries = computed(() =>
-    this.purchases.hasValue() ? (this.purchases.value().data ?? []) : [],
+    this.purchasesResource.hasValue()
+      ? (this.purchasesResource.value().data ?? [])
+      : [],
   );
-  readonly loading = this.purchases.isLoading;
+  readonly loading = this.purchasesResource.isLoading;
   readonly error = computed(() => {
-    const error = this.purchases.error();
+    const error = this.purchasesResource.error();
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
@@ -47,7 +51,7 @@ export class PurchaseService {
     if (this.customerId() === customerId) {
       // Same customer (e.g. right after recording a purchase) — the request itself
       // hasn't changed, so ask for a fresh copy.
-      this.purchases.reload();
+      this.purchasesResource.reload();
     } else {
       this.customerId.set(customerId);
     }
@@ -76,7 +80,7 @@ export class PurchaseService {
       .set('productId', productId);
 
     return this.http.post<GenericResponse<object>>(
-      `${this.API_URL}/purchase`,
+      `${this.apiUrl}/purchase`,
       null,
       { params },
     );

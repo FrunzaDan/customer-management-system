@@ -10,7 +10,7 @@
       type="button"
       class="btn btn-danger shadow-none"
       (click)="clearAuditLog()"
-      [disabled]="isLoading() || clearing() || totalItems() === 0"
+      [disabled]="loading() || clearing() || totalItems() === 0"
     >
       {{ clearing() ? 'Clearing…' : 'Clear audit log' }}
     </button>
@@ -18,7 +18,7 @@
   @if (clearError(); as error) {
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   }
-  @if (isLoading()) {
+  @if (loading()) {
     <div class="app-card loading-state" role="status">
       <span
         class="spinner-border spinner-border-sm me-2"
@@ -26,7 +26,7 @@
       ></span
       >Loading audit log…
     </div>
-  } @else if (errorMessage(); as error) {
+  } @else if (loadError(); as error) {
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   } @else if (entries().length === 0) {
     <div class="app-card empty-state">No recorded actions yet.</div>

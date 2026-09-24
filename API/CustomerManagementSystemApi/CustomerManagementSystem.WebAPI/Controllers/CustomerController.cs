@@ -22,23 +22,23 @@ public class CustomerController(ICustomerService customerService) : ApiControlle
     [HttpPost("create")]
     public async Task<ActionResult<ResponseModel<Guid?>>> CreateCustomer(
         [FromBody] CreateCustomerRequest request, CancellationToken cancellationToken) =>
-        Reply(await customerService.CreateCustomer(request, Username, cancellationToken));
+        Reply(await customerService.CreateCustomerAsync(request, Username, cancellationToken));
 
     [HttpGet("get")]
     public async Task<ActionResult<ResponseModel<CustomerModel>>> GetCustomer([FromQuery] string? searchTerm,
         CancellationToken cancellationToken) =>
-        Reply(await customerService.GetCustomer(searchTerm, cancellationToken));
+        Reply(await customerService.GetCustomerAsync(searchTerm, cancellationToken));
 
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<PagedResponse<CustomerModel>>>> GetCustomers(
         [FromQuery] GetCustomersRequest request, CancellationToken cancellationToken) =>
-        Reply(await customerService.GetCustomers(request, cancellationToken));
+        Reply(await customerService.GetCustomersAsync(request, cancellationToken));
 
     [HttpGet("export")]
     public async Task<IActionResult> ExportCustomers([FromQuery] ExportCustomersRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await customerService.GetCustomersForExport(request, cancellationToken);
+        var response = await customerService.GetCustomersForExportAsync(request, cancellationToken);
         if (response is not { Status: 200, Data: { } csv })
             return Reply(response);
 
@@ -49,62 +49,47 @@ public class CustomerController(ICustomerService customerService) : ApiControlle
     [HttpGet("audit-log")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<AuditLogEntry>>>> GetCustomerAuditLog(
         [FromQuery] Guid customerId, CancellationToken cancellationToken) =>
-        Reply(await customerService.GetCustomerAuditLog(customerId, cancellationToken));
+        Reply(await customerService.GetCustomerAuditLogAsync(customerId, cancellationToken));
 
     [HttpGet("audit-log/all")]
     public async Task<ActionResult<ResponseModel<PagedResponse<GlobalAuditLogEntry>>>> GetAllCustomerAuditLog(
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
-        Reply(await customerService.GetAllCustomerAuditLog(pageNumber, pageSize, cancellationToken));
-
-    [HttpPost("product")]
-    public async Task<ActionResult<ResponseModel<Guid?>>> CreateProduct([FromBody] CreateProductRequest request,
-        CancellationToken cancellationToken) =>
-        Reply(await customerService.CreateProduct(request, cancellationToken));
-
-    [HttpGet("products")]
-    public async Task<ActionResult<ResponseModel<IReadOnlyList<ProductModel>>>> GetProducts(
-        CancellationToken cancellationToken) =>
-        Reply(await customerService.GetProducts(cancellationToken));
+        Reply(await customerService.GetAllCustomerAuditLogAsync(pageNumber, pageSize, cancellationToken));
 
     [HttpGet("monthly-activity")]
     public async Task<ActionResult<ResponseModel<MonthlyActivityModel>>> GetMonthlyActivity(
         CancellationToken cancellationToken) =>
-        Reply(await customerService.GetMonthlyActivity(cancellationToken));
-
-    [HttpGet("product-details")]
-    public async Task<ActionResult<ResponseModel<ProductDetailsModel>>> GetProductDetails(
-        [FromQuery] Guid productId, CancellationToken cancellationToken) =>
-        Reply(await customerService.GetProductDetails(productId, cancellationToken));
+        Reply(await customerService.GetMonthlyActivityAsync(cancellationToken));
 
     [HttpGet("purchases")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<PurchaseModel>>>> GetCustomerPurchases(
         [FromQuery] Guid customerId, CancellationToken cancellationToken) =>
-        Reply(await customerService.GetCustomerPurchases(customerId, cancellationToken));
+        Reply(await customerService.GetCustomerPurchasesAsync(customerId, cancellationToken));
 
     [HttpPost("purchase")]
     public async Task<ActionResult<ResponseModel<object>>> PurchaseProduct([FromQuery] Guid customerId,
         [FromQuery] Guid productId, CancellationToken cancellationToken) =>
-        Reply(await customerService.PurchaseProduct(customerId, productId, Username, cancellationToken));
+        Reply(await customerService.PurchaseProductAsync(customerId, productId, Username, cancellationToken));
 
     [HttpPatch("update")]
     public async Task<ActionResult<ResponseModel<object>>> UpdateCustomer([FromBody] UpdateCustomerRequest request,
         CancellationToken cancellationToken) =>
-        Reply(await customerService.UpdateCustomer(request, Username, cancellationToken));
+        Reply(await customerService.UpdateCustomerAsync(request, Username, cancellationToken));
 
     [HttpPatch("deactivate")]
     public async Task<ActionResult<ResponseModel<object>>> DeactivateCustomer([FromQuery] Guid customerId,
         CancellationToken cancellationToken) =>
-        Reply(await customerService.DeactivateCustomer(customerId, Username, cancellationToken));
+        Reply(await customerService.DeactivateCustomerAsync(customerId, Username, cancellationToken));
 
     [HttpPatch("reactivate")]
     public async Task<ActionResult<ResponseModel<object>>> ReactivateCustomer([FromQuery] Guid customerId,
         CancellationToken cancellationToken) =>
-        Reply(await customerService.ReactivateCustomer(customerId, Username, cancellationToken));
+        Reply(await customerService.ReactivateCustomerAsync(customerId, Username, cancellationToken));
 
     [HttpDelete("delete")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteCustomer([FromQuery] Guid customerId,
         CancellationToken cancellationToken) =>
-        Reply(await customerService.DeleteCustomer(customerId, Username, cancellationToken));
+        Reply(await customerService.DeleteCustomerAsync(customerId, Username, cancellationToken));
 
     // Explicit role check (not just the class-level [Authorize]) on top of a destructive,
     // untargeted action — wipes every audit row for every customer in one call. Today this
@@ -114,5 +99,5 @@ public class CustomerController(ICustomerService customerService) : ApiControlle
     [HttpDelete("audit-log/all")]
     public async Task<ActionResult<ResponseModel<object>>> DeleteAllCustomerAuditLog(
         CancellationToken cancellationToken) =>
-        Reply(await customerService.DeleteAllCustomerAuditLog(cancellationToken));
+        Reply(await customerService.DeleteAllCustomerAuditLogAsync(cancellationToken));
 }

@@ -16,7 +16,7 @@ export interface Product {
   warehouse: string;
 }
 
-// POST /api/customer/product. No customerId (the DB generates it and the response returns it), and
+// POST /api/product/create. No productId (the DB generates it and the response returns it), and
 // no stock/sold numbers: a new product starts fully stocked.
 export type CreateProductRequest = Pick<
   Product,

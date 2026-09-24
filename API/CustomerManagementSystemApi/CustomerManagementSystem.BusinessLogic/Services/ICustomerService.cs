@@ -4,37 +4,31 @@ namespace CustomerManagementSystem.BusinessLogic.Services;
 
 public interface ICustomerService
 {
-    Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomers(GetCustomersRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<PagedResponse<CustomerModel>>> GetCustomersAsync(GetCustomersRequest request, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<string>> GetCustomersForExport(ExportCustomersRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<string>> GetCustomersForExportAsync(ExportCustomersRequest request, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<CustomerModel>> GetCustomer(string? searchTerm, CancellationToken cancellationToken = default);
+    Task<ResponseModel<CustomerModel>> GetCustomerAsync(string? searchTerm, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLog(Guid customerId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogAsync(Guid customerId, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLog(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLogAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProducts(CancellationToken cancellationToken = default);
+    Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesAsync(Guid customerId, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<ProductDetailsModel>> GetProductDetails(Guid productId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> PurchaseProductAsync(Guid customerId, Guid productId, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchases(Guid customerId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<Guid?>> CreateCustomerAsync(CreateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<object>> PurchaseProduct(Guid customerId, Guid productId, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> UpdateCustomerAsync(UpdateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<Guid?>> CreateProduct(CreateProductRequest request, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeactivateCustomerAsync(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> ReactivateCustomerAsync(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<object>> UpdateCustomer(UpdateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteCustomerAsync(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<object>> DeactivateCustomer(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> DeleteAllCustomerAuditLogAsync(CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<object>> ReactivateCustomer(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
-
-    Task<ResponseModel<object>> DeleteCustomer(Guid customerId, string performedBy, CancellationToken cancellationToken = default);
-
-    Task<ResponseModel<object>> DeleteAllCustomerAuditLog(CancellationToken cancellationToken = default);
-
-    Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivity(CancellationToken cancellationToken = default);
+    Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(CancellationToken cancellationToken = default);
 }

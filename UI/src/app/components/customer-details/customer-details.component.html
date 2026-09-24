@@ -1,5 +1,5 @@
-@if (!isLoading()) {
-  @if (errorMessage(); as error) {
+@if (!loading()) {
+  @if (loadError(); as error) {
     <div class="page">
       <div class="alert alert-danger" role="alert">{{ error }}</div>
       <a routerLink="/customers" class="btn btn-primary">Back to customers</a>
@@ -112,7 +112,7 @@
                       customer()?.status === CustomerStatus.Test
                     "
                   >
-                    {{ customerStatusLabel() }}
+                    {{ statusLabel() }}
                   </span>
                 </div>
               </div>
@@ -129,7 +129,7 @@
                 </div>
                 <div class="detail-row">
                   <dt>Gender</dt>
-                  <dd class="text-capitalize">{{ customerGender() || '—' }}</dd>
+                  <dd class="text-capitalize">{{ genderLabel() || '—' }}</dd>
                 </div>
                 <div class="detail-row">
                   <dt>Birth date</dt>
@@ -214,7 +214,7 @@
                 <div class="detail-row">
                   <dt>Status</dt>
                   <dd>
-                    {{ customerStatusLabel() }}
+                    {{ statusLabel() }}
                     <span class="text-muted small"
                       >({{ customer()?.status }})</span
                     >

@@ -1,12 +1,6 @@
-import { inject } from '@angular/core';
-import { CanActivateFn, Routes } from '@angular/router';
-import { AuthGuardService } from './services/auth-guard.service';
+import { Routes } from '@angular/router';
+import { authGuard } from './services/auth.guard';
 import { unsavedChangesGuard } from './services/unsaved-changes.guard';
-
-const authGuardFn: CanActivateFn = () => {
-  const authService = inject(AuthGuardService);
-  return authService.canActivate();
-};
 
 // Every page is lazy-loaded so the initial bundle only carries the shell;
 // `title` feeds AppTitleStrategy (document title = WCAG 2.4.2).
@@ -21,17 +15,14 @@ export const routes: Routes = [
   },
   {
     path: '',
+    redirectTo: 'customers',
     pathMatch: 'full',
-    loadComponent: () =>
-      import('./components/home/home.component').then((m) => m.HomeComponent),
-    canActivate: [authGuardFn],
-    title: 'Customers',
   },
   {
     path: 'customers',
     loadComponent: () =>
       import('./components/home/home.component').then((m) => m.HomeComponent),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Customers',
   },
   {
@@ -40,9 +31,9 @@ export const routes: Routes = [
       import('./components/create-customer/create-customer.component').then(
         (m) => m.CreateCustomerComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
-    title: 'Register customer',
+    title: 'Add customer',
   },
   {
     path: 'customers/update/:customerId',
@@ -50,7 +41,7 @@ export const routes: Routes = [
       import('./components/update-customer/update-customer.component').then(
         (m) => m.UpdateCustomerComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
     title: 'Edit customer',
   },
@@ -60,7 +51,7 @@ export const routes: Routes = [
       import('./components/about/about.component').then(
         (m) => m.AboutComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'About',
   },
   {
@@ -69,7 +60,7 @@ export const routes: Routes = [
       import('./components/customer-details/customer-details.component').then(
         (m) => m.CustomerDetailsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Customer details',
   },
   {
@@ -78,7 +69,7 @@ export const routes: Routes = [
       import('./components/products/products.component').then(
         (m) => m.ProductsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Products',
   },
   {
@@ -87,7 +78,7 @@ export const routes: Routes = [
       import('./components/create-product/create-product.component').then(
         (m) => m.CreateProductComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
     title: 'Add product',
   },
@@ -97,7 +88,7 @@ export const routes: Routes = [
       import('./components/product-details/product-details.component').then(
         (m) => m.ProductDetailsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Product details',
   },
   {
@@ -106,7 +97,7 @@ export const routes: Routes = [
       import('./components/charts/charts.component').then(
         (m) => m.ChartsComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Charts',
   },
   {
@@ -115,7 +106,7 @@ export const routes: Routes = [
       import('./components/global-audit-log/global-audit-log.component').then(
         (m) => m.GlobalAuditLogComponent,
       ),
-    canActivate: [authGuardFn],
+    canActivate: [authGuard],
     title: 'Audit log',
   },
   {

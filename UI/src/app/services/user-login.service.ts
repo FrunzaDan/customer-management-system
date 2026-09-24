@@ -18,7 +18,7 @@ export interface CredentialsCheckResult {
   providedIn: 'root',
 })
 export class UserLoginService {
-  private readonly API_URL = `${environment.apiUrl}/api/authentication/access-token`;
+  private readonly apiUrl = `${environment.apiUrl}/api/authentication/access-token`;
 
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
@@ -29,7 +29,7 @@ export class UserLoginService {
     userLoginRequest: UserLoginRequest,
   ): Observable<GenericResponse<LoginData>> {
     return this.http.post<GenericResponse<LoginData>>(
-      this.API_URL,
+      this.apiUrl,
       userLoginRequest,
     );
   }
@@ -49,6 +49,9 @@ export class UserLoginService {
       this.notificationService.show('Login successful.');
       this.router.navigateByUrl('customers');
     }
-    return { success, message: response.responseMessage };
+    return {
+      success,
+      message: response.responseMessage ?? 'Sign-in failed. Please try again.',
+    };
   }
 }

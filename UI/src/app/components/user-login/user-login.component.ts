@@ -40,12 +40,12 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   private readonly footerService = inject(FooterService);
   private readonly sessionStorageService = inject(SessionStorageService);
 
-  // `?sessionExpired=true` is added by AuthGuardService / authErrorInterceptor
+  // `?sessionExpired=true` is added by authGuard / authErrorInterceptor
   // when a token is missing or rejected; bound here by withComponentInputBinding().
   readonly sessionExpired = input<string>();
 
   readonly model = signal<LoginModel>({ username: '', password: '' });
-  readonly errorMessage = signal<string | null>(null);
+  readonly loginError = signal<string | null>(null);
 
   readonly loginForm = form(
     this.model,
@@ -71,7 +71,7 @@ export class UserLoginComponent implements OnInit, OnDestroy {
     this.sessionStorageService.removeSessionStorage();
     this.navbarService.hideNavbar();
     this.footerService.hideFooter();
-    this.errorMessage.set(null);
+    this.loginError.set(null);
   }
 
   private async login(): Promise<void> {
@@ -86,11 +86,11 @@ export class UserLoginComponent implements OnInit, OnDestroy {
         this.userLoginService.login(loginRequest),
       );
       const result = this.userLoginService.checkCredentials(response);
-      this.errorMessage.set(result.success ? null : result.message);
+      this.loginError.set(result.success ? null : result.message);
     } catch (error) {
       // The API's Problem Details message: "Invalid username or password." (401),
       // "Too many login attempts…" (429), or a generic one naming the status.
-      this.errorMessage.set(
+      this.loginError.set(
         extractErrorMessage(error as HttpErrorResponse, 'Sign-in failed'),
       );
     }
@@ -99,6 +99,6 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.navbarService.displayNavbar();
     this.footerService.displayFooter();
-    this.errorMessage.set(null);
+    this.loginError.set(null);
   }
 }

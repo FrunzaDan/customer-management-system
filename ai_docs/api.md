@@ -7,9 +7,10 @@ The ASP.NET Core Web API (.NET 10) under `API/CustomerManagementSystemApi/`.
 ## Key files / paths
 
 - `CustomerManagementSystem.WebAPI/Program.cs` — options, pipeline, JwtBearer, CORS, rate limiter.
-- `WebAPI/Controllers/` — `AuthenticationController`, `CustomerController`, both deriving from `ApiControllerBase`.
+- `WebAPI/Controllers/` — `AuthenticationController`, `CustomerController`, `ProductController`, all deriving from `ApiControllerBase`.
 - `WebAPI/ErrorHandling/GlobalExceptionHandler.cs` — the one place unhandled exceptions are logged.
-- `BusinessLogic/CustomerFunctions/` — `CustomerCreation`, `CustomerUpdating`, `CustomerGetting`, `CustomerActivation`, `CustomerDeletion`, `CustomerPurchasing`, `ProductCreation`, `CustomerAuditLogger`.
+- `BusinessLogic/CustomerFunctions/` — `CustomerCreation`, `CustomerUpdating`, `CustomerGetting`, `CustomerActivation`, `CustomerDeletion`, `CustomerPurchasing`, `CustomerAuditLogger`.
+- `BusinessLogic/CatalogFunctions/` — `ProductFunctions`.
 - `BusinessLogic/AuthFunctions/` — `JwtCreation`, `JwtSigningKey`.
 - `BusinessLogic/Validations/` — email, phone number and address rules.
 - `DataAccess/DBConnection/` — `SqlConnectionFactory`, `DbUtils`, `DbHelper`, `SqlExtensions`, `PasswordHasher`.
@@ -87,10 +88,17 @@ Other settings:
 - **`/api/customer`** (every endpoint requires `[Authorize]`):
   - Customers: `POST /create`, `GET /get?searchTerm=`, `GET /all` (paged, search, sort), `GET /export` (CSV), `PATCH /update`, `PATCH /deactivate`, `PATCH /reactivate`, `DELETE /delete`.
   - Audit log: `GET /audit-log?customerId=`, `GET /audit-log/all`, `DELETE /audit-log/all` (role `1801`).
-  - Products and purchases: `GET /products`, `GET /product-details`, `POST /product`, `GET /purchases`, `POST /purchase`.
+  - Purchases: `GET /purchases`, `POST /purchase`.
   - Charts: `GET /monthly-activity`.
+- **`/api/product`** (every endpoint requires `[Authorize]`): `GET /all`, `GET /get?productId=` (the product and its buyers), `POST /create`.
 - **`GET /health`:** liveness only, no auth.
-- **Creates:** `POST /create` and `POST /product` return the new GUID as `data`. Other mutations return no `data`.
+- **Creates:** `POST /api/customer/create` and `POST /api/product/create` return the new GUID as `data`. Other mutations return no `data`.
+
+### Naming
+
+- Every async method ends in `Async`, in the services, the logic classes and the data layer. Controller actions are the exception, since their routes are explicit.
+- **Logic classes:** the main entity has one class per action (`CustomerCreation`, `CustomerGetting`, …). Each secondary entity has one class for all its operations (`ProductFunctions`, like the employee app's `OfficeFunctions`). A logic method has the same name as the service method it backs.
+- Collections are returned as `IReadOnlyList<T>`.
 
 ### Validation and data types
 

@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { submit } from '@angular/forms/signals';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { ReplaySubject, of, throwError } from 'rxjs';
 import { Customer } from '../../interfaces/customer';
 import { CustomerService } from '../../services/customer.service';
 import { UpdateCustomerComponent } from './update-customer.component';
@@ -12,7 +12,14 @@ describe('UpdateCustomerComponent', () => {
   let getCustomer: ReturnType<typeof vi.fn>;
   let updateCustomer: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let selectedCustomer: ReturnType<typeof signal<Customer | null>>;
+  let customer$: ReplaySubject<Customer>;
+  let fixture: ComponentFixture<UpdateCustomerComponent>;
+
+  // Emits the customer the page's rxResource streams, and waits for it to land.
+  const loadCustomer = async (customer: Customer) => {
+    customer$.next(customer);
+    await fixture.whenStable();
+  };
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
     customerId: 'customer-1',
@@ -38,19 +45,19 @@ describe('UpdateCustomerComponent', () => {
 
   // `customerId` is what withComponentInputBinding() binds from the `:customerId` route param.
   const createComponent = (id: string | null = 'customer-1') => {
-    const fixture = TestBed.createComponent(UpdateCustomerComponent);
+    fixture = TestBed.createComponent(UpdateCustomerComponent);
     if (id) fixture.componentRef.setInput('customerId', id);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
 
   beforeEach(() => {
-    getCustomer = vi.fn();
+    customer$ = new ReplaySubject<Customer>(1);
+    getCustomer = vi.fn(() => customer$);
     updateCustomer = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
-    selectedCustomer = signal<Customer | null>(null);
 
     TestBed.configureTestingModule({
       providers: [
@@ -58,9 +65,6 @@ describe('UpdateCustomerComponent', () => {
         {
           provide: CustomerService,
           useValue: {
-            selectedCustomer: selectedCustomer,
-            selectedCustomerLoading: signal(false),
-            selectedCustomerError: signal<string | null>(null),
             getCustomer,
             updateCustomer,
           },
@@ -92,25 +96,25 @@ describe('UpdateCustomerComponent', () => {
       expect(component.model().firstName).toBe('');
     });
 
-    it('pre-fills every field, converting gender to a string', () => {
+    it('pre-fills every field, converting gender to a string', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ gender: 2 }));
+      await loadCustomer(buildCustomer({ gender: 2 }));
 
       expect(component.model().firstName).toBe('Dan');
       expect(component.model().gender).toBe('2');
       expect(component.model().country).toBe('Romania');
     });
 
-    it('pre-fills the stored birthDate as-is (the API always sends YYYY-MM-DD)', () => {
+    it('pre-fills the stored birthDate as-is (the API always sends YYYY-MM-DD)', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ birthDate: '2020-01-05' }));
+      await loadCustomer(buildCustomer({ birthDate: '2020-01-05' }));
 
       expect(component.model().birthDate).toBe('2020-01-05');
     });
 
-    it('leaves the birthDate blank when the customer has none', () => {
+    it('leaves the birthDate blank when the customer has none', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ birthDate: undefined }));
+      await loadCustomer(buildCustomer({ birthDate: undefined }));
 
       expect(component.model().birthDate).toBe('');
     });
@@ -119,7 +123,7 @@ describe('UpdateCustomerComponent', () => {
   describe('submitting', () => {
     it('does nothing and reports the errors when the form is invalid', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       component.model.update((m) => ({ ...m, firstName: '' }));
 
       await submit(component.customerForm);
@@ -144,7 +148,7 @@ describe('UpdateCustomerComponent', () => {
 
     it('merges the form values onto the loaded customer and saves', async () => {
       const component = createComponent();
-      selectedCustomer.set(
+      await loadCustomer(
         buildCustomer({ customerId: 'customer-1', createdAt: '2026-01-01' }),
       );
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
@@ -163,7 +167,7 @@ describe('UpdateCustomerComponent', () => {
 
     it('navigates back to the customer list on success', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
 
       await submit(component.customerForm);
 
@@ -172,7 +176,7 @@ describe('UpdateCustomerComponent', () => {
 
     it('surfaces the error and stops submitting on failure', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       updateCustomer.mockReturnValue(
         throwError(
           () =>
@@ -192,24 +196,24 @@ describe('UpdateCustomerComponent', () => {
   });
 
   describe('unsaved changes', () => {
-    it('has none after the customer loads (loading is not editing)', () => {
+    it('has none after the customer loads (loading is not editing)', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
 
       expect(component.hasUnsavedChanges()).toBe(false);
     });
 
-    it('has some once the user changes a field', () => {
+    it('has some once the user changes a field', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
       expect(component.hasUnsavedChanges()).toBe(true);
     });
 
-    it('has none again if the user puts the original value back', () => {
+    it('has none again if the user puts the original value back', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
       component.model.update((m) => ({ ...m, firstName: 'Dan' }));
 
@@ -218,7 +222,7 @@ describe('UpdateCustomerComponent', () => {
 
     it('keeps them when the save fails', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       updateCustomer.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 500 })),
       );
@@ -231,7 +235,7 @@ describe('UpdateCustomerComponent', () => {
 
     it('clears them once saved, before navigating away', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       let dirtyAtNavigation: boolean | undefined;
       navigate.mockImplementation(async () => {
         dirtyAtNavigation = component.hasUnsavedChanges();
@@ -244,9 +248,9 @@ describe('UpdateCustomerComponent', () => {
       expect(dirtyAtNavigation).toBe(false);
     });
 
-    it('asks the browser to confirm closing/reloading the tab only when dirty', () => {
+    it('asks the browser to confirm closing/reloading the tab only when dirty', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
 
       const clean = new Event('beforeunload', {
         cancelable: true,

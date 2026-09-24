@@ -7,9 +7,12 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../services/product.service';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 
 @Component({
   selector: 'app-product-details',
@@ -24,9 +27,26 @@ export class ProductDetailsComponent {
   // Bound from the `:productId` route param by withComponentInputBinding() in app.config.ts.
   readonly productId = input<string>();
 
-  readonly details = this.productService.details;
-  readonly isLoading = this.productService.detailsLoading;
-  readonly errorMessage = this.productService.detailsError;
+  // Keyed on the route's id, like the customer details page; hasValue() guards
+  // the read, since value() throws while the resource is in error.
+  private readonly detailsResource = rxResource({
+    params: () => this.productId(),
+    stream: ({ params: productId }) =>
+      this.productService.getProductDetails(productId),
+  });
+  readonly details = computed(() =>
+    this.detailsResource.hasValue() ? this.detailsResource.value() : null,
+  );
+  readonly loading = this.detailsResource.isLoading;
+  readonly loadError = computed(() => {
+    const error = this.detailsResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load the product',
+        )
+      : null;
+  });
 
   readonly product = computed(() => this.details()?.product ?? null);
   readonly buyers = computed(() => this.details()?.buyers ?? []);
@@ -38,16 +58,10 @@ export class ProductDetailsComponent {
   );
 
   constructor() {
-    // (Re)load whenever the id in the URL changes; no id means nothing to show.
+    // No id means nothing to show.
     effect(() => {
-      const id = this.productId();
-      untracked(() => {
-        if (id) {
-          this.productService.loadProductDetails(id);
-        } else {
-          this.router.navigate(['/products']);
-        }
-      });
+      if (!this.productId())
+        untracked(() => this.router.navigate(['/products']));
     });
   }
 

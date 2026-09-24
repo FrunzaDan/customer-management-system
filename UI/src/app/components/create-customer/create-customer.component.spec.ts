@@ -64,7 +64,7 @@ describe('CreateCustomerComponent', () => {
     });
 
     expect(component.customerForm.email().errors()[0].message).toBe(
-      'The Email should be a valid one',
+      'The email should be a valid one',
     );
     expect(component.customerForm.phoneNumber().errors()[0].message).toBe(
       'The phone number should be a valid one',
@@ -102,7 +102,7 @@ describe('CreateCustomerComponent', () => {
     await submit(component.customerForm);
 
     expect(navigate).toHaveBeenCalledWith(['/customers']);
-    expect(component.errorMessage()).toBeNull();
+    expect(component.saveError()).toBeNull();
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
@@ -114,7 +114,7 @@ describe('CreateCustomerComponent', () => {
     await submit(component.customerForm);
 
     expect(component.customerForm().submitting()).toBe(false);
-    expect(component.errorMessage()).toBe(
+    expect(component.saveError()).toBe(
       'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
     );
     expect(navigate).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe('CreateCustomerComponent', () => {
 
     await submit(component.customerForm);
 
-    expect(component.errorMessage()).toBe('Email already registered.');
+    expect(component.saveError()).toBe('Email already registered.');
   });
 
   describe('unsaved changes', () => {

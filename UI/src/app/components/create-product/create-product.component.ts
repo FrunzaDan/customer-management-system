@@ -33,7 +33,7 @@ export class CreateProductComponent {
   readonly hasUnsavedChanges = computed(
     () => !this.saved() && isProductFormDirty(this.model(), emptyProductForm()),
   );
-  readonly errorMessage = signal<string | null>(null);
+  readonly saveError = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
 
   readonly productForm = form(this.model, productFormSchema, {
@@ -50,7 +50,7 @@ export class CreateProductComponent {
   });
 
   private async save(): Promise<void> {
-    this.errorMessage.set(null);
+    this.saveError.set(null);
     this.invalidSummary.set(null);
 
     try {
@@ -62,7 +62,7 @@ export class CreateProductComponent {
       await this.router.navigate(['/products']);
     } catch (error) {
       // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
-      this.errorMessage.set(
+      this.saveError.set(
         extractErrorMessage(
           error as HttpErrorResponse,
           'Failed to add product',

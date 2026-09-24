@@ -14,7 +14,7 @@ public class AuthenticationController(IAuthService authService) : ApiControllerB
     [EnableRateLimiting("login")]
     public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
         [FromBody] MerchantCredentials merchantCredentials, CancellationToken cancellationToken) =>
-        Reply(await authService.GetAccessToken(merchantCredentials, cancellationToken));
+        Reply(await authService.GetAccessTokenAsync(merchantCredentials, cancellationToken));
 
     [Authorize]
     [HttpGet("verify-token")]

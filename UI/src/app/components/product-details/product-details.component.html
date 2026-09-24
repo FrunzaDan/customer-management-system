@@ -16,7 +16,7 @@
     </div>
   </div>
 
-  @if (isLoading()) {
+  @if (loading()) {
     <div class="app-card loading-state" role="status">
       <span
         class="spinner-border spinner-border-sm me-2"
@@ -24,7 +24,7 @@
       ></span
       >Loading product…
     </div>
-  } @else if (errorMessage(); as error) {
+  } @else if (loadError(); as error) {
     <div class="alert alert-danger" role="alert">{{ error }}</div>
   } @else if (product(); as product) {
     <div class="row g-4">

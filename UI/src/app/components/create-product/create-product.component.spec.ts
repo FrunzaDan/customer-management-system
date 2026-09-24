@@ -88,7 +88,7 @@ describe('CreateProductComponent', () => {
     await submit(component.productForm);
 
     expect(navigate).toHaveBeenCalledWith(['/products']);
-    expect(component.errorMessage()).toBeNull();
+    expect(component.saveError()).toBeNull();
   });
 
   it('sets a friendly message and stops submitting on a network error (status 0)', async () => {
@@ -100,7 +100,7 @@ describe('CreateProductComponent', () => {
     await submit(component.productForm);
 
     expect(component.productForm().submitting()).toBe(false);
-    expect(component.errorMessage()).toBe(
+    expect(component.saveError()).toBe(
       'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
     );
     expect(navigate).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ describe('CreateProductComponent', () => {
 
     await submit(component.productForm);
 
-    expect(component.errorMessage()).toBe('Price must be greater than zero.');
+    expect(component.saveError()).toBe('Price must be greater than zero.');
   });
 
   describe('unsaved changes', () => {

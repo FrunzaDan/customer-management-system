@@ -969,14 +969,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/products",
+							"raw": "{{baseUrl}}/api/product/all",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customer",
-								"products"
+								"product",
+								"all"
 							]
 						},
 						"description": "The fixed 50-product catalogue, ordered by category then name. Captures the product with the most units left into {{productId}} so repeated Collection Runner passes don't run it out of stock."
@@ -1188,14 +1188,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/product-details?productId={{productId}}",
+							"raw": "{{baseUrl}}/api/product/get?productId={{productId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customer",
-								"product-details"
+								"product",
+								"get"
 							],
 							"query": [
 								{
@@ -1312,14 +1312,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customer/product-details?productId=00000000-0000-0000-0000-000000000000",
+							"raw": "{{baseUrl}}/api/product/get?productId=00000000-0000-0000-0000-000000000000",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customer",
-								"product-details"
+								"product",
+								"get"
 							],
 							"query": [
 								{

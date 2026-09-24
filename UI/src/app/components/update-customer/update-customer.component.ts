@@ -1,14 +1,13 @@
 import {
   Component,
   computed,
-  effect,
   inject,
   input,
   linkedSignal,
   signal,
-  untracked,
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -24,7 +23,7 @@ import {
 import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-form-fields.component';
 
 @Component({
-  selector: 'app-edit-customer',
+  selector: 'app-update-customer',
   templateUrl: './update-customer.component.html',
   styleUrl: './update-customer.component.css',
   imports: [CustomerFormFieldsComponent, FormRoot, RouterLink],
@@ -38,9 +37,26 @@ export class UpdateCustomerComponent {
   // Bound from the `:customerId` route param by withComponentInputBinding() in app.config.ts.
   readonly customerId = input<string>();
 
-  readonly customer = this.customerService.selectedCustomer;
-  readonly isLoading = this.customerService.selectedCustomerLoading;
-  readonly errorMessage = this.customerService.selectedCustomerError;
+  // Keyed on the route's id, like the details page; hasValue() guards the read,
+  // since value() throws while the resource is in error.
+  private readonly customerResource = rxResource({
+    params: () => this.customerId(),
+    stream: ({ params: customerId }) =>
+      this.customerService.getCustomer(customerId),
+  });
+  readonly customer = computed(() =>
+    this.customerResource.hasValue() ? this.customerResource.value() : null,
+  );
+  readonly loading = this.customerResource.isLoading;
+  readonly loadError = computed(() => {
+    const error = this.customerResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load the customer',
+        )
+      : null;
+  });
 
   // The form model *is* the loaded customer, mapped: it re-derives whenever
   // customer() changes and stays writable for the user's edits — no effect +
@@ -59,7 +75,7 @@ export class UpdateCustomerComponent {
     () => !this.saved() && isCustomerFormDirty(this.model(), this.baseline()),
   );
 
-  // Distinct from isLoading/errorMessage above, which reflect fetching the
+  // Distinct from loading/loadError above, which reflect fetching the
   // customer being edited — these track the save (PATCH) request itself.
   readonly saveError = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
@@ -76,13 +92,6 @@ export class UpdateCustomerComponent {
       },
     },
   });
-
-  constructor() {
-    effect(() => {
-      const id = this.customerId();
-      if (id) untracked(() => this.customerService.getCustomer(id));
-    });
-  }
 
   private async save(): Promise<void> {
     const current = this.customer();

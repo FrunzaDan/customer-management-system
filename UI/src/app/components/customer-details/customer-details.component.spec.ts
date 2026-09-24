@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { ReplaySubject, of, throwError } from 'rxjs';
 import { Customer, CustomerStatus } from '../../interfaces/customer';
 import { CustomerService } from '../../services/customer.service';
 import { AuditLogService } from '../../services/audit-log.service';
@@ -26,7 +26,14 @@ describe('CustomerDetailsComponent', () => {
   let deleteCustomer: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  let selectedCustomer: ReturnType<typeof signal<Customer | null>>;
+  let customer$: ReplaySubject<Customer>;
+  let fixture: ComponentFixture<CustomerDetailsComponent>;
+
+  // Emits the customer the page's rxResource streams, and waits for it to land.
+  const loadCustomer = async (customer: Customer) => {
+    customer$.next(customer);
+    await fixture.whenStable();
+  };
   let activationLoading: ReturnType<typeof signal<boolean>>;
 
   const buildCustomer = (overrides: Partial<Customer> = {}): Customer => ({
@@ -69,7 +76,8 @@ describe('CustomerDetailsComponent', () => {
   let routeParamId: string | null = 'customer-1';
 
   const createComponent = (): CustomerDetailsComponent => {
-    getCustomer = vi.fn();
+    customer$ = new ReplaySubject<Customer>(1);
+    getCustomer = vi.fn(() => customer$);
     loadAuditLog = vi.fn();
     loadPurchases = vi.fn();
     loadProducts = vi.fn();
@@ -85,7 +93,6 @@ describe('CustomerDetailsComponent', () => {
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     confirm = vi.fn().mockResolvedValue(true);
     navigate = vi.fn().mockResolvedValue(true);
-    selectedCustomer = signal<Customer | null>(null);
     activationLoading = signal(false);
 
     // CustomerDetailsComponent resolves its dependencies via field-initializer
@@ -97,9 +104,6 @@ describe('CustomerDetailsComponent', () => {
         {
           provide: CustomerService,
           useValue: {
-            selectedCustomer: selectedCustomer,
-            selectedCustomerLoading: signal(false),
-            selectedCustomerError: signal<string | null>(null),
             getCustomer,
             activationLoading,
             activationError: signal<string | null>(null),
@@ -144,7 +148,7 @@ describe('CustomerDetailsComponent', () => {
     // RouterLink in the template needs the real Router; only stub navigate().
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
 
-    const fixture = TestBed.createComponent(CustomerDetailsComponent);
+    fixture = TestBed.createComponent(CustomerDetailsComponent);
     if (routeParamId) fixture.componentRef.setInput('customerId', routeParamId);
     fixture.detectChanges();
     return fixture.componentInstance;
@@ -173,62 +177,58 @@ describe('CustomerDetailsComponent', () => {
       expect(loadProducts).toHaveBeenCalled();
     });
 
-    it('navigates home instead of fetching when there is no id', () => {
+    it('navigates to the customer list instead of fetching when there is no id', () => {
       routeParamId = null;
       createComponent();
 
       expect(getCustomer).not.toHaveBeenCalled();
       expect(loadAuditLog).not.toHaveBeenCalled();
       expect(loadPurchases).not.toHaveBeenCalled();
-      expect(navigate).toHaveBeenCalledWith(['']);
+      expect(navigate).toHaveBeenCalledWith(['/customers']);
     });
   });
 
   describe('computed labels', () => {
-    it('customerGender maps the numeric code to a label', () => {
+    it('genderLabel maps the numeric code to a label', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ gender: 2 }));
+      await loadCustomer(buildCustomer({ gender: 2 }));
 
-      expect(component.customerGender()).toBe('female');
+      expect(component.genderLabel()).toBe('female');
     });
 
-    it('customerStatusLabel maps the status code to a label', () => {
+    it('statusLabel maps the status code to a label', async () => {
       const component = createComponent();
-      selectedCustomer.set(
-        buildCustomer({ status: CustomerStatus.Deactivated }),
-      );
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
 
-      expect(component.customerStatusLabel()).toBe('Deactivated');
+      expect(component.statusLabel()).toBe('Deactivated');
     });
 
     it('both are undefined when no customer is loaded', () => {
       const component = createComponent();
 
-      expect(component.customerGender()).toBeUndefined();
-      expect(component.customerStatusLabel()).toBeUndefined();
+      expect(component.genderLabel()).toBeUndefined();
+      expect(component.statusLabel()).toBeUndefined();
     });
   });
 
   describe('canDelete', () => {
-    it('is false for an Active customer', () => {
+    it('is false for an Active customer', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Active }));
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Active }));
 
       expect(component.canDelete()).toBe(false);
     });
 
-    it('is true for a Deactivated customer', () => {
+    it('is true for a Deactivated customer', async () => {
       const component = createComponent();
-      selectedCustomer.set(
-        buildCustomer({ status: CustomerStatus.Deactivated }),
-      );
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
 
       expect(component.canDelete()).toBe(true);
     });
 
-    it('is true for a Test customer (exempt from the deactivate-first rule)', () => {
+    it('is true for a Test customer (exempt from the deactivate-first rule)', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Test }));
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Test }));
 
       expect(component.canDelete()).toBe(true);
     });
@@ -237,7 +237,7 @@ describe('CustomerDetailsComponent', () => {
   describe('deactivateCustomer / reactivateCustomer', () => {
     it('deactivateCustomer asks for confirmation before delegating to the service', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
 
       await component.deactivateCustomer();
 
@@ -247,7 +247,7 @@ describe('CustomerDetailsComponent', () => {
 
     it('deactivateCustomer does nothing when the user cancels', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deactivateCustomer();
@@ -255,9 +255,9 @@ describe('CustomerDetailsComponent', () => {
       expect(deactivateCustomer).not.toHaveBeenCalled();
     });
 
-    it('reactivateCustomer delegates directly, without a confirmation prompt', () => {
+    it('reactivateCustomer delegates directly, without a confirmation prompt', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
 
       component.reactivateCustomer();
 
@@ -269,7 +269,7 @@ describe('CustomerDetailsComponent', () => {
   describe('deleteCustomer', () => {
     it('does nothing when the user cancels the confirmation', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       confirm.mockResolvedValue(false);
 
       await component.deleteCustomer();
@@ -279,7 +279,7 @@ describe('CustomerDetailsComponent', () => {
 
     it('deletes the customer and navigates back to the list on success', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
 
       await component.deleteCustomer();
 
@@ -289,7 +289,7 @@ describe('CustomerDetailsComponent', () => {
 
     it('surfaces the error and stops loading when the delete request fails', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       deleteCustomer.mockReturnValue(
         throwError(
           () =>
@@ -313,9 +313,9 @@ describe('CustomerDetailsComponent', () => {
   });
 
   describe('audit log reload on activation-loading transition', () => {
-    it('reloads the audit log once a deactivate/reactivate call resolves (true -> false)', () => {
+    it('reloads the customer and its audit log once a deactivate/reactivate call resolves (true -> false)', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       loadAuditLog.mockClear();
 
       activationLoading.set(true);
@@ -326,11 +326,12 @@ describe('CustomerDetailsComponent', () => {
       TestBed.flushEffects();
 
       expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
+      expect(getCustomer).toHaveBeenCalledTimes(2); // the first load, then the refresh
     });
 
-    it('does not reload on the initial false state (no prior true)', () => {
+    it('does not reload on the initial false state (no prior true)', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       loadAuditLog.mockClear();
 
       TestBed.flushEffects();
@@ -339,18 +340,16 @@ describe('CustomerDetailsComponent', () => {
     });
   });
   describe('purchases', () => {
-    it('canPurchase is true for Active and Test customers, false for Deactivated', () => {
+    it('canPurchase is true for Active and Test customers, false for Deactivated', async () => {
       const component = createComponent();
 
-      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Active }));
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Active }));
       expect(component.canPurchase()).toBe(true);
 
-      selectedCustomer.set(buildCustomer({ status: CustomerStatus.Test }));
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Test }));
       expect(component.canPurchase()).toBe(true);
 
-      selectedCustomer.set(
-        buildCustomer({ status: CustomerStatus.Deactivated }),
-      );
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
       expect(component.canPurchase()).toBe(false);
     });
 
@@ -394,9 +393,9 @@ describe('CustomerDetailsComponent', () => {
       expect(groups[0].products.map((p) => p.productId)).toEqual(['p1', 'p2']);
     });
 
-    it('canSubmitPurchase needs a picked, in-stock product for a customer who can buy', () => {
+    it('canSubmitPurchase needs a picked, in-stock product for a customer who can buy', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       products.set([
         buildProduct({ productId: 'in-stock', quantityOnHand: 3 }),
         buildProduct({ productId: 'sold-out', quantityOnHand: 0 }),
@@ -410,15 +409,13 @@ describe('CustomerDetailsComponent', () => {
       component.selectedProductId.set('in-stock');
       expect(component.canSubmitPurchase()).toBe(true);
 
-      selectedCustomer.set(
-        buildCustomer({ status: CustomerStatus.Deactivated }),
-      );
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
       expect(component.canSubmitPurchase()).toBe(false); // deactivated customer
     });
 
-    it('recordPurchase posts the pick, resets it, and refreshes purchases, stock and audit trail', () => {
+    it('recordPurchase posts the pick, resets it, and refreshes purchases, stock and audit trail', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       products.set([buildProduct({ productId: 'product-1' })]);
       component.selectedProductId.set('product-1');
       loadPurchases.mockClear();
@@ -435,18 +432,18 @@ describe('CustomerDetailsComponent', () => {
       expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
     });
 
-    it('recordPurchase does nothing when no product is picked', () => {
+    it('recordPurchase does nothing when no product is picked', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
 
       component.recordPurchase();
 
       expect(purchaseProduct).not.toHaveBeenCalled();
     });
 
-    it('recordPurchase does nothing for a product that is out of stock', () => {
+    it('recordPurchase does nothing for a product that is out of stock', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer());
+      await loadCustomer(buildCustomer());
       products.set([
         buildProduct({ productId: 'sold-out', quantityOnHand: 0 }),
       ]);
@@ -457,9 +454,9 @@ describe('CustomerDetailsComponent', () => {
       expect(purchaseProduct).not.toHaveBeenCalled();
     });
 
-    it('surfaces the server message, stops loading and re-fetches stock when the purchase fails', () => {
+    it('surfaces the server message, stops loading and re-fetches stock when the purchase fails', async () => {
       const component = createComponent();
-      selectedCustomer.set(buildCustomer({ customerId: 'customer-1' }));
+      await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       products.set([buildProduct({ productId: 'product-1' })]);
       component.selectedProductId.set('product-1');
       loadProducts.mockClear();

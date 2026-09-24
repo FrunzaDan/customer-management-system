@@ -2,7 +2,7 @@
   <div class="page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Register customer</h1>
+        <h1 class="page-title">Add customer</h1>
         <p class="page-subtitle">
           Enter the customer's personal details and address.
         </p>
@@ -27,12 +27,12 @@
             aria-hidden="true"
           ></span>
         }
-        Register customer
+        Add customer
       </button>
       <a routerLink="/customers" class="btn btn-link">Cancel</a>
     </div>
 
-    @if (errorMessage(); as error) {
+    @if (saveError(); as error) {
       <div class="alert alert-danger mt-3" role="alert">{{ error }}</div>
     }
   </div>

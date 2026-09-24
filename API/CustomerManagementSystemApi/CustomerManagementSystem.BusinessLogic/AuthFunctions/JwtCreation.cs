@@ -23,13 +23,13 @@ public class JwtCreation
         _signingKey = JwtSigningKey.Create(_authOptions.SecureJwtKey);
     }
 
-    public async Task<ResponseModel<AccessTokenResponse>> GenerateBearerJwt(MerchantCredentials merchantCredentials,
+    public async Task<ResponseModel<AccessTokenResponse>> GenerateBearerJwtAsync(MerchantCredentials merchantCredentials,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(merchantCredentials.Username))
             return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
-        var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDb(merchantCredentials, cancellationToken);
+        var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDbAsync(merchantCredentials, cancellationToken);
 
         // 401 (wrong username or password) or 403 (a role that may not sign in), with its message.
         if (credentialsCheck.Status != StatusCodes.Status200OK)

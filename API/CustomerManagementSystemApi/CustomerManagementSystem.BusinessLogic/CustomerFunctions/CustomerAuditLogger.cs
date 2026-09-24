@@ -10,12 +10,12 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 // swallowed and logged instead.
 public partial class CustomerAuditLogger(IDbUtils dbUtils, ILogger<CustomerAuditLogger> logger) : ICustomerAuditLogger
 {
-    public async Task Log(Guid customerId, string performedBy, AuditAction action, string? details = null,
+    public async Task LogAsync(Guid customerId, string performedBy, AuditAction action, string? details = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            await dbUtils.LogCustomerAudit(customerId, performedBy, action, details, cancellationToken);
+            await dbUtils.LogCustomerAuditAsync(customerId, performedBy, action, details, cancellationToken);
         }
         catch (Exception ex)
         {

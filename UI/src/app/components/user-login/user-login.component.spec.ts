@@ -71,7 +71,7 @@ describe('UserLoginComponent', () => {
       username: 'TestMerchantID',
       password: 'Merchant123',
     });
-    expect(component.errorMessage()).toBeNull();
+    expect(component.loginError()).toBeNull();
   });
 
   it('shows the API message when the credentials check fails', async () => {
@@ -80,7 +80,7 @@ describe('UserLoginComponent', () => {
 
     await submit(component.loginForm);
 
-    expect(component.errorMessage()).toBe('Nope');
+    expect(component.loginError()).toBe('Nope');
   });
 
   it('shows the API problem detail when sign-in is rejected', async () => {
@@ -101,7 +101,7 @@ describe('UserLoginComponent', () => {
 
     await submit(component.loginForm);
 
-    expect(component.errorMessage()).toBe('Invalid username or password.');
+    expect(component.loginError()).toBe('Invalid username or password.');
   });
 
   it.each([
@@ -120,7 +120,7 @@ describe('UserLoginComponent', () => {
 
       await submit(component.loginForm);
 
-      expect(component.errorMessage()).toBe(message);
+      expect(component.loginError()).toBe(message);
     },
   );
 

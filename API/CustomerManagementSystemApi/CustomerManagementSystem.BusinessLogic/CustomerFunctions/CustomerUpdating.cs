@@ -7,7 +7,7 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
 public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger)
 {
-    public async Task<ResponseModel<object>> UpdateCustomerFunction(UpdateCustomerRequest request, string performedBy,
+    public async Task<ResponseModel<object>> UpdateCustomerAsync(UpdateCustomerRequest request, string performedBy,
         CancellationToken cancellationToken = default)
     {
         if (request.CustomerId == Guid.Empty)
@@ -40,12 +40,12 @@ public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
                 return new ResponseModel<object>(400, addressLengthError);
         }
 
-        var response = await dbUtils.UpdateCustomer(request, cancellationToken);
+        var response = await dbUtils.UpdateCustomerAsync(request, cancellationToken);
 
         // Not forwarding cancellationToken: the edit already succeeded, so the audit write
         // should still be attempted even if the client has since disconnected.
         if (response.Status == 200)
-            await auditLogger.Log(request.CustomerId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
+            await auditLogger.LogAsync(request.CustomerId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
 
         return response;
     }

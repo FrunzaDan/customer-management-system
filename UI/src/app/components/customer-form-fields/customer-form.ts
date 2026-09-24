@@ -43,9 +43,9 @@ export const customerFormSchema = schema<CustomerFormModel>((p) => {
   required(p.lastName, { message: 'Last name is required' });
   required(p.email, { message: 'Email is required' });
   pattern(p.email, new RegExp(environment.emailRegex), {
-    message: 'The Email should be a valid one',
+    message: 'The email should be a valid one',
   });
-  required(p.phoneNumber, { message: 'Phone Number is required' });
+  required(p.phoneNumber, { message: 'Phone number is required' });
   pattern(p.phoneNumber, new RegExp(environment.phoneNumberRegex), {
     message: 'The phone number should be a valid one',
   });

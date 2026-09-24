@@ -1,21 +1,22 @@
-// customer-list.component.ts
-import {
-  Component,
-  OnInit,
-  computed,
-  effect,
-  signal,
-  Signal,
-  inject,
-} from '@angular/core';
+import { Component, OnInit, computed, signal, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { CustomerService } from '../../services/customer.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { NotificationService } from '../../services/notification.service';
-import { Customer, CustomerStatus } from '../../interfaces/customer';
+import { CustomerStatus } from '../../interfaces/customer';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { customerStatusLabel } from '../../utils/customer-status-label';
+
+type CustomerSortColumn = 'name' | 'email' | 'phoneNumber';
+
+// How each sort column reads in the table caption.
+const SORT_LABELS: Record<CustomerSortColumn, string> = {
+  name: 'name',
+  email: 'email',
+  phoneNumber: 'phone number',
+};
 
 @Component({
   selector: 'app-customer-list',
@@ -24,15 +25,13 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   imports: [RouterLink],
 })
 export class CustomerListComponent implements OnInit {
-  // Use dependency injection with inject()
   private readonly customerService = inject(CustomerService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
 
-  // Public signals for template
   readonly customers = this.customerService.customers;
-  readonly isLoading = this.customerService.loading;
-  readonly errorMessage = this.customerService.error;
+  readonly loading = this.customerService.loading;
+  readonly loadError = this.customerService.error;
   readonly activationLoading = this.customerService.activationLoading;
   readonly activationError = this.customerService.activationError;
 
@@ -48,7 +47,7 @@ export class CustomerListComponent implements OnInit {
   readonly selectedCustomerIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
-  readonly allOnPageSelected = computed(
+  readonly allSelected = computed(
     () =>
       this.customers().length > 0 &&
       this.customers().every((c) =>
@@ -61,21 +60,16 @@ export class CustomerListComponent implements OnInit {
   readonly exportLoading = this.customerService.exportLoading;
   readonly exportError = this.customerService.exportError;
 
-  // Register customerStatus enum for better type checking
   readonly CustomerStatus = CustomerStatus;
 
-  readonly statusLabels = new Map<Customer['status'], string>([
-    [CustomerStatus.Active, 'Active'],
-    [CustomerStatus.Deactivated, 'Deactivated'],
-    [CustomerStatus.Test, 'Test'],
-  ]);
+  readonly customerStatusLabel = customerStatusLabel;
 
   // Search, sorting, and pagination are all server-side now: every change to
   // any of these re-fetches just the relevant page from the API rather than
   // filtering/sorting an already-loaded full list in memory (see
   // CustomerService.loadCustomers and Customer_List).
   readonly searchTerm = signal('');
-  readonly sortColumn = signal<'name' | 'email' | 'phoneNumber'>('name');
+  readonly sortColumn = signal<CustomerSortColumn>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
   readonly pageSize = 50;
@@ -89,47 +83,20 @@ export class CustomerListComponent implements OnInit {
   // Spoken by the polite live region so a screen-reader user hears the outcome
   // of a search / page change without hunting for it.
   readonly resultsAnnouncement = computed(() => {
-    if (this.isLoading()) return 'Loading customers';
+    if (this.loading()) return 'Loading customers';
     const total = this.totalItems();
     return `${total} ${total === 1 ? 'customer' : 'customers'} found`;
   });
 
   readonly tableCaption = computed(
     () =>
-      `Customers, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${this.sortColumn()} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
+      `Customers, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${SORT_LABELS[this.sortColumn()]} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
   );
 
   // Debounced so typing doesn't fire an API call per keystroke — the search
   // used to be a synchronous in-memory filter, but now it's a network call.
   private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   private static readonly SEARCH_DEBOUNCE_MS = 300;
-
-  // Computed signal for duplicate GUIDs
-  readonly duplicateGuids = computed(() => {
-    const customers = this.customers();
-    const customerIdCount = new Map<string, number>();
-
-    customers.forEach((customer) => {
-      const count = customerIdCount.get(customer.customerId) ?? 0;
-      customerIdCount.set(customer.customerId, count + 1);
-    });
-
-    return Array.from(customerIdCount.entries())
-      .filter(([_, count]) => count > 1)
-      .map(([customerId]) => customerId);
-  });
-
-  constructor() {
-    // duplicateGuids() is a computed signal, so re-run this check whenever
-    // it actually changes instead of only once, synchronously, right after
-    // the (async) loadCustomers() call in ngOnInit.
-    effect(() => {
-      const duplicates = this.duplicateGuids();
-      if (duplicates.length > 0) {
-        console.warn('Duplicate GUIDs found:', duplicates);
-      }
-    });
-  }
 
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
@@ -152,14 +119,12 @@ export class CustomerListComponent implements OnInit {
   }
 
   // Exposed on the <th> so assistive tech announces the current sort.
-  ariaSort(
-    column: 'name' | 'email' | 'phoneNumber',
-  ): 'ascending' | 'descending' | 'none' {
+  ariaSort(column: CustomerSortColumn): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
   }
 
-  setSort(column: 'name' | 'email' | 'phoneNumber'): void {
+  setSort(column: CustomerSortColumn): void {
     if (this.sortColumn() === column) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
     } else {
@@ -193,7 +158,6 @@ export class CustomerListComponent implements OnInit {
     });
   }
 
-  // Customer action methods
   async deactivateCustomer(customerId: string): Promise<void> {
     const confirmed = await this.confirmDialogService.confirm(
       'Are you sure you want to deactivate this customer?',
@@ -220,7 +184,7 @@ export class CustomerListComponent implements OnInit {
     this.customerService.deleteCustomer(customerId).subscribe({
       next: () => {
         this.deleting.set(false);
-        // deleteCustomer() only
+        // removeCustomerLocally() (called by CustomerService) only
         // drops the row from the in-memory page — totalItems/page count
         // would go stale without a real re-fetch of the current page.
         this.fetchCustomers();
@@ -246,7 +210,7 @@ export class CustomerListComponent implements OnInit {
     this.selectedCustomerIds.set(next);
   }
 
-  toggleSelectAllOnPage(checked: boolean): void {
+  toggleSelectAll(checked: boolean): void {
     const next = new Set(this.selectedCustomerIds());
     for (const customer of this.customers()) {
       if (checked) {

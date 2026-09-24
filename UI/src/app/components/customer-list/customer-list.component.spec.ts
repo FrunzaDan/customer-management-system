@@ -231,7 +231,7 @@ describe('CustomerListComponent', () => {
     });
   });
 
-  describe('toggleSelection / toggleSelectAllOnPage', () => {
+  describe('toggleSelection / toggleSelectAll', () => {
     it('adds a customerId to selectedCustomerIds when checked, and removes it when unchecked', () => {
       component.toggleSelection('customer-1', true);
       expect(component.isSelected('customer-1')).toBe(true);
@@ -240,64 +240,36 @@ describe('CustomerListComponent', () => {
       expect(component.isSelected('customer-1')).toBe(false);
     });
 
-    it('allOnPageSelected is false when the page is empty', () => {
+    it('allSelected is false when the page is empty', () => {
       customers.set([]);
-      expect(component.allOnPageSelected()).toBe(false);
+      expect(component.allSelected()).toBe(false);
     });
 
-    it('toggleSelectAllOnPage(true) selects every customer on the current page', () => {
+    it('toggleSelectAll(true) selects every customer on the current page', () => {
       customers.set([
         buildCustomer({ customerId: 'g1' }),
         buildCustomer({ customerId: 'g2' }),
       ]);
 
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
 
       expect(component.isSelected('g1')).toBe(true);
       expect(component.isSelected('g2')).toBe(true);
-      expect(component.allOnPageSelected()).toBe(true);
+      expect(component.allSelected()).toBe(true);
     });
 
-    it('toggleSelectAllOnPage(false) clears the selection for every customer on the current page', () => {
+    it('toggleSelectAll(false) clears the selection for every customer on the current page', () => {
       customers.set([
         buildCustomer({ customerId: 'g1' }),
         buildCustomer({ customerId: 'g2' }),
       ]);
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
 
-      component.toggleSelectAllOnPage(false);
+      component.toggleSelectAll(false);
 
       expect(component.isSelected('g1')).toBe(false);
       expect(component.isSelected('g2')).toBe(false);
-      expect(component.allOnPageSelected()).toBe(false);
-    });
-  });
-
-  describe('duplicateGuids effect', () => {
-    it('warns when the current page contains duplicate GUIDs', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      customers.set([
-        buildCustomer({ customerId: 'dup' }),
-        buildCustomer({ customerId: 'dup' }),
-      ]);
-      TestBed.flushEffects();
-
-      expect(warnSpy).toHaveBeenCalledWith('Duplicate GUIDs found:', ['dup']);
-      warnSpy.mockRestore();
-    });
-
-    it('does not warn when every GUID on the page is unique', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      customers.set([
-        buildCustomer({ customerId: 'g1' }),
-        buildCustomer({ customerId: 'g2' }),
-      ]);
-      TestBed.flushEffects();
-
-      expect(warnSpy).not.toHaveBeenCalled();
-      warnSpy.mockRestore();
+      expect(component.allSelected()).toBe(false);
     });
   });
 
@@ -376,7 +348,7 @@ describe('CustomerListComponent', () => {
         }),
         buildCustomer({ customerId: 'test-1', status: CustomerStatus.Test }),
       ]);
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
       loadCustomers.mockClear();
 
       await component.bulkDeleteSelected();
@@ -407,7 +379,7 @@ describe('CustomerListComponent', () => {
           status: CustomerStatus.Deactivated,
         }),
       ]);
-      component.toggleSelectAllOnPage(true);
+      component.toggleSelectAll(true);
       deactivateCustomerSilently.mockReturnValue(
         throwError(() => new Error('boom')),
       );

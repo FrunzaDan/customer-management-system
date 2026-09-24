@@ -29,7 +29,7 @@ const DEFAULT_PAGE_SIZE = 50;
   providedIn: 'root',
 })
 export class GlobalAuditLogService {
-  private readonly API_URL = `${environment.apiUrl}/api/customer/audit-log/all`;
+  private readonly apiUrl = `${environment.apiUrl}/api/customer/audit-log/all`;
 
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
@@ -46,7 +46,7 @@ export class GlobalAuditLogService {
     const params = this.params();
     if (!params) return undefined;
     return {
-      url: this.API_URL,
+      url: this.apiUrl,
       params: { pageNumber: params.pageNumber, pageSize: params.pageSize },
     };
   });
@@ -88,7 +88,7 @@ export class GlobalAuditLogService {
   }
 
   deleteAllAuditLog(): Observable<GenericResponse<object>> {
-    return this.http.delete<GenericResponse<object>>(this.API_URL).pipe(
+    return this.http.delete<GenericResponse<object>>(this.apiUrl).pipe(
       tap(() => {
         this.page.set({
           pageNumber: 1,
