@@ -56,7 +56,7 @@ public class AuthServiceTests
             Password = "Merchant123",
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
+        Assert.Equal(400, result.Status);
         dbUtils.Verify(
             d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -79,8 +79,8 @@ public class AuthServiceTests
             Password = password,
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
-        Assert.Equal("Invalid or empty merchant credentials.", result.ResponseMessage);
+        Assert.Equal(400, result.Status);
+        Assert.Equal("Username and password are required.", result.ResponseMessage);
         dbUtils.Verify(
             d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -91,7 +91,7 @@ public class AuthServiceTests
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(403, "Invalid username or password."));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessToken(new MerchantCredentials
@@ -100,7 +100,7 @@ public class AuthServiceTests
             Password = "WrongPassword",
         }, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
+        Assert.Equal(401, result.Status);
         Assert.Equal("Invalid username or password.", result.ResponseMessage);
     }
 }

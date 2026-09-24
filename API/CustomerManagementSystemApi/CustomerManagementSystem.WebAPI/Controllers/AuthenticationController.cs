@@ -8,16 +8,13 @@ namespace CustomerManagementSystem.WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthenticationController(IAuthService authService) : ControllerBase
+public class AuthenticationController(IAuthService authService) : ApiControllerBase
 {
     [HttpPost("access-token")]
     [EnableRateLimiting("login")]
     public async Task<ActionResult<ResponseModel<AccessTokenResponse>>> GetAccessToken(
-        [FromBody] MerchantCredentials merchantCredentials, CancellationToken cancellationToken)
-    {
-        var response = await authService.GetAccessToken(merchantCredentials, cancellationToken);
-        return StatusCode(response.Status, response);
-    }
+        [FromBody] MerchantCredentials merchantCredentials, CancellationToken cancellationToken) =>
+        Reply(await authService.GetAccessToken(merchantCredentials, cancellationToken));
 
     [Authorize]
     [HttpGet("verify-token")]

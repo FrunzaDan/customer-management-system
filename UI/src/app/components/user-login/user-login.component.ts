@@ -18,6 +18,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UserLoginRequest } from '../../interfaces/user-login-request';
 import { FooterService } from '../../services/footer.service';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 import { NavbarService } from '../../services/navbar.service';
 import { SessionStorageService } from '../../services/session-storage.service';
 import { UserLoginService } from '../../services/user-login.service';
@@ -87,32 +88,11 @@ export class UserLoginComponent implements OnInit, OnDestroy {
       const result = this.userLoginService.checkCredentials(response);
       this.errorMessage.set(result.success ? null : result.message);
     } catch (error) {
-      this.handleLoginError((error as HttpErrorResponse).status);
-    }
-  }
-
-  private handleLoginError(statusCode: number): void {
-    switch (statusCode) {
-      case 403:
-        this.errorMessage.set('Merchant credentials are incorrect!');
-        break;
-      case 404:
-        this.errorMessage.set('Endpoint is down!');
-        break;
-      case 429:
-        this.errorMessage.set(
-          'Too many login attempts. Please wait a moment and try again.',
-        );
-        break;
-      case 0:
-        this.errorMessage.set(
-          'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
-        );
-        break;
-      default:
-        this.errorMessage.set(
-          `Server error (${statusCode}). Please try again later.`,
-        );
+      // The API's Problem Details message: "Invalid username or password." (401),
+      // "Too many login attempts…" (429), or a generic one naming the status.
+      this.errorMessage.set(
+        extractErrorMessage(error as HttpErrorResponse, 'Sign-in failed'),
+      );
     }
   }
 

@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Product_GetDetails]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- Result set 1: the product (zero rows = not found; the API maps that to 404).
     SELECT

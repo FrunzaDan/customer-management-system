@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[CustomerAuditLog_ListByCustomer]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     SELECT
         CustomerAuditLogId,

@@ -6,29 +6,56 @@ describe('extractErrorMessage', () => {
     const error = new HttpErrorResponse({ status: 0 });
 
     expect(extractErrorMessage(error)).toBe(
-      'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+      'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
     );
   });
 
-  it("uses the envelope's responseMessage", () => {
+  it("joins a validation problem's per-field messages", () => {
     const error = new HttpErrorResponse({
-      status: 409,
-      error: { status: 409, responseMessage: 'Email already registered.' },
+      status: 400,
+      error: {
+        title: 'One or more validation errors occurred.',
+        status: 400,
+        errors: {
+          FirstName: ['The FirstName field is required.'],
+          Grade: ['Grade must be between 0 and 12.'],
+        },
+      },
     });
 
-    expect(extractErrorMessage(error)).toBe('Email already registered.');
+    expect(extractErrorMessage(error)).toBe(
+      'The FirstName field is required. Grade must be between 0 and 12.',
+    );
   });
 
-  it('falls back to a plain message when there is no responseMessage', () => {
+  it("uses a problem's detail when there are no validation errors", () => {
+    const error = new HttpErrorResponse({
+      status: 404,
+      error: {
+        title: 'Not Found',
+        status: 404,
+        detail: 'Record not found.',
+      },
+    });
+
+    expect(extractErrorMessage(error)).toBe('Record not found.');
+  });
+
+  it("falls back to a problem's title when it has no detail", () => {
     const error = new HttpErrorResponse({
       status: 500,
-      error: { message: 'Something broke.' },
+      error: {
+        title: 'An error occurred while processing your request.',
+        status: 500,
+      },
     });
 
-    expect(extractErrorMessage(error)).toBe('Something broke.');
+    expect(extractErrorMessage(error)).toBe(
+      'An error occurred while processing your request.',
+    );
   });
 
-  it('names the failed action when the response has no message body', () => {
+  it('names the failed action when the response has no problem body', () => {
     const error = new HttpErrorResponse({ status: 502 });
 
     expect(extractErrorMessage(error)).toBe(

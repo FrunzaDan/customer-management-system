@@ -344,18 +344,9 @@ export class CustomerService {
       })
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
       .subscribe({
-        next: (response) => {
-          if (response.status != 200) {
-            this.handleActivationError(
-              new Error(
-                action === 'deactivate'
-                  ? 'Deactivation failed'
-                  : 'Reactivation failed',
-              ),
-            );
-            return;
-          }
-
+        // A rejected change (e.g. 409 "already deactivated") arrives as an HTTP
+        // error with a Problem Details body, so reaching next() means it was done.
+        next: () => {
           if (!this.setStatusLocally(customerId, status)) {
             this.handleActivationError(
               new Error(`Customer with GUID ${customerId} not found locally.`),
@@ -438,8 +429,8 @@ export class CustomerService {
     }));
   }
 
-  // An Error (not an HttpErrorResponse) is a request that succeeded at the HTTP
-  // level but that the API reported as not done; its message is already user-facing.
+  // An Error (not an HttpErrorResponse) is a change the API made that this page
+  // couldn't reflect (the row isn't in the loaded list); its message is already user-facing.
   private handleActivationError(error: HttpErrorResponse | Error): void {
     this.activationState.set({
       loading: false,

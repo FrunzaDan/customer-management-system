@@ -1,10 +1,10 @@
-﻿using System.Threading.RateLimiting;
+﻿using System.Globalization;
+using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
-using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using CustomerManagementSystem.WebAPI.Routing;
@@ -22,31 +22,19 @@ builder.Services.AddBusinessLogic();
 // System.Text.Json (the ASP.NET Core default; camelCase, case-insensitive reads) — it handles
 // DateOnly, UTC DateTime ("...Z") and Guid natively.
 builder.Services.AddControllers(options =>
-        options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())))
-    .ConfigureApiBehaviorOptions(options =>
-    {
-        // With typed request members (Guid, DateOnly, enums), a malformed value now fails in
-        // model binding, before the action runs. Reply in the same ResponseModel envelope as
-        // every other 400, instead of ASP.NET's default ValidationProblemDetails shape.
-        options.InvalidModelStateResponseFactory = context =>
-        {
-            // A bad JSON body value is reported twice: once under its JSON path ("$.birthDate")
-            // and once under the action parameter's name ("request") — name the field.
-            var firstError = context.ModelState
-                .Where(entry => entry.Value?.Errors.Count > 0)
-                .OrderByDescending(entry => entry.Key.StartsWith('$'))
-                .Select(entry => $"Invalid value for '{entry.Key.TrimStart('$', '.')}'.")
-                .FirstOrDefault() ?? "Invalid request.";
-
-            return new BadRequestObjectResult(new ResponseModel<object>(StatusCodes.Status400BadRequest, firstError));
-        };
-    });
+    options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())));
 // OpenAPI document from ASP.NET Core's built-in generator (/openapi/v1.json), shown by Swagger UI.
 builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 
 builder.Services.AddHealthChecks();
 
-// The one handler for unexpected exceptions — see ErrorHandling/GlobalExceptionHandler.cs.
+// Every error response is RFC 9457 Problem Details (application/problem+json): validation
+// failures from [ApiController] (a malformed Guid/DateOnly/enum is rejected in model binding,
+// before the action runs), failed ResponseModel results (ApiControllerBase.Reply), bare status
+// codes such as 401/403 from the JWT bearer handler (UseStatusCodePages), the login rate limit
+// (OnRejected below) and unhandled exceptions (GlobalExceptionHandler, which logs them once and
+// answers 500).
+builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var jwtKey = builder.Configuration["Auth:SecureJWTKey"] ??
@@ -100,17 +88,35 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         }));
 
-    options.OnRejected = async (context, cancellationToken) =>
+    options.OnRejected = async (context, _) =>
     {
-        await context.HttpContext.Response.WriteAsJsonAsync(
-            new ResponseModel<object>(StatusCodes.Status429TooManyRequests,
-                "Too many login attempts. Please wait a moment and try again."), cancellationToken);
+        // Retry-After tells the client when the window resets (RFC 9110 §10.2.3).
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+
+        await context.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(
+            new ProblemDetailsContext
+            {
+                HttpContext = context.HttpContext,
+                ProblemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status429TooManyRequests,
+                    Detail = "Too many login attempts. Please wait a moment and try again."
+                }
+            });
     };
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// First, so it catches exceptions from everything after it.
+app.UseExceptionHandler();
+// Gives an empty 4xx/5xx (unknown route, wrong method, 401/403 from the JWT bearer handler) a
+// Problem Details body.
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -120,12 +126,6 @@ else
 {
     app.UseHsts();
 }
-
-// Unhandled exceptions: logged once and answered 500 by GlobalExceptionHandler. The empty
-// fallback pipeline is required: a bare UseExceptionHandler() refuses to start unless
-// AddProblemDetails() is registered, and this API replies in the ResponseModel envelope, not
-// Problem Details. GlobalExceptionHandler always handles the exception, so the fallback never runs.
-app.UseExceptionHandler(_ => { });
 
 // Responses carry live, per-user data: never let a browser or proxy cache them.
 app.Use(async (context, next) =>

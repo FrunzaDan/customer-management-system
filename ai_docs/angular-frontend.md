@@ -46,14 +46,9 @@ Because routes are guarded and the app uses SSR, this guard's HTTP call can run 
 
 1. User submits username + password → `UserLoginService.checkCredentials()` → `POST /api/authentication/access-token`, returning a `CredentialsCheckResult { success, message }` discriminated result (checked via `response.status === 200`, not by string-matching the body).
 2. On success: the token is stashed via `SessionStorageService` (`sessionStorage`, cleared when the tab closes), the app navigates to `/customers`.
-3. On error, `UserLoginComponent` maps the HTTP status to a message:
-   - `403` → "Merchant credentials are incorrect!"
-   - `404` → "Endpoint is down!"
-   - `429` → rate-limit message (see [api](api.md) for the `"login"` policy backing this)
-   - `0` (no response reached the browser at all — network/TLS-level failure) → "Could not reach the server. It may be offline, or your browser does not trust its security certificate."
-   - anything else → `"Server error ({statusCode}). Please try again later."`
+3. On error, `UserLoginComponent` shows `extractErrorMessage(error, 'Sign-in failed')`, like every other failed request: the API's Problem Details `detail` — "Invalid username or password." (`401`), "Too many login attempts…" (`429`, see [api](api.md) for the `"login"` policy) — or, with no body, the unreachable-server message (`0`) or "Sign-in failed (<status>). Please try again."
 
-- `status === 0` is a **deliberately distinct** case: it's what a rejected TLS certificate (e.g. `ERR_CERT_AUTHORITY_INVALID`) looks like to Angular's `HttpClient` — no response body, no real status code — so the message says so instead of defaulting to a generic "server is down," which would be misleading (the server is up; the browser just doesn't trust its cert). See [build-and-run](build-and-run.md) for the underlying dev-cert trust issue this message is covering for.
+- `status === 0` is a **deliberately distinct** case in `extractErrorMessage`: it's what a rejected TLS certificate (e.g. `ERR_CERT_AUTHORITY_INVALID`) looks like to Angular's `HttpClient` — no response body, no real status code — so the message mentions the certificate instead of defaulting to a generic "server is down," which would be misleading. See [build-and-run](build-and-run.md) for the underlying dev-cert trust issue this message is covering for.
 - The token is attached to the login *request itself* too (via `HttpHeaderService`) even though there's nothing to authenticate yet at that point — harmless (an empty/garbage `Authorization` header on an anonymous endpoint), just worth knowing it's not conditional on having a token already.
 
 ### Route/component map
@@ -112,7 +107,7 @@ Leaving a form with unsaved edits asks first, at three layers:
 Same convention in all three sibling apps (customer, employee, imalo); the shared files (`notification.service.ts`, `confirm-dialog.service.ts`, their components and specs) are identical copies, so a change to one belongs in all three.
 
 - **Success → toast, fired by the service.** A service method that changes data confirms it in a `tap` (`NotificationService.show('Customer deleted successfully.')`), so every caller gets it. Bulk callers use the `…Silently` variant (the plain method is the silent one plus the `tap`) and show one summary toast instead of one per item.
-- **Failure of an action → inline, next to it.** The component catches the `HttpErrorResponse`, turns it into text with `extractErrorMessage(error, 'Failed to <action>')` (`utils/extract-error-message.ts`) and shows it in a `role="alert"` box beside the form or button. No `console.error` for errors the user already sees.
+- **Failure of an action → inline, next to it.** The component catches the `HttpErrorResponse`, turns it into text with `extractErrorMessage(error, 'Failed to <action>')` (`utils/extract-error-message.ts`, byte-identical in all three apps: every API error is RFC 9457 Problem Details, so it shows the `errors` messages, else `detail`, else `title`, else a line naming the action and status) and shows it in a `role="alert"` box beside the form or button. No `console.error` for errors the user already sees.
 - **Failure of a page load → an alert box in place of the content**, never an empty page or a "Loading…" that never ends.
 - **Error toasts** are only for failures with no better place on the page (a bulk action's summary, test-data generation). They stay until dismissed (`show(message, 'error')` defaults to no timeout) and are `role="alert"`; success toasts are `role="status"` and last 6 s.
 - **Confirmations** — `ConfirmDialogService.confirm(message, { title?, confirmLabel?, cancelLabel?, variant? })`, never `window.confirm()`. Give a question title and a verb label (`{ title: 'Delete customer?', confirmLabel: 'Delete', variant: 'danger' }`); `variant: 'danger'` is for what can't be undone (delete, discard edits). One dialog at a time: a newer `confirm()` answers an unanswered one with `false`.

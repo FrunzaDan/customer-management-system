@@ -206,12 +206,12 @@ public class CustomerCreationTests
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         dbUtils.Setup(d => d.CreateCustomer(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<Guid?>(400, "Email already exists."));
+            .ReturnsAsync(new ResponseModel<Guid?>(409, "Email already exists."));
         var registration = new CustomerCreation(dbUtils.Object, auditLogger.Object);
 
         var result = await registration.CreateCustomerFunction(ValidRequest(), PerformedBy, TestContext.Current.CancellationToken);
 
-        Assert.Equal(400, result.Status);
+        Assert.Equal(409, result.Status);
         auditLogger.Verify(
             a => a.Log(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(), It.IsAny<string?>(),
                 It.IsAny<CancellationToken>()), Times.Never);

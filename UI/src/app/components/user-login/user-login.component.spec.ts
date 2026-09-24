@@ -83,23 +83,46 @@ describe('UserLoginComponent', () => {
     expect(component.errorMessage()).toBe('Nope');
   });
 
-  it.each([
-    [403, 'Merchant credentials are incorrect!'],
-    [404, 'Endpoint is down!'],
-    [429, 'Too many login attempts. Please wait a moment and try again.'],
-    [
-      0,
-      'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
-    ],
-    [500, 'Server error (500). Please try again later.'],
-  ])('maps HTTP %i to a friendly message', async (status, message) => {
-    login.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+  it('shows the API problem detail when sign-in is rejected', async () => {
+    login.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 401,
+            error: {
+              title: 'Unauthorized',
+              status: 401,
+              detail: 'Invalid username or password.',
+            },
+          }),
+      ),
+    );
     component.model.set({ username: 'TestMerchantID', password: 'x' });
 
     await submit(component.loginForm);
 
-    expect(component.errorMessage()).toBe(message);
+    expect(component.errorMessage()).toBe('Invalid username or password.');
   });
+
+  it.each([
+    [
+      0,
+      'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
+    ],
+    [502, 'Sign-in failed (502). Please try again.'],
+  ])(
+    'explains HTTP %i when there is no problem body',
+    async (status, message) => {
+      login.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status })),
+      );
+      component.model.set({ username: 'TestMerchantID', password: 'x' });
+
+      await submit(component.loginForm);
+
+      expect(component.errorMessage()).toBe(message);
+    },
+  );
 
   describe('session-expired notice', () => {
     const render = (sessionExpired?: string) => {

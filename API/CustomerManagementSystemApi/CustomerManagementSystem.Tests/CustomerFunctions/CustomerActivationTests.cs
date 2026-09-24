@@ -32,7 +32,7 @@ public class CustomerActivationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
-        var expected = new ResponseModel<object>(409, "Customer already deactivated or update failed.");
+        var expected = new ResponseModel<object>(409, "Customer is already deactivated.");
         dbUtils.Setup(d => d.DeactivateCustomer(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var activation = new CustomerActivation(dbUtils.Object, auditLogger.Object);
 

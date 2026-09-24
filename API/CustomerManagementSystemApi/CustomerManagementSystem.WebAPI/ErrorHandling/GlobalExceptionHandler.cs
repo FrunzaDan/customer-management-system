@@ -1,15 +1,16 @@
-using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CustomerManagementSystem.WebAPI.ErrorHandling;
 
 // The one place an unexpected exception becomes a response (registered with AddExceptionHandler,
-// run by UseExceptionHandler). Expected failures are ResponseModel results with their own status;
-// anything thrown bubbles up here, is logged once, and the client gets a 500 in the same
-// ResponseModel envelope as every other reply. A request the client aborted never gets here —
-// UseExceptionHandler answers those with 499.
-public sealed class GlobalExceptionHandler(IHostEnvironment environment, ILogger<GlobalExceptionHandler> logger)
-    : IExceptionHandler
+// run by UseExceptionHandler). Controllers, services and DbUtils don't catch-and-log: an
+// exception bubbles up here, is logged once, and the client gets a 500 Problem Details body.
+// A request the client aborted never gets here — UseExceptionHandler answers those with 499.
+public sealed class GlobalExceptionHandler(
+    IProblemDetailsService problemDetailsService,
+    IHostEnvironment environment,
+    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
@@ -17,15 +18,20 @@ public sealed class GlobalExceptionHandler(IHostEnvironment environment, ILogger
         logger.LogError(exception, "Unhandled exception while processing {Method} {Path}",
             httpContext.Request.Method, httpContext.Request.Path);
 
-        // Exception messages can carry SQL, connection-string or schema details, so they only
-        // reach the client in Development.
-        var message = environment.IsDevelopment()
-            ? $"An error occurred while processing your request: {exception.Message}"
-            : "An error occurred while processing your request.";
-
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(
-            new ResponseModel<object>(StatusCodes.Status500InternalServerError, message), cancellationToken);
-        return true;
+
+        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = httpContext,
+            Exception = exception,
+            ProblemDetails = new ProblemDetails
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "An error occurred while processing your request.",
+                // Exception messages can carry SQL, connection-string or schema details, so they
+                // only reach the client in Development.
+                Detail = environment.IsDevelopment() ? exception.Message : null,
+            },
+        });
     }
 }

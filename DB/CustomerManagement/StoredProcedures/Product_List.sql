@@ -2,6 +2,7 @@ CREATE PROCEDURE [dbo].[Product_List]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- Deliberately unpaginated: the catalogue is a fixed set of 50 products.
     -- SoldQuantity is derived (initial - on hand), not counted from CustomerPurchase —

@@ -9,14 +9,14 @@ namespace CustomerManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class CustomerController(ICustomerService customerService) : ControllerBase
+public class CustomerController(ICustomerService customerService) : ApiControllerBase
 {
     // Every [Authorize]-gated request has a verified JWT with ClaimTypes.Name set to the
     // merchant's username (see JwtCreation.BuildTokenDescriptor) — never null/empty in practice.
     private string Username => User.Identity!.Name!;
 
     // GUID query parameters are typed Guid: a malformed value is rejected by model binding
-    // (400, via the InvalidModelStateResponseFactory in Program.cs), and a missing one binds
+    // (400 ValidationProblemDetails, from [ApiController]), and a missing one binds
     // to Guid.Empty, which the business logic rejects with its own 400.
 
     [HttpPost("create")]
@@ -115,7 +115,4 @@ public class CustomerController(ICustomerService customerService) : ControllerBa
     public async Task<ActionResult<ResponseModel<object>>> DeleteAllCustomerAuditLog(
         CancellationToken cancellationToken) =>
         Reply(await customerService.DeleteAllCustomerAuditLog(cancellationToken));
-
-    // The envelope's Status is the HTTP status to reply with.
-    private ObjectResult Reply<T>(ResponseModel<T> response) => StatusCode(response.Status, response);
 }

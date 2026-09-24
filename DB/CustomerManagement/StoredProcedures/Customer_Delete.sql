@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Customer_Delete]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -59,8 +60,7 @@ BEGIN
             IF @@TRANCOUNT > 0
                 ROLLBACK TRANSACTION;
 
-            SET @Result = 500;
-            SET @Message = CONCAT('Failed to delete customer: ', ERROR_MESSAGE());
+            THROW;
         END CATCH
     END
 

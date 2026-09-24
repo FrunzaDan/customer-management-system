@@ -99,7 +99,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         if (authData is null ||
             !PasswordHasher.VerifyPassword(merchantCredentials.Password ?? string.Empty, authData.PasswordHash,
                 authData.PasswordSalt))
-            return new ResponseModel<MerchantRole?>(403, "Invalid username or password.");
+            return new ResponseModel<MerchantRole?>(401, "Invalid username or password.");
 
         var roleCode = (short)authData.MerchantRole;
         return authData.MerchantRole == MerchantRole.Merchant
@@ -223,34 +223,20 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         Func<SqlDataReader, Task<T>> handleReader,
         CancellationToken cancellationToken = default)
     {
-        try
-        {
-            await CheckConnectionStringAsync(cancellationToken).ConfigureAwait(false);
+        // No try/catch: expected outcomes come back as the proc's (Result, Message) row, and anything
+        // thrown here (a SqlException the proc re-THROWs, a lost connection, a cancelled request)
+        // propagates unchanged to GlobalExceptionHandler, which logs it once and answers 500.
+        await CheckConnectionStringAsync(cancellationToken).ConfigureAwait(false);
 
-            await using var connection = new SqlConnection(CurrentConnectionString);
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = new SqlConnection(CurrentConnectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-            await using var command = new SqlCommand(storedProcedure, connection);
-            command.CommandType = CommandType.StoredProcedure;
+        await using var command = new SqlCommand(storedProcedure, connection);
+        command.CommandType = CommandType.StoredProcedure;
 
-            configureCommand?.Invoke(command);
+        configureCommand?.Invoke(command);
 
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-            return await handleReader(reader);
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (SqlException sqlEx)
-        {
-            throw new InvalidOperationException(
-                $"Error executing stored procedure '{storedProcedure}': {sqlEx.Message}", sqlEx);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Unexpected error during stored procedure execution: {ex.Message}",
-                ex);
-        }
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await handleReader(reader);
     }
 }

@@ -161,7 +161,7 @@ describe('CustomerService', () => {
 
       expect(service.loading()).toBe(false);
       expect(service.error()).toBe(
-        'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+        'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
       );
     });
   });
@@ -266,7 +266,10 @@ describe('CustomerService', () => {
         .subscribe({ error: () => {} });
       httpMock
         .expectOne(`${API_URL}/update`)
-        .flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
+        .flush(
+          { title: 'Bad Request', status: 400, detail: 'boom' },
+          { status: 400, statusText: 'Bad Request' },
+        );
 
       expect(service.customers()).toEqual([original]);
       expect(notificationShow).not.toHaveBeenCalled();
@@ -311,7 +314,11 @@ describe('CustomerService', () => {
       httpMock
         .expectOne((r) => r.url === `${API_URL}/delete`)
         .flush(
-          { message: 'Customer must be deactivated before it can be deleted.' },
+          {
+            title: 'Conflict',
+            status: 409,
+            detail: 'Customer must be deactivated before it can be deleted.',
+          },
           { status: 409, statusText: 'Conflict' },
         );
 
@@ -382,23 +389,6 @@ describe('CustomerService', () => {
       );
     });
 
-    it('sets an error and skips the local update/notification when the response status is not 200', () => {
-      seedCustomers([buildCustomer()]);
-
-      service.deactivateCustomer('customer-1');
-      httpMock
-        .expectOne((r) => r.url === `${API_URL}/deactivate`)
-        .flush({
-          status: 409,
-          responseMessage: 'Customer is already deactivated.',
-        });
-
-      expect(service.customers()[0].status).toBe(CustomerStatus.Active);
-      expect(notificationShow).not.toHaveBeenCalled();
-      expect(service.activationLoading()).toBe(false);
-      expect(service.activationError()).toBe('Deactivation failed');
-    });
-
     it('sets a not-found error and skips notification when the customer is not in the loaded list', () => {
       service.deactivateCustomer('missing-customerId');
       httpMock
@@ -415,7 +405,11 @@ describe('CustomerService', () => {
       httpMock
         .expectOne((r) => r.url === `${API_URL}/deactivate`)
         .flush(
-          { message: 'Customer is already deactivated.' },
+          {
+            title: 'Conflict',
+            status: 409,
+            detail: 'Customer is already deactivated.',
+          },
           { status: 409, statusText: 'Conflict' },
         );
 
@@ -523,7 +517,7 @@ describe('CustomerService', () => {
 
       expect(service.exportLoading()).toBe(false);
       expect(service.exportError()).toBe(
-        'Could not reach the server. It may be offline, or your browser does not trust its security certificate.',
+        'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
       );
     });
 

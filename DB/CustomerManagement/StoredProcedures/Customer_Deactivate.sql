@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Customer_Deactivate]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -29,7 +30,7 @@ BEGIN
         ELSE
         BEGIN
             SET @Result = 409;
-            SET @Message = 'Customer already deactivated or update failed.';
+            SET @Message = 'Customer is already deactivated.';
         END
     END
     ELSE

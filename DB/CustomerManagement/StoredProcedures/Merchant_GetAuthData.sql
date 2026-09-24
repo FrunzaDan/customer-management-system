@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[Merchant_GetAuthData]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     UPDATE dbo.Merchant
     SET LastInteractionAt = SYSUTCDATETIME()

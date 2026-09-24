@@ -61,24 +61,24 @@ public class JwtCreationTests
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_ReturnsForbidden_WhenCredentialsAreRejectedByTheDb()
+    public async Task GenerateBearerJwt_PassesOnTheDbRejection_WhenCredentialsAreWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(403, "Invalid merchant credentials."));
+            .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
-        Assert.Equal("Invalid merchant credentials.", result.ResponseMessage);
+        Assert.Equal(401, result.Status);
+        Assert.Equal("Invalid username or password.", result.ResponseMessage);
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task GenerateBearerJwt_ReturnsForbidden_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
+    public async Task GenerateBearerJwt_ReturnsBadRequest_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
@@ -86,42 +86,36 @@ public class JwtCreationTests
 
         var result = await jwtCreation.GenerateBearerJwt(credentials, TestContext.Current.CancellationToken);
 
-        Assert.Equal(403, result.Status);
+        Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_ReturnsServerError_WhenAccessTokenTimeoutIsNotConfiguredAsANumber()
+    public async Task GenerateBearerJwt_Throws_WhenAccessTokenTimeoutIsNotConfiguredAsANumber()
     {
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
         var jwtCreation = new JwtCreation(CreateConfig(accessTokenTimeout: "not-a-number").Object, dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
-
-        // AccessTokenTimeout is validated via double.TryParse before any token is built/signed,
-        // so a bad config value returns this dedicated message rather than falling through to
-        // BuildTokenDescriptor()'s double.Parse and being caught by the generic catch block.
-        Assert.Equal(500, result.Status);
-        Assert.Equal("Invalid AccessTokenTimeout configuration.", result.ResponseMessage);
+        // A misconfigured server, not a client error: it throws, and GlobalExceptionHandler logs it
+        // and answers 500 (without the message outside Development — see ErrorResponseTests).
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken));
+        Assert.Equal("Invalid Auth:AccessTokenTimeout configuration.", exception.Message);
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_DoesNotLeakExceptionDetails_WhenTokenGenerationFails()
+    public async Task GenerateBearerJwt_LetsADbFailurePropagate_ToTheGlobalExceptionHandler()
     {
         var dbUtils = new Mock<IDbUtils>();
+        var failure = new InvalidOperationException("Connection string 'CustomerManagementSystemDB_Docker' is unreachable.");
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Connection string 'CustomerManagementSystemDB_Docker' is unreachable."));
+            .ThrowsAsync(failure);
         var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
 
-        var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
-
-        // This endpoint is unauthenticated, unlike the rest of the API, and any exception here
-        // is caught locally rather than reaching the global exception handler's Details-only-in-
-        // Development guard — so the raw exception message must never reach the response.
-        Assert.Equal(500, result.Status);
-        Assert.DoesNotContain("Connection string", result.ResponseMessage);
-        Assert.DoesNotContain("unreachable", result.ResponseMessage);
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken));
+        Assert.Same(failure, exception);
     }
 }

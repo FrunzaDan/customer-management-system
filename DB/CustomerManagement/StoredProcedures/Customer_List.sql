@@ -7,6 +7,7 @@ CREATE PROCEDURE [dbo].[Customer_List]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- % and _ are LIKE wildcards; a literal search for either would otherwise match far
     -- more than the user typed (e.g. a search for "_" matching almost every customer).

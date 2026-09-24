@@ -81,7 +81,10 @@ describe('MonthlyActivityService', () => {
 
     httpMock
       .expectOne(API_URL)
-      .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+      .flush(
+        { title: 'Server Error', status: 500, detail: 'boom' },
+        { status: 500, statusText: 'Server Error' },
+      );
     await settle();
 
     expect(service.loading()).toBe(false);

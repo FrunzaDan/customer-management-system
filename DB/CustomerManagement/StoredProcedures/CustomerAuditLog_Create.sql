@@ -6,6 +6,7 @@ CREATE PROCEDURE [dbo].[CustomerAuditLog_Create]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);

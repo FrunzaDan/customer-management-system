@@ -2,6 +2,7 @@ CREATE PROCEDURE [dbo].[Report_GetMonthlyActivity]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- Both result sets return each month as a DATE (the 1st of that month), not a
     -- preformatted string — the API formats it as "yyyy-MM". FORMAT() needs CLR, which

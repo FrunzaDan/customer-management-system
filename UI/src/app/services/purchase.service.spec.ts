@@ -98,7 +98,7 @@ describe('PurchaseService', () => {
       httpMock
         .expectOne((r) => r.url === LIST_URL)
         .flush(
-          { message: 'boom' },
+          { title: 'Bad Request', status: 400, detail: 'boom' },
           { status: 500, statusText: 'Server Error' },
         );
       await settle();
@@ -156,7 +156,11 @@ describe('PurchaseService', () => {
       httpMock
         .expectOne((r) => r.url === PURCHASE_URL)
         .flush(
-          { responseMessage: 'Product is out of stock.' },
+          {
+            title: 'Conflict',
+            status: 409,
+            detail: 'Product is out of stock.',
+          },
           { status: 409, statusText: 'Conflict' },
         );
 

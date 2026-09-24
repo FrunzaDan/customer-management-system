@@ -26,42 +26,27 @@ public class JwtCreation
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(merchantCredentials.Username))
-            return new ResponseModel<AccessTokenResponse>(403, "Invalid or empty username.");
+            return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
-        try
-        {
-            // Validate merchant credentials
-            var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDb(merchantCredentials, cancellationToken);
+        var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDb(merchantCredentials, cancellationToken);
 
-            if (credentialsCheck.Status != 200)
-                return new ResponseModel<AccessTokenResponse>(403, credentialsCheck.ResponseMessage);
+        // 401 (wrong username or password) or 403 (a role that may not sign in), with its message.
+        if (credentialsCheck.Status != StatusCodes.Status200OK)
+            return new ResponseModel<AccessTokenResponse>(credentialsCheck.Status, credentialsCheck.ResponseMessage);
 
-            // Validate config before doing any signing work: BuildTokenDescriptor() would
-            // otherwise call double.Parse(AccessTokenTimeout) directly and throw on a bad
-            // value, making this check unreachable and wasting a signed token in the process.
-            if (!double.TryParse(_configuration.AccessTokenTimeout, out var timeoutMinutes))
-                return new ResponseModel<AccessTokenResponse>(500, "Invalid AccessTokenTimeout configuration.");
+        // A bad AccessTokenTimeout is a server misconfiguration, not something the caller did: it
+        // throws, and GlobalExceptionHandler logs it and answers 500 (checked before any signing
+        // work, since BuildTokenDescriptor would otherwise need the value).
+        if (!double.TryParse(_configuration.AccessTokenTimeout, out var timeoutMinutes))
+            throw new InvalidOperationException("Invalid Auth:AccessTokenTimeout configuration.");
 
-            // One timestamp for both the token's exp claim and the ExpiresAt reported to the
-            // client, so the two can't drift apart.
-            var expires = DateTime.UtcNow.AddMinutes(timeoutMinutes);
-            var token = GenerateJwtToken(merchantCredentials.Username, credentialsCheck.Data, expires);
+        // One timestamp for both the token's exp claim and the ExpiresAt reported to the
+        // client, so the two can't drift apart.
+        var expires = DateTime.UtcNow.AddMinutes(timeoutMinutes);
+        var token = GenerateJwtToken(merchantCredentials.Username, credentialsCheck.Data, expires);
 
-            return new ResponseModel<AccessTokenResponse>(StatusCodes.Status200OK, "Success!",
-                new AccessTokenResponse { AccessToken = token, ExpiresAt = expires });
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception)
-        {
-            // Unlike the rest of the app, this endpoint is unauthenticated, and any exception
-            // here is caught locally rather than bubbling to the global exception handler (whose
-            // Details-only-in-Development guard wouldn't apply to this method's own response
-            // anyway) — so ex.Message must never be echoed back to an anonymous caller.
-            return new ResponseModel<AccessTokenResponse>(500, "An error occurred while generating the access token.");
-        }
+        return new ResponseModel<AccessTokenResponse>(StatusCodes.Status200OK, "Success!",
+            new AccessTokenResponse { AccessToken = token, ExpiresAt = expires });
     }
 
     private string GenerateJwtToken(string username, MerchantRole? merchantRole, DateTime expires)

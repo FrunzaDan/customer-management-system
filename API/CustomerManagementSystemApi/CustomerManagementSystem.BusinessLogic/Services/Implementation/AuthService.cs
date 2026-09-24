@@ -10,7 +10,7 @@ public class AuthService(JwtCreation jwtCreation) : IAuthService
     {
         if (string.IsNullOrWhiteSpace(merchantCredentials.Username) ||
             string.IsNullOrWhiteSpace(merchantCredentials.Password))
-            return new ResponseModel<AccessTokenResponse>(403, "Invalid or empty merchant credentials.");
+            return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
         return await jwtCreation.GenerateBearerJwt(merchantCredentials, cancellationToken);
     }

@@ -3,6 +3,7 @@ CREATE PROCEDURE [dbo].[CustomerPurchase_ListByCustomer]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- Price is the product's *current* price, not a snapshot of what was paid.
     SELECT

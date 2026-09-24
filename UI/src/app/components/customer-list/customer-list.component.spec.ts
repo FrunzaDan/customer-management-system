@@ -329,7 +329,10 @@ describe('CustomerListComponent', () => {
           () =>
             new HttpErrorResponse({
               status: 409,
-              error: { responseMessage: 'Customer must be deactivated first.' },
+              error: {
+                title: 'Error',
+                detail: 'Customer must be deactivated first.',
+              },
             }),
         ),
       );

@@ -126,7 +126,7 @@ describe('ProductService', () => {
       httpMock
         .expectOne(PRODUCTS_URL)
         .flush(
-          { message: 'boom' },
+          { title: 'Server Error', status: 500, detail: 'boom' },
           { status: 500, statusText: 'Server Error' },
         );
       await settle();
@@ -202,7 +202,7 @@ describe('ProductService', () => {
       httpMock
         .expectOne((r) => r.url === DETAILS_URL)
         .flush(
-          { status: 404, responseMessage: 'Product not found.' },
+          { title: 'Error', status: 404, detail: 'Product not found.' },
           { status: 404, statusText: 'Not Found' },
         );
       await settle();

@@ -4,6 +4,7 @@ CREATE PROCEDURE [dbo].[CustomerAuditLog_List]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     -- Result set 1: the total, counted on its own so it's right even when the
     -- requested page has no rows (past the last page, or the log was just cleared).

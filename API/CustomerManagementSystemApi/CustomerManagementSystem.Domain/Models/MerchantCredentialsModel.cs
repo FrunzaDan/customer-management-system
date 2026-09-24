@@ -1,10 +1,7 @@
 ﻿namespace CustomerManagementSystem.Domain.Models;
 
-// No [Required] here deliberately: with [ApiController], data-annotation failures are
-// intercepted by ASP.NET's automatic model validation before the controller action runs,
-// returning its own ValidationProblemDetails shape instead of this app's uniform
-// ResponseModel envelope. AuthService.GetAccessToken is the single place that validates
-// these fields, so every empty-credentials case gets the same 403 ResponseModel response.
+// No [Required] here: AuthService.GetAccessToken is the single place that validates these
+// fields, so every missing-credentials case gets the same 400 with one message.
 public sealed class MerchantCredentials
 {
     public string? Username { get; set; }

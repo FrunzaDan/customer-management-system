@@ -15,6 +15,7 @@ CREATE PROCEDURE [dbo].[Customer_Update]
 AS
 BEGIN
     SET NOCOUNT ON;
+    SET XACT_ABORT ON;
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
@@ -31,12 +32,12 @@ BEGIN
 
     -- Same duplicate pre-check Customer_Create does, excluding the row being edited
     -- itself — without this, an edit that collides with another customer's Email/PhoneNumber
-    -- would throw a raw, unhandled UQ_ constraint violation instead of a clean 400.
+    -- would throw a raw, unhandled UQ_ constraint violation instead of a clean 409.
     IF @Email IS NOT NULL AND EXISTS (
         SELECT 1 FROM dbo.Customer WHERE Email = @Email AND CustomerId <> @CustomerId
     )
     BEGIN
-        SET @Result = 400;
+        SET @Result = 409;
         SET @Message = 'Email already exists.';
 
         SELECT @Result AS Result, @Message AS Message;
@@ -47,7 +48,7 @@ BEGIN
         SELECT 1 FROM dbo.Customer WHERE PhoneNumber = @PhoneNumber AND CustomerId <> @CustomerId
     )
     BEGIN
-        SET @Result = 400;
+        SET @Result = 409;
         SET @Message = 'Phone number already exists.';
 
         SELECT @Result AS Result, @Message AS Message;
@@ -98,8 +99,13 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
-        SET @Result = 500;
-        SET @Message = CONCAT('Failed to update customer: ', ERROR_MESSAGE());
+        -- 2601/2627: a concurrent request took the value between the pre-check above and
+        -- this write; the UQ_ constraint caught it, so answer the same 409 as the pre-check.
+        IF ERROR_NUMBER() NOT IN (2601, 2627)
+            THROW;
+
+        SET @Result = 409;
+        SET @Message = 'Email or phone number already exists.';
     END CATCH
 
     SELECT @Result AS Result, @Message AS Message;
