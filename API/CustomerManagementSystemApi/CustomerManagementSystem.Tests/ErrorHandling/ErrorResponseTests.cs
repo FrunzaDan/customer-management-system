@@ -31,9 +31,9 @@ public class ErrorResponseTests
             // Captures what the app logs, next to the console, for the logging assertions below.
             builder.ConfigureLogging(logging => logging.AddFakeLogging());
             // Program.cs refuses to start without these; nothing here signs or validates a token.
-            builder.UseSetting("Auth:SecureJWTKey", "test-signing-key-that-is-at-least-32-bytes-long");
-            builder.UseSetting("Auth:JWTIssuer", "test-issuer");
-            builder.UseSetting("Auth:JWTAudience", "test-audience");
+            builder.UseSetting("Auth:SecureJwtKey", "test-signing-key-that-is-at-least-32-bytes-long");
+            builder.UseSetting("Auth:JwtIssuer", "test-issuer");
+            builder.UseSetting("Auth:JwtAudience", "test-audience");
             builder.ConfigureTestServices(services => services.AddScoped(_ => authService.Object));
         });
 

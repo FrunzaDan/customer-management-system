@@ -3,6 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import {
@@ -43,9 +44,20 @@ describe('CustomerService', () => {
     ...overrides,
   });
 
+  // The response is applied asynchronously, so wait for the app to settle
+  // after flushing before asserting on the signals.
+  const settle = () => TestBed.inject(ApplicationRef).whenStable();
+
+  // httpResource issues its request from an effect, so flush effects after
+  // calling loadCustomers() before expecting the HTTP call.
+  const load = (params: Parameters<CustomerService['loadCustomers']>[0]) => {
+    service.loadCustomers(params);
+    TestBed.tick();
+  };
+
   // Loads one page holding `customers`, the way the list page fills the service.
-  const seedCustomers = (customers: Customer[]) => {
-    service.loadCustomers({ pageNumber: 1, pageSize: 10 });
+  const seedCustomers = async (customers: Customer[]) => {
+    load({ pageNumber: 1, pageSize: 10 });
     httpMock
       .expectOne((r) => r.url === `${API_URL}/all`)
       .flush({
@@ -58,6 +70,7 @@ describe('CustomerService', () => {
           items: customers,
         },
       });
+    await settle();
   };
 
   beforeEach(() => {
@@ -88,7 +101,7 @@ describe('CustomerService', () => {
     });
 
     it('sends pageNumber, pageSize, sortColumn, and sortDirection as query params', () => {
-      service.loadCustomers({
+      load({
         pageNumber: 2,
         pageSize: 10,
         sortColumn: 'email',
@@ -106,7 +119,7 @@ describe('CustomerService', () => {
     });
 
     it('defaults sortColumn to name and sortDirection to asc when not provided', () => {
-      service.loadCustomers({ pageNumber: 1, pageSize: 10 });
+      load({ pageNumber: 1, pageSize: 10 });
 
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
       expect(req.request.params.get('sortColumn')).toBe('name');
@@ -116,7 +129,7 @@ describe('CustomerService', () => {
     });
 
     it('includes searchTerm only when a non-empty one is provided', () => {
-      service.loadCustomers({ pageNumber: 1, pageSize: 10, searchTerm: 'dan' });
+      load({ pageNumber: 1, pageSize: 10, searchTerm: 'dan' });
 
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
       expect(req.request.params.get('searchTerm')).toBe('dan');
@@ -124,10 +137,10 @@ describe('CustomerService', () => {
       req.flush(emptyPage(1));
     });
 
-    it('populates customers/totalItems/pageNumber/pageSize from a successful response', () => {
+    it('populates customers/totalItems/pageNumber/pageSize from a successful response', async () => {
       const customer = buildCustomer();
 
-      seedCustomers([customer]);
+      await seedCustomers([customer]);
 
       expect(service.customers()).toEqual([customer]);
       expect(service.totalItems()).toBe(1);
@@ -137,27 +150,153 @@ describe('CustomerService', () => {
       expect(service.error()).toBeNull();
     });
 
-    it('sets loading true synchronously while the request is in flight', () => {
-      service.loadCustomers({ pageNumber: 1, pageSize: 10 });
+    it('sets loading true synchronously while the request is in flight', async () => {
+      load({ pageNumber: 1, pageSize: 10 });
 
       expect(service.loading()).toBe(true);
 
       httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(emptyPage(1));
+      await settle();
 
       expect(service.loading()).toBe(false);
     });
 
-    it('sets a friendly message and clears loading on a network error (status 0)', () => {
-      service.loadCustomers({ pageNumber: 1, pageSize: 10 });
+    it('sets a friendly message and clears loading on a network error (status 0)', async () => {
+      load({ pageNumber: 1, pageSize: 10 });
 
       httpMock
         .expectOne((r) => r.url === `${API_URL}/all`)
         .error(new ProgressEvent('error'), { status: 0 });
+      await settle();
 
       expect(service.loading()).toBe(false);
       expect(service.error()).toBe(
         'Could not reach the server. It may be offline, or your browser may not trust its security certificate.',
       );
+    });
+  });
+
+  describe('loadCustomers (resource behaviour)', () => {
+    const pageOf = (customers: Customer[], pageNumber = 1) => ({
+      status: 200,
+      responseMessage: 'ok',
+      data: {
+        pageNumber,
+        pageSize: 10,
+        totalItems: customers.length,
+        items: customers,
+      },
+    });
+
+    it('makes no request until loadCustomers() is called', () => {
+      TestBed.tick();
+
+      httpMock.expectNone((r) => r.url === `${API_URL}/all`);
+      expect(service.customers()).toEqual([]);
+      expect(service.loading()).toBe(false);
+    });
+
+    it('keeps the loaded page on screen while the next page loads', async () => {
+      const first = buildCustomer();
+      await seedCustomers([first]);
+      // Read it, as the list page's template does.
+      expect(service.customers()).toEqual([first]);
+
+      load({ pageNumber: 2, pageSize: 10 });
+
+      expect(service.loading()).toBe(true);
+      expect(service.customers()).toEqual([first]);
+
+      const second = buildCustomer({ customerId: 'customer-2' });
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/all`)
+        .flush(pageOf([second], 2));
+      await settle();
+
+      expect(service.customers()).toEqual([second]);
+      expect(service.pageNumber()).toBe(2);
+    });
+
+    it('cancels the request still in flight when a newer page is requested', async () => {
+      load({ pageNumber: 1, pageSize: 10 });
+      const stale = httpMock.expectOne((r) => r.url === `${API_URL}/all`);
+
+      load({ pageNumber: 2, pageSize: 10 });
+
+      expect(stale.cancelled).toBe(true);
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/all`)
+        .flush(pageOf([], 2));
+      await settle();
+      expect(service.pageNumber()).toBe(2);
+    });
+
+    it('fetches the same page again when asked with the same params', async () => {
+      await seedCustomers([buildCustomer()]);
+
+      load({ pageNumber: 1, pageSize: 10 });
+
+      httpMock.expectOne((r) => r.url === `${API_URL}/all`).flush(pageOf([]));
+      await settle();
+      expect(service.customers()).toEqual([]);
+    });
+  });
+
+  describe('getCustomer', () => {
+    const select = async (customer: Customer) => {
+      service.getCustomer(customer.customerId);
+      TestBed.tick();
+      const req = httpMock.expectOne((r) => r.url === `${API_URL}/get`);
+      expect(req.request.params.get('searchTerm')).toBe(customer.customerId);
+      req.flush({ status: 200, responseMessage: 'ok', data: customer });
+      await settle();
+    };
+
+    it('loads the selected customer by id', async () => {
+      const customer = buildCustomer();
+
+      await select(customer);
+
+      expect(service.selectedCustomer()).toEqual(customer);
+      expect(service.selectedCustomerLoading()).toBe(false);
+      expect(service.selectedCustomerError()).toBeNull();
+    });
+
+    it('fetches again when asked for the customer already selected', async () => {
+      await select(buildCustomer());
+
+      await select(buildCustomer({ firstName: 'Fresh' }));
+
+      expect(service.selectedCustomer()?.firstName).toBe('Fresh');
+    });
+
+    it('names the failed load on a server error', async () => {
+      service.getCustomer('customer-1');
+      TestBed.tick();
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/get`)
+        .flush(null, { status: 500, statusText: 'Server Error' });
+      await settle();
+
+      expect(service.selectedCustomer()).toBeNull();
+      expect(service.selectedCustomerError()).toBe(
+        'Failed to load the customer (500). Please try again.',
+      );
+    });
+
+    it('deactivating the selected customer updates it even when no list is loaded', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      await select(buildCustomer());
+
+      service.deactivateCustomer('customer-1');
+      httpMock
+        .expectOne((r) => r.url === `${API_URL}/deactivate`)
+        .flush({ status: 200, responseMessage: 'ok' });
+
+      expect(service.selectedCustomer()?.status).toBe(
+        CustomerStatus.Deactivated,
+      );
+      expect(service.activationError()).toBeNull();
     });
   });
 
@@ -236,8 +375,8 @@ describe('CustomerService', () => {
       });
     });
 
-    it('updates the customer in the loaded list and notifies on success', () => {
-      seedCustomers([buildCustomer()]);
+    it('updates the customer in the loaded list and notifies on success', async () => {
+      await seedCustomers([buildCustomer()]);
       const updated = buildCustomer({ firstName: 'Updated' });
 
       service.updateCustomer(updated).subscribe();
@@ -252,9 +391,9 @@ describe('CustomerService', () => {
       );
     });
 
-    it('does not touch the loaded list or notify when the request errors', () => {
+    it('does not touch the loaded list or notify when the request errors', async () => {
       const original = buildCustomer();
-      seedCustomers([original]);
+      await seedCustomers([original]);
 
       service
         .updateCustomer(buildCustomer({ firstName: 'Updated' }))
@@ -285,8 +424,8 @@ describe('CustomerService', () => {
       });
     });
 
-    it('removes the customer from the loaded list and notifies on success', () => {
-      seedCustomers([buildCustomer()]);
+    it('removes the customer from the loaded list and notifies on success', async () => {
+      await seedCustomers([buildCustomer()]);
 
       service.deleteCustomer('customer-1').subscribe();
       httpMock
@@ -302,8 +441,8 @@ describe('CustomerService', () => {
       );
     });
 
-    it('does not touch the loaded list or notify when the request errors', () => {
-      seedCustomers([buildCustomer()]);
+    it('does not touch the loaded list or notify when the request errors', async () => {
+      await seedCustomers([buildCustomer()]);
 
       service.deleteCustomer('customer-1').subscribe({ error: () => {} });
       httpMock
@@ -321,8 +460,8 @@ describe('CustomerService', () => {
       expect(notificationShow).not.toHaveBeenCalled();
     });
 
-    it('deleteCustomerSilently removes the customer from the loaded list, but never notifies', () => {
-      seedCustomers([buildCustomer()]);
+    it('deleteCustomerSilently removes the customer from the loaded list, but never notifies', async () => {
+      await seedCustomers([buildCustomer()]);
 
       service.deleteCustomerSilently('customer-1').subscribe();
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/delete`);
@@ -353,8 +492,8 @@ describe('CustomerService', () => {
         .flush({ status: 200, responseMessage: 'ok' });
     });
 
-    it('deactivateCustomer marks the loaded customer Deactivated and notifies on success', () => {
-      seedCustomers([buildCustomer()]);
+    it('deactivateCustomer marks the loaded customer Deactivated and notifies on success', async () => {
+      await seedCustomers([buildCustomer()]);
 
       service.deactivateCustomer('customer-1');
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/deactivate`);
@@ -370,8 +509,10 @@ describe('CustomerService', () => {
       expect(service.activationError()).toBeNull();
     });
 
-    it('reactivateCustomer marks the loaded customer Active and hits the reactivate endpoint', () => {
-      seedCustomers([buildCustomer({ status: CustomerStatus.Deactivated })]);
+    it('reactivateCustomer marks the loaded customer Active and hits the reactivate endpoint', async () => {
+      await seedCustomers([
+        buildCustomer({ status: CustomerStatus.Deactivated }),
+      ]);
 
       service.reactivateCustomer('customer-1');
       const req = httpMock.expectOne((r) => r.url === `${API_URL}/reactivate`);
@@ -415,8 +556,8 @@ describe('CustomerService', () => {
       // httpMock.verify() in afterEach confirms no retry request was made.
     });
 
-    it('retries once on a transient (5xx) failure and then succeeds', () => {
-      seedCustomers([buildCustomer()]);
+    it('retries once on a transient (5xx) failure and then succeeds', async () => {
+      await seedCustomers([buildCustomer()]);
       vi.useFakeTimers();
 
       service.deactivateCustomer('customer-1');

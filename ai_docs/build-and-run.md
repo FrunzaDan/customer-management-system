@@ -25,7 +25,7 @@ docker run \
   --platform linux/arm64 \
   -d mcr.microsoft.com/azure-sql-edge
 ```
-- `sa` password for local dev is `MyStrongPassw0rd?` — matches `appsettings.json`'s `DefaultConnection` connection string and `run.sh`'s `SQL_SA_PASSWORD` default. Local-dev-only credential, not a production secret.
+- `sa` password for local dev is `MyStrongPassw0rd?` — matches `appsettings.json`'s `ConnectionStrings:Docker` (which `run.sh` also passes to the API as `ConnectionStrings__Docker`) and `run.sh`'s `SQL_SA_PASSWORD` default. Local-dev-only credential, not a production secret.
 - Container name `sqlserver`, port `1433`. `run.sh` picks `--platform linux/arm64` automatically only on Apple Silicon Macs (`uname -s == Darwin && uname -m == arm64`); everywhere else it defaults to `linux/amd64`. Both are overridable via env var.
 - Azure SQL Edge does **not** ship `sqlcmd`/`mssql-tools` inside the container, so readiness can't be probed with the usual `docker exec ... sqlcmd` trick — see step 2 below for how `run.sh` works around that.
 

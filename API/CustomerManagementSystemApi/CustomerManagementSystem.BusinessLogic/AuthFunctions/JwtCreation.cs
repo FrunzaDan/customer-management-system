@@ -4,6 +4,7 @@ using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -11,15 +12,15 @@ namespace CustomerManagementSystem.BusinessLogic.AuthFunctions;
 
 public class JwtCreation
 {
-    private readonly IAppSettingsConfig _configuration;
+    private readonly AuthOptions _authOptions;
     private readonly IDbUtils _dbUtils;
     private readonly SymmetricSecurityKey _signingKey;
 
-    public JwtCreation(IAppSettingsConfig appSettingsConfig, IDbUtils dbUtils)
+    public JwtCreation(IOptions<AuthOptions> authOptions, IDbUtils dbUtils)
     {
         _dbUtils = dbUtils;
-        _configuration = appSettingsConfig;
-        _signingKey = JwtSigningKey.Create(_configuration.SecureJwtKey);
+        _authOptions = authOptions.Value;
+        _signingKey = JwtSigningKey.Create(_authOptions.SecureJwtKey);
     }
 
     public async Task<ResponseModel<AccessTokenResponse>> GenerateBearerJwt(MerchantCredentials merchantCredentials,
@@ -34,15 +35,9 @@ public class JwtCreation
         if (credentialsCheck.Status != StatusCodes.Status200OK)
             return new ResponseModel<AccessTokenResponse>(credentialsCheck.Status, credentialsCheck.ResponseMessage);
 
-        // A bad AccessTokenTimeout is a server misconfiguration, not something the caller did: it
-        // throws, and GlobalExceptionHandler logs it and answers 500 (checked before any signing
-        // work, since BuildTokenDescriptor would otherwise need the value).
-        if (!double.TryParse(_configuration.AccessTokenTimeout, out var timeoutMinutes))
-            throw new InvalidOperationException("Invalid Auth:AccessTokenTimeout configuration.");
-
         // One timestamp for both the token's exp claim and the ExpiresAt reported to the
         // client, so the two can't drift apart.
-        var expires = DateTime.UtcNow.AddMinutes(timeoutMinutes);
+        var expires = DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenTimeoutMinutes);
         var token = GenerateJwtToken(merchantCredentials.Username, credentialsCheck.Data, expires);
 
         return new ResponseModel<AccessTokenResponse>(StatusCodes.Status200OK, "Success!",
@@ -77,8 +72,8 @@ public class JwtCreation
             IssuedAt = DateTime.UtcNow,
             Expires = expires,
             SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256Signature),
-            Issuer = _configuration.JwtIssuer,
-            Audience = _configuration.JwtAudience
+            Issuer = _authOptions.JwtIssuer,
+            Audience = _authOptions.JwtAudience
         };
     }
 }

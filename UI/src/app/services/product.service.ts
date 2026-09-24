@@ -84,7 +84,7 @@ export class ProductService {
    */
   fetchProducts(): Observable<Product[]> {
     return this.http
-      .get<GenericResponse<Product[]>>(`${this.API_URL}/products`, {})
+      .get<GenericResponse<Product[]>>(`${this.API_URL}/products`)
       .pipe(map((response) => response?.data ?? []));
   }
 

@@ -2,17 +2,31 @@
 using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.HttpLogging;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using CustomerManagementSystem.WebAPI.Routing;
+using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.WebAPI.ErrorHandling;
 using CustomerManagementSystem.WebAPI.OpenApi;
+using CustomerManagementSystem.WebAPI.Routing;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configuration, bound and validated at startup (ValidateOnStart): a missing or invalid value stops
+// the app with an OptionsValidationException naming the key, instead of failing on the first
+// request that needs it.
+builder.Services.AddOptions<AuthOptions>()
+    .BindConfiguration(AuthOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddOptions<DatabaseOptions>()
+    .BindConfiguration(DatabaseOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // Adds the Business Logic Layer
 builder.Services.AddBusinessLogic();
@@ -49,24 +63,20 @@ builder.Services.AddHttpLogging(options =>
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-var jwtKey = builder.Configuration["Auth:SecureJWTKey"] ??
-             throw new InvalidOperationException("Missing Auth:SecureJWTKey configuration.");
-var jwtIssuer = builder.Configuration["Auth:JWTIssuer"] ??
-                throw new InvalidOperationException("Missing Auth:JWTIssuer configuration.");
-var jwtAudience = builder.Configuration["Auth:JWTAudience"] ??
-                  throw new InvalidOperationException("Missing Auth:JWTAudience configuration.");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+// Validates tokens with the same Auth settings JwtCreation issues them with.
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<AuthOptions>>((options, authOptions) =>
     {
+        var auth = authOptions.Value;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = JwtSigningKey.Create(jwtKey),
+            IssuerSigningKey = JwtSigningKey.Create(auth.SecureJwtKey),
             ValidateIssuer = true,
-            ValidIssuer = jwtIssuer,
+            ValidIssuer = auth.JwtIssuer,
             ValidateAudience = true,
-            ValidAudience = jwtAudience,
+            ValidAudience = auth.JwtAudience,
             ClockSkew = TimeSpan.Zero
         };
     });

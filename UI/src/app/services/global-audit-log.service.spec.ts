@@ -3,6 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../environments/environment';
 import { GlobalAuditLogEntry } from '../interfaces/global-audit-log-entry';
@@ -41,31 +42,51 @@ describe('GlobalAuditLogService', () => {
     httpMock.verify();
   });
 
+  // The response is applied asynchronously, so wait for the app to settle
+  // after flushing before asserting on the signals.
+  const settle = () => TestBed.inject(ApplicationRef).whenStable();
+
+  // httpResource issues its request from an effect, so flush effects after
+  // calling loadAllAuditLog() before expecting the HTTP call.
+  const load = (pageNumber: number, pageSize = 20) => {
+    service.loadAllAuditLog({ pageNumber, pageSize });
+    TestBed.tick();
+  };
+
+  const pageOf = (
+    items: GlobalAuditLogEntry[],
+    pageNumber = 1,
+    totalItems = items.length,
+  ) => ({
+    status: 200,
+    responseMessage: 'ok',
+    data: { pageNumber, pageSize: 20, totalItems, items },
+  });
+
+  it('makes no request until loadAllAuditLog() is called', () => {
+    TestBed.tick();
+
+    httpMock.expectNone((r) => r.url === API_URL);
+    expect(service.entries()).toEqual([]);
+    expect(service.loading()).toBe(false);
+  });
+
   it('sends pageNumber and pageSize as query params', () => {
-    service.loadAllAuditLog({ pageNumber: 2, pageSize: 20 });
+    load(2);
 
     const req = httpMock.expectOne((r) => r.url === API_URL);
     expect(req.request.params.get('pageNumber')).toBe('2');
     expect(req.request.params.get('pageSize')).toBe('20');
 
-    req.flush({
-      status: 200,
-      responseMessage: 'ok',
-      data: { pageNumber: 2, pageSize: 20, totalItems: 0, items: [] },
-    });
+    req.flush(pageOf([], 2));
   });
 
-  it('populates entries/totalItems/pageNumber from a successful response', () => {
+  it('populates entries/totalItems/pageNumber from a successful response', async () => {
     const entry = buildEntry();
 
-    service.loadAllAuditLog({ pageNumber: 1, pageSize: 20 });
-    httpMock
-      .expectOne((r) => r.url === API_URL)
-      .flush({
-        status: 200,
-        responseMessage: 'ok',
-        data: { pageNumber: 1, pageSize: 20, totalItems: 1, items: [entry] },
-      });
+    load(1);
+    httpMock.expectOne((r) => r.url === API_URL).flush(pageOf([entry]));
+    await settle();
 
     expect(service.entries()).toEqual([entry]);
     expect(service.totalItems()).toBe(1);
@@ -74,28 +95,24 @@ describe('GlobalAuditLogService', () => {
     expect(service.error()).toBeNull();
   });
 
-  it('sets loading true synchronously while the request is in flight', () => {
-    service.loadAllAuditLog({ pageNumber: 1, pageSize: 20 });
+  it('sets loading true synchronously while the request is in flight', async () => {
+    load(1);
 
     expect(service.loading()).toBe(true);
 
-    httpMock
-      .expectOne((r) => r.url === API_URL)
-      .flush({
-        status: 200,
-        responseMessage: 'ok',
-        data: { pageNumber: 1, pageSize: 20, totalItems: 0, items: [] },
-      });
+    httpMock.expectOne((r) => r.url === API_URL).flush(pageOf([]));
+    await settle();
 
     expect(service.loading()).toBe(false);
   });
 
-  it('sets a friendly message and clears loading on a network error (status 0)', () => {
-    service.loadAllAuditLog({ pageNumber: 1, pageSize: 20 });
+  it('sets a friendly message and clears loading on a network error (status 0)', async () => {
+    load(1);
 
     httpMock
       .expectOne((r) => r.url === API_URL)
       .error(new ProgressEvent('error'), { status: 0 });
+    await settle();
 
     expect(service.loading()).toBe(false);
     expect(service.error()).toBe(
@@ -103,39 +120,28 @@ describe('GlobalAuditLogService', () => {
     );
   });
 
-  it('drops a stale response when a newer page is requested before it arrives', () => {
+  it('cancels a stale request when a newer page is requested before it arrives', async () => {
     const newer = buildEntry({ customerAuditLogId: 2 });
 
-    service.loadAllAuditLog({ pageNumber: 1, pageSize: 20 });
-    service.loadAllAuditLog({ pageNumber: 2, pageSize: 20 });
+    load(1);
+    const stale = httpMock.expectOne((r) => r.url === API_URL);
+    load(2);
 
-    const [stale, current] = httpMock.match((r) => r.url === API_URL);
     expect(stale.cancelled).toBe(true);
-    current.flush({
-      status: 200,
-      responseMessage: 'ok',
-      data: { pageNumber: 2, pageSize: 20, totalItems: 21, items: [newer] },
-    });
+    httpMock.expectOne((r) => r.url === API_URL).flush(pageOf([newer], 2, 21));
+    await settle();
 
     expect(service.pageNumber()).toBe(2);
     expect(service.entries()).toEqual([newer]);
   });
 
-  it('empties the list and shows a toast once the log is cleared', () => {
+  it('empties the list and shows a toast once the log is cleared', async () => {
     const show = vi.spyOn(TestBed.inject(NotificationService), 'show');
-    service.loadAllAuditLog({ pageNumber: 2, pageSize: 20 });
+    load(2);
     httpMock
       .expectOne((r) => r.url === API_URL)
-      .flush({
-        status: 200,
-        responseMessage: 'ok',
-        data: {
-          pageNumber: 2,
-          pageSize: 20,
-          totalItems: 21,
-          items: [buildEntry()],
-        },
-      });
+      .flush(pageOf([buildEntry()], 2, 21));
+    await settle();
 
     service.deleteAllAuditLog().subscribe();
     const req = httpMock.expectOne((r) => r.url === API_URL);

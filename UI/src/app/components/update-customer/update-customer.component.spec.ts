@@ -59,8 +59,8 @@ describe('UpdateCustomerComponent', () => {
           provide: CustomerService,
           useValue: {
             selectedCustomer: selectedCustomer,
-            loading: signal(false),
-            error: signal<string | null>(null),
+            selectedCustomerLoading: signal(false),
+            selectedCustomerError: signal<string | null>(null),
             getCustomer,
             updateCustomer,
           },

@@ -2,10 +2,16 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.SqlClient" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Options" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\CustomerManagementSystem.Domain\CustomerManagementSystem.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="CustomerManagementSystem.Tests" />
     </ItemGroup>
 
 </Project>

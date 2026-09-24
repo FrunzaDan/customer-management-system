@@ -2,20 +2,16 @@ import {
   HttpClient,
   HttpErrorResponse,
   HttpParams,
+  httpResource,
 } from '@angular/common/http';
-import { computed, Injectable, signal, inject } from '@angular/core';
 import {
-  catchError,
-  map,
-  Observable,
-  of,
-  retry,
-  Subject,
-  switchMap,
-  tap,
-  throwError,
-  timer,
-} from 'rxjs';
+  computed,
+  inject,
+  Injectable,
+  linkedSignal,
+  signal,
+} from '@angular/core';
+import { Observable, retry, tap, throwError, timer } from 'rxjs';
 import {
   CreateCustomerRequest,
   Customer,
@@ -68,23 +64,92 @@ export class CustomerService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly state = signal({
-    customers: [] as Customer[],
-    selectedCustomer: null as Customer | null,
-    loading: false,
-    error: null as string | null,
-    pageNumber: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
-    totalItems: 0,
+  // The requested page, search and sort. No request is made until loadCustomers() is
+  // first called (returning undefined idles the resource), and a new value cancels the
+  // request still in flight, so a slower stale page can't overwrite a newer one.
+  private readonly listParams = signal<LoadCustomersParams | undefined>(
+    undefined,
+  );
+
+  // Pagination, search, and sorting are all server-side: each change re-fetches just the
+  // requested page rather than filtering/sorting an already-loaded full list in memory.
+  private readonly customersResource = httpResource<
+    GenericResponse<PagedResponse<Customer>>
+  >(() => {
+    const params = this.listParams();
+    if (!params) return undefined;
+    return {
+      url: `${this.API_URL}/all`,
+      params: {
+        pageNumber: params.pageNumber,
+        pageSize: params.pageSize,
+        sortColumn: params.sortColumn ?? 'name',
+        sortDirection: params.sortDirection ?? 'asc',
+        ...(params.searchTerm ? { searchTerm: params.searchTerm } : {}),
+      },
+    };
   });
 
-  readonly customers = computed(() => this.state().customers);
-  readonly selectedCustomer = computed(() => this.state().selectedCustomer);
-  readonly loading = computed(() => this.state().loading);
-  readonly error = computed(() => this.state().error);
-  readonly pageNumber = computed(() => this.state().pageNumber);
-  readonly pageSize = computed(() => this.state().pageSize);
-  readonly totalItems = computed(() => this.state().totalItems);
+  // The last page that loaded. A resource drops its value when its params change, so
+  // this keeps the current rows on screen while the next page, search or sort loads (and
+  // after a failed load). hasValue() guards the read: value() throws while in error.
+  private readonly page = linkedSignal<
+    PagedResponse<Customer> | undefined,
+    PagedResponse<Customer> | undefined
+  >({
+    source: () =>
+      this.customersResource.hasValue()
+        ? (this.customersResource.value().data ?? undefined)
+        : undefined,
+    computation: (page, previous) => page ?? previous?.value,
+  });
+
+  readonly customers = computed(() => this.page()?.items ?? []);
+  readonly pageNumber = computed(
+    () => this.page()?.pageNumber ?? this.listParams()?.pageNumber ?? 1,
+  );
+  readonly pageSize = computed(
+    () =>
+      this.page()?.pageSize ?? this.listParams()?.pageSize ?? DEFAULT_PAGE_SIZE,
+  );
+  readonly totalItems = computed(() => this.page()?.totalItems ?? 0);
+  readonly loading = this.customersResource.isLoading;
+  readonly error = computed(() => {
+    const error = this.customersResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load customers',
+        )
+      : null;
+  });
+
+  // The customer the details/edit pages show; same shape as ProductService's details.
+  private readonly selectedCustomerId = signal<string | undefined>(undefined);
+
+  private readonly selectedCustomerResource = httpResource<
+    GenericResponse<Customer>
+  >(() => {
+    const customerId = this.selectedCustomerId();
+    if (!customerId) return undefined;
+    return { url: `${this.API_URL}/get`, params: { searchTerm: customerId } };
+  });
+
+  readonly selectedCustomer = computed(() =>
+    this.selectedCustomerResource.hasValue()
+      ? (this.selectedCustomerResource.value().data ?? null)
+      : null,
+  );
+  readonly selectedCustomerLoading = this.selectedCustomerResource.isLoading;
+  readonly selectedCustomerError = computed(() => {
+    const error = this.selectedCustomerResource.error();
+    return error
+      ? extractErrorMessage(
+          error as HttpErrorResponse,
+          'Failed to load the customer',
+        )
+      : null;
+  });
 
   // Deactivate/reactivate have their own in-flight/error state, separate from the list's.
   private readonly activationState = signal({
@@ -98,82 +163,17 @@ export class CustomerService {
   readonly exportLoading = signal(false);
   readonly exportError = signal<string | null>(null);
 
-  // Routed through switchMap so a new loadCustomers() call cancels whatever request is
-  // still in flight — without this, a slower earlier response (e.g. a stale page/search)
-  // can land after a faster later one and overwrite it with stale data.
-  private readonly loadCustomersParams$ = new Subject<LoadCustomersParams>();
-
-  constructor() {
-    this.loadCustomersParams$
-      .pipe(
-        switchMap((params) => {
-          let httpParams = new HttpParams()
-            .set('pageNumber', params.pageNumber)
-            .set('pageSize', params.pageSize)
-            .set('sortColumn', params.sortColumn ?? 'name')
-            .set('sortDirection', params.sortDirection ?? 'asc');
-
-          if (params.searchTerm) {
-            httpParams = httpParams.set('searchTerm', params.searchTerm);
-          }
-
-          return this.http
-            .get<GenericResponse<PagedResponse<Customer>>>(
-              `${this.API_URL}/all`,
-              { params: httpParams },
-            )
-            .pipe(
-              map((response) => ({ response, requestedParams: params })),
-              catchError((error: HttpErrorResponse) => {
-                this.handleError(error);
-                return of(null);
-              }),
-            );
-        }),
-      )
-      .subscribe((result) => {
-        if (!result || !result.response) return;
-
-        const { response, requestedParams } = result;
-        const paged = response.data;
-        this.state.update((state) => ({
-          ...state,
-          customers: paged?.items ?? [],
-          pageNumber: paged?.pageNumber ?? requestedParams.pageNumber,
-          pageSize: paged?.pageSize ?? requestedParams.pageSize,
-          totalItems: paged?.totalItems ?? 0,
-          loading: false,
-          error: null,
-        }));
-      });
-  }
-
-  // Pagination, search, and sorting are all server-side: each call re-fetches
-  // just the requested page from the API rather than filtering/sorting an
-  // already-loaded full list in memory.
   loadCustomers(params: LoadCustomersParams): void {
-    this.setLoading(true);
-    this.loadCustomersParams$.next(params);
+    // A new object always counts as a change, so the same page is fetched again too.
+    this.listParams.set({ ...params });
   }
 
   getCustomer(customerId: string): void {
-    this.setLoading(true);
-
-    const params = new HttpParams().set('searchTerm', customerId);
-
-    this.http
-      .get<GenericResponse<Customer>>(`${this.API_URL}/get`, { params })
-      .subscribe({
-        next: (response) => {
-          this.state.update((state) => ({
-            ...state,
-            selectedCustomer: response?.data ?? null,
-            loading: false,
-            error: null,
-          }));
-        },
-        error: (error: HttpErrorResponse) => this.handleError(error),
-      });
+    if (this.selectedCustomerId() === customerId) {
+      this.selectedCustomerResource.reload();
+    } else {
+      this.selectedCustomerId.set(customerId);
+    }
   }
 
   // On success, `data` is the new customer's server-generated GUID.
@@ -339,42 +339,50 @@ export class CustomerService {
       });
   }
 
-  // Returns false when the customer isn't in the loaded list.
+  // Returns false when the customer is neither in the loaded list nor the one selected.
   private setStatusLocally(
     customerId: string,
     status: CustomerStatus,
   ): boolean {
-    const existingCustomer = this.customers().find(
-      (c) => c.customerId === customerId,
-    );
+    const existingCustomer =
+      this.customers().find((c) => c.customerId === customerId) ??
+      (this.selectedCustomer()?.customerId === customerId
+        ? this.selectedCustomer()
+        : null);
     if (!existingCustomer) return false;
 
     this.updateCustomerLocally({ ...existingCustomer, status });
     return true;
   }
 
+  // Edits the loaded values in place (no refetch), so the list and the selected
+  // customer keep in step with a change the API just confirmed.
   private updateCustomerLocally(updatedCustomer: Customer): void {
-    this.state.update((state) => ({
-      ...state,
-      customers: state.customers.map((c) =>
+    this.updateLoadedPage((items) =>
+      items.map((c) =>
         c.customerId === updatedCustomer.customerId ? updatedCustomer : c,
       ),
-      selectedCustomer:
-        state.selectedCustomer?.customerId === updatedCustomer.customerId
-          ? updatedCustomer
-          : state.selectedCustomer,
-    }));
+    );
+    if (this.selectedCustomer()?.customerId === updatedCustomer.customerId) {
+      this.selectedCustomerResource.update(
+        (response) => response && { ...response, data: updatedCustomer },
+      );
+    }
   }
 
   private removeCustomerLocally(customerId: string): void {
-    this.state.update((state) => ({
-      ...state,
-      customers: state.customers.filter((c) => c.customerId !== customerId),
-      selectedCustomer:
-        state.selectedCustomer?.customerId === customerId
-          ? null
-          : state.selectedCustomer,
-    }));
+    this.updateLoadedPage((items) =>
+      items.filter((c) => c.customerId !== customerId),
+    );
+    if (this.selectedCustomer()?.customerId === customerId) {
+      this.selectedCustomerResource.update(
+        (response) => response && { ...response, data: null },
+      );
+    }
+  }
+
+  private updateLoadedPage(update: (items: Customer[]) => Customer[]): void {
+    this.page.update((page) => page && { ...page, items: update(page.items) });
   }
 
   private buildExportFilename(): string {
@@ -389,22 +397,6 @@ export class CustomerService {
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
-  }
-
-  private setLoading(loading: boolean): void {
-    this.state.update((state) => ({
-      ...state,
-      loading,
-      error: loading ? state.error : null, // Clear error only if loading is false
-    }));
-  }
-
-  private handleError(error: HttpErrorResponse): void {
-    this.state.update((state) => ({
-      ...state,
-      loading: false,
-      error: extractErrorMessage(error, 'Failed to load customers'),
-    }));
   }
 
   // An Error (not an HttpErrorResponse) is a change the API made that this page

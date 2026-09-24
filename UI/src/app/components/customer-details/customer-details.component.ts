@@ -52,8 +52,8 @@ export class CustomerDetailsComponent {
   ]);
 
   readonly customer = this.customerService.selectedCustomer;
-  readonly isLoading = this.customerService.loading;
-  readonly errorMessage = this.customerService.error;
+  readonly isLoading = this.customerService.selectedCustomerLoading;
+  readonly errorMessage = this.customerService.selectedCustomerError;
 
   readonly CustomerStatus = CustomerStatus;
   readonly Gender = Gender;

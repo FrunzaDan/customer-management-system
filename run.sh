@@ -154,7 +154,7 @@ echo "==> [5/6] Deploying database schema (retrying until SQL Server accepts con
 # Azure SQL Edge doesn't ship sqlcmd/mssql-tools inside the container, so instead of
 # probing readiness separately, we retry the real publish (the actual connection the
 # API will use) until it succeeds.
-TARGET_CONN="Data Source=localhost,$SQL_PORT;Initial Catalog=$SQL_DATABASE;User ID=SA;Password=$SQL_SA_PASSWORD;TrustServerCertificate=True;Encrypt=True"
+TARGET_CONN="Server=localhost,$SQL_PORT;Database=$SQL_DATABASE;User Id=sa;Password=$SQL_SA_PASSWORD;Encrypt=True;TrustServerCertificate=True"
 PUBLISH_LOG="$RUN_DIR/sqlpackage.log"
 
 published=0
@@ -200,7 +200,9 @@ fi
 
 : >"$API_LOG"
 
-ASPNETCORE_ENVIRONMENT=Development dotnet run --project "$API_PROJ" --launch-profile "$API_LAUNCH_PROFILE" >"$API_LOG" 2>&1 &
+# ConnectionStrings__Docker points the API at the container started above, even when SQL_PORT or
+# SQL_SA_PASSWORD differ from appsettings.json.
+ASPNETCORE_ENVIRONMENT=Development ConnectionStrings__Docker="$TARGET_CONN" dotnet run --project "$API_PROJ" --launch-profile "$API_LAUNCH_PROFILE" >"$API_LOG" 2>&1 &
 API_PID=$!
 echo "    API starting in background (pid $API_PID), logs: $API_LOG"
 

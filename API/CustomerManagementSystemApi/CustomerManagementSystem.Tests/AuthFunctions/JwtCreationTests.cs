@@ -2,6 +2,7 @@ using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.Domain.Models;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Moq;
 
@@ -9,16 +10,13 @@ namespace CustomerManagementSystem.Tests.AuthFunctions;
 
 public class JwtCreationTests
 {
-    private static Mock<IAppSettingsConfig> CreateConfig(string accessTokenTimeout = "15")
+    private static IOptions<AuthOptions> CreateOptions() => Options.Create(new AuthOptions
     {
-        var config = new Mock<IAppSettingsConfig>();
-        config.Setup(c => c.SecureJwtKey)
-            .Returns("UGxlYXNlIHN0b3JlIHRoaXMgc2VjdXJpdHkga2V5IGluIGEgc2VjdXJlIGVudmlyb25tZW50IQ==");
-        config.Setup(c => c.JwtIssuer).Returns("https://localhost:7145/");
-        config.Setup(c => c.JwtAudience).Returns("https://localhost:7145/");
-        config.Setup(c => c.AccessTokenTimeout).Returns(accessTokenTimeout);
-        return config;
-    }
+        SecureJwtKey = "UGxlYXNlIHN0b3JlIHRoaXMgc2VjdXJpdHkga2V5IGluIGEgc2VjdXJlIGVudmlyb25tZW50IQ==",
+        JwtIssuer = "https://localhost:7145/",
+        JwtAudience = "https://localhost:7145/",
+        AccessTokenTimeoutMinutes = 15
+    });
 
     private static MerchantCredentials Credentials => new()
     {
@@ -32,7 +30,7 @@ public class JwtCreationTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
-        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
@@ -49,7 +47,7 @@ public class JwtCreationTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
-        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
         var token = new JsonWebTokenHandler().ReadJsonWebToken(result.Data!.AccessToken);
@@ -66,7 +64,7 @@ public class JwtCreationTests
         var dbUtils = new Mock<IDbUtils>();
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
-        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken);
 
@@ -81,7 +79,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwt_ReturnsBadRequest_WithoutTouchingTheDb_WhenUsernameIsMissing(string? username)
     {
         var dbUtils = new Mock<IDbUtils>();
-        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
         var credentials = new MerchantCredentials { Username = username, Password = "Merchant123" };
 
         var result = await jwtCreation.GenerateBearerJwt(credentials, TestContext.Current.CancellationToken);
@@ -91,28 +89,13 @@ public class JwtCreationTests
     }
 
     [Fact]
-    public async Task GenerateBearerJwt_Throws_WhenAccessTokenTimeoutIsNotConfiguredAsANumber()
-    {
-        var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
-        var jwtCreation = new JwtCreation(CreateConfig(accessTokenTimeout: "not-a-number").Object, dbUtils.Object);
-
-        // A misconfigured server, not a client error: it throws, and GlobalExceptionHandler logs it
-        // and answers 500 (without the message outside Development — see ErrorResponseTests).
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken));
-        Assert.Equal("Invalid Auth:AccessTokenTimeout configuration.", exception.Message);
-    }
-
-    [Fact]
     public async Task GenerateBearerJwt_LetsADbFailurePropagate_ToTheGlobalExceptionHandler()
     {
         var dbUtils = new Mock<IDbUtils>();
-        var failure = new InvalidOperationException("Connection string 'CustomerManagementSystemDB_Docker' is unreachable.");
+        var failure = new InvalidOperationException("The database is unreachable.");
         dbUtils.Setup(d => d.CheckMerchantCredentialsFromDb(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(failure);
-        var jwtCreation = new JwtCreation(CreateConfig().Object, dbUtils.Object);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             jwtCreation.GenerateBearerJwt(Credentials, TestContext.Current.CancellationToken));

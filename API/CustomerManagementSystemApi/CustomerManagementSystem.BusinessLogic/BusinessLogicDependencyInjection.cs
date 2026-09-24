@@ -3,7 +3,6 @@ using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 using CustomerManagementSystem.BusinessLogic.Services;
 using CustomerManagementSystem.BusinessLogic.Services.Implementation;
 using CustomerManagementSystem.DataAccess.DBConnection;
-using CustomerManagementSystem.Domain.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CustomerManagementSystem.BusinessLogic;
@@ -14,8 +13,8 @@ public static class BusinessLogicDependencyInjection
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICustomerService, CustomerService>();
+        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
         services.AddSingleton<IDbUtils, DbUtils>();
-        services.AddSingleton<IAppSettingsConfig, AppSettingsConfig>();
         services.AddSingleton<JwtCreation>();
 
         services.AddScoped<ICustomerAuditLogger, CustomerAuditLogger>();

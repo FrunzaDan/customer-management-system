@@ -1,12 +1,11 @@
 using System.Data;
-using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
 
 namespace CustomerManagementSystem.DataAccess.DBConnection;
 
-public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
+public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
 {
     public Task<ResponseModel<Guid?>> CreateCustomer(CreateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
@@ -202,9 +201,7 @@ public class DbUtils(IAppSettingsConfig configuration) : IDbUtils
         // No try/catch: expected outcomes come back as the proc's (Result, Message) row, and anything
         // thrown here (a SqlException the proc re-THROWs, a lost connection, a cancelled request)
         // propagates unchanged to GlobalExceptionHandler, which logs it once and answers 500.
-        // A new SqlConnection per call is cheap: SqlClient pools the physical connections.
-        await using var connection = new SqlConnection(configuration.DefaultConnection);
-        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
         await using var command = new SqlCommand(storedProcedure, connection);
         command.CommandType = CommandType.StoredProcedure;

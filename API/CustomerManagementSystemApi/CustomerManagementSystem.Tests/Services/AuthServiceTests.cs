@@ -3,25 +3,23 @@ using CustomerManagementSystem.BusinessLogic.Services.Implementation;
 using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.Domain.Models;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace CustomerManagementSystem.Tests.Services;
 
 public class AuthServiceTests
 {
-    private static Mock<IAppSettingsConfig> CreateConfig()
+    private static IOptions<AuthOptions> CreateOptions() => Options.Create(new AuthOptions
     {
-        var config = new Mock<IAppSettingsConfig>();
-        config.Setup(c => c.SecureJwtKey)
-            .Returns("UGxlYXNlIHN0b3JlIHRoaXMgc2VjdXJpdHkga2V5IGluIGEgc2VjdXJlIGVudmlyb25tZW50IQ==");
-        config.Setup(c => c.JwtIssuer).Returns("https://localhost:7145/");
-        config.Setup(c => c.JwtAudience).Returns("https://localhost:7145/");
-        config.Setup(c => c.AccessTokenTimeout).Returns("15");
-        return config;
-    }
+        SecureJwtKey = "UGxlYXNlIHN0b3JlIHRoaXMgc2VjdXJpdHkga2V5IGluIGEgc2VjdXJlIGVudmlyb25tZW50IQ==",
+        JwtIssuer = "https://localhost:7145/",
+        JwtAudience = "https://localhost:7145/",
+        AccessTokenTimeoutMinutes = 15
+    });
 
     private static AuthService CreateSut(Mock<IDbUtils> dbUtils) =>
-        new(new JwtCreation(CreateConfig().Object, dbUtils.Object));
+        new(new JwtCreation(CreateOptions(), dbUtils.Object));
 
     [Fact]
     public async Task GetAccessToken_ReturnsAToken_WhenCredentialsAreValid()

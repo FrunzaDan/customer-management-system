@@ -39,8 +39,8 @@ export class UpdateCustomerComponent {
   readonly customerId = input<string>();
 
   readonly customer = this.customerService.selectedCustomer;
-  readonly isLoading = this.customerService.loading;
-  readonly errorMessage = this.customerService.error;
+  readonly isLoading = this.customerService.selectedCustomerLoading;
+  readonly errorMessage = this.customerService.selectedCustomerError;
 
   // The form model *is* the loaded customer, mapped: it re-derives whenever
   // customer() changes and stays writable for the user's edits — no effect +
