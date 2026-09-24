@@ -18,6 +18,17 @@ public static partial class AddressValidation
         return null;
     }
 
+    public static string? ValidateNotBlank(AddressRequest address)
+    {
+        if (IsBlank(address.Country)) return "Country cannot be blank.";
+        if (IsBlank(address.County)) return "County cannot be blank.";
+        if (IsBlank(address.City)) return "City cannot be blank.";
+        if (IsBlank(address.PostalCode)) return "Postal code cannot be blank.";
+        if (IsBlank(address.Street)) return "Street cannot be blank.";
+        if (IsBlank(address.StreetNumber)) return "Street number cannot be blank.";
+        return null;
+    }
+
     public static string? ValidateLengths(AddressRequest address)
     {
         if (address.Country?.Length > FieldLengthConstants.Country) return "Country is too long.";
@@ -30,6 +41,8 @@ public static partial class AddressValidation
         if (address.StreetNumber?.Length > FieldLengthConstants.StreetNumber) return "Street number is too long.";
         return null;
     }
+
+    private static bool IsBlank(string? value) => value is not null && string.IsNullOrWhiteSpace(value);
 
     [GeneratedRegex(RegexConstants.PostalCodeRegex)]
     private static partial Regex PostalCodeRegex();

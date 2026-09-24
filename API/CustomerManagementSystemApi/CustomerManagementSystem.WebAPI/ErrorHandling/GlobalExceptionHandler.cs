@@ -11,6 +11,13 @@ public sealed partial class GlobalExceptionHandler(
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
     {
+        if (httpContext.RequestAborted.IsCancellationRequested)
+        {
+            LogRequestAborted(logger, httpContext.Request.Method, httpContext.Request.Path);
+            httpContext.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+            return true;
+        }
+
         LogUnhandledException(logger, exception, httpContext.Request.Method, httpContext.Request.Path);
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -32,4 +39,8 @@ public sealed partial class GlobalExceptionHandler(
         Message = "Unhandled exception while processing {Method} {Path}")]
     private static partial void LogUnhandledException(ILogger logger, Exception exception, string method,
         PathString path);
+
+    [LoggerMessage(EventId = 5, Level = LogLevel.Debug,
+        Message = "The client aborted {Method} {Path} before it completed")]
+    private static partial void LogRequestAborted(ILogger logger, string method, PathString path);
 }

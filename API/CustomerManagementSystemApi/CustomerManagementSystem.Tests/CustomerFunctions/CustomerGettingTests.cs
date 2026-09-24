@@ -49,7 +49,7 @@ public class CustomerGettingTests
 
         var result = await getting.GetCustomerAsync("not-a-valid-search-term", TestContext.Current.CancellationToken);
 
-        Assert.Equal(404, result.Status);
+        Assert.Equal(400, result.Status);
         dbUtils.Verify(d => d.GetCustomerAsync(It.IsAny<CustomerLookup>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -246,6 +246,22 @@ public class CustomerGettingTests
         Assert.Equal(200, result.Status);
         Assert.Contains("Dan", result.Data);
         Assert.Contains("Frunza", result.Data);
+    }
+
+    [Fact]
+    public async Task GetCustomersForExportAsync_RejectsAResultLargerThanTheExportCap()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<PagedResponse<CustomerModel>>(200, "Success!",
+                new PagedResponse<CustomerModel>([MakeCustomer()], 5001, 1, 5000)));
+        var getting = new CustomerGetting(dbUtils.Object);
+
+        var result = await getting.GetCustomersForExportAsync(new ExportCustomersRequest(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        Assert.Contains("limited to 5000", result.ResponseMessage);
+        Assert.Null(result.Data);
     }
 
     [Fact]

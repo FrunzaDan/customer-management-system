@@ -11,6 +11,7 @@ CREATE TABLE [dbo].[Customer]
     [BirthDate] DATE NULL,
     [StatusCode] SMALLINT NOT NULL
         CONSTRAINT [DF_Customer_StatusCode] DEFAULT 1901,
+    [StatusCodeBeforeDeactivation] SMALLINT NULL,
     [CreatedAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Customer_CreatedAt] DEFAULT SYSUTCDATETIME(),
     [LastInteractionAt] DATETIME2 (3) NOT NULL
@@ -19,7 +20,9 @@ CREATE TABLE [dbo].[Customer]
     CONSTRAINT [UQ_Customer_Email] UNIQUE ([Email]),
     CONSTRAINT [UQ_Customer_PhoneNumber] UNIQUE ([PhoneNumber]),
     CONSTRAINT [CK_Customer_Gender] CHECK ([Gender] IN (0, 1, 2)),
-    CONSTRAINT [CK_Customer_StatusCode] CHECK ([StatusCode] IN (1901, 1903, 1904))
+    CONSTRAINT [CK_Customer_StatusCode] CHECK ([StatusCode] IN (1901, 1903, 1904)),
+    CONSTRAINT [CK_Customer_StatusCodeBeforeDeactivation]
+        CHECK ([StatusCodeBeforeDeactivation] IN (1901, 1904))
 );
 GO
 

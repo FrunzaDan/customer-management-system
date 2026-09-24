@@ -1,4 +1,12 @@
-import { Component, OnInit, computed, signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  effect,
+  signal,
+  inject,
+  untracked,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
@@ -77,6 +85,18 @@ export class CustomerListComponent implements OnInit {
     () =>
       `Customers, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${SORT_LABELS[this.sortColumn()]} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
   );
+
+  constructor() {
+    effect(() => {
+      if (this.loading() || this.loadError()) return;
+      const lastPage = this.totalPages();
+      if (this.currentPage() <= lastPage) return;
+      untracked(() => {
+        this.currentPage.set(lastPage);
+        this.fetchCustomers();
+      });
+    });
+  }
 
   private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   private static readonly SEARCH_DEBOUNCE_MS = 300;

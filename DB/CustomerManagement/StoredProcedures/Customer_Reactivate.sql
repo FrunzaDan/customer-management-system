@@ -19,8 +19,9 @@ BEGIN
         UPDATE dbo.Customer
         SET
             LastInteractionAt = @Now,
-            StatusCode = 1901
-        WHERE CustomerId = @CustomerId AND StatusCode <> 1901;
+            StatusCode = ISNULL(StatusCodeBeforeDeactivation, 1901),
+            StatusCodeBeforeDeactivation = NULL
+        WHERE CustomerId = @CustomerId AND StatusCode = 1903;
 
         IF @@ROWCOUNT > 0
         BEGIN
@@ -30,7 +31,7 @@ BEGIN
         ELSE
         BEGIN
             SET @Result = 409;
-            SET @Message = 'Customer is already active.';
+            SET @Message = 'Customer is not deactivated.';
         END
     END
     ELSE

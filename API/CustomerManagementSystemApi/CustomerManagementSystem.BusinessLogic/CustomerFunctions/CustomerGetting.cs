@@ -19,7 +19,7 @@ public class CustomerGetting(IDbUtils dbUtils)
 
         var lookup = DetermineLookup(searchTerm.Trim());
         if (lookup is null)
-            return new ResponseModel<CustomerModel>(404,
+            return new ResponseModel<CustomerModel>(400,
                 "No valid search variable was provided! It must be a customer ID, phone number, or email.");
 
         return await dbUtils.GetCustomerAsync(lookup, cancellationToken);
@@ -61,6 +61,10 @@ public class CustomerGetting(IDbUtils dbUtils)
         var response = await dbUtils.GetCustomersAsync(pagedRequest, cancellationToken);
         if (response is not { Status: 200, Data: { } paged })
             return new ResponseModel<string>(response.Status, response.ResponseMessage);
+
+        if (paged.TotalItems > MaxExportRows)
+            return new ResponseModel<string>(400,
+                $"{paged.TotalItems} customers match, but an export is limited to {MaxExportRows}. Narrow the search and try again.");
 
         var csv = CustomerCsvExporter.ToCsv(paged.Items);
         return new ResponseModel<string>(200, $"{paged.Items.Count} customers exported.", csv);

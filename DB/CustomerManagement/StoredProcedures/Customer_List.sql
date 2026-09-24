@@ -12,6 +12,19 @@ BEGIN
     DECLARE @EscapedSearchTerm NVARCHAR(508) =
         REPLACE(REPLACE(REPLACE(@SearchTerm, '\', '\\'), '%', '\%'), '_', '\_');
 
+    SELECT COUNT(*) AS TotalCount
+    FROM
+        dbo.Customer AS c
+    INNER JOIN
+        dbo.CustomerAddress AS a
+        ON c.CustomerId = a.CustomerId
+    WHERE
+        @SearchTerm IS NULL
+        OR c.FirstName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR c.LastName LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR c.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
+        OR c.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\';
+
     SELECT
         c.CustomerId,
         c.FirstName,
@@ -28,8 +41,7 @@ BEGIN
         a.City,
         a.PostalCode,
         a.Street,
-        a.StreetNumber,
-        COUNT(*) OVER() AS TotalCount
+        a.StreetNumber
     FROM
         dbo.Customer AS c
     INNER JOIN
@@ -49,7 +61,8 @@ BEGIN
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'asc' THEN c.Email END ASC,
         CASE WHEN @SortColumn = 'email' AND @SortDirection = 'desc' THEN c.Email END DESC,
         CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'asc' THEN c.PhoneNumber END ASC,
-        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'desc' THEN c.PhoneNumber END DESC
+        CASE WHEN @SortColumn = 'phonenumber' AND @SortDirection = 'desc' THEN c.PhoneNumber END DESC,
+        c.CustomerId
     OFFSET (@PageNumber - 1) * @PageSize ROWS
     FETCH NEXT @PageSize ROWS ONLY;
 END

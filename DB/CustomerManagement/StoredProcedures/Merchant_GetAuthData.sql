@@ -5,10 +5,6 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    UPDATE dbo.Merchant
-    SET LastInteractionAt = SYSUTCDATETIME()
-    WHERE Username = @Username;
-
     SELECT
         PasswordHash,
         PasswordSalt,

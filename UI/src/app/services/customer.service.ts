@@ -187,11 +187,11 @@ export class CustomerService {
   }
 
   deactivateCustomer(customerId: string): void {
-    this.changeStatus(customerId, 'deactivate', CustomerStatus.Deactivated);
+    this.changeStatus(customerId, 'deactivate');
   }
 
   reactivateCustomer(customerId: string): void {
-    this.changeStatus(customerId, 'reactivate', CustomerStatus.Active);
+    this.changeStatus(customerId, 'reactivate');
   }
 
   deactivateCustomerSilently(
@@ -234,9 +234,7 @@ export class CustomerService {
         },
         error: (error: HttpErrorResponse) => {
           this.exportLoading.set(false);
-          this.exportError.set(
-            extractErrorMessage(error, 'Failed to export customers'),
-          );
+          void this.setExportError(error);
         },
       });
   }
@@ -244,7 +242,6 @@ export class CustomerService {
   private changeStatus(
     customerId: string,
     action: 'deactivate' | 'reactivate',
-    status: CustomerStatus,
   ): void {
     this.activationState.set({ loading: true, error: null });
     const params = new HttpParams().set('customerId', customerId);
@@ -256,7 +253,11 @@ export class CustomerService {
       .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
       .subscribe({
         next: () => {
-          this.setStatusLocally(customerId, status);
+          if (action === 'deactivate') {
+            this.setStatusLocally(customerId, CustomerStatus.Deactivated);
+          } else {
+            this.refreshCustomerLocally(customerId);
+          }
           this.activationState.set({ loading: false, error: null });
           this.notificationService.show(`Customer ${action}d successfully.`);
         },
@@ -270,6 +271,15 @@ export class CustomerService {
     );
     if (existingCustomer)
       this.updateCustomerLocally({ ...existingCustomer, status });
+  }
+
+  private refreshCustomerLocally(customerId: string): void {
+    if (!this.customers().some((item) => item.customerId === customerId))
+      return;
+    this.getCustomer(customerId).subscribe({
+      next: (customer) => this.updateCustomerLocally(customer),
+      error: () => this.setStatusLocally(customerId, CustomerStatus.Active),
+    });
   }
 
   private updateCustomerLocally(updatedCustomer: Customer): void {
@@ -288,6 +298,25 @@ export class CustomerService {
 
   private updateLoadedPage(update: (items: Customer[]) => Customer[]): void {
     this.page.update((page) => page && { ...page, items: update(page.items) });
+  }
+
+  private async setExportError(error: HttpErrorResponse): Promise<void> {
+    const body =
+      error.error instanceof Blob
+        ? await readJsonBlob(error.error)
+        : error.error;
+    this.exportError.set(
+      extractErrorMessage(
+        new HttpErrorResponse({
+          error: body,
+          headers: error.headers,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url ?? undefined,
+        }),
+        'Failed to export customers',
+      ),
+    );
   }
 
   private buildExportFilename(): string {
@@ -323,4 +352,12 @@ function toUpdateCustomerRequest(customer: Customer): UpdateCustomerRequest {
     birthDate: customer.birthDate ?? undefined,
     address: customer.address,
   };
+}
+
+async function readJsonBlob(blob: Blob): Promise<unknown> {
+  try {
+    return JSON.parse(await blob.text());
+  } catch {
+    return null;
+  }
 }

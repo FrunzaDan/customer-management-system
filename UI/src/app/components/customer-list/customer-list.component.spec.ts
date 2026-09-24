@@ -167,6 +167,23 @@ describe('CustomerListComponent', () => {
     });
   });
 
+  describe('page clamping after a reload', () => {
+    it('steps back to the last page when the current page no longer exists', () => {
+      totalItems.set(120);
+      component.currentPage.set(3);
+      TestBed.tick();
+      loadCustomers.mockClear();
+
+      totalItems.set(100);
+      TestBed.tick();
+
+      expect(component.currentPage()).toBe(2);
+      expect(loadCustomers).toHaveBeenCalledWith(
+        expect.objectContaining({ pageNumber: 2 }),
+      );
+    });
+  });
+
   describe('onSearchInput', () => {
     it('debounces so only the last call within the window triggers a fetch', () => {
       vi.useFakeTimers();

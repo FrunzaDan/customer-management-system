@@ -19,6 +19,7 @@ BEGIN
         UPDATE dbo.Customer
         SET
             LastInteractionAt = @Now,
+            StatusCodeBeforeDeactivation = StatusCode,
             StatusCode = 1903
         WHERE CustomerId = @CustomerId AND StatusCode <> 1903;
 

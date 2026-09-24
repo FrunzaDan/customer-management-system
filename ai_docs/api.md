@@ -67,7 +67,7 @@ Other settings:
 - **`401`/`403`:** bad credentials or role, or a missing or expired token.
 - **`404`/`409`:** from the proc's `(Result, Message)` row.
 - **`429`:** the login rate limit.
-- **`500`:** anything thrown, handled by `GlobalExceptionHandler`. `detail` is included in Development only.
+- **`500`:** anything thrown, handled by `GlobalExceptionHandler`. `detail` is included in Development only. If the client has already aborted the request (a cancelled navigation or a superseded search), the handler logs at Debug and ends with `499` instead.
 - There's no try/catch in controllers, services or data access. The one exception is the best-effort audit write.
 
 ### Logging
@@ -115,7 +115,7 @@ Other settings:
 
 ### Auth
 
-- **Login:** `DbUtils` reads the hash, salt and role (`Merchant_GetAuthData`) and verifies PBKDF2-SHA256 in C#: 100k iterations, a 16-byte salt, and `FixedTimeEquals`.
+- **Login:** `DbUtils` reads the hash, salt and role (`Merchant_GetAuthData`) and verifies PBKDF2-SHA256 in C#: 100k iterations, a 16-byte salt, and `FixedTimeEquals`. An unknown username is hashed against a dummy salt, so it takes as long as a wrong password. Only a successful login updates `LastInteractionAt` (`Merchant_RecordLogin`).
 - **Token:** `JwtCreation` signs an HMAC-SHA256 JWT with these claims: `sid`, `sub`, `name`, `role`, `amr`, `jti`, `iat`. The expiry comes from `AccessTokenTimeoutMinutes`.
 - **Validation:** only `AddJwtBearer`, which checks the signature, issuer, audience and lifetime with `ClockSkew = 0`.
 

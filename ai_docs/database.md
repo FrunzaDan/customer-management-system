@@ -43,7 +43,7 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `DB/Custo
 
 ### Procedures
 
-- **`Customer_List`:** paged with `OFFSET`/`FETCH`. It searches with `LIKE` (wildcards escaped) and sorts through a `CASE` `ORDER BY` (no dynamic SQL). The total comes from `COUNT(*) OVER()`. `/export` reuses it with page size 5000.
+- **`Customer_List`:** paged with `OFFSET`/`FETCH`. It searches with `LIKE` (wildcards escaped) and sorts through a `CASE` `ORDER BY` (no dynamic SQL). It returns two result sets, the total count and then the page, so an empty page past the end still reports the right total. Every sort ends on `CustomerId`, so equal names page deterministically. `/export` reuses it with page size 5000 and returns `400` when more rows match.
 - **`Customer_Get`:** one `IF` branch each for id, phone number and email, so each gets an index seek.
 - **`Customer_Update`:** a partial update (`ISNULL(@x, column)`) that updates the customer and address rows in one transaction.
 - **`CustomerAuditLog_List`:** paged. The total is a separate first result set, so an empty page still reports the right total.
@@ -52,7 +52,7 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `DB/Custo
 ### Customer lifecycle (enforced in the procs)
 
 - New customers are active (`1901`). The generator creates test customers (`1904`).
-- `Deactivate` needs a customer that isn't already deactivated. `Reactivate` needs one that isn't already active. Otherwise the result is `409`.
+- `Deactivate` needs a customer that isn't already deactivated; it saves the current status in `StatusCodeBeforeDeactivation`. `Reactivate` needs a deactivated one and restores that status, so a Test record stays Test. Otherwise the result is `409`.
 - `Delete` needs status `1903` or `1904`. It deletes purchases, then the address, then the customer, in one transaction.
 - Email and phone number duplicates are checked first (`409`). The unique constraints catch the race window, and the `CATCH` maps errors 2601/2627 to the same `409`.
 

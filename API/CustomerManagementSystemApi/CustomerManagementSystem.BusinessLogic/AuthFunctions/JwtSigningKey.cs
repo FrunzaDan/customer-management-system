@@ -6,5 +6,5 @@ namespace CustomerManagementSystem.BusinessLogic.AuthFunctions;
 public static class JwtSigningKey
 {
     public static SymmetricSecurityKey Create(string secureJwtKey) =>
-        new(Encoding.ASCII.GetBytes(secureJwtKey));
+        new(Encoding.UTF8.GetBytes(secureJwtKey));
 }

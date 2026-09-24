@@ -61,7 +61,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - **After a change:** an update, status change or delete is written straight into the loaded list, with no refetch.
 - `GlobalAuditLogService`, `AuditLogService`, `PurchaseService` and `MonthlyActivityService` follow the same pattern.
 - **`ProductService`** is shaped like the employee app's `OfficeService`: `loadProducts()` feeds an `httpResource`, while `fetchProducts()` and `getProductDetails(id)` are one-off Observables. `product-details` keys an `rxResource` on the route id.
-- **Retries:** deactivate and reactivate retry only on status 0 or ≥500, with backoff.
+- **Retries:** deactivate and reactivate retry only on status 0 or ≥500, with backoff. After a reactivate, the list re-reads that row from the server, because the restored status may be Test rather than Active.
 - **Customer list:**
   - search (debounced 300 ms), sort and paging all happen on the server;
   - page size is 50;

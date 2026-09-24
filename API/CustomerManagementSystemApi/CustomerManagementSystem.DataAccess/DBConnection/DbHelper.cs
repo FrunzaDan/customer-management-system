@@ -68,16 +68,13 @@ public static class DbHelper
     public static async Task<ResponseModel<PagedResponse<CustomerModel>>> HandleResponseWithPagedCustomersAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
+        await reader.ReadAsync().ConfigureAwait(false);
+        var totalItems = reader.GetInt32("TotalCount");
+
         var items = new List<CustomerModel>();
-        var totalItems = 0;
-
+        await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-        {
-            if (items.Count == 0)
-                totalItems = reader.GetInt32("TotalCount");
-
             items.Add(MapCustomerFromReader(reader));
-        }
 
         return new ResponseModel<PagedResponse<CustomerModel>>(200,
             $"{items.Count} customers found (page {pageNumber}).",

@@ -7,6 +7,9 @@ namespace CustomerManagementSystem.DataAccess.DBConnection;
 
 public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
 {
+    private static readonly byte[] UnknownUserHash = new byte[32];
+    private static readonly byte[] UnknownUserSalt = new byte[16];
+
     public Task<ResponseModel<Guid?>> CreateCustomerAsync(CreateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
@@ -88,16 +91,25 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             cancellationToken
         );
 
-        if (authData is null ||
-            !PasswordHasher.VerifyPassword(merchantCredentials.Password ?? string.Empty, authData.PasswordHash,
-                authData.PasswordSalt))
+        var passwordMatches = PasswordHasher.VerifyPassword(merchantCredentials.Password ?? string.Empty,
+            authData?.PasswordHash ?? UnknownUserHash, authData?.PasswordSalt ?? UnknownUserSalt);
+
+        if (authData is null || !passwordMatches)
             return new ResponseModel<MerchantRole?>(401, "Invalid username or password.");
 
         var roleCode = (short)authData.MerchantRole;
-        return authData.MerchantRole == MerchantRole.Merchant
-            ? new ResponseModel<MerchantRole?>(200, $"Credentials validated successfully. Role: {roleCode}.",
-                authData.MerchantRole)
-            : new ResponseModel<MerchantRole?>(403, $"The provided merchant role ({roleCode}) is not valid.");
+        if (authData.MerchantRole != MerchantRole.Merchant)
+            return new ResponseModel<MerchantRole?>(403, $"The provided merchant role ({roleCode}) is not valid.");
+
+        await ExecuteStoredProcedureAsync(
+            "dbo.Merchant_RecordLogin",
+            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username,
+                merchantCredentials.Username),
+            _ => Task.FromResult(true),
+            cancellationToken);
+
+        return new ResponseModel<MerchantRole?>(200, $"Credentials validated successfully. Role: {roleCode}.",
+            authData.MerchantRole);
     }
 
     public Task<ResponseModel<object>> LogCustomerAuditAsync(Guid customerId, string performedBy, AuditAction action,
