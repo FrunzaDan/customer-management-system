@@ -13,7 +13,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - the shared helpers (`notification`, `confirm-dialog`, `api-logger`, `health`, `unsaved-changes.guard`).
 - `src/app/components/` — one folder per page or widget.
 - `src/app/interfaces/` — mirrors of the API's JSON.
-- `src/app/utils/extract-error-message.ts`, `audit-action-label.ts`, `random-purchases.ts`.
+- `src/app/utils/extract-error-message.ts`, `audit-action-label.ts`, `random-purchases.ts`, `chart-scale.ts` (chart axis math, shared with the Imalo app).
 - `src/app/pipes/ron.pipe.ts`, `src/styles.css`.
 
 ## How it works
@@ -74,6 +74,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - **Catalogue charts** use `ProductService.products`. They show the top 7 categories plus "Other"; stock health shows every category and flags those ≥85% sold.
 - **Time-series charts** use `GET /monthly-activity`. The monthly/yearly toggle is computed client-side.
 - **Cumulative growth** counts registrations and doesn't subtract deleted customers, so it isn't a count of current customers.
+- **Axis and labels:** the axis math comes from the shared `utils/chart-scale.ts`. Money labels are whole RON through the `ron` pipe (`ron.transform(value, '1.0-0')`), as in the Imalo charts.
 - Each chart uses one color (`--spectrumColor2`), plus `--dangerColor1` for flags. The palette has no colorblind-safe pair.
 
 ### Forms (Signal Forms)
@@ -115,4 +116,4 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `linkedSignal` is lazy: it only remembers a page that something has read.
 - `value()` throws while a resource is in error. Guard reads with `hasValue()`.
 - SSR runs HTTP through Node's `fetch`, which has its own TLS trust. See [build-and-run](build-and-run.md).
-- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together.
+- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together. `utils/chart-scale.ts` (axis math: `niceMax`, `formatTick`) is identical in the customer and Imalo apps; the employee app has no charts.

@@ -15,6 +15,10 @@ describe('RonPipe', () => {
     expect(pipe.transform(0)).toBe('0.00 RON');
   });
 
+  it('takes a number format, for whole-RON chart labels', () => {
+    expect(pipe.transform(1234.5, '1.0-0')).toBe('1,235 RON');
+  });
+
   it('renders nothing for null/undefined', () => {
     expect(pipe.transform(null)).toBe('');
     expect(pipe.transform(undefined)).toBe('');

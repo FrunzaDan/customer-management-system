@@ -4,6 +4,7 @@ import { MonthlyActivityService } from '../../services/monthly-activity.service'
 import { RankedBarChartComponent } from './ranked-bar-chart/ranked-bar-chart.component';
 import { StockHealthChartComponent } from './stock-health-chart/stock-health-chart.component';
 import { TimeSeriesChartComponent } from './time-series-chart/time-series-chart.component';
+import { RonPipe } from '../../pipes/ron.pipe';
 import {
   cumulativePoints,
   monthlyToPoints,
@@ -26,10 +27,12 @@ export type TimeRange = 'monthly' | 'yearly';
     StockHealthChartComponent,
     TimeSeriesChartComponent,
   ],
+  providers: [RonPipe],
 })
 export class ChartsComponent {
   private readonly productService = inject(ProductService);
   private readonly monthlyActivityService = inject(MonthlyActivityService);
+  private readonly ron = inject(RonPipe);
 
   readonly products = this.productService.products;
   readonly productsLoading = this.productService.loading;
@@ -83,8 +86,9 @@ export class ChartsComponent {
     cumulativePoints(this.activity().customerCreations),
   );
 
-  readonly currencyFormatter = (value: number) =>
-    value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  // Whole RON, like the Imalo charts: the chart labels have no room for decimals.
+  readonly formatRon = (value: number): string =>
+    this.ron.transform(value, '1.0-0');
 
   constructor() {
     this.productService.loadProducts();

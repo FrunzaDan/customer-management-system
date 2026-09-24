@@ -1,4 +1,5 @@
 import { Component, computed, input } from '@angular/core';
+import { formatTick, niceMax } from '../../../utils/chart-scale';
 
 export interface TimeSeriesPoint {
   key: string;
@@ -45,22 +46,6 @@ const LEFT_PADDING = 30;
 const MIN_CHART_WIDTH = 260;
 const MARKER_RADIUS = 4.5;
 const BAR_CORNER_RADIUS = 4;
-
-// Smallest "nice" round number >= raw, for axis ticks (0 / 5 / 10 / 50 / 100 ...).
-function niceMax(raw: number): number {
-  if (raw <= 0) return 1;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(raw)));
-  const residual = raw / magnitude;
-  const niceResidual =
-    residual <= 1 ? 1 : residual <= 2 ? 2 : residual <= 5 ? 5 : 10;
-  return niceResidual * magnitude;
-}
-
-function formatTick(value: number): string {
-  return value >= 1000
-    ? `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}k`
-    : String(Math.round(value));
-}
 
 // 4px-rounded top, square baseline — a bar's data-end is the far end from the
 // axis, per the app's chart mark spec.
