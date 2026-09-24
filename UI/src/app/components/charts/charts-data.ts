@@ -100,7 +100,7 @@ export function yearlyToPoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
 }
 
 // Running total of monthly registrations — a customer-count-over-time approximation,
-// not a currently-active count (it doesn't subtract deletions; see charts.md).
+// not a currently-active count (it doesn't subtract deletions; see ai_docs/angular-frontend.md, Charts).
 export function cumulativePoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
   let running = 0;
   return counts.map((count) => {

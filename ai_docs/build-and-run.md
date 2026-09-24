@@ -2,51 +2,51 @@
 
 ## What it is
 
-How to build and run the DB, API, and UI on a dev machine, and the two recurring TLS-trust problems that come up when doing so.
+How to build, test and run the database, API and UI locally.
 
 ## Key files / paths
 
-- `build.sh` — repo root, compile/test only, no live services.
-- `run.sh` — repo root, full dev environment orchestration.
-- `DB/CustomerManagement/Scripts/PostDeployment/Seed_Merchant.sql` — seeds the test login.
-- `.run/` — gitignored logs + exported dev TLS cert, written by `run.sh`.
+- `build.sh` — restores, builds and tests the API, builds the DB project, then runs `npm ci` and `npm run build` for the UI. Starts nothing.
+- `run.sh` — the full dev environment. Safe to re-run.
+- `.run/` — logs and the exported dev certificate (gitignored).
+- `DB/CustomerManagement/Scripts/PostDeployment/Seed_Merchant.sql` — the test login.
 
 ## How it works
 
-**Docker SQL Server (Azure SQL Edge)** — manual equivalent of what `run.sh` automates:
+### `run.sh`
+
+1. Starts Docker, then starts or creates the `sqlserver` container (Azure SQL Edge on port 1433). It uses `linux/arm64` on Apple Silicon and `linux/amd64` everywhere else.
+2. Installs `sqlpackage` 170.3.93 if it's missing, builds the `.sqlproj`, and publishes it, retrying for up to 180 s until SQL Server answers.
+3. Starts the API at `https://localhost:7145` with `ConnectionStrings__Docker` pointing at that container, and waits up to 60 s for it. If the API doesn't come up, the script fails.
+4. Exports the API's TLS certificate to `.run/dev-cert.pem` and sets `NODE_EXTRA_CA_CERTS`, so Node (SSR) trusts it.
+5. Starts `npm start` at `http://localhost:4203`. `Ctrl+C` stops both.
+
+You can override these environment variables: `SQL_PORT`, `SQL_SA_PASSWORD`, `SQL_DATABASE`, `SQL_CONTAINER_NAME`, `SQL_IMAGE`, `SQL_PLATFORM` and `API_URL`.
+
+### Manual Docker equivalent
+
 ```bash
-docker pull mcr.microsoft.com/azure-sql-edge
-
-docker run \
-  -e "ACCEPT_EULA=1" \
-  -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" \
-  -p 1433:1433 \
-  --name sqlserver \
-  --platform linux/arm64 \
-  -d mcr.microsoft.com/azure-sql-edge
+docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" \
+  -p 1433:1433 --name sqlserver --platform linux/arm64 -d mcr.microsoft.com/azure-sql-edge
 ```
-- `sa` password for local dev is `MyStrongPassw0rd?` — matches `appsettings.json`'s `ConnectionStrings:Docker` (which `run.sh` also passes to the API as `ConnectionStrings__Docker`) and `run.sh`'s `SQL_SA_PASSWORD` default. Local-dev-only credential, not a production secret.
-- Container name `sqlserver`, port `1433`. `run.sh` picks `--platform linux/arm64` automatically only on Apple Silicon Macs (`uname -s == Darwin && uname -m == arm64`); everywhere else it defaults to `linux/amd64`. Both are overridable via env var.
-- Azure SQL Edge does **not** ship `sqlcmd`/`mssql-tools` inside the container, so readiness can't be probed with the usual `docker exec ... sqlcmd` trick — see step 2 below for how `run.sh` works around that.
 
-**`build.sh`** — CI-style, one-shot: `dotnet restore`/`build`/`test` on the API solution, `dotnet build` the DB `.sqlproj`, then `npm ci && npm run build` for Angular. Doesn't start anything; just proves everything compiles and tests pass. Run before committing API/DB/UI changes.
+### Which database the API uses
 
-**`run.sh`** — full local dev environment, idempotent (safe to re-run):
-1. Starts Docker Desktop if not running (macOS: `open -a Docker`), starts/creates the `sqlserver` container if needed (existing container is `docker start`ed, not recreated). `SQL_DATABASE` defaults to `CustomerManagement`, overridable via env var.
-2. Installs `sqlpackage` (pinned to `170.3.93` — newer releases can need a .NET runtime patch this machine doesn't have) as a global dotnet tool if missing, builds the DB `.sqlproj`, and publishes the `.dacpac`, retrying with jitter (no `sqlcmd` in the container to probe readiness with, so it retries the *real* publish instead) until SQL Server accepts connections or 180s elapse.
-3. Starts the API in the background (`dotnet run --launch-profile https`, `https://localhost:7145`), waits for `/swagger/index.html` to respond — and now **hard-fails with a clear error** if it doesn't come up within 60s, instead of silently continuing into a broken UI-only session.
-4. Extracts the API's live TLS cert (via `openssl s_client | openssl x509`) into `.run/dev-cert.pem` and sets `NODE_EXTRA_CA_CERTS` to it, so Node's `fetch()` (used during Angular SSR) trusts it.
-5. Starts the Angular dev server in the foreground (`npm start`, `http://localhost:4203` — port set in `UI/angular.json`; must stay in the API's `Cors:AllowedOrigins`). `Ctrl+C` stops both API and Angular (trap on `EXIT INT TERM`).
+- **macOS:** always the Docker container.
+- **Windows:** the Docker container if it answers within 3 s. Otherwise the local SQL Server (`ConnectionStrings:LocalSqlServer`, Windows auth).
+- The choice is logged at startup. On Windows, start Docker before the API. See [api](api.md).
 
-**Test login** (seeded by the post-deployment script, skipped if the merchant already exists):
-- Username: `TestMerchantID`
-- Password: `Merchant123`
+### Test login
+
+- Username `TestMerchantID`, password `Merchant123`.
 
 ## Gotchas / conventions
 
-- **Formatting is Prettier**, configured identically in all three apps (`UI/.prettierrc`, with the `angular` parser for `.html`; `UI/.editorconfig` matches too). Run `npm run format` in `UI/` before committing; `npm run format:check` lists files that aren't formatted.
-- **One-time local machine setup, not handled by either script**: the ASP.NET Core HTTPS dev certificate must be trusted at the OS level — `dotnet dev-certs https --trust`.
-- **Browser TLS trust** (`ERR_CERT_AUTHORITY_INVALID` in the browser, login fails with the UI's `status === 0` message, see [angular-frontend](angular-frontend.md)): running `dotnet dev-certs https --export-path` **regenerates** the dev cert rather than exporting the existing one, desyncing "the cert Kestrel serves" from "the cert the OS trusts" (multiple `localhost` dev certs end up in the login keychain). Fix: `dotnet dev-certs https --clean && dotnet dev-certs https --trust`. Never use `--export-path` to "just get the current cert" — it doesn't.
-- **Node/SSR TLS trust** (silent `AbortError`s in the terminal for guarded routes; page still works after client-side hydration): Angular SSR makes real `fetch()` calls from **Node**, whose TLS stack doesn't consult the per-user login keychain the way a browser or `curl` does — so even an OS-trusted cert can fail Node's handshake. This is why `run.sh` step 4 exists. Separate from the browser-trust problem above; fixing one does not fix the other.
-- `sqlpackage` version is pinned deliberately (see comment in `run.sh`) — don't "helpfully" bump it without checking it runs against the .NET runtime actually installed.
-- `run.sh`'s API-readiness wait and its later cert-extraction step both need the API's port — they now share one `$API_PORT` variable instead of each re-deriving it from `$API_URL` independently.
+- **One-time setup:** `dotnet dev-certs https --trust`.
+- **Browser shows `ERR_CERT_AUTHORITY_INVALID`:** run `dotnet dev-certs https --clean && dotnet dev-certs https --trust`. Never use `--export-path`, which regenerates the certificate.
+- **Node SSR `AbortError`s:** Node doesn't read the keychain. That's why `run.sh` step 4 exists.
+- **Pinned versions:**
+  - `sqlpackage` is pinned; don't bump it without checking the installed .NET runtime.
+  - `DB/CustomerManagement/global.json` pins .NET 8. Keep it.
+- **Formatting:** Prettier (`npm run format`, `npm run format:check`), configured the same in all three apps.
+- The `sa` password is a local-dev credential only.

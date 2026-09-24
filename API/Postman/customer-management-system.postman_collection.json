@@ -961,7 +961,7 @@
 		},
 		{
 			"name": "Products & Purchases",
-			"description": "Product catalogue and per-customer purchases (see ai_docs/products-and-purchases.md). A numbered, self-cleaning walk: register a helper customer, buy the best-stocked product, verify the purchase history and the product's buyers/sold/left numbers, check the validation and lifecycle guardrails, then delete the helper. Each run consumes one unit of stock (from whichever product has the most left), which is never restored.",
+			"description": "Product catalogue and per-customer purchases (see ai_docs/database.md, Products and purchases). A numbered, self-cleaning walk: register a helper customer, buy the best-stocked product, verify the purchase history and the product's buyers/sold/left numbers, check the validation and lifecycle guardrails, then delete the helper. Each run consumes one unit of stock (from whichever product has the most left), which is never restored.",
 			"item": [
 				{
 					"name": "1. Get Products (captures the best-stocked product)",
