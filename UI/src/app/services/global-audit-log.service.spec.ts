@@ -42,12 +42,8 @@ describe('GlobalAuditLogService', () => {
     httpMock.verify();
   });
 
-  // The response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  // httpResource issues its request from an effect, so flush effects after
-  // calling loadAllAuditLog() before expecting the HTTP call.
   const load = (pageNumber: number, pageSize = 20) => {
     service.loadAllAuditLog({ pageNumber, pageSize });
     TestBed.tick();

@@ -27,9 +27,6 @@ public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
         if (!string.IsNullOrEmpty(request.PhoneNumber) && PhoneNumberValidation.ValidatePhoneNumber(request.PhoneNumber) == false)
             return new ResponseModel<object>(400, "Invalid phone number.");
 
-        // No BirthDate check: its format is guaranteed by the type (DateOnly) — a malformed
-        // value is already rejected while the request body is deserialized.
-
         if (request.Gender is { } gender && !Enum.IsDefined(gender))
             return new ResponseModel<object>(400, "Invalid Gender value.");
 
@@ -42,16 +39,12 @@ public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
 
         var response = await dbUtils.UpdateCustomerAsync(request, cancellationToken);
 
-        // Not forwarding cancellationToken: the edit already succeeded, so the audit write
-        // should still be attempted even if the client has since disconnected.
         if (response.Status == 200)
             await auditLogger.LogAsync(request.CustomerId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
 
         return response;
     }
 
-    // Customer_Update is a partial update (ISNULL(@param, column)) — only the fields
-    // actually present in the request were touched, so list just those.
     private static string DescribeChangedFields(UpdateCustomerRequest request)
     {
         var changedFields = new List<string>();

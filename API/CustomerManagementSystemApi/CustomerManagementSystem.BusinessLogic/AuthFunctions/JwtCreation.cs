@@ -31,12 +31,9 @@ public class JwtCreation
 
         var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDbAsync(merchantCredentials, cancellationToken);
 
-        // 401 (wrong username or password) or 403 (a role that may not sign in), with its message.
         if (credentialsCheck.Status != StatusCodes.Status200OK)
             return new ResponseModel<AccessTokenResponse>(credentialsCheck.Status, credentialsCheck.ResponseMessage);
 
-        // One timestamp for both the token's exp claim and the ExpiresAt reported to the
-        // client, so the two can't drift apart.
         var expires = DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenTimeoutMinutes);
         var token = GenerateJwtToken(merchantCredentials.Username, credentialsCheck.Data, expires);
 
@@ -47,8 +44,6 @@ public class JwtCreation
     private string GenerateJwtToken(string username, MerchantRole? merchantRole, DateTime expires)
     {
         var tokenDescriptor = BuildTokenDescriptor(username, merchantRole, expires);
-        // JsonWebTokenHandler is the current IdentityModel handler (the one JwtBearer validates
-        // with); it writes claim types as given, so the claims below use the short JWT names.
         return new JsonWebTokenHandler().CreateToken(tokenDescriptor);
     }
 
@@ -58,17 +53,12 @@ public class JwtCreation
         {
             Subject = new ClaimsIdentity([
                 new Claim(JwtRegisteredClaimNames.Sub, username),
-                // unique_name/role are mapped back to ClaimTypes.Name/Role when JwtBearer reads the token.
                 new Claim(JwtRegisteredClaimNames.UniqueName, username),
-                // The role claim is the numeric code ("1801"), which is what [Authorize(Roles = "1801")]
-                // checks — not the enum member's name.
                 new Claim("role",
                     merchantRole is { } role ? ((short)role).ToString(CultureInfo.InvariantCulture) : string.Empty),
                 new Claim(JwtRegisteredClaimNames.Amr, "pwd"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             ]),
-            // iat is set here rather than as a hand-built claim: RFC 7519 requires a NumericDate
-            // (seconds since the Unix epoch), which the token handler writes from IssuedAt.
             IssuedAt = DateTime.UtcNow,
             Expires = expires,
             SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256Signature),

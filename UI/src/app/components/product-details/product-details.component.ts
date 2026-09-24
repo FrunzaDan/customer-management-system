@@ -24,11 +24,8 @@ export class ProductDetailsComponent {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
 
-  // Bound from the `:productId` route param by withComponentInputBinding() in app.config.ts.
   readonly productId = input<string>();
 
-  // Keyed on the route's id, like the customer details page; hasValue() guards
-  // the read, since value() throws while the resource is in error.
   private readonly detailsResource = rxResource({
     params: () => this.productId(),
     stream: ({ params: productId }) =>
@@ -51,14 +48,11 @@ export class ProductDetailsComponent {
   readonly product = computed(() => this.details()?.product ?? null);
   readonly buyers = computed(() => this.details()?.buyers ?? []);
 
-  // Sales whose buyer is no longer on record (deleted customers): sold is derived from
-  // stock, but the buyers list only has customers that still exist.
   readonly unlistedSales = computed(() =>
     Math.max(0, (this.product()?.soldQuantity ?? 0) - this.buyers().length),
   );
 
   constructor() {
-    // No id means nothing to show.
     effect(() => {
       if (!this.productId())
         untracked(() => this.router.navigate(['/products']));

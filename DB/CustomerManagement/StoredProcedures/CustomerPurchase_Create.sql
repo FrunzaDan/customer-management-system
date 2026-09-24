@@ -43,13 +43,9 @@ BEGIN
         FROM dbo.Product
         WHERE ProductId = @ProductId;
 
-        -- The stock decrement and the purchase row must succeed together: a decremented
-        -- stock with no purchase row (or the reverse) would leave the two tables disagreeing.
         BEGIN TRY
             BEGIN TRANSACTION;
 
-            -- The "QuantityOnHand > 0" guard sits in the UPDATE itself (not a separate
-            -- read-then-write), so two concurrent buyers of the last unit can't both succeed.
             UPDATE dbo.Product
             SET QuantityOnHand = QuantityOnHand - 1
             WHERE ProductId = @ProductId AND QuantityOnHand > 0;
@@ -80,7 +76,5 @@ BEGIN
         END CATCH
     END
 
-    -- ProductName rides along on the usual (Result, Message) row so the API can put it in
-    -- the audit-log entry without a second query; only meaningful when Result = 0.
     SELECT @Result AS Result, @Message AS Message, @ProductName AS ProductName;
 END

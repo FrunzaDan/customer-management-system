@@ -34,8 +34,6 @@ export class GlobalAuditLogService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  // Same shape as CustomerService's list: nothing is fetched until loadAllAuditLog() is
-  // first called, and a new page cancels the request still in flight.
   private readonly params = signal<LoadAllAuditLogParams | undefined>(
     undefined,
   );
@@ -51,7 +49,6 @@ export class GlobalAuditLogService {
     };
   });
 
-  // The last page that loaded, kept on screen while the next one loads.
   private readonly page = linkedSignal<
     PagedResponse<GlobalAuditLogEntry> | undefined,
     PagedResponse<GlobalAuditLogEntry> | undefined
@@ -83,7 +80,6 @@ export class GlobalAuditLogService {
   });
 
   loadAllAuditLog(params: LoadAllAuditLogParams): void {
-    // A new object always counts as a change, so the same page is fetched again too.
     this.params.set({ ...params });
   }
 

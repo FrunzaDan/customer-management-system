@@ -24,7 +24,6 @@ describe('isCustomerFormDirty', () => {
   });
 });
 
-// Must accept and reject the same addresses as the API's RegexConstants.EmailRegex.
 describe('environment.emailRegex', () => {
   const emailRegex = new RegExp(environment.emailRegex);
 

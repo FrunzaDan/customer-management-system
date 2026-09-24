@@ -25,8 +25,6 @@ interface LinePoint {
   label: string;
   x: number;
   y: number;
-  // Direct label only on the first/last point (the run's start and current total) —
-  // labeling every point would clutter a chart already showing the axis.
   labelAnchor: 'start' | 'end' | null;
   valueText: string;
   tooltip: string;
@@ -47,8 +45,6 @@ const MIN_CHART_WIDTH = 260;
 const MARKER_RADIUS = 4.5;
 const BAR_CORNER_RADIUS = 4;
 
-// 4px-rounded top, square baseline — a bar's data-end is the far end from the
-// axis, per the app's chart mark spec.
 function roundedTopPath(
   x: number,
   y: number,
@@ -65,8 +61,6 @@ function roundedTopPath(
   );
 }
 
-// Vertical bars (monthly/yearly counts) or a line+area (cumulative totals), sharing one
-// axis/gridline scale — a single series, so no legend/categorical color is needed.
 @Component({
   selector: 'app-time-series-chart',
   templateUrl: './time-series-chart.component.html',

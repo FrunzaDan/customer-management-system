@@ -55,8 +55,6 @@
   transform: rotate(90deg);
 }
 
-/* Toasts slide in from the right edge and slide back out when they go
-   (animate.enter / animate.leave on each toast). */
 .notification-enter {
   animation: notification-slide-in var(--duration-base) var(--ease-out);
 }

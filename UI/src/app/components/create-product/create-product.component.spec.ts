@@ -27,8 +27,6 @@ describe('CreateProductComponent', () => {
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     navigate = vi.fn().mockResolvedValue(true);
 
-    // The component resolves its dependencies (and builds its signal form) in
-    // field initializers, so it needs an active injection context.
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },

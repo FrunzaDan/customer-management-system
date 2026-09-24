@@ -9,10 +9,6 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    -- % and _ are LIKE wildcards; a literal search for either would otherwise match far
-    -- more than the user typed (e.g. a search for "_" matching almost every customer).
-    -- Still fully parameterized (no string concatenation of SQL) — this only escapes the
-    -- pattern characters inside the parameter's own value.
     DECLARE @EscapedSearchTerm NVARCHAR(508) =
         REPLACE(REPLACE(REPLACE(@SearchTerm, '\', '\\'), '%', '\%'), '_', '\_');
 
@@ -46,13 +42,6 @@ BEGIN
         OR c.Email LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
         OR c.PhoneNumber LIKE '%' + @EscapedSearchTerm + '%' ESCAPE '\'
     ORDER BY
-        -- Parameterized sorting without dynamic SQL: for a given
-        -- @SortColumn/@SortDirection, exactly one pair of CASE expressions
-        -- below evaluates to non-NULL for every row, so it's the only pair
-        -- that actually influences row order — the rest are NULL for every
-        -- row and are no-ops. Ties within name always break by FirstName.
-        -- The sort keys ('name', 'email', 'phonenumber') are the API's CustomerSortColumn
-        -- values, not column names.
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN c.LastName END ASC,
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'asc' THEN c.FirstName END ASC,
         CASE WHEN @SortColumn = 'name' AND @SortDirection = 'desc' THEN c.LastName END DESC,

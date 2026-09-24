@@ -14,8 +14,6 @@
 }
 
 .gradient-custom-2 {
-  /* Dark-to-teal only: the white copy on this panel needs >= 4.5:1 everywhere,
-     and the old gradient ended in light mint (WCAG 1.4.3). */
   background: var(--spectrumColor1);
   background: linear-gradient(
     to right,

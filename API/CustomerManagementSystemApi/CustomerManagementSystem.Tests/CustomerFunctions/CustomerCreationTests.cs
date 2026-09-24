@@ -69,7 +69,7 @@ public class CustomerCreationTests
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerCreation(dbUtils.Object, auditLogger.Object);
         var request = ValidRequest();
-        request.Email = new string('a', 250) + "@x.ro"; // 255 chars, one over NVARCHAR(254)
+        request.Email = new string('a', 250) + "@x.ro";
 
         var result = await registration.CreateCustomerAsync(request, PerformedBy, TestContext.Current.CancellationToken);
 
@@ -115,7 +115,6 @@ public class CustomerCreationTests
     [Fact]
     public async Task CreateCustomerAsync_RejectsAnAddressWithAMissingField_WithoutTouchingTheDb()
     {
-        // Every CustomerAddress column is NOT NULL, so this would otherwise be a 500 from the insert.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var registration = new CustomerCreation(dbUtils.Object, auditLogger.Object);
@@ -147,7 +146,7 @@ public class CustomerCreationTests
     [Theory]
     [InlineData(null)]
     [InlineData(CustomerStatus.Active)]
-    [InlineData(CustomerStatus.Test)] // the About page's "add 50 test customers" bulk generator
+    [InlineData(CustomerStatus.Test)]
     public async Task CreateCustomerAsync_AcceptsNoStatusActiveOrTest(CustomerStatus? status)
     {
         var dbUtils = new Mock<IDbUtils>();

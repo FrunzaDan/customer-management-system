@@ -26,15 +26,11 @@ describe('MonthlyActivityService', () => {
     httpMock.verify();
   });
 
-  // httpResource issues its request from an effect, so flush effects after
-  // calling loadMonthlyActivity() before expecting the HTTP call.
   const load = () => {
     service.loadMonthlyActivity();
     TestBed.tick();
   };
 
-  // ...and the response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   it('makes no request until loadMonthlyActivity() is called', () => {
@@ -66,7 +62,6 @@ describe('MonthlyActivityService', () => {
 
   it('falls back to empty series when the resource has no value', () => {
     load();
-    // Not flushed yet — hasValue() is still false.
     expect(service.activity()).toEqual({
       customerCreations: [],
       productPurchases: [],

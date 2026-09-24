@@ -39,15 +39,11 @@ describe('AuditLogService', () => {
     httpMock.verify();
   });
 
-  // httpResource issues its request from an effect, so flush effects after
-  // calling loadAuditLog() before expecting the HTTP call.
   const load = (customerId: string) => {
     service.loadAuditLog(customerId);
     TestBed.tick();
   };
 
-  // ...and the response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   it('makes no request until a customer is loaded', async () => {

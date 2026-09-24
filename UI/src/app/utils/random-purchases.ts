@@ -17,7 +17,6 @@ export function chooseProductsToBuy(
   ).slice(0, count);
 }
 
-// Fisher–Yates, on a copy.
 function shuffled<T>(values: ReadonlyArray<T>, random: () => number): T[] {
   const result = [...values];
   for (let i = result.length - 1; i > 0; i--) {

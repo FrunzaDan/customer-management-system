@@ -11,7 +11,6 @@
   <div class="alert alert-danger" role="alert">{{ error }}</div>
 }
 
-<!-- Announced politely to screen readers whenever the result set changes. -->
 <p class="visually-hidden" role="status">{{ resultsAnnouncement() }}</p>
 
 <div class="list-toolbar">
@@ -67,7 +66,6 @@
     >Loading customers…
   </div>
 } @else if (customers().length === 0) {
-  <!-- A failed load already shows its alert above; "no customers" would be misleading. -->
   @if (!loadError()) {
     <div class="app-card empty-state">
       @if (searchTerm()) {

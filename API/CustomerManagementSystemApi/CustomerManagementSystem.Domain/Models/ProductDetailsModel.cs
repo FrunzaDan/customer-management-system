@@ -4,12 +4,9 @@ public sealed record ProductDetailsModel
 {
     public required ProductModel Product { get; init; }
 
-    // Newest first. Only customers that still exist appear (deleting a customer deletes their
-    // purchase rows), so this can hold fewer entries than Product.SoldQuantity.
     public required IReadOnlyList<ProductBuyerModel> Buyers { get; init; }
 }
 
-// One purchase of a product, from the product's side: who bought it and when.
 public sealed record ProductBuyerModel
 {
     public required int CustomerPurchaseId { get; init; }
@@ -22,6 +19,5 @@ public sealed record ProductBuyerModel
 
     public required string CustomerEmail { get; init; }
 
-    // UTC.
     public required DateTime PurchasedAt { get; init; }
 }

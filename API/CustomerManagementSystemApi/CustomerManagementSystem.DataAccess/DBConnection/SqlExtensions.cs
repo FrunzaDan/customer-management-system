@@ -3,11 +3,6 @@ using Microsoft.Data.SqlClient;
 
 namespace CustomerManagementSystem.DataAccess.DBConnection;
 
-// Typed SqlParameter factories: each parameter is declared with exactly the SQL type (and
-// size) of the stored-proc parameter it binds to, instead of AddWithValue inferring one from
-// the CLR value — so a string is never sent as NVARCHAR to a VARCHAR parameter (or sized to
-// the value's own length), and a C# null always becomes DBNull. Null matters: the edit proc
-// reads a NULL parameter as "leave this column unchanged".
 internal static class SqlParameterExtensions
 {
     public static void AddGuid(this SqlParameterCollection parameters, string name, Guid? value) =>
@@ -41,9 +36,6 @@ internal static class SqlParameterExtensions
     }
 }
 
-// Typed, by-column-name reads. Each getter matches the column's SQL type exactly
-// (UNIQUEIDENTIFIER → Guid, TINYINT → byte, SMALLINT → short, DATE → DateOnly), so a schema
-// change that breaks the mapping fails loudly instead of being papered over by a conversion.
 internal static class SqlDataReaderExtensions
 {
     public static Guid GetGuid(this SqlDataReader reader, string column) =>
@@ -58,8 +50,6 @@ internal static class SqlDataReaderExtensions
     public static string GetString(this SqlDataReader reader, string column) =>
         reader.GetString(reader.GetOrdinal(column));
 
-    // A real DB NULL must come back as a C# null, not "" — reader["col"].ToString() would
-    // call DBNull.Value.ToString(), silently turning "never set" into "set to empty string".
     public static string? GetNullableString(this SqlDataReader reader, string column)
     {
         var ordinal = reader.GetOrdinal(column);
@@ -87,10 +77,6 @@ internal static class SqlDataReaderExtensions
         return reader.IsDBNull(ordinal) ? null : reader.GetFieldValue<DateOnly>(ordinal);
     }
 
-    // Every timestamp column is DATETIME2 written with SYSUTCDATETIME(), but DATETIME2 carries
-    // no offset, so the reader hands back DateTimeKind.Unspecified. Marking it Utc is what makes
-    // the JSON serializer append "Z" — without it a browser parses the value as its own local
-    // time and shows every timestamp off by the viewer's UTC offset.
     public static DateTime GetUtcDateTime(this SqlDataReader reader, string column) =>
         DateTime.SpecifyKind(reader.GetDateTime(reader.GetOrdinal(column)), DateTimeKind.Utc);
 

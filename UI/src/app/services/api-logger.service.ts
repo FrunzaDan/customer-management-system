@@ -2,10 +2,6 @@ import { Injectable, isDevMode, signal } from '@angular/core';
 
 const STORAGE_KEY = 'apiLoggingEnabled';
 
-// Whether apiLoggerInterceptor mirrors API calls to the devtools console. On by
-// default in development builds only — a production console shouldn't carry
-// every request and response body unless someone asks for it (About page
-// toggle). The choice is remembered per browser.
 @Injectable({
   providedIn: 'root',
 })
@@ -23,10 +19,7 @@ export class ApiLoggerService {
     }
     try {
       localStorage.setItem(STORAGE_KEY, String(value));
-    } catch {
-      // Storage blocked (private mode, site data disabled): the toggle still
-      // works, it just isn't remembered.
-    }
+    } catch {}
   }
 
   private readInitialValue(): boolean {

@@ -13,8 +13,6 @@ public class CustomerUpdatingTests
     [Fact]
     public async Task UpdateCustomerAsync_RejectsAnEmptyCustomerId_WithoutTouchingTheDb()
     {
-        // A malformed GUID is already rejected by model binding; Guid.Empty is what a missing
-        // one binds to.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var editing = new CustomerUpdating(dbUtils.Object, auditLogger.Object);
@@ -60,7 +58,6 @@ public class CustomerUpdatingTests
     [Fact]
     public async Task UpdateCustomerAsync_RejectsAnUndefinedGender_WithoutTouchingTheDb()
     {
-        // A JSON number binds to the enum even when it isn't one of its members.
         var dbUtils = new Mock<IDbUtils>();
         var auditLogger = new Mock<ICustomerAuditLogger>();
         var editing = new CustomerUpdating(dbUtils.Object, auditLogger.Object);

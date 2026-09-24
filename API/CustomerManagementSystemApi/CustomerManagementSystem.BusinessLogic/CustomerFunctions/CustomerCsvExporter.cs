@@ -6,8 +6,6 @@ namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 
 public static class CustomerCsvExporter
 {
-    // UTF-8 BOM (U+FEFF), written via its code point rather than the invisible
-    // literal glyph so it survives round-tripping through editors/encodings intact.
     private const char Utf8Bom = (char)0xFEFF;
 
     private static readonly string[] Header =
@@ -19,8 +17,6 @@ public static class CustomerCsvExporter
     public static string ToCsv(IEnumerable<CustomerModel> customers)
     {
         var builder = new StringBuilder();
-        // Leading BOM so Excel opens the file as UTF-8 instead of guessing ANSI
-        // and mangling non-ASCII names/addresses.
         builder.Append(Utf8Bom);
         builder.AppendJoin(',', Header.Select(EscapeField)).Append("\r\n");
 
@@ -36,7 +32,6 @@ public static class CustomerCsvExporter
                 GenderLabel(customer.Gender),
                 customer.BirthDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 StatusLabel(customer.Status),
-                // "u" = "yyyy-MM-dd HH:mm:ssZ": sortable, unambiguous, and explicitly UTC.
                 customer.CreatedAt.ToString("u", CultureInfo.InvariantCulture),
                 customer.LastInteractionAt.ToString("u", CultureInfo.InvariantCulture),
                 customer.Address.Country,
@@ -69,9 +64,6 @@ public static class CustomerCsvExporter
         _ => string.Empty
     };
 
-    // RFC 4180 quoting, plus a leading apostrophe on any field that starts with a
-    // formula-trigger character (=, +, -, @) so a spreadsheet app never executes
-    // customer-supplied data as a formula when the CSV is opened.
     private static string EscapeField(string? value)
     {
         var field = value ?? string.Empty;

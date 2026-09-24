@@ -34,9 +34,6 @@ export class UserLoginService {
     );
   }
 
-  // Keys off response.status, not the response message text — comparing against a
-  // literal success string ("Success!") would silently break if that wording ever
-  // changed on either side of the API/UI boundary.
   checkCredentials(
     response: GenericResponse<LoginData>,
   ): CredentialsCheckResult {

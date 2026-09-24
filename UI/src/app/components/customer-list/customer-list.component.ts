@@ -11,7 +11,6 @@ import { customerStatusLabel } from '../../utils/customer-status-label';
 
 type CustomerSortColumn = 'name' | 'email' | 'phoneNumber';
 
-// How each sort column reads in the table caption.
 const SORT_LABELS: Record<CustomerSortColumn, string> = {
   name: 'name',
   email: 'email',
@@ -35,15 +34,9 @@ export class CustomerListComponent implements OnInit {
   readonly activationLoading = this.customerService.activationLoading;
   readonly activationError = this.customerService.activationError;
 
-  // Delete is a separate action from deactivate/reactivate, so it gets its own
-  // in-flight/error state rather than being folded into activationLoading/Error.
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
-  // Bulk-delete selection is scoped to the current page only — the checkboxes
-  // reference rows that actually exist in the browser, and selection is reset
-  // on every fetchCustomers() (page/search/sort change, or after the bulk
-  // action itself refreshes the page).
   readonly selectedCustomerIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
@@ -55,8 +48,6 @@ export class CustomerListComponent implements OnInit {
       ),
   );
 
-  // CSV export exports whatever the list is currently searching/sorted by,
-  // not just the current page — see CustomerService.
   readonly exportLoading = this.customerService.exportLoading;
   readonly exportError = this.customerService.exportError;
 
@@ -64,10 +55,6 @@ export class CustomerListComponent implements OnInit {
 
   readonly customerStatusLabel = customerStatusLabel;
 
-  // Search, sorting, and pagination are all server-side now: every change to
-  // any of these re-fetches just the relevant page from the API rather than
-  // filtering/sorting an already-loaded full list in memory (see
-  // CustomerService.loadCustomers and Customer_List).
   readonly searchTerm = signal('');
   readonly sortColumn = signal<CustomerSortColumn>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
@@ -80,8 +67,6 @@ export class CustomerListComponent implements OnInit {
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );
 
-  // Spoken by the polite live region so a screen-reader user hears the outcome
-  // of a search / page change without hunting for it.
   readonly resultsAnnouncement = computed(() => {
     if (this.loading()) return 'Loading customers';
     const total = this.totalItems();
@@ -93,8 +78,6 @@ export class CustomerListComponent implements OnInit {
       `Customers, page ${this.currentPage()} of ${this.totalPages()}, sorted by ${SORT_LABELS[this.sortColumn()]} ${this.sortDirection() === 'asc' ? 'ascending' : 'descending'}`,
   );
 
-  // Debounced so typing doesn't fire an API call per keystroke — the search
-  // used to be a synchronous in-memory filter, but now it's a network call.
   private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   private static readonly SEARCH_DEBOUNCE_MS = 300;
 
@@ -103,9 +86,6 @@ export class CustomerListComponent implements OnInit {
 
     clearTimeout(this.searchDebounceTimer);
     this.searchDebounceTimer = setTimeout(() => {
-      // A narrower search can make the current page go out of range (e.g.
-      // you're on page 3, then a search narrows results to one page) —
-      // snap back to page 1 on every new search term.
       this.currentPage.set(1);
       this.fetchCustomers();
     }, CustomerListComponent.SEARCH_DEBOUNCE_MS);
@@ -118,7 +98,6 @@ export class CustomerListComponent implements OnInit {
     this.fetchCustomers();
   }
 
-  // Exposed on the <th> so assistive tech announces the current sort.
   ariaSort(column: CustomerSortColumn): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
@@ -184,9 +163,6 @@ export class CustomerListComponent implements OnInit {
     this.customerService.deleteCustomer(customerId).subscribe({
       next: () => {
         this.deleting.set(false);
-        // removeCustomerLocally() (called by CustomerService) only
-        // drops the row from the in-memory page — totalItems/page count
-        // would go stale without a real re-fetch of the current page.
         this.fetchCustomers();
       },
       error: (error: HttpErrorResponse) => {
@@ -222,10 +198,6 @@ export class CustomerListComponent implements OnInit {
     this.selectedCustomerIds.set(next);
   }
 
-  // A customer must be Deactivated (or Test, which is exempt from that rule —
-  // see Customer_Delete) to be deleted directly; an Active one is only
-  // deactivated as part of this action, not deleted, same as the single-row
-  // buttons would require.
   async bulkDeleteSelected(): Promise<void> {
     const customerIds = this.selectedCustomerIds();
     const selected = this.customers().filter((c) =>

@@ -29,7 +29,6 @@ describe('CustomerDetailsComponent', () => {
   let customer$: ReplaySubject<Customer>;
   let fixture: ComponentFixture<CustomerDetailsComponent>;
 
-  // Emits the customer the page's rxResource streams, and waits for it to land.
   const loadCustomer = async (customer: Customer) => {
     customer$.next(customer);
     await fixture.whenStable();
@@ -71,8 +70,6 @@ describe('CustomerDetailsComponent', () => {
     ...overrides,
   });
 
-  // routeParamId is what withComponentInputBinding() would bind to the `customerId`
-  // input from the `:customerId` route param; set it to null before createComponent() for the "no id" case.
   let routeParamId: string | null = 'customer-1';
 
   const createComponent = (): CustomerDetailsComponent => {
@@ -95,10 +92,6 @@ describe('CustomerDetailsComponent', () => {
     navigate = vi.fn().mockResolvedValue(true);
     activationLoading = signal(false);
 
-    // CustomerDetailsComponent resolves its dependencies via field-initializer
-    // inject() calls, so it needs TestBed provider tokens (not positional
-    // constructor args) plus an active injection context for the effect()
-    // call in its constructor.
     TestBed.configureTestingModule({
       providers: [
         {
@@ -145,7 +138,6 @@ describe('CustomerDetailsComponent', () => {
       ],
     });
 
-    // RouterLink in the template needs the real Router; only stub navigate().
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
 
     fixture = TestBed.createComponent(CustomerDetailsComponent);
@@ -326,7 +318,7 @@ describe('CustomerDetailsComponent', () => {
       TestBed.flushEffects();
 
       expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
-      expect(getCustomer).toHaveBeenCalledTimes(2); // the first load, then the refresh
+      expect(getCustomer).toHaveBeenCalledTimes(2);
     });
 
     it('does not reload on the initial false state (no prior true)', async () => {
@@ -365,16 +357,15 @@ describe('CustomerDetailsComponent', () => {
         purchasedAt: '2026-01-01',
       });
 
-      expect(component.totalSpent()).toBe(0); // no purchases yet
+      expect(component.totalSpent()).toBe(0);
 
       purchases.set([
         buildPurchase(1, 0.1),
         buildPurchase(2, 0.2),
         buildPurchase(3, 1299),
       ]);
-      expect(component.totalSpent()).toBe(1299.3); // plain float addition gives 1299.3000000000002
+      expect(component.totalSpent()).toBe(1299.3);
 
-      // The same product bought twice counts twice.
       purchases.set([buildPurchase(1, 49.99), buildPurchase(2, 49.99)]);
       expect(component.totalSpent()).toBe(99.98);
     });
@@ -401,16 +392,16 @@ describe('CustomerDetailsComponent', () => {
         buildProduct({ productId: 'sold-out', quantityOnHand: 0 }),
       ]);
 
-      expect(component.canSubmitPurchase()).toBe(false); // nothing picked
+      expect(component.canSubmitPurchase()).toBe(false);
 
       component.selectedProductId.set('sold-out');
-      expect(component.canSubmitPurchase()).toBe(false); // out of stock
+      expect(component.canSubmitPurchase()).toBe(false);
 
       component.selectedProductId.set('in-stock');
       expect(component.canSubmitPurchase()).toBe(true);
 
       await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
-      expect(component.canSubmitPurchase()).toBe(false); // deactivated customer
+      expect(component.canSubmitPurchase()).toBe(false);
     });
 
     it('recordPurchase posts the pick, resets it, and refreshes purchases, stock and audit trail', async () => {
@@ -475,9 +466,9 @@ describe('CustomerDetailsComponent', () => {
 
       expect(component.purchasing()).toBe(false);
       expect(component.purchaseError()).toBe('Product is out of stock.');
-      expect(component.selectedProductId()).toBe('product-1'); // pick kept
-      expect(loadProducts).toHaveBeenCalled(); // stock shown is stale
-      expect(loadPurchases).not.toHaveBeenCalled(); // nothing was recorded
+      expect(component.selectedProductId()).toBe('product-1');
+      expect(loadProducts).toHaveBeenCalled();
+      expect(loadPurchases).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,9 +1,6 @@
 <Project>
-    <!-- Central Package Management: every package version for this solution lives here;
-         the .csproj files reference packages without a Version. -->
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-        <!-- Lets the pin below also apply to packages that only arrive transitively. -->
         <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     </PropertyGroup>
     <ItemGroup>
@@ -13,14 +10,11 @@
         <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
         <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.12" />
         <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
-        <!-- JwtBearer pulls in an older OpenIdConnect (8.19.x); Microsoft.IdentityModel.* packages
-             must all be the same version, so pin it to match JsonWebTokens. -->
         <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
         <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
     </ItemGroup>
     <ItemGroup Label="Tests">
         <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
-        <!-- FakeLogger / FakeLogCollector: asserts on what was logged (level, event id, structured state). -->
         <PackageVersion Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.10.0" />
         <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.11.2" />
         <PackageVersion Include="Moq" Version="4.20.72" />

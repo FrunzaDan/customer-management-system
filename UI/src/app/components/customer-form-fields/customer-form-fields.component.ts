@@ -2,8 +2,6 @@ import { Component, input } from '@angular/core';
 import { FieldTree, FormField } from '@angular/forms/signals';
 import { CustomerFormModel } from './customer-form';
 
-// The two form cards (personal details + address) shared by create-customer and
-// update-customer. The parent owns the form and its submission; this only renders.
 @Component({
   selector: 'app-customer-form-fields',
   templateUrl: './customer-form-fields.component.html',

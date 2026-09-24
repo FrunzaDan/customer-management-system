@@ -9,8 +9,6 @@ import {
 } from '@angular/core';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 
-// WAI-ARIA "alertdialog" pattern: labelled by its title, described by its
-// message, focus moved in on open, kept inside while open, returned on close.
 @Component({
   selector: 'app-confirm-dialog',
   templateUrl: './confirm-dialog.component.html',
@@ -28,11 +26,9 @@ export class ConfirmDialogComponent {
   private readonly cancelButton =
     viewChild<ElementRef<HTMLButtonElement>>('cancelButton');
 
-  // Where focus was before the dialog opened, so it can go back there (WCAG 2.4.3).
   private returnFocusTo: HTMLElement | null = null;
 
   constructor() {
-    // Opening: remember the trigger, then focus the *non-destructive* choice.
     effect(() => {
       const cancel = this.cancelButton();
       if (!cancel) return;
@@ -43,7 +39,6 @@ export class ConfirmDialogComponent {
       });
     });
 
-    // Closing: hand focus back as soon as the user answers.
     effect(() => {
       if (!this.closing()) return;
       untracked(() => {
@@ -63,8 +58,6 @@ export class ConfirmDialogComponent {
     }
   }
 
-  // aria-modal tells assistive tech the page behind is inert, but keyboard Tab
-  // still walks the page unless focus is contained.
   trapFocus(event: KeyboardEvent): void {
     if (event.key !== 'Tab') return;
     const buttons = Array.from(

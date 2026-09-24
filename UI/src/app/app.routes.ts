@@ -2,8 +2,6 @@ import { Routes } from '@angular/router';
 import { authGuard } from './services/auth.guard';
 import { unsavedChangesGuard } from './services/unsaved-changes.guard';
 
-// Every page is lazy-loaded so the initial bundle only carries the shell;
-// `title` feeds AppTitleStrategy (document title = WCAG 2.4.2).
 export const routes: Routes = [
   {
     path: 'login',

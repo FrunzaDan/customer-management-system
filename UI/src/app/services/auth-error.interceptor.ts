@@ -4,9 +4,6 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { SessionStorageService } from './session-storage.service';
 
-// Skipped for Authentication endpoints: login (401 there just means bad
-// credentials, not an expired session) and verify-token (whose own service
-// and the auth guard already handle a 401 without a redirect side effect).
 const AUTH_ENDPOINT_SEGMENT = '/api/authentication/';
 
 export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {

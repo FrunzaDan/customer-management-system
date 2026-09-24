@@ -4,8 +4,6 @@ using Microsoft.OpenApi;
 
 namespace CustomerManagementSystem.WebAPI.OpenApi;
 
-// Declares the JWT bearer scheme in the generated OpenAPI document, so Swagger UI shows an
-// "Authorize" button and sends the token on every request.
 internal sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
 {
     public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context,

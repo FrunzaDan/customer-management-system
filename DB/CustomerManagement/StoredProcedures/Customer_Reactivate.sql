@@ -20,7 +20,7 @@ BEGIN
         SET
             LastInteractionAt = @Now,
             StatusCode = 1901
-        WHERE CustomerId = @CustomerId AND StatusCode <> 1901; -- Prevent update if already reactivated
+        WHERE CustomerId = @CustomerId AND StatusCode <> 1901;
 
         IF @@ROWCOUNT > 0
         BEGIN

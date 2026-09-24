@@ -19,9 +19,6 @@ const MONTH_ABBREVIATIONS = [
   'Dec',
 ] as const;
 
-// Sums valueFn(product) per category, ranked descending, folding everything past `limit`
-// into one "Other" row — keeps a chart with a dozen-plus categories from a dozen-plus
-// unreadably thin bars.
 export function rankByCategory(
   products: Product[],
   valueFn: (product: Product) => number,
@@ -50,8 +47,6 @@ export function rankByCategory(
   ];
 }
 
-// Share of each category's originally-stocked units already sold, ranked so the
-// categories closest to selling out surface first.
 export function stockHealthByCategory(products: Product[]): StockHealthRow[] {
   const totals = new Map<string, { sold: number; inventory: number }>();
   for (const product of products) {
@@ -70,8 +65,6 @@ function percentSold(row: { sold: number; inventory: number }): number {
   return row.inventory > 0 ? row.sold / row.inventory : 0;
 }
 
-// "yyyy-MM" -> "Jan '26" — always carries the year (2-digit) so a range spanning more
-// than one year is never ambiguous, unlike a bare "Jan".
 function formatMonthLabel(yearMonth: string): string {
   const [year, month] = yearMonth.split('-');
   const index = Number(month) - 1;
@@ -99,8 +92,6 @@ export function yearlyToPoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
     .map(([year, value]) => ({ key: year, label: year, value }));
 }
 
-// Running total of monthly registrations — a customer-count-over-time approximation,
-// not a currently-active count (it doesn't subtract deletions; see ai_docs/angular-frontend.md, Charts).
 export function cumulativePoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
   let running = 0;
   return counts.map((count) => {

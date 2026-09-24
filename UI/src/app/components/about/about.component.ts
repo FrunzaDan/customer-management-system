@@ -15,8 +15,6 @@ import {
 
 const TEST_CUSTOMER_COUNT = 50;
 
-// How many times to re-draw products for a customer whose every purchase was rejected
-// (e.g. the products it picked ran out of stock) before giving up on it.
 const MAX_PURCHASE_ROUNDS = 3;
 
 const FIRST_NAMES = [
@@ -212,12 +210,8 @@ export class AboutComponent {
     this.addingTestCustomers.set(true);
 
     try {
-      // Fetched before anything is created: if the catalogue can't be loaded, fail up
-      // front rather than leaving 50 customers that were meant to have purchases without.
       let stock: Product[];
       try {
-        // A private copy, decremented as the run buys — so it stops offering products it
-        // has drained, without re-fetching the catalogue after every purchase.
         stock = (await firstValueFrom(this.productService.fetchProducts())).map(
           (product) => ({ ...product }),
         );
@@ -229,16 +223,11 @@ export class AboutComponent {
         return;
       }
 
-      // An index-based suffix (rather than pure randomness) guarantees no
-      // email/phoneNumber collisions within the batch itself, since both columns
-      // carry a unique constraint at the database level.
       const customers = Array.from(
         { length: TEST_CUSTOMER_COUNT },
         (_, index) => this.buildRandomCustomer(index),
       );
 
-      // Sequential on purpose (as the bulk delete is): each purchase reads and decrements
-      // shared stock, and one HTTP call at a time keeps the API and the tally in step.
       let added = 0;
       let failed = 0;
       let purchases = 0;
@@ -279,10 +268,6 @@ export class AboutComponent {
     }
   }
 
-  /**
-   * Gives a freshly registered test customer (by the GUID registration returned) 1–5
-   * distinct in-stock products and returns how many purchases went through.
-   */
   private async buyRandomProducts(
     customerId: string,
     stock: Product[],
@@ -290,7 +275,7 @@ export class AboutComponent {
     let bought = 0;
     for (let round = 0; round < MAX_PURCHASE_ROUNDS && bought === 0; round++) {
       const chosen = chooseProductsToBuy(stock);
-      if (chosen.length === 0) break; // nothing left in stock
+      if (chosen.length === 0) break;
 
       for (const product of chosen) {
         try {
@@ -303,7 +288,6 @@ export class AboutComponent {
           product.quantityOnHand--;
           bought++;
         } catch {
-          // Rejected (typically out of stock): don't offer it again this run.
           product.quantityOnHand = 0;
         }
       }

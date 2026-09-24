@@ -9,7 +9,6 @@
   color: var(--spectrumColor1);
 }
 
-/* Sold / Inventory / Left */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -35,7 +34,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Label / value rows (same look as customer details) */
 .detail-list {
   margin: 0;
 }
@@ -82,8 +80,6 @@
   }
 }
 
-/* Three narrow columns inside a half-width card: the shared .table-themed 760px minimum would
-   make the table scroll sideways and clip the date, so let this one shrink to its card. */
 .buyers-table {
   min-width: 0;
 }

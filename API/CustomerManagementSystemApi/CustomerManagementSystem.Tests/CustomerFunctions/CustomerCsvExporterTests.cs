@@ -107,7 +107,6 @@ public class CustomerCsvExporterTests
     {
         var csv = CustomerCsvExporter.ToCsv([MakeCustomer(), MakeCustomer()]);
 
-        // header + 2 data rows + trailing blank line from the last row's \r\n
         Assert.Equal(4, csv.Split("\r\n").Length);
     }
 }

@@ -11,9 +11,6 @@ interface StockHealthBar extends StockHealthRow {
   nearSellout: boolean;
 }
 
-// A category's share of its originally-stocked units already sold — an intrinsic
-// percentage (sold / inventory), unlike RankedBarChartComponent's bars, which are
-// scaled relative to the list's own max.
 const NEAR_SELLOUT_THRESHOLD = 85;
 
 @Component({

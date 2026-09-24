@@ -12,7 +12,6 @@ public sealed record AuditLogEntry
 
     public string? Details { get; init; }
 
-    // UTC.
     public required DateTime OccurredAt { get; init; }
 }
 
@@ -22,8 +21,6 @@ public sealed record GlobalAuditLogEntry
 
     public required Guid CustomerId { get; init; }
 
-    // Null when the customer no longer exists (CustomerAuditLog_List LEFT
-    // JOINs Customer, since audit history outlives a deleted customer).
     public string? CustomerFirstName { get; init; }
 
     public string? CustomerLastName { get; init; }
@@ -34,6 +31,5 @@ public sealed record GlobalAuditLogEntry
 
     public string? Details { get; init; }
 
-    // UTC.
     public required DateTime OccurredAt { get; init; }
 }

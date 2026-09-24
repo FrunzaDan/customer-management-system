@@ -5,7 +5,7 @@ export interface ProductFormModel {
   name: string;
   category: string;
   description: string;
-  price: string; // <input type="number"> emits strings; the API wants a decimal (see toProduct)
+  price: string;
   initialQuantity: string;
   warehouse: string;
 }
@@ -19,10 +19,7 @@ export const emptyProductForm = (): ProductFormModel => ({
   warehouse: '',
 });
 
-// A strictly positive number, at most two decimal places — matches
-// Product's CK_Product_Price / DECIMAL(12,2) column.
 const PricePattern = /^\d+(\.\d{1,2})?$/;
-// A strictly positive whole number.
 const QuantityPattern = /^[1-9]\d*$/;
 
 export const productFormSchema = schema<ProductFormModel>((p) => {
@@ -39,7 +36,6 @@ export const productFormSchema = schema<ProductFormModel>((p) => {
   required(p.warehouse, { message: 'Warehouse is required' });
 });
 
-// Description is optional, so it's sent as null rather than an empty string.
 export function toProduct(model: ProductFormModel): CreateProductRequest {
   return {
     name: model.name,

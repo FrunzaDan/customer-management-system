@@ -22,7 +22,7 @@ describe('AboutComponent — createTestCustomers', () => {
   const catalogue = (size = 50, stock = 100) =>
     Array.from({ length: size }, (_, i) => buildProduct(i, stock));
 
-  let registered: string[]; // emails, in registration order
+  let registered: string[];
   let purchases: { customerId: string; productId: string }[];
   let fetchProducts: ReturnType<typeof vi.fn>;
   let createCustomerSilently: ReturnType<typeof vi.fn>;
@@ -78,7 +78,7 @@ describe('AboutComponent — createTestCustomers', () => {
 
     expect(registered).toHaveLength(50);
     const byCustomer = purchasesByCustomer();
-    expect(byCustomer.size).toBe(50); // nobody left without a purchase
+    expect(byCustomer.size).toBe(50);
     for (const products of byCustomer.values()) {
       expect(products.length).toBeGreaterThanOrEqual(1);
       expect(products.length).toBeLessThanOrEqual(5);
@@ -132,7 +132,6 @@ describe('AboutComponent — createTestCustomers', () => {
   });
 
   it('never buys more units of a product than it has in stock', async () => {
-    // 3 units of one product among plenty of others: it must stop being offered after 3 sales
     const products = [buildProduct(0, 3), ...catalogue(30).slice(1)];
     const component = createComponent(products);
 
@@ -145,7 +144,6 @@ describe('AboutComponent — createTestCustomers', () => {
 
   it('draws again when every product it picked is rejected, so the customer still ends up with one', async () => {
     const component = createComponent(catalogue(50));
-    // Reject the first 3 attempts overall (e.g. someone else took the stock), then accept.
     let attempts = 0;
     purchaseProductSilently.mockImplementation(
       (customerId: string, productId: string) => {
@@ -233,7 +231,7 @@ describe('AboutComponent — createTestCustomers', () => {
     const component = createComponent();
 
     const first = component.createTestCustomers();
-    await component.createTestCustomers(); // re-entrant call
+    await component.createTestCustomers();
     await first;
 
     expect(fetchProducts).toHaveBeenCalledTimes(1);

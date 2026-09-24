@@ -39,9 +39,6 @@ export class App {
   private readonly injector = inject(Injector);
   private readonly main = viewChild.required<ElementRef<HTMLElement>>('main');
 
-  // Repeated polling only makes sense in the browser — during SSR/prerendering
-  // it would keep the app permanently "unstable", which hangs the build's
-  // prerender step waiting for a stability signal that never arrives.
   readonly apiAvailable = toSignal(
     isPlatformBrowser(this.platformId)
       ? this.healthService.pollApiHealth()
@@ -51,10 +48,6 @@ export class App {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      // A client-side route change doesn't move keyboard/screen-reader focus on
-      // its own, so the new page would go unannounced. After each navigation
-      // (except the initial load, which the browser handles) focus the new
-      // page's <h1> (WCAG 2.4.3 Focus Order).
       this.router.events
         .pipe(
           filter((event) => event instanceof NavigationEnd),
@@ -70,7 +63,6 @@ export class App {
   }
 
   protected skipToContent(event: Event): void {
-    // A plain href="#main" would resolve against <base href="/"> and navigate.
     event.preventDefault();
     this.main().nativeElement.focus();
   }

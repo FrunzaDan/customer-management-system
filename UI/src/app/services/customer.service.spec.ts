@@ -45,18 +45,13 @@ describe('CustomerService', () => {
     ...overrides,
   });
 
-  // The response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  // httpResource issues its request from an effect, so flush effects after
-  // calling loadCustomers() before expecting the HTTP call.
   const load = (params: Parameters<CustomerService['loadCustomers']>[0]) => {
     service.loadCustomers(params);
     TestBed.tick();
   };
 
-  // Loads one page holding `customers`, the way the list page fills the service.
   const seedCustomers = async (customers: Customer[]) => {
     load({ pageNumber: 1, pageSize: 10 });
     httpMock
@@ -200,7 +195,6 @@ describe('CustomerService', () => {
     it('keeps the loaded page on screen while the next page loads', async () => {
       const first = buildCustomer();
       await seedCustomers([first]);
-      // Read it, as the list page's template does.
       expect(service.customers()).toEqual([first]);
 
       load({ pageNumber: 2, pageSize: 10 });
@@ -330,7 +324,6 @@ describe('CustomerService', () => {
 
       const req = httpMock.expectOne(`${API_URL}/update`);
       expect(req.request.method).toBe('PATCH');
-      // Server-owned fields (status, dates) aren't part of an edit request.
       const { status, createdAt, lastInteractionAt, ...editable } = customer;
       expect(req.request.body).toEqual(editable);
 
@@ -518,7 +511,6 @@ describe('CustomerService', () => {
       expect(service.activationError()).toBe(
         'Customer is already deactivated.',
       );
-      // httpMock.verify() in afterEach confirms no retry request was made.
     });
 
     it('retries once on a transient (5xx) failure and then succeeds', async () => {
@@ -547,11 +539,6 @@ describe('CustomerService', () => {
     let triggerDownloadSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      // triggerDownload drives browser-only APIs (URL.createObjectURL, an <a>
-      // click) that jsdom doesn't implement — stub it (via an `any` cast, since
-      // it's private) so tests can assert the HTTP/signal behavior without
-      // exercising that DOM plumbing.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       triggerDownloadSpy = vi
         .spyOn(service as any, 'triggerDownload')
         .mockImplementation(() => {});

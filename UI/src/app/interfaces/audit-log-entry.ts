@@ -1,6 +1,5 @@
 import { IsoDateTime } from './iso-date';
 
-// CustomerAuditLog.ActionType — serialized by the API by name.
 export type AuditAction =
   | 'Created'
   | 'Edited'
@@ -14,7 +13,6 @@ export interface AuditLogEntry {
   customerId: string;
   performedBy: string;
   actionType: AuditAction;
-  // NULL in the DB when there are none, sent as null.
   details: string | null;
   occurredAt: IsoDateTime;
 }

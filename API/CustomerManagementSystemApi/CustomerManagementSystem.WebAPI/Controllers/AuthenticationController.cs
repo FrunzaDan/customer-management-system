@@ -20,7 +20,6 @@ public class AuthenticationController(IAuthService authService) : ApiControllerB
     [HttpGet("verify-token")]
     public ActionResult<ResponseModel<object>> VerifyToken()
     {
-        // Reaching this point means the [Authorize] middleware already validated the bearer token.
         return Ok(new ResponseModel<object>(200, "Authorized: Valid claims."));
     }
 }

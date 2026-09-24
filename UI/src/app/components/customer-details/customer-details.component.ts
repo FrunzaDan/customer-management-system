@@ -43,12 +43,8 @@ export class CustomerDetailsComponent {
   private readonly productService = inject(ProductService);
   private readonly router = inject(Router);
 
-  // Bound from the `:customerId` route param by withComponentInputBinding() in app.config.ts.
   readonly customerId = input<string>();
 
-  // Keyed on the route's id, like Imalo's ScholarDetailsComponent: a new id
-  // cancels whatever is still in flight. hasValue() guards the read, since
-  // value() throws while the resource is in error.
   private readonly customerResource = rxResource({
     params: () => this.customerId(),
     stream: ({ params: customerId }) =>
@@ -57,8 +53,6 @@ export class CustomerDetailsComponent {
   readonly customer = computed(() =>
     this.customerResource.hasValue() ? this.customerResource.value() : null,
   );
-  // The first load only: a reload (after a status change) keeps the page on
-  // screen until the fresh copy arrives.
   readonly loading = computed(
     () => this.customerResource.status() === 'loading',
   );
@@ -75,9 +69,6 @@ export class CustomerDetailsComponent {
   readonly CustomerStatus = CustomerStatus;
   readonly Gender = Gender;
 
-  // Deactivate/reactivate share CustomerService's loading/error state (it's
-  // providedIn: 'root', same instance the customer list uses); delete gets its own,
-  // same split as customer-list.component.ts.
   readonly activationLoading = this.customerService.activationLoading;
   readonly activationError = this.customerService.activationError;
   readonly deleting = signal(false);
@@ -93,8 +84,6 @@ export class CustomerDetailsComponent {
   readonly purchasesLoading = this.purchaseService.loading;
   readonly purchasesError = this.purchaseService.error;
 
-  // Sum of the listed purchases' prices. Added up in whole cents so 0.1 + 0.2 style
-  // float drift never shows on screen (prices are DECIMAL(12,2) in the DB).
   readonly totalSpent = computed(
     () =>
       this.purchases().reduce(
@@ -107,7 +96,6 @@ export class CustomerDetailsComponent {
   readonly productsLoading = this.productService.loading;
   readonly productsError = this.productService.error;
 
-  // Which product is picked in the "Record purchase" <select> ('' = none yet).
   readonly selectedProductId = signal('');
   readonly purchasing = signal(false);
   readonly purchaseError = signal<string | null>(null);
@@ -122,9 +110,6 @@ export class CustomerDetailsComponent {
     return customer ? customerStatusLabel(customer.status) : undefined;
   });
 
-  // Deactivated customers follow the normal deactivate-then-delete lifecycle;
-  // Test customers are fictitious data and are exempt from that guardrail
-  // (see Customer_Delete), so they can be deleted straight away too.
   readonly canDelete = computed(() => {
     const status = this.customer()?.status;
     return (
@@ -132,14 +117,11 @@ export class CustomerDetailsComponent {
     );
   });
 
-  // Same rule as CustomerPurchase_Create: everything but a deactivated customer may buy.
   readonly canPurchase = computed(() => {
     const status = this.customer()?.status;
     return status !== undefined && status !== CustomerStatus.Deactivated;
   });
 
-  // The catalogue grouped by category (the API already returns it category-ordered),
-  // for <optgroup>s — 50 flat options would be a long list to scan.
   readonly productGroups = computed(() => {
     const groups = new Map<string, Product[]>();
     for (const product of this.products()) {
@@ -165,11 +147,8 @@ export class CustomerDetailsComponent {
   });
 
   constructor() {
-    // The catalogue is the same for every customer, so it's fetched once per visit
-    // to this page rather than per id.
     this.productService.loadProducts();
 
-    // (Re)load whenever the id in the URL changes; no id means nothing to show.
     effect(() => {
       const id = this.customerId();
       untracked(() => {
@@ -182,8 +161,6 @@ export class CustomerDetailsComponent {
       });
     });
 
-    // A deactivate/reactivate changes the status and adds an audit entry, so
-    // both are re-fetched once activationLoading() flips back to false.
     effect(() => {
       const loading = this.activationLoading();
       if (this.wasActivationLoading && !loading) {
@@ -230,8 +207,6 @@ export class CustomerDetailsComponent {
       next: () => {
         this.purchasing.set(false);
         this.selectedProductId.set('');
-        // A purchase changes three things on this page: the history, the product's
-        // stock (shown in the <select>) and the audit trail (a "Purchased" entry).
         this.purchaseService.loadPurchases(customerId);
         this.productService.loadProducts();
         this.auditLogService.loadAuditLog(customerId);
@@ -239,7 +214,6 @@ export class CustomerDetailsComponent {
       error: (error: HttpErrorResponse) => {
         this.purchasing.set(false);
         this.purchaseError.set(extractErrorMessage(error));
-        // e.g. "out of stock" — the list the user picked from is now stale.
         this.productService.loadProducts();
       },
     });

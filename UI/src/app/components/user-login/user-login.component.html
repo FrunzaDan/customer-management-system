@@ -4,7 +4,6 @@
       <div class="col-xl-10">
         <div class="card app-card login-card text-black">
           <div class="row g-0">
-            <!-- Login Form Section -->
             <div class="col-md-6">
               <div class="card-body p-md-5 mx-md-4">
                 <div class="text-center">
@@ -25,7 +24,6 @@
                     </div>
                   }
 
-                  <!-- Username Input -->
                   @let username = loginForm.username();
                   @let usernameError = username.touched() && username.invalid();
                   <div class="form-floating mb-4">
@@ -50,7 +48,6 @@
                     }
                   </div>
 
-                  <!-- Password Input -->
                   @let password = loginForm.password();
                   @let passwordError = password.touched() && password.invalid();
                   <div class="form-floating mb-4">
@@ -75,7 +72,6 @@
                     }
                   </div>
 
-                  <!-- Submit Button and Error Message -->
                   <div class="text-center pt-1 mb-2 pb-1">
                     <button
                       type="submit"
@@ -99,7 +95,6 @@
                     <a class="forgot-link" href="#!">Forgot password?</a>
                   </div>
 
-                  <!-- Help Section -->
                   <div
                     class="d-flex align-items-center justify-content-center pb-4"
                   >
@@ -112,7 +107,6 @@
               </div>
             </div>
 
-            <!-- Info Section -->
             <div class="col-md-6 d-flex align-items-center gradient-custom-2">
               <div class="text-white px-3 py-4 p-md-5 mx-md-4">
                 <h2 class="h4 mb-4">More than just a management system</h2>

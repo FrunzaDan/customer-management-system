@@ -1,5 +1,4 @@
 .gradient-custom {
-  /* Stops at --spectrumColor2: white text on --spectrumColor3 is only 3.9:1. */
   background: linear-gradient(
     to right,
     var(--spectrumColor1),
@@ -10,7 +9,6 @@
 
 #navbarBrand {
   width: 48px;
-  /* The logo is a black glyph; flip it to white so it reads on the dark gradient. */
   filter: brightness(0) invert(1);
 }
 
@@ -48,7 +46,6 @@
   transform: scale(0.96);
 }
 
-/* Menu button: three bars that fold into an X while the menu is open. */
 .navbar-toggler {
   transition:
     box-shadow var(--duration-fast) ease-in-out,
@@ -106,8 +103,6 @@
   transform: rotate(-45deg);
 }
 
-/* Desktop: the menu wrapper is layout-neutral, and each link has an underline
-   that grows from the centre on hover and stays full width on the active page. */
 @media (min-width: 576px) {
   .navbar-menu {
     display: contents;
@@ -135,9 +130,6 @@
   }
 }
 
-/* Phone: the menu slides open and shut (grid rows 0fr <-> 1fr animate the real
-   height). Hidden while shut, so its links drop out of the tab order; the
-   visibility flip waits for the close to finish. */
 @media (max-width: 575.98px) {
   .navbar-collapse {
     display: grid;
@@ -159,7 +151,6 @@
   .navbar-menu {
     min-height: 0;
     overflow: clip;
-    /* Room for the links' focus outline. */
     overflow-clip-margin: 0.5rem;
   }
 

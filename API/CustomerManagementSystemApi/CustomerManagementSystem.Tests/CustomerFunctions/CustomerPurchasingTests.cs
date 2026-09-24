@@ -64,8 +64,8 @@ public class CustomerPurchasingTests
     }
 
     [Theory]
-    [InlineData(404)] // customer or product not found
-    [InlineData(409)] // deactivated customer, or out of stock
+    [InlineData(404)]
+    [InlineData(409)]
     [InlineData(500)]
     public async Task PurchaseProductAsync_PassesThroughADbLayerRejectionUnchanged_WithoutLoggingAnAuditEntry(int status)
     {

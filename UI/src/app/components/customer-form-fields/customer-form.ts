@@ -6,14 +6,12 @@ import {
   Gender,
 } from '../../interfaces/customer';
 
-// Shared by create-customer and update-customer: one model shape, one validation
-// schema, and the two-way mapping between the form and the API's Customer.
 export interface CustomerFormModel {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: string;
-  gender: string; // <select> emits strings; the API wants a Gender number (see toCreateCustomerRequest)
+  gender: string;
   birthDate: string;
   country: string;
   county: string;
@@ -66,8 +64,6 @@ export function toFormModel(customer: Customer): CustomerFormModel {
     email: customer.email,
     phoneNumber: customer.phoneNumber,
     gender: customer.gender.toString(),
-    // Already "YYYY-MM-DD" — the DB column is a real DATE — which is exactly what
-    // <input type="date"> needs to pre-fill.
     birthDate: customer.birthDate ?? '',
     country: customer.address.country,
     county: customer.address.county,
@@ -99,9 +95,6 @@ export function toCreateCustomerRequest(
   };
 }
 
-// The loaded customer with the form's values applied — what the edit page saves, and what
-// the local customer list is updated to once the save succeeds. Server-owned fields (customerId,
-// status, dates) come from `current` unchanged.
 export function applyFormModel(
   model: CustomerFormModel,
   current: Customer,
@@ -109,10 +102,6 @@ export function applyFormModel(
   return { ...current, ...toCreateCustomerRequest(model) };
 }
 
-// True when the user has changed anything relative to `baseline` (the blank
-// form when adding, the loaded customer when editing). Comparing values —
-// rather than trusting a "touched" flag — means typing something and then
-// putting it back doesn't count as an unsaved change.
 export function isCustomerFormDirty(
   model: CustomerFormModel,
   baseline: CustomerFormModel,

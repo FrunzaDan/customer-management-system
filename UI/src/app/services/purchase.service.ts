@@ -22,8 +22,6 @@ export class PurchaseService {
 
   private readonly customerId = signal<string | undefined>(undefined);
 
-  // Same shape as AuditLogService: the request is a function of `customerId`, so a
-  // new customerId cancels the in-flight request, and nothing is fetched until one is set.
   private readonly purchasesResource = httpResource<
     GenericResponse<Purchase[]>
   >(() => {
@@ -35,7 +33,6 @@ export class PurchaseService {
     };
   });
 
-  // hasValue() guards the read: value() throws while the resource is in error.
   readonly entries = computed(() =>
     this.purchasesResource.hasValue()
       ? (this.purchasesResource.value().data ?? [])
@@ -49,8 +46,6 @@ export class PurchaseService {
 
   loadPurchases(customerId: string): void {
     if (this.customerId() === customerId) {
-      // Same customer (e.g. right after recording a purchase) — the request itself
-      // hasn't changed, so ask for a fresh copy.
       this.purchasesResource.reload();
     } else {
       this.customerId.set(customerId);
@@ -66,11 +61,6 @@ export class PurchaseService {
     );
   }
 
-  /**
-   * Same endpoint as {@link purchaseProduct}, without the per-call success toast — for
-   * callers (bulk test-data generation) that show one summary notification instead of
-   * one per request.
-   */
   purchaseProductSilently(
     customerId: string,
     productId: string,

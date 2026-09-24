@@ -7,9 +7,6 @@ namespace CustomerManagementSystem.BusinessLogic.Validations;
 
 public static partial class AddressValidation
 {
-    // Registration only: every CustomerAddress column is NOT NULL, so a missing field would
-    // otherwise surface as an opaque 500 from the insert instead of a validation error.
-    // (Edit is a partial update — an omitted field there means "leave unchanged".)
     public static string? ValidateRequired(AddressRequest address)
     {
         if (string.IsNullOrWhiteSpace(address.Country)) return "Country is required.";
@@ -21,15 +18,12 @@ public static partial class AddressValidation
         return null;
     }
 
-    // Returns an error message, or null if every present field is within its DB column's length.
     public static string? ValidateLengths(AddressRequest address)
     {
         if (address.Country?.Length > FieldLengthConstants.Country) return "Country is too long.";
         if (address.County?.Length > FieldLengthConstants.County) return "County is too long.";
         if (address.City?.Length > FieldLengthConstants.City) return "City is too long.";
         if (address.PostalCode?.Length > FieldLengthConstants.PostalCode) return "Postal code is too long.";
-        // CustomerAddress.PostalCode is VARCHAR, not NVARCHAR — a non-ASCII character would be
-        // silently stored as '?', so reject it instead. Real postal codes never need one.
         if (!string.IsNullOrEmpty(address.PostalCode) && !PostalCodeRegex().IsMatch(address.PostalCode))
             return "Postal code may only contain letters, digits, spaces and hyphens.";
         if (address.Street?.Length > FieldLengthConstants.Street) return "Street is too long.";

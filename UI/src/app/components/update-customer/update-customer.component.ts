@@ -27,18 +27,14 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
   templateUrl: './update-customer.component.html',
   styleUrl: './update-customer.component.css',
   imports: [CustomerFormFieldsComponent, FormRoot, RouterLink],
-  // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
 export class UpdateCustomerComponent {
   private readonly router = inject(Router);
   private readonly customerService = inject(CustomerService);
 
-  // Bound from the `:customerId` route param by withComponentInputBinding() in app.config.ts.
   readonly customerId = input<string>();
 
-  // Keyed on the route's id, like the details page; hasValue() guards the read,
-  // since value() throws while the resource is in error.
   private readonly customerResource = rxResource({
     params: () => this.customerId(),
     stream: ({ params: customerId }) =>
@@ -58,9 +54,6 @@ export class UpdateCustomerComponent {
       : null;
   });
 
-  // The form model *is* the loaded customer, mapped: it re-derives whenever
-  // customer() changes and stays writable for the user's edits — no effect +
-  // patchValue copy step.
   private readonly baseline = computed(() => {
     const customer = this.customer();
     return customer ? toFormModel(customer) : emptyCustomerForm();
@@ -69,14 +62,10 @@ export class UpdateCustomerComponent {
 
   private readonly saved = signal(false);
 
-  // Read by unsavedChangesGuard: edits that differ from the loaded customer and
-  // haven't been saved. Putting a value back to the original clears it.
   readonly hasUnsavedChanges = computed(
     () => !this.saved() && isCustomerFormDirty(this.model(), this.baseline()),
   );
 
-  // Distinct from loading/loadError above, which reflect fetching the
-  // customer being edited — these track the save (PATCH) request itself.
   readonly saveError = signal<string | null>(null);
   readonly invalidSummary = signal<string | null>(null);
 
@@ -106,7 +95,6 @@ export class UpdateCustomerComponent {
           applyFormModel(this.model(), current),
         ),
       );
-      // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/customers']);
     } catch (error) {

@@ -11,8 +11,6 @@ import { extractErrorMessage } from '../utils/extract-error-message';
 export class MonthlyActivityService {
   private readonly apiUrl = `${environment.apiUrl}/api/customer/monthly-activity`;
 
-  // No request is made until loadMonthlyActivity() is first called, same reasoning
-  // as ProductService.
   private readonly requested = signal(false);
 
   private readonly activityResource = httpResource<

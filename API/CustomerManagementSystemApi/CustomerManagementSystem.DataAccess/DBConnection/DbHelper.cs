@@ -9,9 +9,6 @@ public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, 
 
 public static class DbHelper
 {
-    // Customer_Create takes @StatusCode; Customer_Update does not (status is
-    // only ever changed via deactivate/reactivate) — so create and edit need separate
-    // parameter sets, not one shared method that adds a parameter edit's proc doesn't declare.
     public static void AddCustomerParametersForCreate(SqlCommand command, CreateCustomerRequest customer)
     {
         AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber,
@@ -87,8 +84,6 @@ public static class DbHelper
             new PagedResponse<CustomerModel>(items, totalItems, pageNumber, pageSize));
     }
 
-    // The standard (Result, Message) row every mutating proc returns: Result 0 = success,
-    // anything else is the HTTP status to reply with.
     public static async Task<ResponseModel<object>> HandleResponseWithMessageAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
@@ -101,8 +96,6 @@ public static class DbHelper
             : new ResponseModel<object>(result, message ?? "Operation failed.");
     }
 
-    // Customer_Create/Product_Create return the usual (Result, Message) row plus the new
-    // row's DB-generated key in guidColumn, which is handed back as Data on success.
     public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuidAsync(SqlDataReader reader,
         string guidColumn)
     {
@@ -116,9 +109,6 @@ public static class DbHelper
             : new ResponseModel<Guid?>(result, message ?? "Operation failed.");
     }
 
-    // CustomerPurchase_Create returns the usual (Result, Message) row plus ProductName. On
-    // success the name comes back as Data (the caller puts it in the audit entry); on any
-    // failure it's the plain status + message that HandleResponseWithMessage would give.
     public static async Task<ResponseModel<string>> HandleResponseWithPurchaseResultAsync(SqlDataReader reader)
     {
         if (!await reader.ReadAsync().ConfigureAwait(false))
@@ -143,8 +133,6 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, $"{items.Count} audit log entries found.", items);
     }
 
-    // CustomerAuditLog_List returns two result sets: the total (one row), then the page. The total
-    // comes first, on its own, so it's right even when the page is empty.
     public static async Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> HandleResponseWithPagedAuditLogListAsync(
         SqlDataReader reader, int pageNumber, int pageSize)
     {
@@ -172,8 +160,6 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<ProductModel>>(200, $"{items.Count} products found.", items);
     }
 
-    // Product_GetDetails returns two result sets: the product (zero rows = not found), then
-    // the customers who bought it.
     public static async Task<ResponseModel<ProductDetailsModel>> HandleResponseWithProductDetailsAsync(
         SqlDataReader reader)
     {
@@ -202,8 +188,6 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<PurchaseModel>>(200, $"{items.Count} purchases found.", items);
     }
 
-    // Report_GetMonthlyActivity returns two result sets: customer registrations by month,
-    // then product purchases by month (see that proc).
     public static async Task<ResponseModel<MonthlyActivityModel>> HandleResponseWithMonthlyActivityAsync(
         SqlDataReader reader)
     {
@@ -268,7 +252,6 @@ public static class DbHelper
     {
         CustomerAuditLogId = reader.GetInt32("CustomerAuditLogId"),
         CustomerId = reader.GetGuid("CustomerId"),
-        // NULL here (deleted customer, via the proc's LEFT JOIN) must come back as a real null.
         CustomerFirstName = reader.GetNullableString("FirstName"),
         CustomerLastName = reader.GetNullableString("LastName"),
         PerformedBy = reader.GetString("PerformedBy"),

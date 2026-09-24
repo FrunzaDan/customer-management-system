@@ -37,11 +37,6 @@ BEGIN
         BEGIN TRY
             BEGIN TRANSACTION;
 
-            -- Both inserts must succeed together: Customer_Get/Customer_List INNER JOIN
-            -- to CustomerAddress, so a customer row left without a matching address row would
-            -- silently disappear from every read despite existing in Customer.
-            -- CustomerId, CreatedAt and LastInteractionAt come from the table's
-            -- defaults (NEWSEQUENTIALID() / SYSUTCDATETIME()); OUTPUT captures the new key.
             INSERT INTO dbo.Customer
             (
                 FirstName, LastName, Email, PhoneNumber, Gender, BirthDate, StatusCode
@@ -73,8 +68,6 @@ BEGIN
             IF @@TRANCOUNT > 0
                 ROLLBACK TRANSACTION;
 
-            -- 2601/2627: a concurrent request took the value between the pre-check above and
-            -- this write; the UQ_ constraint caught it, so answer the same 409 as the pre-check.
             IF ERROR_NUMBER() NOT IN (2601, 2627)
                 THROW;
 
@@ -83,7 +76,5 @@ BEGIN
         END CATCH
     END
 
-    -- CustomerId rides along on the usual (Result, Message) row so the API can return the
-    -- new customer's server-generated key; only meaningful when Result = 0.
     SELECT @Result AS Result, @Message AS Message, @CustomerId AS CustomerId;
 END

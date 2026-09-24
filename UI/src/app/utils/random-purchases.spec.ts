@@ -29,7 +29,6 @@ describe('chooseProductsToBuy', () => {
       expect(chosen.length).toBeLessThanOrEqual(MAX_TEST_PURCHASES);
       counts.add(chosen.length);
     }
-    // ...and the whole range is actually reachable, not just one value.
     expect([...counts].sort()).toEqual([1, 2, 3, 4, 5]);
   });
 

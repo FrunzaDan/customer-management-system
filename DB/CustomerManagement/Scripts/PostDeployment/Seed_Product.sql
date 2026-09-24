@@ -1,10 +1,3 @@
--- Seeds the fixed catalogue of 50 tech products into Product.
---
--- Idempotent: a row is only inserted when its GUID isn't already there, so re-running a
--- deployment never duplicates products and never resets QuantityOnHand back to its seed
--- value once purchases have started decrementing it. InitialQuantity (units originally
--- stocked) starts equal to QuantityOnHand. The GUIDs are hard-coded (not NEWID()) precisely
--- so that "already there" can be recognised on every later deploy.
 INSERT INTO dbo.Product (
     ProductId,
     Name,

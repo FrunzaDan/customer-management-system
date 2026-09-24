@@ -9,7 +9,6 @@ import { ProductDetailsComponent } from './product-details.component';
 describe('ProductDetailsComponent', () => {
   let getProductDetails: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.fn>;
-  // What the page's rxResource streams: nothing yet (loading), a value, or an error.
   let productDetails$: Subject<ProductDetails>;
 
   const buildDetails = (
@@ -180,7 +179,6 @@ describe('ProductDetailsComponent', () => {
 
   it('explains the gap when some sales were to since-deleted customers', async () => {
     const fixture = render();
-    // 2 sold, but only 1 buyer still on record
     await show(fixture, buildDetails({}, [buyer(1, 'Ada')]));
 
     expect(el(fixture).textContent).toContain(

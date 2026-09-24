@@ -5,8 +5,6 @@ using Microsoft.Extensions.Logging.Testing;
 
 namespace CustomerManagementSystem.Tests.DataAccess;
 
-// Which database SqlConnectionFactory picks per operating system. The probe is faked, so no SQL
-// Server is needed.
 public class SqlConnectionFactoryTests
 {
     private const string Docker = "Server=localhost,1433;Database=Test;User Id=sa;Password=x";

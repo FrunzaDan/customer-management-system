@@ -9,9 +9,6 @@ public class CustomerGetting(IDbUtils dbUtils)
 {
     private const int MaxPageSize = 100;
 
-    // CSV export ignores paging (it's not a "current page" export) but still needs
-    // a hard cap so an unfiltered export on a very large table can't balloon the
-    // response — generous enough that no real local/demo dataset will ever hit it.
     private const int MaxExportRows = 5000;
 
     public async Task<ResponseModel<CustomerModel>> GetCustomerAsync(string? searchTerm,
@@ -45,10 +42,6 @@ public class CustomerGetting(IDbUtils dbUtils)
         return await dbUtils.GetCustomersAsync(request, cancellationToken);
     }
 
-    // Exports the full search/sort result (capped at MaxExportRows), not just one
-    // page — it reuses Customer_List via the same dbUtils.GetCustomers call the
-    // paginated endpoint uses, just with PageNumber/PageSize fixed internally, so the
-    // filtering/sorting SQL stays in exactly one place.
     public async Task<ResponseModel<string>> GetCustomersForExportAsync(ExportCustomersRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -73,8 +66,6 @@ public class CustomerGetting(IDbUtils dbUtils)
         return new ResponseModel<string>(200, $"{paged.Items.Count} customers exported.", csv);
     }
 
-    // The enums can only hold an undefined value if one was forced in (e.g. "?sortColumn=7"
-    // binds to (CustomerSortColumn)7), so this is a backstop, not the primary check.
     private static string? ValidateAndNormalizeSortAndSearch(GetCustomersRequest request)
     {
         if (!Enum.IsDefined(request.SortColumn))
@@ -122,15 +113,10 @@ public class CustomerGetting(IDbUtils dbUtils)
         return await dbUtils.GetAllCustomerAuditLogAsync(pageNumber, pageSize, cancellationToken);
     }
 
-    // Feeds the Charts tab's time-series charts. No paging/filtering — both series
-    // are small (one row per month with any activity), same reasoning as ProductFunctions.GetProductsAsync.
     public async Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetMonthlyActivityAsync(cancellationToken);
 
-    // Picks the one key Customer_Get should seek on, from the search term's shape: GUID
-    // (any format Guid.TryParse accepts — braces, upper case, no hyphens), then phone number, then
-    // email. Null when it's none of the three.
     private static CustomerLookup? DetermineLookup(string searchTerm)
     {
         if (Guid.TryParse(searchTerm, out var customerId))

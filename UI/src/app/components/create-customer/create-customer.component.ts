@@ -19,7 +19,6 @@ import { CustomerFormFieldsComponent } from '../customer-form-fields/customer-fo
   templateUrl: './create-customer.component.html',
   styleUrl: './create-customer.component.css',
   imports: [CustomerFormFieldsComponent, FormRoot, RouterLink],
-  // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
 export class CreateCustomerComponent {
@@ -29,7 +28,6 @@ export class CreateCustomerComponent {
   readonly model = signal<CustomerFormModel>(emptyCustomerForm());
   private readonly saved = signal(false);
 
-  // Read by unsavedChangesGuard: anything typed, and not yet saved.
   readonly hasUnsavedChanges = computed(
     () =>
       !this.saved() && isCustomerFormDirty(this.model(), emptyCustomerForm()),
@@ -45,14 +43,11 @@ export class CreateCustomerComponent {
         this.invalidSummary.set(
           `The form has ${errors.length} ${errors.length === 1 ? 'error' : 'errors'}. Please correct the highlighted fields.`,
         );
-        // Move focus to the first problem so keyboard/screen-reader users land on it.
         errors[0]?.fieldTree().focusBoundControl();
       },
     },
   });
 
-  // Runs only when the form is valid (FormRoot -> submit()); the form's own
-  // submitting() state replaces the old hand-rolled `loading` signal.
   private async save(): Promise<void> {
     this.saveError.set(null);
     this.invalidSummary.set(null);
@@ -63,11 +58,9 @@ export class CreateCustomerComponent {
           toCreateCustomerRequest(this.model()),
         ),
       );
-      // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/customers']);
     } catch (error) {
-      // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
       this.saveError.set(
         extractErrorMessage(
           error as HttpErrorResponse,

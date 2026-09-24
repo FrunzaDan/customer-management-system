@@ -2,8 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace CustomerManagementSystem.WebAPI.Routing;
 
-// Turns route tokens into lowercase kebab-case, the conventional casing for URL paths:
-// "[controller]" on CostCenterController becomes "cost-center", on CustomerController "customer".
 public sealed partial class KebabCaseParameterTransformer : IOutboundParameterTransformer
 {
     public string? TransformOutbound(object? value) =>

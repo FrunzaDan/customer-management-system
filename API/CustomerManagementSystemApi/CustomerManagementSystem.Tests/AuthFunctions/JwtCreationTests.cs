@@ -52,9 +52,7 @@ public class JwtCreationTests
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
         var token = new JsonWebTokenHandler().ReadJsonWebToken(result.Data!.AccessToken);
 
-        // RFC 7519: iat is seconds since the Unix epoch (a JSON number), not a date string.
         Assert.IsType<long>(token.GetPayloadValue<object>(JwtRegisteredClaimNames.Iat));
-        // [Authorize(Roles = "1801")] matches on the code, not the enum member's name.
         Assert.Contains(token.Claims, c => c.Type == "role" && c.Value == "1801");
     }
 

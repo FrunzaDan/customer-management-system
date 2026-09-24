@@ -40,8 +40,6 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   private readonly footerService = inject(FooterService);
   private readonly sessionStorageService = inject(SessionStorageService);
 
-  // `?sessionExpired=true` is added by authGuard / authErrorInterceptor
-  // when a token is missing or rejected; bound here by withComponentInputBinding().
   readonly sessionExpired = input<string>();
 
   readonly model = signal<LoginModel>({ username: '', password: '' });
@@ -59,7 +57,6 @@ export class UserLoginComponent implements OnInit, OnDestroy {
     {
       submission: {
         action: () => this.login(),
-        // Land on the first field that needs fixing.
         onInvalid: (field) =>
           field().errorSummary()[0]?.fieldTree().focusBoundControl(),
       },
@@ -67,7 +64,6 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   );
 
   ngOnInit(): void {
-    // Clear session storage and prepare UI
     this.sessionStorageService.removeSessionStorage();
     this.navbarService.hideNavbar();
     this.footerService.hideFooter();
@@ -88,8 +84,6 @@ export class UserLoginComponent implements OnInit, OnDestroy {
       const result = this.userLoginService.checkCredentials(response);
       this.loginError.set(result.success ? null : result.message);
     } catch (error) {
-      // The API's Problem Details message: "Invalid username or password." (401),
-      // "Too many login attempts…" (429), or a generic one naming the status.
       this.loginError.set(
         extractErrorMessage(error as HttpErrorResponse, 'Sign-in failed'),
       );

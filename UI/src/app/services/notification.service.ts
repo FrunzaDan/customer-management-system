@@ -8,9 +8,6 @@ export interface Notification {
 
 const DEFAULT_DURATION_MS = 6000;
 
-// Toasts confirm that something the user did succeeded, and report failures
-// that have no better place on the page (a background or bulk operation).
-// A failure tied to a form or a button is shown inline, next to it, instead.
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private readonly _notifications = signal<Notification[]>([]);
@@ -18,8 +15,6 @@ export class NotificationService {
 
   private nextId = 0;
 
-  // An error stays until dismissed (durationMs 0): it may need more than a few
-  // seconds to read, and it shouldn't vanish before the user notices it.
   show(
     message: string,
     type: Notification['type'] = 'success',

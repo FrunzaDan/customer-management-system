@@ -6,7 +6,6 @@ export interface Purchase {
   productId: string;
   productName: string;
   category: string;
-  // The product's current price, not a snapshot of what was paid at purchase time.
   price: number;
   purchasedAt: IsoDateTime;
 }

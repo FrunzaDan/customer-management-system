@@ -16,13 +16,9 @@ public class CustomerPurchasing(IDbUtils dbUtils, ICustomerAuditLogger auditLogg
 
         var response = await dbUtils.PurchaseProductAsync(customerId, productId, cancellationToken);
 
-        // Mutations carry no Data (see ai_docs/api.md): on success the DB layer hands back the
-        // product's name purely so it can go into the audit entry, and it's dropped here.
         if (response.Status != 200)
             return new ResponseModel<object>(response.Status, response.ResponseMessage);
 
-        // Not forwarding cancellationToken to the audit write: the purchase already
-        // succeeded, so the log entry should still be attempted.
         await auditLogger.LogAsync(customerId, performedBy, AuditAction.Purchased,
             response.Data is { } productName ? $"Product: {productName}" : $"Product ID: {productId}");
 

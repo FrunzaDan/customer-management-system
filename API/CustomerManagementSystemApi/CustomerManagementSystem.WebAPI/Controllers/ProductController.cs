@@ -5,9 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CustomerManagementSystem.WebAPI.Controllers;
 
-// The product catalogue, in its own controller like the employee app's OfficeController.
-// Buying a product stays on CustomerController (purchase/purchases): it is an action a
-// customer takes, and it is audited on that customer.
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]

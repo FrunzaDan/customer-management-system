@@ -1,13 +1,11 @@
 import { IsoDate, IsoDateTime } from './iso-date';
 
-// Customer.Gender — serialized by the API as its number.
 export enum Gender {
   NotDeclared = 0,
   Male = 1,
   Female = 2,
 }
 
-// Customer.StatusCode values — see ai_docs/database.md.
 export enum CustomerStatus {
   Active = 1901,
   Deactivated = 1903,
@@ -23,8 +21,6 @@ export interface Address {
   streetNumber: string;
 }
 
-// A customer as the API returns it. Every field but birthDate is NOT NULL in the DB; an unset
-// birthDate arrives as null.
 export interface Customer {
   customerId: string;
   firstName: string;
@@ -39,7 +35,6 @@ export interface Customer {
   address: Address;
 }
 
-// POST /api/customer/create. No customerId: the DB generates it and the response returns it.
 export interface CreateCustomerRequest {
   firstName: string;
   lastName: string;
@@ -47,13 +42,10 @@ export interface CreateCustomerRequest {
   phoneNumber: string;
   gender: Gender;
   birthDate?: IsoDate;
-  // Omitted = Active. The only other value the API accepts is Test.
   status?: CustomerStatus.Active | CustomerStatus.Test;
   address: Address;
 }
 
-// PATCH /api/customer/update — a partial update: an omitted field is left unchanged. There's no
-// status: status only changes through deactivate/reactivate/delete.
 export interface UpdateCustomerRequest extends Partial<
   Omit<CreateCustomerRequest, 'status'>
 > {

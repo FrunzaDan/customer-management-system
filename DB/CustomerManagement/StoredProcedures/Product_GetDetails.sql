@@ -5,7 +5,6 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    -- Result set 1: the product (zero rows = not found; the API maps that to 404).
     SELECT
         ProductId,
         Name,
@@ -19,9 +18,6 @@ BEGIN
     FROM dbo.Product
     WHERE ProductId = @ProductId;
 
-    -- Result set 2: who bought it and when, newest first. Only customers that still exist
-    -- appear here (deleting a customer deletes their purchase rows), so this can list fewer
-    -- rows than the derived SoldQuantity above.
     SELECT
         cp.CustomerPurchaseId,
         cp.CustomerId,

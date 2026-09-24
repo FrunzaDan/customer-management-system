@@ -1,4 +1,3 @@
-/* Header: back link above the title, customer actions on the right. */
 .back-link {
   display: inline-block;
   margin-bottom: 0.5rem;
@@ -24,7 +23,6 @@
   }
 }
 
-/* Profile header (avatar + name + status) */
 .profile-header {
   display: flex;
   align-items: center;
@@ -58,7 +56,6 @@
   overflow-wrap: anywhere;
 }
 
-/* Label / value rows */
 .detail-list {
   margin: 0;
 }
@@ -94,7 +91,6 @@
   font-size: 0.8rem;
 }
 
-/* Purchases */
 .purchase-form {
   display: flex;
   flex-direction: column;
@@ -176,7 +172,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Audit trail */
 .audit-list {
   margin: 0;
   list-style: none;

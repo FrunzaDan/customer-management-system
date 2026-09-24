@@ -17,8 +17,6 @@ export class NavigationBarComponent {
 
   readonly showNavbar = this.navbarService.showNavbar;
 
-  // Drives the mobile menu; replaces Bootstrap's JS collapse plugin so
-  // aria-expanded always reflects the real state.
   protected readonly menuOpen = signal(false);
 
   toggleMenu(): void {

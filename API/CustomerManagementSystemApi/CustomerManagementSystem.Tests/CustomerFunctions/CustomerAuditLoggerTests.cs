@@ -44,11 +44,6 @@ public class CustomerAuditLoggerTests
             Times.Once);
     }
 
-    // Writing an audit entry is best-effort and always runs after the customer mutation
-    // it's recording has already succeeded (see CustomerAuditLogger's own comment) — a DB
-    // hiccup here must never surface as an exception to the caller. Every other test file
-    // mocks ICustomerAuditLogger away, so this is the only place that actually exercises
-    // that swallow-and-log behavior against the real class.
     [Fact]
     public async Task LogAsync_SwallowsAnyExceptionFromTheDbLayer_InsteadOfPropagatingIt()
     {

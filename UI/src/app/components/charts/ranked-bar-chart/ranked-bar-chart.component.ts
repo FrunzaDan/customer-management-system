@@ -10,10 +10,6 @@ interface RankedBar extends RankedItem {
   valueText: string;
 }
 
-// Horizontal ranked bars — one series, so bar length alone carries the ranking and no
-// legend/color-identity is needed (see the Charts tab's "no categorical color" note).
-// Styled entirely off the shared .ranked-* classes in styles.css (also used by
-// StockHealthChartComponent) — no scoped stylesheet needed here.
 @Component({
   selector: 'app-ranked-bar-chart',
   templateUrl: './ranked-bar-chart.component.html',

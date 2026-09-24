@@ -60,8 +60,6 @@ public class AuthServiceTests
             Times.Never);
     }
 
-    // Distinct from JwtCreation's own guard, which only checks Username — AuthService is
-    // the one place that also rejects a missing/blank password before any DB call is made.
     [Theory]
     [InlineData(null)]
     [InlineData("")]

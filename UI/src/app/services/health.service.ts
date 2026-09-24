@@ -14,13 +14,10 @@ export class HealthService {
   private readonly http = inject(HttpClient);
 
   checkApiHealth(): Observable<boolean> {
-    // ASP.NET Core health checks answer with plain text ("Healthy"), not JSON.
     return this.http
       .get(this.healthUrl, { observe: 'response', responseType: 'text' })
       .pipe(
-        map((response: HttpResponse<string>) => response.ok), // cleaner than status check
-        // A failed poll only flips the banner; apiLoggerInterceptor has already
-        // logged the failed request.
+        map((response: HttpResponse<string>) => response.ok),
         catchError(() => of(false)),
       );
   }

@@ -102,7 +102,7 @@ describe('CustomerListComponent', () => {
       component.currentPage.set(3);
       loadCustomers.mockClear();
 
-      component.setSort('name'); // 'name' is already the default sort column
+      component.setSort('name');
 
       expect(component.sortColumn()).toBe('name');
       expect(component.sortDirection()).toBe('desc');
@@ -134,7 +134,7 @@ describe('CustomerListComponent', () => {
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
-      totalItems.set(120); // 120 items / 50 per page = 3 pages
+      totalItems.set(120);
       loadCustomers.mockClear();
 
       component.goToPage(10);
@@ -161,7 +161,7 @@ describe('CustomerListComponent', () => {
     it('does nothing when the target page equals the current page', () => {
       loadCustomers.mockClear();
 
-      component.goToPage(1); // already on page 1, totalPages() is 1 with 0 items
+      component.goToPage(1);
 
       expect(loadCustomers).not.toHaveBeenCalled();
     });
@@ -290,8 +290,6 @@ describe('CustomerListComponent', () => {
       expect(deleteCustomer).toHaveBeenCalledWith('customer-1');
       expect(component.deleting()).toBe(false);
       expect(component.deleteError()).toBeNull();
-      // removeCustomerLocally only drops the row locally; the component still
-      // re-fetches so totalItems/page count don't go stale.
       expect(loadCustomers).toHaveBeenCalledTimes(1);
     });
 

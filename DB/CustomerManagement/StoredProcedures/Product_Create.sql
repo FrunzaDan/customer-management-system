@@ -15,9 +15,6 @@ BEGIN
     DECLARE @ProductId UNIQUEIDENTIFIER = NULL;
     DECLARE @Inserted TABLE (ProductId UNIQUEIDENTIFIER);
 
-    -- A newly added product starts fully stocked: QuantityOnHand = InitialQuantity,
-    -- same as every seeded row (see Product / Seed_Product).
-    -- ProductId comes from the table's NEWSEQUENTIALID() default.
     INSERT INTO dbo.Product
     (
         Name, Category, Description,
@@ -35,6 +32,5 @@ BEGIN
     SET @Result = 0;
     SET @Message = 'Product created successfully.';
 
-    -- ProductId: the new product's server-generated key; only meaningful when Result = 0.
     SELECT @Result AS Result, @Message AS Message, @ProductId AS ProductId;
 END

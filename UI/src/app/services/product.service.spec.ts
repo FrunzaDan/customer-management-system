@@ -50,15 +50,11 @@ describe('ProductService', () => {
     httpMock.verify();
   });
 
-  // The response is applied asynchronously, so wait for the app to settle
-  // after flushing before asserting on the signals.
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
   describe('products', () => {
     const PRODUCTS_URL = `${API_URL}/all`;
 
-    // httpResource issues its request from an effect, so flush effects after
-    // calling loadProducts() before expecting the HTTP call.
     const load = () => {
       service.loadProducts();
       TestBed.tick();
@@ -113,7 +109,7 @@ describe('ProductService', () => {
         .flush({ status: 200, responseMessage: 'ok', data: [product] });
 
       expect(result).toEqual([product]);
-      expect(service.products()).toEqual([]); // the resource was never loaded
+      expect(service.products()).toEqual([]);
     });
 
     it('surfaces the server-provided error message when present', async () => {

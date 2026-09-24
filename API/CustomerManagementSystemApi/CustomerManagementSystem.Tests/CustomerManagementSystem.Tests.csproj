@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <!-- xUnit v3 on Microsoft Testing Platform v2: the test project is its own executable
-         (dotnet test / dotnet run both work; see the repo-root global.json). -->
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>

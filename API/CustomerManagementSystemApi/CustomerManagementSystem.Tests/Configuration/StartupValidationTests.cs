@@ -4,8 +4,6 @@ using Microsoft.Extensions.Options;
 
 namespace CustomerManagementSystem.Tests.Configuration;
 
-// Program.cs validates its options at startup (ValidateOnStart): a bad value stops the app with an
-// error naming the setting, rather than surfacing on the first request that needs it.
 public class StartupValidationTests
 {
     [Theory]

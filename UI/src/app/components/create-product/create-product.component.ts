@@ -19,7 +19,6 @@ import { ProductFormFieldsComponent } from './product-form-fields.component';
   templateUrl: './create-product.component.html',
   styleUrl: './create-product.component.css',
   imports: [ProductFormFieldsComponent, FormRoot, RouterLink],
-  // Refresh / closing the tab isn't a router navigation, so guard it here too.
   host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
 export class CreateProductComponent {
@@ -29,7 +28,6 @@ export class CreateProductComponent {
   readonly model = signal<ProductFormModel>(emptyProductForm());
   private readonly saved = signal(false);
 
-  // Read by unsavedChangesGuard: anything typed, and not yet saved.
   readonly hasUnsavedChanges = computed(
     () => !this.saved() && isProductFormDirty(this.model(), emptyProductForm()),
   );
@@ -57,11 +55,9 @@ export class CreateProductComponent {
       await firstValueFrom(
         this.productService.createProduct(toProduct(this.model())),
       );
-      // Saved — leaving now must not trigger the unsaved-changes prompt.
       this.saved.set(true);
       await this.router.navigate(['/products']);
     } catch (error) {
-      // A 401 (session expired mid-form) is handled globally by authErrorInterceptor.
       this.saveError.set(
         extractErrorMessage(
           error as HttpErrorResponse,

@@ -13,8 +13,6 @@ export class VerifyTokenService {
   private readonly http = inject(HttpClient);
 
   isTokenValid(): Observable<boolean> {
-    // Reaching a response at all means the API's [Authorize] middleware accepted the
-    // token; any error (401 with an empty body, network failure, etc.) means it didn't.
     return this.verifyTokenViaAPI().pipe(
       map(() => true),
       catchError(() => of(false)),

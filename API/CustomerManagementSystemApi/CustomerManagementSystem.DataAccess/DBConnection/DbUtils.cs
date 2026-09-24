@@ -37,7 +37,6 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
                 command.Parameters.AddInt("@PageNumber", request.PageNumber);
                 command.Parameters.AddInt("@PageSize", request.PageSize);
                 command.Parameters.AddNVarChar("@SearchTerm", FieldLengthConstants.SearchTerm, request.SearchTerm);
-                // The proc's CASE-based ORDER BY matches on the lowercase names ('name', 'asc', ...).
                 command.Parameters.AddVarChar("@SortColumn", FieldLengthConstants.SortColumn,
                     request.SortColumn.ToString().ToLowerInvariant());
                 command.Parameters.AddVarChar("@SortDirection", FieldLengthConstants.SortDirection,
@@ -198,9 +197,6 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
         Func<SqlDataReader, Task<T>> handleReader,
         CancellationToken cancellationToken = default)
     {
-        // No try/catch: expected outcomes come back as the proc's (Result, Message) row, and anything
-        // thrown here (a SqlException the proc re-THROWs, a lost connection, a cancelled request)
-        // propagates unchanged to GlobalExceptionHandler, which logs it once and answers 500.
         await using var connection = await connectionFactory.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
         await using var command = new SqlCommand(storedProcedure, connection);

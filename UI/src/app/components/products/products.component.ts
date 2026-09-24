@@ -7,7 +7,6 @@ import { ProductService } from '../../services/product.service';
 export type ProductSortColumn =
   'name' | 'category' | 'warehouse' | 'price' | 'sold' | 'inventory' | 'left';
 
-// How each column reads a comparable value off a product.
 const SORT_VALUES: Record<
   ProductSortColumn,
   (product: Product) => string | number
@@ -21,7 +20,6 @@ const SORT_VALUES: Record<
   left: (p) => p.quantityOnHand,
 };
 
-// How each sort column reads in the table caption.
 const SORT_LABELS: Record<ProductSortColumn, string> = {
   name: 'product',
   category: 'category',
@@ -44,9 +42,6 @@ export class ProductsComponent {
   readonly loading = this.productService.loading;
   readonly loadError = this.productService.error;
 
-  // Unlike the customer list (paged, so sorted in SQL), the whole 50-product catalogue is
-  // already loaded, so sorting happens here. Until a header is clicked (`null`), rows keep
-  // the API's category/name order.
   readonly sortColumn = signal<ProductSortColumn | null>(null);
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -57,7 +52,6 @@ export class ProductsComponent {
 
     const value = SORT_VALUES[column];
     const direction = this.sortDirection() === 'asc' ? 1 : -1;
-    // Array.sort is stable, so equal values keep the API order (category, name).
     return [...products].sort((a, b) => {
       const x = value(a);
       const y = value(b);
@@ -79,11 +73,9 @@ export class ProductsComponent {
   });
 
   constructor() {
-    // Stock changes with every purchase, so always fetch fresh on entering the page.
     this.productService.loadProducts();
   }
 
-  // Exposed on the <th> so assistive tech announces the current sort.
   ariaSort(column: ProductSortColumn): 'ascending' | 'descending' | 'none' {
     if (this.sortColumn() !== column) return 'none';
     return this.sortDirection() === 'asc' ? 'ascending' : 'descending';

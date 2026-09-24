@@ -13,9 +13,6 @@ export class AuditLogService {
 
   private readonly customerId = signal<string | undefined>(undefined);
 
-  // Declarative fetch: the request is a function of `customerId`, so a new
-  // customerId cancels the in-flight request and starts another, and no request is
-  // made at all until a customerId has been set (returning undefined idles it).
   private readonly auditLogResource = httpResource<
     GenericResponse<AuditLogEntry[]>
   >(() => {
@@ -27,7 +24,6 @@ export class AuditLogService {
     };
   });
 
-  // hasValue() guards the read: value() throws while the resource is in error.
   readonly entries = computed(() =>
     this.auditLogResource.hasValue()
       ? (this.auditLogResource.value().data ?? [])
@@ -46,8 +42,6 @@ export class AuditLogService {
 
   loadAuditLog(customerId: string): void {
     if (this.customerId() === customerId) {
-      // Same customer (e.g. after a deactivate/reactivate) — the request itself
-      // hasn't changed, so ask for a fresh copy.
       this.auditLogResource.reload();
     } else {
       this.customerId.set(customerId);

@@ -9,7 +9,7 @@ describe('ConfirmDialogComponent accessibility', () => {
 
   const settle = (fixture: ReturnType<typeof TestBed.createComponent>) => {
     fixture.detectChanges();
-    fixture.detectChanges(); // second pass lets the viewChild-driven effects run
+    fixture.detectChanges();
   };
 
   const open = (fixture: ReturnType<typeof TestBed.createComponent>) => {
@@ -80,7 +80,7 @@ describe('ConfirmDialogComponent accessibility', () => {
         cancelable: true,
       }),
     );
-    expect(document.activeElement).toBe(cancel); // wrapped forward
+    expect(document.activeElement).toBe(cancel);
 
     dialog.dispatchEvent(
       new KeyboardEvent('keydown', {
@@ -90,7 +90,7 @@ describe('ConfirmDialogComponent accessibility', () => {
         cancelable: true,
       }),
     );
-    expect(document.activeElement).toBe(confirm); // wrapped backward
+    expect(document.activeElement).toBe(confirm);
   });
 
   it('uses the default title and Cancel / Confirm labels unless told otherwise', () => {

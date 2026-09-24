@@ -15,7 +15,6 @@ describe('UpdateCustomerComponent', () => {
   let customer$: ReplaySubject<Customer>;
   let fixture: ComponentFixture<UpdateCustomerComponent>;
 
-  // Emits the customer the page's rxResource streams, and waits for it to land.
   const loadCustomer = async (customer: Customer) => {
     customer$.next(customer);
     await fixture.whenStable();
@@ -43,7 +42,6 @@ describe('UpdateCustomerComponent', () => {
     ...overrides,
   });
 
-  // `customerId` is what withComponentInputBinding() binds from the `:customerId` route param.
   const createComponent = (id: string | null = 'customer-1') => {
     fixture = TestBed.createComponent(UpdateCustomerComponent);
     if (id) fixture.componentRef.setInput('customerId', id);
@@ -71,7 +69,6 @@ describe('UpdateCustomerComponent', () => {
         },
       ],
     });
-    // RouterLink in the template needs the real Router; only stub navigate().
     TestBed.inject(Router).navigate = navigate as unknown as Router['navigate'];
   });
 
@@ -158,7 +155,7 @@ describe('UpdateCustomerComponent', () => {
       expect(updateCustomer).toHaveBeenCalledWith(
         expect.objectContaining({
           customerId: 'customer-1',
-          createdAt: '2026-01-01', // preserved from the original record, not in the form
+          createdAt: '2026-01-01',
           firstName: 'Updated',
           gender: 1,
         }),
@@ -267,8 +264,6 @@ describe('UpdateCustomerComponent', () => {
     });
   });
 
-  // Local helper: the same mapping the component uses, to build a valid model
-  // without a loaded customer.
   function toModel(customer: Customer) {
     return {
       firstName: customer.firstName,

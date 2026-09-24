@@ -30,9 +30,6 @@ BEGIN
         RETURN;
     END
 
-    -- Same duplicate pre-check Customer_Create does, excluding the row being edited
-    -- itself — without this, an edit that collides with another customer's Email/PhoneNumber
-    -- would throw a raw, unhandled UQ_ constraint violation instead of a clean 409.
     IF @Email IS NOT NULL AND EXISTS (
         SELECT 1 FROM dbo.Customer WHERE Email = @Email AND CustomerId <> @CustomerId
     )
@@ -55,10 +52,6 @@ BEGIN
         RETURN;
     END
 
-    -- Both updates must stay in sync, same reasoning as Customer_Create/Customer_Delete's
-    -- TRY/CATCH + transaction: Customer_Get/Customer_List INNER JOIN the two tables, so a
-    -- Customer update that commits while the paired CustomerAddress update then fails would
-    -- leave the two tables inconsistent.
     BEGIN TRY
         BEGIN TRANSACTION;
 
@@ -73,9 +66,6 @@ BEGIN
             BirthDate = ISNULL(@BirthDate, BirthDate)
         WHERE CustomerId = @CustomerId;
 
-        -- Only touch CustomerAddress when the request actually supplied an address
-        -- field; otherwise every ISNULL(@param, column) would resolve to the
-        -- existing value and this would be a no-op write on every edit call.
         IF @Country IS NOT NULL OR @County IS NOT NULL OR @City IS NOT NULL
             OR @PostalCode IS NOT NULL OR @Street IS NOT NULL OR @StreetNumber IS NOT NULL
         BEGIN
@@ -99,8 +89,6 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
-        -- 2601/2627: a concurrent request took the value between the pre-check above and
-        -- this write; the UQ_ constraint caught it, so answer the same 409 as the pre-check.
         IF ERROR_NUMBER() NOT IN (2601, 2627)
             THROW;
 

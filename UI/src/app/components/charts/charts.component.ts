@@ -42,8 +42,6 @@ export class ChartsComponent {
   readonly activityLoading = this.monthlyActivityService.loading;
   readonly activityError = this.monthlyActivityService.error;
 
-  // Product-catalogue charts — plain computeds off ProductService, same source the
-  // Products tab already loads.
   readonly categorySold = computed(() =>
     rankByCategory(this.products(), (p) => p.soldQuantity, TOP_CATEGORY_COUNT),
   );
@@ -65,8 +63,6 @@ export class ChartsComponent {
     ),
   );
 
-  // Time-series charts — off MonthlyActivityService. Each bar chart has its own
-  // Monthly/Yearly toggle; cumulative growth always shows the full monthly run.
   readonly customerGrowthRange = signal<TimeRange>('monthly');
   readonly productsSoldRange = signal<TimeRange>('monthly');
 
@@ -86,7 +82,6 @@ export class ChartsComponent {
     cumulativePoints(this.activity().customerCreations),
   );
 
-  // Whole RON, like the Imalo charts: the chart labels have no room for decimals.
   readonly formatRon = (value: number): string =>
     this.ron.transform(value, '1.0-0');
 

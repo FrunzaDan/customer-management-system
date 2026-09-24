@@ -3,10 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CustomerManagementSystem.WebAPI.ErrorHandling;
 
-// The one place an unexpected exception becomes a response (registered with AddExceptionHandler,
-// run by UseExceptionHandler). Controllers, services and DbUtils don't catch-and-log: an
-// exception bubbles up here, is logged once, and the client gets a 500 Problem Details body.
-// A request the client aborted never gets here — UseExceptionHandler answers those with 499.
 public sealed partial class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
     IHostEnvironment environment,
@@ -27,14 +23,11 @@ public sealed partial class GlobalExceptionHandler(
             {
                 Status = StatusCodes.Status500InternalServerError,
                 Title = "An error occurred while processing your request.",
-                // Exception messages can carry SQL, connection-string or schema details, so they
-                // only reach the client in Development.
                 Detail = environment.IsDevelopment() ? exception.Message : null,
             },
         });
     }
 
-    // Source-generated (compile-time template parsing, no boxing, level check before any work).
     [LoggerMessage(EventId = 1, Level = LogLevel.Error,
         Message = "Unhandled exception while processing {Method} {Path}")]
     private static partial void LogUnhandledException(ILogger logger, Exception exception, string method,

@@ -14,11 +14,6 @@ using Moq;
 
 namespace CustomerManagementSystem.Tests.ErrorHandling;
 
-// Runs the real request pipeline in memory (WebApplicationFactory) with a mocked service layer, so
-// what's pinned here is what a client actually receives: every error is RFC 9457 Problem Details
-// (application/problem+json), whether it comes from a failed ResponseModel result, model
-// validation, a missing bearer token, an unmatched route or an unhandled exception — while a
-// success is still the ResponseModel envelope. Same cases as Imalo's ErrorResponseTests.
 public class ErrorResponseTests
 {
     private const string AccessTokenUrl = "/api/authentication/access-token";
@@ -28,9 +23,7 @@ public class ErrorResponseTests
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment(environment);
-            // Captures what the app logs, next to the console, for the logging assertions below.
             builder.ConfigureLogging(logging => logging.AddFakeLogging());
-            // Program.cs refuses to start without these; nothing here signs or validates a token.
             builder.UseSetting("Auth:SecureJwtKey", "test-signing-key-that-is-at-least-32-bytes-long");
             builder.UseSetting("Auth:JwtIssuer", "test-issuer");
             builder.UseSetting("Auth:JwtAudience", "test-audience");
@@ -74,8 +67,6 @@ public class ErrorResponseTests
         Assert.Equal(exposesMessage, problem.TryGetProperty("detail", out var detail));
         if (exposesMessage) Assert.Equal("Login failed for user 'sa'.", detail.GetString());
 
-        // Logged exactly once, by GlobalExceptionHandler (ExceptionHandlerMiddleware doesn't log an
-        // exception an IExceptionHandler handled).
         var error = Assert.Single(factory.Services.GetFakeLogCollector().GetSnapshot(),
             record => record.Level >= LogLevel.Error);
         Assert.Equal(1, error.Id.Id);
@@ -153,7 +144,6 @@ public class ErrorResponseTests
     public async Task EveryRequest_WritesOneAccessLogLine_ExceptTheHealthPoll()
     {
         await using var factory = CreateFactory(new Mock<IAuthService>());
-        // https, so an HTTP-to-HTTPS redirect doesn't add a second request to the log.
         var client = factory.CreateClient(
             new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
 

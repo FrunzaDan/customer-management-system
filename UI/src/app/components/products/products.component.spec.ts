@@ -187,7 +187,7 @@ describe('ProductsComponent', () => {
       seed(fixture);
 
       click(fixture, 'Category');
-      expect(names(fixture)).toEqual(['Charlie', 'Bravo', 'Alpha']); // Keyboard, Laptop, Mouse
+      expect(names(fixture)).toEqual(['Charlie', 'Bravo', 'Alpha']);
       expect(header(fixture, 'Category').getAttribute('aria-sort')).toBe(
         'ascending',
       );
@@ -218,10 +218,10 @@ describe('ProductsComponent', () => {
       expect(names(fixture)).toEqual(['Alpha', 'Charlie', 'Bravo']);
 
       click(fixture, 'Inventory');
-      expect(names(fixture)).toEqual(['Alpha', 'Bravo', 'Charlie']); // 10, 10, 20 (stable)
+      expect(names(fixture)).toEqual(['Alpha', 'Bravo', 'Charlie']);
 
       click(fixture, 'Left');
-      expect(names(fixture)).toEqual(['Bravo', 'Alpha', 'Charlie']); // 1, 8, 15
+      expect(names(fixture)).toEqual(['Bravo', 'Alpha', 'Charlie']);
     });
 
     it('starts a newly clicked column ascending and moves the aria-sort to it', () => {
@@ -229,7 +229,7 @@ describe('ProductsComponent', () => {
       seed(fixture);
 
       click(fixture, 'Price');
-      click(fixture, 'Price'); // now descending
+      click(fixture, 'Price');
       click(fixture, 'Product');
 
       expect(header(fixture, 'Product').getAttribute('aria-sort')).toBe(

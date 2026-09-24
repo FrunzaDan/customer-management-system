@@ -1,4 +1,3 @@
-/* You can add global styles to this file, and also import other style files */
 :root {
   --spectrumColor1: #133b36;
   --spectrumColor2: #037874;
@@ -11,7 +10,6 @@
   --regularFont: 'JostRegular', sans-serif;
   --extralightFont: 'JostExtraLight', sans-serif;
 
-  /* Motion: one set of durations and curves for every transition/animation. */
   --duration-fast: 0.15s;
   --duration-base: 0.25s;
   --duration-slow: 0.35s;
@@ -100,8 +98,6 @@ a {
   filter: brightness(90%);
 }
 
-/* Buttons lift on hover and press in on click. .btn-link stays flat: it is
-   styled as text, and a moving link reads as a glitch. */
 .btn {
   transition:
     filter var(--duration-fast) ease,
@@ -129,8 +125,6 @@ a {
   cursor: pointer;
 }
 
-/* Only where a real pointer hovers: on a touch screen :hover sticks after a
-   tap and would leave the link enlarged. */
 @media (hover: hover) {
   .hoverItem:hover {
     transform: scale(1.06);
@@ -146,12 +140,6 @@ a {
   background-color: var(--spectrumColor4);
 }
 
-/* ---------------------------------------------------------------------
-   Shared design language — used by every routed page so they read as one
-   app: page shell, page header, cards, tables, empty states, form bits.
-   --------------------------------------------------------------------- */
-
-/* Page shell: navbar on top, footer pinned to the bottom of short pages. */
 app-root {
   display: flex;
   flex-direction: column;
@@ -196,7 +184,6 @@ app-footer {
   color: var(--mutedText);
 }
 
-/* Cards */
 .app-card {
   background-color: #fff;
   border: 1px solid rgba(19, 59, 54, 0.1);
@@ -225,31 +212,21 @@ app-footer {
   }
 }
 
-/* Tables (customer list, global audit log) */
 .table-card {
   overflow: hidden;
 }
 
-/* Bootstrap's .table-responsive sets only overflow-x: auto, but the browser then computes
-   overflow-y as auto too, making the table its own vertical scroll container: the mouse wheel
-   gets captured over the table (even by a 1px overflow) and the page stops scrolling. Only the
-   horizontal (phone) scroll is wanted; vertical scrolling always belongs to the page. */
 .table-responsive {
   overflow-y: hidden;
 }
 
 .table-themed {
-  /* Inside .table-responsive: scroll sideways on phones rather than squeezing
-     every column into a 4-line wrap. */
   min-width: 760px;
   --bs-table-striped-bg: rgba(165, 240, 197, 0.3);
   --bs-table-hover-bg: rgba(165, 240, 197, 0.55);
   margin-bottom: 0;
 }
 
-/* Column-sort control: a real <button> (keyboard + screen-reader operable)
-   styled to look like the header text it replaces
-   (customer list and products table). */
 .sort-button {
   padding: 0;
   border: 0;
@@ -271,7 +248,6 @@ app-footer {
   transform: scale(0.96);
 }
 
-/* One ▲ that turns over for descending, so flipping the direction animates. */
 .sort-indicator {
   display: inline-block;
   animation: sort-indicator-in var(--duration-base) var(--ease-spring);
@@ -293,13 +269,9 @@ app-footer {
 
 .table-themed > tbody > tr > td {
   padding: 0.75rem;
-  /* Bootstrap paints the row hover as an inset box-shadow; fade it in. */
   transition: box-shadow var(--duration-fast) ease;
 }
 
-/* Hovered and selected rows get an accent bar on their left edge. It is a
-   second inset shadow on the first cell, on top of the one Bootstrap paints
-   the row color with, so both have to be listed in every state. */
 .table-themed > tbody > tr > :first-child {
   box-shadow:
     inset 0 0 0 var(--spectrumColor2),
@@ -332,8 +304,6 @@ app-footer {
   }
 }
 
-/* Rows ticked for a bulk action. After Bootstrap's .table-hover rule, so a
-   selected row keeps its color under the pointer. */
 .table-themed > tbody > tr.is-selected > * {
   --bs-table-bg-state: rgba(3, 120, 116, 0.12);
 }
@@ -372,8 +342,6 @@ app-footer {
   text-align: center;
 }
 
-/* Ranked horizontal bar rows — shared by the Charts tab's ranked-bar and
-   stock-health charts (RankedBarChartComponent, StockHealthChartComponent). */
 .ranked-list {
   display: flex;
   flex-direction: column;
@@ -439,7 +407,6 @@ app-footer {
   }
 }
 
-/* Palette-aligned bits of Bootstrap that otherwise show its default blue/green */
 .badge.bg-success {
   background-color: var(--spectrumColor2) !important;
 }
@@ -455,8 +422,6 @@ app-footer {
   box-shadow: 0 0 0 0.25rem rgba(3, 120, 116, 0.2);
 }
 
-/* Native checkboxes are ~13px; WCAG 2.2 (2.5.8) wants targets of at least 24px
-   or enough spacing around them. */
 input[type='checkbox'] {
   width: 1.25rem;
   height: 1.25rem;
@@ -486,17 +451,10 @@ code {
   gap: 0.75rem;
 }
 
-/* ---------------------------------------------------------------------
-   Motion
-   --------------------------------------------------------------------- */
-
-/* Alerts slide in when they appear (a failed load or action). */
 .alert {
   animation: reveal-in var(--duration-base) var(--ease-out);
 }
 
-/* Cards rise into place when they appear. Sibling cards, and cards in
-   sibling grid columns, follow one another a beat apart. */
 .app-card {
   animation: card-in var(--duration-slow) var(--ease-out) backwards;
   animation-delay: calc(var(--stagger, 0) * 60ms);
@@ -529,8 +487,6 @@ code {
   }
 }
 
-/* Loading placeholders wait a beat before fading in, so a fast load never
-   flashes one. */
 .loading-state {
   animation: loading-in var(--duration-base) ease 0.2s backwards;
 }
@@ -541,10 +497,6 @@ code {
   }
 }
 
-/* Table rows fade in one after another when they are added (first render, a
-   new page, new search results): animate.enter="row-enter" with
-   [style.--row-index]="$index" on the <tr>. A row that only moves (a re-sort)
-   is not re-created, so it stays still. The delay stops growing after 12 rows. */
 .row-enter {
   animation: row-in var(--duration-base) var(--ease-out) backwards;
   animation-delay: calc(min(var(--row-index, 0), 12) * 30ms);
@@ -563,8 +515,6 @@ code {
   }
 }
 
-/* For content that opens and closes, with Angular's animate.enter /
-   animate.leave: animate.enter="reveal-enter" animate.leave="reveal-leave". */
 .reveal-enter {
   animation: reveal-in var(--duration-base) var(--ease-out);
 }
@@ -587,8 +537,6 @@ code {
   }
 }
 
-/* Route changes cross-fade (the router's withViewTransitions). The header
-   gets its own name so it stays put instead of fading with the page. */
 header {
   view-transition-name: site-header;
 }
@@ -614,13 +562,6 @@ header {
   }
 }
 
-/* ---------------------------------------------------------------------
-   Accessibility
-   --------------------------------------------------------------------- */
-
-/* Visible keyboard focus everywhere (WCAG 2.4.7 / 2.4.11). Deliberately an
-   outline, not a box-shadow: Bootstrap's `.shadow-none` on buttons would
-   otherwise wipe the indicator out. Dark surfaces flip it to white. */
 :focus-visible {
   outline: 3px solid var(--focusColor);
   outline-offset: 2px;
@@ -632,13 +573,11 @@ header {
   outline-color: #fff;
 }
 
-/* Programmatic focus target after route changes — not an interactive control. */
 main:focus,
 main [tabindex='-1']:focus {
   outline: none;
 }
 
-/* Skip link: first tab stop on every page, hidden until focused (WCAG 2.4.1). */
 .skip-link {
   position: absolute;
   top: 0.5rem;
@@ -658,7 +597,6 @@ main [tabindex='-1']:focus {
   color: var(--spectrumColor1);
 }
 
-/* Respect the OS "reduce motion" setting (WCAG 2.3.3). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
