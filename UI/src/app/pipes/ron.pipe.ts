@@ -1,12 +1,14 @@
-import { formatNumber } from '@angular/common';
-import { LOCALE_ID, Pipe, PipeTransform, inject } from '@angular/core';
+import { formatNumber, registerLocaleData } from '@angular/common';
+import localeRo from '@angular/common/locales/ro';
+import { Pipe, PipeTransform } from '@angular/core';
 
+registerLocaleData(localeRo);
+
+/** Formats an amount the Romanian way (1.234,50 RON), whatever the app's LOCALE_ID. */
 @Pipe({ name: 'ron' })
 export class RonPipe implements PipeTransform {
-  private readonly locale = inject(LOCALE_ID);
-
   transform(value: number | null | undefined, digitsInfo = '1.2-2'): string {
     if (value === null || value === undefined) return '';
-    return `${formatNumber(value, this.locale, digitsInfo)} RON`;
+    return `${formatNumber(value, 'ro', digitsInfo)} RON`;
   }
 }
