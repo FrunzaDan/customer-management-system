@@ -128,7 +128,8 @@ Other settings:
 - **Covered:** validations, the business-logic classes, `JwtCreation`, `PasswordHasher` and `SqlConnectionFactory` (with a faked probe).
 - **In-memory pipeline tests** (`WebApplicationFactory`):
   - `ErrorResponseTests`;
-  - `StartupValidationTests`.
+  - `StartupValidationTests`;
+  - `Security/EndpointAuthorizationTests`: every `api/` route in the live route table must answer 401 without a token (only the login is allow-listed), and `DELETE audit-log/all` needs role `1801`. Tokens are minted in the test with the same signing key. Use an `https://localhost` client, because following the HTTPS redirect drops the `Authorization` header.
 - No test needs a database.
 
 ## Gotchas / conventions

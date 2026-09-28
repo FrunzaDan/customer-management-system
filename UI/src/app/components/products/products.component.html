@@ -91,11 +91,7 @@
                   }
                 </button>
               </th>
-              <th
-                scope="col"
-                class="text-end"
-                [attr.aria-sort]="ariaSort('price')"
-              >
+              <th scope="col" [attr.aria-sort]="ariaSort('price')">
                 <button
                   type="button"
                   class="sort-button"
@@ -112,11 +108,7 @@
                   }
                 </button>
               </th>
-              <th
-                scope="col"
-                class="text-end"
-                [attr.aria-sort]="ariaSort('sold')"
-              >
+              <th scope="col" [attr.aria-sort]="ariaSort('sold')">
                 <button
                   type="button"
                   class="sort-button"
@@ -133,11 +125,7 @@
                   }
                 </button>
               </th>
-              <th
-                scope="col"
-                class="text-end"
-                [attr.aria-sort]="ariaSort('inventory')"
-              >
+              <th scope="col" [attr.aria-sort]="ariaSort('inventory')">
                 <button
                   type="button"
                   class="sort-button"
@@ -154,11 +142,7 @@
                   }
                 </button>
               </th>
-              <th
-                scope="col"
-                class="text-end"
-                [attr.aria-sort]="ariaSort('left')"
-              >
+              <th scope="col" [attr.aria-sort]="ariaSort('left')">
                 <button
                   type="button"
                   class="sort-button"
@@ -189,16 +173,16 @@
                 </th>
                 <td class="align-middle">{{ product.category }}</td>
                 <td class="align-middle">{{ product.warehouse }}</td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   {{ product.price | ron }}
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   {{ product.soldQuantity }}
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   {{ product.initialQuantity }}
                 </td>
-                <td class="align-middle text-end">
+                <td class="align-middle">
                   @if (product.quantityOnHand === 0) {
                     <span class="badge rounded-pill bg-secondary"
                       >Sold out</span

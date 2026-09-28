@@ -95,7 +95,7 @@
         </caption>
         <thead>
           <tr>
-            <th scope="col" class="text-center">
+            <th scope="col">
               <input
                 #selectAll
                 type="checkbox"
@@ -155,8 +155,8 @@
                 }
               </button>
             </th>
-            <th scope="col" class="text-center">Status</th>
-            <th scope="col" class="text-end">Actions</th>
+            <th scope="col">Status</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -167,7 +167,7 @@
               [style.--row-index]="$index"
               [class.is-selected]="isSelected(customer.customerId)"
             >
-              <td class="align-middle text-center">
+              <td class="align-middle">
                 <input
                   #rowCheckbox
                   type="checkbox"
@@ -190,7 +190,7 @@
               <td class="align-middle text-nowrap">
                 {{ customer.phoneNumber }}
               </td>
-              <td class="align-middle text-center">
+              <td class="align-middle">
                 <span
                   class="badge rounded-pill"
                   [class.bg-success]="customer.status === CustomerStatus.Active"
@@ -203,7 +203,7 @@
                   {{ customerStatusLabel(customer.status) }}
                 </span>
               </td>
-              <td class="align-middle text-end">
+              <td class="align-middle">
                 <div
                   class="btn-group"
                   role="group"

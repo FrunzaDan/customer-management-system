@@ -276,6 +276,11 @@ app-footer {
   white-space: nowrap;
 }
 
+/* Every header and cell is centred, text and numbers alike. */
+.table-themed > :is(thead, tbody, tfoot) > tr > * {
+  text-align: center;
+}
+
 /* Row headers (<th scope="row">) too, or they keep Bootstrap's smaller padding. */
 .table-themed > tbody > tr > * {
   padding: 0.75rem;

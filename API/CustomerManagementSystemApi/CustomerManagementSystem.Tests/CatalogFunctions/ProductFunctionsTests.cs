@@ -1,5 +1,6 @@
 using CustomerManagementSystem.BusinessLogic.CatalogFunctions;
 using CustomerManagementSystem.DataAccess.DBConnection;
+using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 using Moq;
 
@@ -120,6 +121,26 @@ public class ProductFunctionsTests
 
         Assert.Equal(400, result.Status);
         Assert.Contains("Price", result.ResponseMessage);
+        dbUtils.Verify(d => d.CreateProductAsync(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(nameof(CreateProductRequest.Name), FieldLengthConstants.ProductName, "Product name is too long.")]
+    [InlineData(nameof(CreateProductRequest.Category), FieldLengthConstants.ProductCategory, "Category is too long.")]
+    [InlineData(nameof(CreateProductRequest.Description), FieldLengthConstants.ProductDescription, "Description is too long.")]
+    [InlineData(nameof(CreateProductRequest.Warehouse), FieldLengthConstants.ProductWarehouse, "Warehouse is too long.")]
+    public async Task CreateProductAsync_RejectsAFieldLongerThanItsColumn_WithoutTouchingTheDb(string field,
+        int maxLength, string expectedMessage)
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var products = new ProductFunctions(dbUtils.Object);
+        var request = ValidRequest();
+        typeof(CreateProductRequest).GetProperty(field)!.SetValue(request, new string('a', maxLength + 1));
+
+        var result = await products.CreateProductAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        Assert.Equal(expectedMessage, result.ResponseMessage);
         dbUtils.Verify(d => d.CreateProductAsync(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
