@@ -11,7 +11,8 @@ public static class CustomerCsvExporter
     private static readonly string[] Header =
     [
         "Customer ID", "First Name", "Last Name", "Email", "Phone Number", "Gender", "Birth Date", "Status",
-        "Created At", "Last Interaction At", "Country", "County", "City", "Postal Code", "Street", "Street Number"
+        "Enrollment Date", "Account Created At", "Last Interaction At", "Country", "County", "City", "Postal Code",
+        "Street", "Street Number"
     ];
 
     public static string ToCsv(IEnumerable<CustomerModel> customers)
@@ -32,7 +33,8 @@ public static class CustomerCsvExporter
                 GenderLabel(customer.Gender),
                 customer.BirthDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 StatusLabel(customer.Status),
-                customer.CreatedAt.ToString("u", CultureInfo.InvariantCulture),
+                customer.EnrollmentDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                customer.AccountCreatedAt.ToString("u", CultureInfo.InvariantCulture),
                 customer.LastInteractionAt.ToString("u", CultureInfo.InvariantCulture),
                 customer.Address.Country,
                 customer.Address.County,

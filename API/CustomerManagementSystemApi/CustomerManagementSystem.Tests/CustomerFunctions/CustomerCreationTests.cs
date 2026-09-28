@@ -143,6 +143,22 @@ public class CustomerCreationTests
         Assert.Contains("Gender", result.ResponseMessage);
     }
 
+    [Fact]
+    public async Task CreateCustomerAsync_RejectsAFutureEnrollmentDate_WithoutTouchingTheDb()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var auditLogger = new Mock<ICustomerAuditLogger>();
+        var registration = new CustomerCreation(dbUtils.Object, auditLogger.Object);
+        var request = ValidRequest();
+        request.EnrollmentDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+
+        var result = await registration.CreateCustomerAsync(request, PerformedBy, TestContext.Current.CancellationToken);
+
+        Assert.Equal(400, result.Status);
+        Assert.Equal("Enrollment date cannot be in the future.", result.ResponseMessage);
+        dbUtils.Verify(d => d.CreateCustomerAsync(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData(CustomerStatus.Active)]

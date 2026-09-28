@@ -200,8 +200,16 @@
               <h2 class="card-title">Account</h2>
               <dl class="detail-list">
                 <div class="detail-row">
-                  <dt>Created</dt>
-                  <dd>{{ (customer()?.createdAt | date: 'medium') || '—' }}</dd>
+                  <dt>Customer since</dt>
+                  <dd>
+                    {{ (customer()?.enrollmentDate | date: 'longDate') || '—' }}
+                  </dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Account created</dt>
+                  <dd>
+                    {{ (customer()?.accountCreatedAt | date: 'medium') || '—' }}
+                  </dd>
                 </div>
                 <div class="detail-row">
                   <dt>Last interaction</dt>

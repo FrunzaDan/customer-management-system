@@ -4,85 +4,151 @@
   <div class="chart-scroll">
     <svg
       class="time-series-chart"
-      [attr.viewBox]="'0 0 ' + svgWidth() + ' ' + svgHeight"
-      [attr.width]="svgWidth()"
-      [attr.height]="svgHeight"
+      [class.has-active]="activeIndex() !== null"
+      [attr.viewBox]="'0 0 ' + viewWidth() + ' ' + viewHeight"
       role="img"
+      tabindex="0"
+      [attr.aria-label]="
+        ariaLabel() + '. Use the left and right arrow keys to read each value.'
+      "
+      (pointerleave)="setActive(null)"
+      (focus)="onFocus()"
+      (blur)="setActive(null)"
+      (keydown)="onKeydown($event)"
     >
-      @for (line of gridLines(); track line.label + line.y) {
+      <defs>
+        <linearGradient [attr.id]="id + '-bar'" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" class="stop-strong" />
+          <stop offset="100%" class="stop-soft" />
+        </linearGradient>
+        <linearGradient [attr.id]="id + '-area'" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" class="stop-area-top" />
+          <stop offset="100%" class="stop-area-bottom" />
+        </linearGradient>
+      </defs>
+
+      @for (line of gridLines(); track $index) {
         <line
           class="gridline"
+          [class.baseline]="$first"
           [attr.x1]="leftPadding"
-          [attr.x2]="svgWidth()"
+          [attr.x2]="rightEdge()"
           [attr.y1]="line.y"
           [attr.y2]="line.y"
         />
         <text
           class="tick-label"
-          [attr.x]="leftPadding - 6"
-          [attr.y]="line.y + 3"
+          [attr.x]="leftPadding - 8"
+          [attr.y]="line.y + 3.5"
           text-anchor="end"
         >
           {{ line.label }}
         </text>
       }
 
+      @if (activeMark(); as active) {
+        <line
+          class="crosshair"
+          [attr.x1]="active.cx"
+          [attr.x2]="active.cx"
+          [attr.y1]="topPadding"
+          [attr.y2]="axisY"
+        />
+      }
+
       @if (variant() === 'bar') {
-        @for (bar of barMarks(); track bar.key) {
-          <path class="mark" [attr.d]="bar.path">
-            <title>{{ bar.tooltip }}</title>
-          </path>
-          @if (bar.isPeak) {
+        @for (mark of marks(); track mark.key) {
+          <path
+            class="bar"
+            [class.active]="activeIndex() === $index"
+            [style.--i]="$index"
+            [attr.d]="mark.path"
+            [attr.fill]="'url(#' + id + '-bar)'"
+          />
+          @if (mark.isPeak && activeIndex() === null) {
             <text
               class="value-label"
-              [attr.x]="bar.x + bar.width / 2"
-              [attr.y]="bar.y - 8"
+              [attr.x]="mark.cx"
+              [attr.y]="mark.y - 8"
               text-anchor="middle"
             >
-              {{ bar.valueText }}
+              {{ mark.valueText }}
             </text>
           }
-          <text
-            class="axis-label"
-            [attr.x]="bar.x + bar.width / 2"
-            [attr.y]="axisY + 16"
-            text-anchor="middle"
-          >
-            {{ bar.label }}
-          </text>
         }
       } @else {
-        <path class="area-path" [attr.d]="areaPath()"></path>
-        <path class="line-path" [attr.d]="linePath()"></path>
-        @for (point of linePoints(); track point.key) {
+        <path
+          class="area-path"
+          [attr.d]="areaPath()"
+          [attr.fill]="'url(#' + id + '-area)'"
+        />
+        <path class="line-glow" [attr.d]="linePath()" pathLength="1" />
+        <path class="line-path" [attr.d]="linePath()" pathLength="1" />
+        @if (lastMark(); as last) {
+          <circle class="pulse" [attr.cx]="last.cx" [attr.cy]="last.y" r="5" />
           <circle
-            class="point"
-            [attr.cx]="point.x"
-            [attr.cy]="point.y"
-            [attr.r]="markerRadius"
-          >
-            <title>{{ point.tooltip }}</title>
-          </circle>
-          @if (point.labelAnchor) {
+            class="end-dot"
+            [attr.cx]="last.cx"
+            [attr.cy]="last.y"
+            r="5"
+          />
+          @if (activeIndex() === null) {
             <text
               class="value-label"
-              [attr.x]="point.x"
-              [attr.y]="point.y - 10"
-              [attr.text-anchor]="point.labelAnchor"
+              [attr.x]="last.cx"
+              [attr.y]="last.y - 12"
+              text-anchor="end"
             >
-              {{ point.valueText }}
+              {{ last.valueText }}
             </text>
           }
+        }
+        @if (activeMark(); as active) {
+          <circle
+            class="active-dot"
+            [attr.cx]="active.cx"
+            [attr.cy]="active.y"
+            r="6"
+          />
+        }
+      }
+
+      @for (mark of marks(); track mark.key) {
+        @if (mark.showLabel) {
           <text
             class="axis-label"
-            [attr.x]="point.x"
-            [attr.y]="axisY + 16"
+            [attr.x]="mark.cx"
+            [attr.y]="axisY + 18"
             text-anchor="middle"
           >
-            {{ point.label }}
+            {{ mark.label }}
           </text>
         }
+        <rect
+          class="hit-area"
+          [attr.x]="mark.bandX"
+          [attr.y]="topPadding"
+          [attr.width]="bandWidth()"
+          [attr.height]="plotHeight"
+          (pointerenter)="setActive($index)"
+        />
+      }
+
+      @if (tooltip(); as tip) {
+        <g
+          class="chart-tooltip"
+          [attr.transform]="'translate(' + tip.x + ',' + tip.y + ')'"
+        >
+          <rect [attr.width]="tip.width" [attr.height]="tooltipHeight" rx="8" />
+          <text class="chart-tooltip-label" x="10" y="15">
+            {{ tip.mark.label }}
+          </text>
+          <text class="chart-tooltip-value" x="10" y="32">
+            {{ tip.mark.valueText }}
+          </text>
+        </g>
       }
     </svg>
   </div>
+  <p class="visually-hidden" aria-live="polite">{{ activeDescription() }}</p>
 }

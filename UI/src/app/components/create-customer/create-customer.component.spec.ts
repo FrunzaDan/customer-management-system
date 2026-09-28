@@ -19,6 +19,7 @@ describe('CreateCustomerComponent', () => {
     phoneNumber: '123456789',
     gender: '1',
     birthDate: '1990-01-01',
+    enrollmentDate: '2012-03-15',
     country: 'Romania',
     county: 'Cluj',
     city: 'Cluj-Napoca',
@@ -69,6 +70,19 @@ describe('CreateCustomerComponent', () => {
     );
   });
 
+  it('pre-fills customer since with today and rejects a future date', () => {
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    expect(component.model().enrollmentDate).toBe(todayIso);
+    expect(component.customerForm.enrollmentDate().valid()).toBe(true);
+
+    component.model.set({ ...validModel, enrollmentDate: '2999-01-01' });
+
+    expect(component.customerForm.enrollmentDate().errors()[0].message).toBe(
+      'Customer since cannot be in the future',
+    );
+  });
+
   it('maps the form value into a Customer (gender as a number, address nested) and registers it', async () => {
     component.model.set(validModel);
 
@@ -82,6 +96,7 @@ describe('CreateCustomerComponent', () => {
         phoneNumber: '123456789',
         gender: 1,
         birthDate: '1990-01-01',
+        enrollmentDate: '2012-03-15',
         address: {
           country: 'Romania',
           county: 'Cluj',

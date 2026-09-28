@@ -1,12 +1,31 @@
 import { Product } from '../../interfaces/product';
-import { MonthlyCount } from '../../interfaces/monthly-activity';
+import { CustomerProfile } from '../../interfaces/customer-insights';
 import {
-  cumulativePoints,
-  monthlyToPoints,
+  ageDistribution,
+  enrollmentCounts,
+  genderSlices,
+  purchasesPerCustomer,
   rankByCategory,
+  salesCounts,
+  statusSlices,
   stockHealthByCategory,
-  yearlyToPoints,
+  tenureDistribution,
+  topCounties,
 } from './charts-data';
+
+const buildCustomer = (
+  overrides: Partial<CustomerProfile> = {},
+): CustomerProfile => ({
+  status: 1901,
+  gender: 1,
+  birthDate: '1990-01-01',
+  enrollmentDate: '2015-06-01',
+  county: 'Cluj',
+  purchaseCount: 0,
+  ...overrides,
+});
+
+const TODAY = new Date(2026, 8, 28);
 
 const buildProduct = (overrides: Partial<Product> = {}): Product => ({
   productId: 'product-1',
@@ -89,47 +108,117 @@ describe('stockHealthByCategory', () => {
   });
 });
 
-describe('monthlyToPoints', () => {
-  it('formats each month as "Mon \'YY" and keeps the API order', () => {
-    const counts: MonthlyCount[] = [
-      { yearMonth: '2025-12', count: 4 },
-      { yearMonth: '2026-01', count: 7 },
+describe('statusSlices', () => {
+  it('counts active, test and deactivated customers in that order', () => {
+    const customers = [
+      buildCustomer({ status: 1901 }),
+      buildCustomer({ status: 1904 }),
+      buildCustomer({ status: 1904 }),
     ];
 
-    expect(monthlyToPoints(counts)).toEqual([
-      { key: '2025-12', label: "Dec '25", value: 4 },
-      { key: '2026-01', label: "Jan '26", value: 7 },
+    expect(statusSlices(customers)).toEqual([
+      { label: 'Active', value: 1 },
+      { label: 'Test', value: 2 },
+      { label: 'Deactivated', value: 0 },
     ]);
   });
 });
 
-describe('yearlyToPoints', () => {
-  it('sums counts per year and sorts ascending', () => {
-    const counts: MonthlyCount[] = [
-      { yearMonth: '2025-11', count: 3 },
-      { yearMonth: '2025-12', count: 5 },
-      { yearMonth: '2024-06', count: 2 },
+describe('genderSlices', () => {
+  it('counts each declared gender, keeping zero slices', () => {
+    const customers = [
+      buildCustomer({ gender: 2 }),
+      buildCustomer({ gender: 2 }),
+      buildCustomer({ gender: 0 }),
     ];
 
-    expect(yearlyToPoints(counts)).toEqual([
-      { key: '2024', label: '2024', value: 2 },
-      { key: '2025', label: '2025', value: 8 },
+    expect(genderSlices(customers)).toEqual([
+      { label: 'Female', value: 2 },
+      { label: 'Male', value: 0 },
+      { label: 'Not declared', value: 1 },
     ]);
   });
 });
 
-describe('cumulativePoints', () => {
-  it('produces a running total, keyed and labeled like the monthly series', () => {
-    const counts: MonthlyCount[] = [
-      { yearMonth: '2026-01', count: 3 },
-      { yearMonth: '2026-02', count: 5 },
-      { yearMonth: '2026-03', count: 2 },
+describe('ageDistribution', () => {
+  it('bands current ages and skips customers without a birth date', () => {
+    const customers = [
+      buildCustomer({ birthDate: '2002-09-29' }), // 23, birthday is tomorrow
+      buildCustomer({ birthDate: '2001-09-28' }), // 25 today
+      buildCustomer({ birthDate: '1950-01-01' }), // 76
+      buildCustomer({ birthDate: null }),
     ];
 
-    expect(cumulativePoints(counts)).toEqual([
-      { key: '2026-01', label: "Jan '26", value: 3 },
-      { key: '2026-02', label: "Feb '26", value: 8 },
-      { key: '2026-03', label: "Mar '26", value: 10 },
+    expect(ageDistribution(customers, TODAY).map((p) => p.value)).toEqual([
+      1, 1, 0, 0, 0, 1,
+    ]);
+  });
+});
+
+describe('tenureDistribution', () => {
+  it('bands whole years since enrollment', () => {
+    const customers = [
+      buildCustomer({ enrollmentDate: '2026-01-01' }),
+      buildCustomer({ enrollmentDate: '2021-09-28' }),
+      buildCustomer({ enrollmentDate: '2005-01-01' }),
+    ];
+
+    expect(tenureDistribution(customers, TODAY)).toEqual([
+      { key: 'Under 1 yr', label: 'Under 1 yr', value: 1 },
+      { key: '1–2 yrs', label: '1–2 yrs', value: 0 },
+      { key: '3–5 yrs', label: '3–5 yrs', value: 1 },
+      { key: '6–10 yrs', label: '6–10 yrs', value: 0 },
+      { key: '11–15 yrs', label: '11–15 yrs', value: 0 },
+      { key: '16+ yrs', label: '16+ yrs', value: 1 },
+    ]);
+  });
+});
+
+describe('purchasesPerCustomer', () => {
+  it('buckets purchase counts, folding 5 and above together', () => {
+    const customers = [0, 1, 1, 5, 9].map((purchaseCount) =>
+      buildCustomer({ purchaseCount }),
+    );
+
+    expect(purchasesPerCustomer(customers).map((p) => p.value)).toEqual([
+      1, 2, 0, 0, 0, 2,
+    ]);
+  });
+});
+
+describe('topCounties', () => {
+  it('ranks counties by customer count and folds the rest into "Other"', () => {
+    const customers = ['Cluj', 'Cluj', 'Iasi', 'Bihor', 'Alba'].map((county) =>
+      buildCustomer({ county }),
+    );
+
+    expect(topCounties(customers, 2)).toEqual([
+      { label: 'Cluj', value: 2 },
+      { label: 'Alba', value: 1 },
+      { label: 'Other (2 counties)', value: 2 },
+    ]);
+  });
+});
+
+describe('enrollmentCounts', () => {
+  it('counts enrollments per month, oldest first', () => {
+    const customers = ['2012-05-20', '2010-01-02', '2012-05-01'].map(
+      (enrollmentDate) => buildCustomer({ enrollmentDate }),
+    );
+
+    expect(enrollmentCounts(customers)).toEqual([
+      { yearMonth: '2010-01', count: 1 },
+      { yearMonth: '2012-05', count: 2 },
+    ]);
+  });
+});
+
+describe('salesCounts', () => {
+  it('picks the requested measure from each month', () => {
+    const sales = [{ yearMonth: '2026-01', purchaseCount: 3, revenue: 1200 }];
+
+    expect(salesCounts(sales, (m) => m.revenue)).toEqual([
+      { yearMonth: '2026-01', count: 1200 },
     ]);
   });
 });

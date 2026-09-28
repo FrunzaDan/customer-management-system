@@ -29,7 +29,8 @@ export interface Customer {
   email: string;
   gender: Gender;
   status: CustomerStatus;
-  createdAt: IsoDateTime;
+  enrollmentDate: IsoDate;
+  accountCreatedAt: IsoDateTime;
   lastInteractionAt: IsoDateTime;
   birthDate: IsoDate | null;
   address: Address;
@@ -42,6 +43,7 @@ export interface CreateCustomerRequest {
   phoneNumber: string;
   gender: Gender;
   birthDate?: IsoDate;
+  enrollmentDate?: IsoDate;
   status?: CustomerStatus.Active | CustomerStatus.Test;
   address: Address;
 }

@@ -10,7 +10,7 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `DB/Custo
   - `Customer`, `CustomerAddress`, `Merchant`;
   - `CustomerAuditLog`;
   - `Product`, `CustomerPurchase`.
-- `StoredProcedures/` — procs named `<Entity>_<Verb>`, for example `Customer_List`, `CustomerPurchase_Create` and `Report_GetMonthlyActivity`.
+- `StoredProcedures/` — procs named `<Entity>_<Verb>`, for example `Customer_List`, `CustomerPurchase_Create` and `Report_GetCustomerInsights`.
 - `Scripts/PostDeployment/` — `PostDeployment.sql` `:r`-includes `Seed_Merchant.sql` and `Seed_Product.sql`.
 - `global.json` — pins the .NET 8 SDK for this project. Keep it.
 
@@ -25,7 +25,8 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `DB/Custo
   - `Gender` (`TINYINT`, 0/1/2);
   - `BirthDate` (`DATE`, nullable);
   - `StatusCode` (`SMALLINT`, default 1901);
-  - `CreatedAt`, `LastInteractionAt`.
+  - `EnrollmentDate` (`DATE`, default today): when they first became a customer, which can predate this system for customers carried over from older registries. `Customer_Update` rejects a date after `AccountCreatedAt` (`400`);
+  - `AccountCreatedAt` (when the row was created here), `LastInteractionAt`.
 - **`CustomerAddress`:** one row per customer. `CustomerId` is both the primary key and the foreign key. Every column is `NOT NULL`.
 - **`Merchant`:**
   - `Username` is the primary key;
@@ -47,7 +48,7 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `DB/Custo
 - **`Customer_Get`:** one `IF` branch each for id, phone number and email, so each gets an index seek.
 - **`Customer_Update`:** a partial update (`ISNULL(@x, column)`) that updates the customer and address rows in one transaction.
 - **`CustomerAuditLog_List`:** paged. The total is a separate first result set, so an empty page still reports the right total.
-- **`Report_GetMonthlyActivity`:** returns two result sets, customers registered per month and purchases per month. Each month is returned as a first-of-month `DATE`, and the API formats it `yyyy-MM`.
+- **`Report_GetCustomerInsights`:** feeds the charts page. It returns two result sets: one row per customer with no names or contact details (`StatusCode`, `Gender`, `BirthDate`, `EnrollmentDate`, `County`, `PurchaseCount`), then purchases and revenue per month. Revenue sums each product's **current** `Price`, because the price paid isn't stored. Each month is returned as a first-of-month `DATE`, and the API formats it `yyyy-MM`. The UI does the grouping, so a new chart rarely needs a new proc.
 
 ### Customer lifecycle (enforced in the procs)
 

@@ -350,6 +350,7 @@ function toUpdateCustomerRequest(customer: Customer): UpdateCustomerRequest {
     phoneNumber: customer.phoneNumber,
     gender: customer.gender,
     birthDate: customer.birthDate ?? undefined,
+    enrollmentDate: customer.enrollmentDate,
     address: customer.address,
   };
 }

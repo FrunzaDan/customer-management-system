@@ -6,7 +6,11 @@
       <li class="ranked-row">
         <span class="ranked-label">{{ bar.label }}</span>
         <span class="ranked-track">
-          <span class="ranked-fill" [style.width.%]="bar.percent"></span>
+          <span
+            class="ranked-fill"
+            [style.width.%]="bar.percent"
+            [style.--i]="$index"
+          ></span>
         </span>
         <span class="ranked-value">{{ bar.valueText }}</span>
       </li>

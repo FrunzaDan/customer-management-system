@@ -1,33 +1,23 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { formatTick, niceMax } from '../../../utils/chart-scale';
+import { ChartPoint } from '../../../utils/chart-stats';
+import { areaUnder, smoothPath } from '../../../utils/chart-geometry';
 
-export interface TimeSeriesPoint {
+export type TimeSeriesPoint = ChartPoint;
+
+interface Mark {
   key: string;
   label: string;
-  value: number;
-}
-
-interface BarMark {
-  key: string;
-  label: string;
+  showLabel: boolean;
+  bandX: number;
+  cx: number;
   x: number;
-  width: number;
   y: number;
+  width: number;
   height: number;
   path: string;
   isPeak: boolean;
   valueText: string;
-  tooltip: string;
-}
-
-interface LinePoint {
-  key: string;
-  label: string;
-  x: number;
-  y: number;
-  labelAnchor: 'start' | 'end' | null;
-  valueText: string;
-  tooltip: string;
 }
 
 interface GridLine {
@@ -35,15 +25,24 @@ interface GridLine {
   label: string;
 }
 
-const BAND_WIDTH = 56;
-const BAR_WIDTH = 28;
-const PLOT_HEIGHT = 150;
-const TOP_PADDING = 22;
-const AXIS_HEIGHT = 22;
-const LEFT_PADDING = 30;
-const MIN_CHART_WIDTH = 260;
-const MARKER_RADIUS = 4.5;
-const BAR_CORNER_RADIUS = 4;
+const DEFAULT_VIEW_WIDTH = 900;
+const VIEW_HEIGHT = 250;
+const TOP_PADDING = 30;
+const BOTTOM_PADDING = 28;
+const LEFT_PADDING = 40;
+const RIGHT_PADDING = 16;
+const PLOT_HEIGHT = VIEW_HEIGHT - TOP_PADDING - BOTTOM_PADDING;
+const MAX_BAR_WIDTH = 34;
+const MAX_AXIS_LABELS = 12;
+const BAR_CORNER_RADIUS = 5;
+const TOOLTIP_HEIGHT = 40;
+const TICK_FRACTIONS = [
+  [0, 0.25, 0.5, 0.75, 1],
+  [0, 0.2, 0.4, 0.6, 0.8, 1],
+  [0, 0.5, 1],
+];
+
+let nextChartId = 0;
 
 function roundedTopPath(
   x: number,
@@ -52,8 +51,8 @@ function roundedTopPath(
   height: number,
   radius: number,
 ): string {
-  const r = Math.min(radius, width / 2, Math.max(height, 0));
   if (height <= 0) return '';
+  const r = Math.min(radius, width / 2, height);
   return (
     `M${x},${y + height} L${x},${y + r} Q${x},${y} ${x + r},${y} ` +
     `L${x + width - r},${y} Q${x + width},${y} ${x + width},${y + r} ` +
@@ -65,102 +64,161 @@ function roundedTopPath(
   selector: 'app-time-series-chart',
   templateUrl: './time-series-chart.component.html',
   styleUrl: './time-series-chart.component.css',
+  host: { '[style.--series-color]': 'color()' },
 })
 export class TimeSeriesChartComponent {
   readonly points = input.required<TimeSeriesPoint[]>();
   readonly variant = input<'bar' | 'line'>('bar');
+  readonly color = input('var(--chartColor1)');
   readonly valueFormatter = input<(value: number) => string>((value) =>
     value.toLocaleString(),
   );
+  // Width in SVG units. The chart always fills its card, so a narrower
+  // viewBox (for half-width cards) keeps the text at a readable size.
+  readonly viewWidth = input(DEFAULT_VIEW_WIDTH);
+  readonly ariaLabel = input('Chart');
   readonly emptyMessage = input('No data yet.');
 
-  readonly hasData = computed(() => this.points().length > 0);
-
-  readonly plotHeight = PLOT_HEIGHT;
-  readonly axisY = TOP_PADDING + PLOT_HEIGHT;
+  readonly id = `tsc-${nextChartId++}`;
+  readonly viewHeight = VIEW_HEIGHT;
   readonly leftPadding = LEFT_PADDING;
-
-  readonly svgWidth = computed(() =>
-    Math.max(this.points().length * BAND_WIDTH + LEFT_PADDING, MIN_CHART_WIDTH),
+  readonly rightEdge = computed(() => this.viewWidth() - RIGHT_PADDING);
+  private readonly plotWidth = computed(
+    () => this.viewWidth() - LEFT_PADDING - RIGHT_PADDING,
   );
-  readonly svgHeight = TOP_PADDING + PLOT_HEIGHT + AXIS_HEIGHT;
+  readonly topPadding = TOP_PADDING;
+  readonly axisY = TOP_PADDING + PLOT_HEIGHT;
+  readonly plotHeight = PLOT_HEIGHT;
+  readonly tooltipHeight = TOOLTIP_HEIGHT;
+
+  readonly activeIndex = signal<number | null>(null);
+
+  readonly hasData = computed(() => this.points().length > 0);
 
   private readonly maxValue = computed(() =>
     niceMax(Math.max(0, ...this.points().map((p) => p.value))),
   );
 
+  readonly bandWidth = computed(
+    () => this.plotWidth() / Math.max(this.points().length, 1),
+  );
+
   readonly gridLines = computed<GridLine[]>(() => {
     const max = this.maxValue();
-    return [0, 0.5, 1].map((fraction) => ({
+    const wholeNumbers = this.points().every((p) => Number.isInteger(p.value));
+    const fractions = TICK_FRACTIONS.find(
+      (set) => !wholeNumbers || set.every((f) => Number.isInteger(max * f)),
+    ) ?? [0, 1];
+    return fractions.map((fraction) => ({
       y: TOP_PADDING + PLOT_HEIGHT * (1 - fraction),
       label: formatTick(max * fraction),
     }));
   });
 
-  readonly barMarks = computed<BarMark[]>(() => {
+  readonly marks = computed<Mark[]>(() => {
     const max = this.maxValue();
     const formatter = this.valueFormatter();
     const points = this.points();
+    const band = this.bandWidth();
+    const barWidth = Math.max(Math.min(band * 0.62, MAX_BAR_WIDTH), 1.5);
     const peak = Math.max(0, ...points.map((p) => p.value));
+    const labelStep = Math.ceil(points.length / MAX_AXIS_LABELS);
+    let peakMarked = false;
 
     return points.map((point, index) => {
-      const bandX = index * BAND_WIDTH + LEFT_PADDING;
-      const x = bandX + (BAND_WIDTH - BAR_WIDTH) / 2;
+      const bandX = LEFT_PADDING + index * band;
+      const cx = bandX + band / 2;
       const height = (point.value / max) * PLOT_HEIGHT;
+      const x = cx - barWidth / 2;
       const y = this.axisY - height;
-      const valueText = formatter(point.value);
+      const isPeak = !peakMarked && point.value === peak && peak > 0;
+      if (isPeak) peakMarked = true;
 
       return {
         key: point.key,
         label: point.label,
+        showLabel: index % labelStep === 0,
+        bandX,
+        cx,
         x,
-        width: BAR_WIDTH,
         y,
+        width: barWidth,
         height,
-        path: roundedTopPath(x, y, BAR_WIDTH, height, BAR_CORNER_RADIUS),
-        isPeak: point.value === peak && peak > 0,
-        valueText,
-        tooltip: `${point.label}: ${valueText}`,
+        path: roundedTopPath(
+          x,
+          y,
+          barWidth,
+          height,
+          Math.min(BAR_CORNER_RADIUS, barWidth / 3),
+        ),
+        isPeak,
+        valueText: formatter(point.value),
       };
     });
   });
 
-  readonly linePoints = computed<LinePoint[]>(() => {
-    const max = this.maxValue();
-    const formatter = this.valueFormatter();
-    const points = this.points();
+  readonly linePath = computed(() =>
+    smoothPath(this.marks().map((m) => ({ x: m.cx, y: m.y }))),
+  );
 
-    return points.map((point, index) => {
-      const valueText = formatter(point.value);
-      const labelAnchor =
-        index === 0 ? 'start' : index === points.length - 1 ? 'end' : null;
+  readonly areaPath = computed(() =>
+    areaUnder(
+      this.marks().map((m) => ({ x: m.cx, y: m.y })),
+      this.axisY,
+    ),
+  );
 
-      return {
-        key: point.key,
-        label: point.label,
-        x: index * BAND_WIDTH + LEFT_PADDING,
-        y: this.axisY - (point.value / max) * PLOT_HEIGHT,
-        labelAnchor,
-        valueText,
-        tooltip: `${point.label}: ${valueText}`,
-      };
-    });
+  readonly lastMark = computed(() => this.marks().at(-1) ?? null);
+
+  readonly activeMark = computed(() => {
+    const index = this.activeIndex();
+    return index === null ? null : (this.marks()[index] ?? null);
   });
 
-  readonly linePath = computed(() => {
-    const pts = this.linePoints();
-    if (pts.length === 0) return '';
-    return 'M' + pts.map((p) => `${p.x},${p.y}`).join(' L');
+  readonly tooltip = computed(() => {
+    const mark = this.activeMark();
+    if (!mark) return null;
+    const textLength = Math.max(mark.label.length, mark.valueText.length);
+    const width = Math.max(textLength * 7.2 + 20, 64);
+    const x = Math.min(
+      Math.max(mark.cx - width / 2, LEFT_PADDING),
+      this.rightEdge() - width,
+    );
+    const y = Math.max(mark.y - TOOLTIP_HEIGHT - 12, 2);
+    return { x, y, width, mark };
   });
 
-  readonly areaPath = computed(() => {
-    const pts = this.linePoints();
-    if (pts.length === 0) return '';
-    const line = this.linePath();
-    const last = pts[pts.length - 1];
-    const first = pts[0];
-    return `${line} L${last.x},${this.axisY} L${first.x},${this.axisY} Z`;
+  readonly activeDescription = computed(() => {
+    const mark = this.activeMark();
+    return mark ? `${mark.label}: ${mark.valueText}` : '';
   });
 
-  readonly markerRadius = MARKER_RADIUS;
+  setActive(index: number | null): void {
+    this.activeIndex.set(index);
+  }
+
+  onFocus(): void {
+    if (this.activeIndex() === null) {
+      this.activeIndex.set(this.points().length - 1);
+    }
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    const count = this.points().length;
+    if (count === 0) return;
+    const current = this.activeIndex() ?? count - 1;
+    const next =
+      event.key === 'ArrowLeft'
+        ? Math.max(current - 1, 0)
+        : event.key === 'ArrowRight'
+          ? Math.min(current + 1, count - 1)
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? count - 1
+              : null;
+    if (next === null) return;
+    event.preventDefault();
+    this.activeIndex.set(next);
+  }
 }

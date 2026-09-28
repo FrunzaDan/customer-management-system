@@ -13,5 +13,5 @@
 }
 
 .ranked-fill.near-sellout {
-  background-color: var(--dangerColor1);
+  --ranked-color: var(--dangerColor1);
 }

@@ -97,14 +97,15 @@ public class CustomerUpdatingTests
         var editing = new CustomerUpdating(dbUtils.Object, auditLogger.Object);
         var request = new UpdateCustomerRequest
         {
-            CustomerId = ValidCustomerId, Email = "dan@example.com", PhoneNumber = "123456789", BirthDate = new DateOnly(1990, 1, 2)
+            CustomerId = ValidCustomerId, Email = "dan@example.com", PhoneNumber = "123456789", BirthDate = new DateOnly(1990, 1, 2),
+            EnrollmentDate = new DateOnly(2010, 6, 15)
         };
 
         var result = await editing.UpdateCustomerAsync(request, PerformedBy, TestContext.Current.CancellationToken);
 
         Assert.Equal(200, result.Status);
         dbUtils.Verify(d => d.UpdateCustomerAsync(request, It.IsAny<CancellationToken>()), Times.Once);
-        auditLogger.Verify(a => a.LogAsync(ValidCustomerId, PerformedBy, AuditAction.Edited, "Updated: email, phone number, birth date", It.IsAny<CancellationToken>()), Times.Once);
+        auditLogger.Verify(a => a.LogAsync(ValidCustomerId, PerformedBy, AuditAction.Edited, "Updated: email, phone number, birth date, enrollment date", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     public static TheoryData<UpdateCustomerRequest, string> BlankOrImpossibleUpdates => new()
@@ -117,12 +118,16 @@ public class CustomerUpdatingTests
         {
             new UpdateCustomerRequest { CustomerId = ValidCustomerId, BirthDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1) },
             "Birth date cannot be in the future."
+        },
+        {
+            new UpdateCustomerRequest { CustomerId = ValidCustomerId, EnrollmentDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1) },
+            "Enrollment date cannot be in the future."
         }
     };
 
     [Theory]
     [MemberData(nameof(BlankOrImpossibleUpdates))]
-    public async Task UpdateCustomerAsync_RejectsBlankFieldsAndAFutureBirthDate_WithoutTouchingTheDb(
+    public async Task UpdateCustomerAsync_RejectsBlankFieldsAndFutureDates_WithoutTouchingTheDb(
         UpdateCustomerRequest request, string expectedMessage)
     {
         var dbUtils = new Mock<IDbUtils>();

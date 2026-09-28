@@ -196,11 +196,11 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             reader => DbHelper.HandleResponseWithCreatedGuidAsync(reader, "ProductId"),
             cancellationToken);
 
-    public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(CancellationToken cancellationToken = default) =>
+    public Task<ResponseModel<CustomerInsightsModel>> GetCustomerInsightsAsync(CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
-            "dbo.Report_GetMonthlyActivity",
+            "dbo.Report_GetCustomerInsights",
             null,
-            DbHelper.HandleResponseWithMonthlyActivityAsync,
+            DbHelper.HandleResponseWithCustomerInsightsAsync,
             cancellationToken);
 
     private async Task<T> ExecuteStoredProcedureAsync<T>(

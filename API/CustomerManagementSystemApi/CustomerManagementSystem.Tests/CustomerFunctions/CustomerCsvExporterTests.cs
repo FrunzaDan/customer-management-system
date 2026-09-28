@@ -17,7 +17,8 @@ public class CustomerCsvExporterTests
             Gender = Gender.Male,
             BirthDate = new DateOnly(1990, 1, 1),
             Status = CustomerStatus.Active,
-            CreatedAt = new DateTime(2026, 1, 1, 8, 30, 0, DateTimeKind.Utc),
+            EnrollmentDate = new DateOnly(2012, 5, 20),
+            AccountCreatedAt = new DateTime(2026, 1, 1, 8, 30, 0, DateTimeKind.Utc),
             LastInteractionAt = new DateTime(2026, 1, 2, 9, 45, 15, DateTimeKind.Utc),
             Address = new AddressModel
             {
@@ -38,7 +39,7 @@ public class CustomerCsvExporterTests
         var csv = CustomerCsvExporter.ToCsv([]);
 
         Assert.Equal((char)0xFEFF, csv[0]);
-        Assert.StartsWith("Customer ID,First Name,Last Name,Email,Phone Number,Gender,Birth Date,Status,Created At,Last Interaction At,Country,County,City,Postal Code,Street,Street Number\r\n", csv[1..]);
+        Assert.StartsWith("Customer ID,First Name,Last Name,Email,Phone Number,Gender,Birth Date,Status,Enrollment Date,Account Created At,Last Interaction At,Country,County,City,Postal Code,Street,Street Number\r\n", csv[1..]);
     }
 
     [Fact]
@@ -74,8 +75,9 @@ public class CustomerCsvExporterTests
         var dataRow = CustomerCsvExporter.ToCsv([MakeCustomer()]).Split("\r\n")[1].Split(',');
 
         Assert.Equal("1990-01-01", dataRow[6]);
-        Assert.Equal("2026-01-01 08:30:00Z", dataRow[8]);
-        Assert.Equal("2026-01-02 09:45:15Z", dataRow[9]);
+        Assert.Equal("2012-05-20", dataRow[8]);
+        Assert.Equal("2026-01-01 08:30:00Z", dataRow[9]);
+        Assert.Equal("2026-01-02 09:45:15Z", dataRow[10]);
     }
 
     [Fact]

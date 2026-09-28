@@ -2,13 +2,261 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Charts</h1>
-      <p class="page-subtitle">Sales, stock and growth at a glance.</p>
+      <p class="page-subtitle">
+        Who your customers are, how the base has grown, and what sells.
+      </p>
     </div>
   </div>
 
   <div class="d-flex flex-column gap-4">
+    @if (insightsLoading() && customerCount() === 0) {
+      <div class="app-card loading-state" role="status">
+        <span
+          class="spinner-border spinner-border-sm me-2"
+          aria-hidden="true"
+        ></span
+        >Loading customer insights…
+      </div>
+    } @else if (insightsError(); as error) {
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+    } @else if (customerCount() === 0) {
+      <div class="app-card empty-state">
+        No customers yet. Add some (or generate test customers on the About
+        page) to see the charts come alive.
+      </div>
+    } @else {
+      <section class="insights-hero" aria-labelledby="hero-title">
+        <h2 id="hero-title" class="hero-title">At a glance</h2>
+        <div class="kpi-grid">
+          <app-kpi-tile
+            label="Customers"
+            [value]="customerCount()"
+            [trend]="growthTrend()"
+            caption="enrolled, all time"
+          />
+          <app-kpi-tile
+            label="Active"
+            [value]="activeShare()"
+            [valueFormatter]="formatPercent"
+            [caption]="activeCaption()"
+          />
+          <app-kpi-tile
+            label="Revenue"
+            [value]="totalRevenue()"
+            [valueFormatter]="formatRon"
+            [trend]="revenueTrend()"
+            caption="at current prices"
+          />
+          <app-kpi-tile
+            label="Purchases"
+            [value]="totalPurchases()"
+            [caption]="purchasesCaption()"
+          />
+          <app-kpi-tile
+            label="Average tenure"
+            [value]="averageTenure()"
+            [valueFormatter]="formatYears"
+            [caption]="tenureCaption()"
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Customer base</h2>
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="card app-card chart-card">
+              <div class="card-body">
+                <div class="chart-card-header">
+                  <div>
+                    <h3 class="card-title">Customers enrolled</h3>
+                    <p class="chart-caption">
+                      When customers first became customers, including those
+                      carried over from older registries.
+                    </p>
+                  </div>
+                  <div
+                    class="range-toggle"
+                    role="group"
+                    aria-label="Time range"
+                  >
+                    <button
+                      type="button"
+                      [class.active]="customerGrowthRange() === 'monthly'"
+                      [attr.aria-pressed]="customerGrowthRange() === 'monthly'"
+                      (click)="setCustomerGrowthRange('monthly')"
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      [class.active]="customerGrowthRange() === 'yearly'"
+                      [attr.aria-pressed]="customerGrowthRange() === 'yearly'"
+                      (click)="setCustomerGrowthRange('yearly')"
+                    >
+                      Yearly
+                    </button>
+                  </div>
+                </div>
+                <app-time-series-chart
+                  [points]="customerGrowthPoints()"
+                  variant="bar"
+                  ariaLabel="Customers enrolled over time"
+                  emptyMessage="No customers yet."
+                />
+                @if (busiestEnrollmentYear(); as peak) {
+                  <p class="chart-insight">
+                    Busiest year: <strong>{{ peak.label }}</strong
+                    >, with {{ peak.value }} new customers.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="card app-card chart-card">
+              <div class="card-body">
+                <h3 class="card-title">Customer base growth</h3>
+                <p class="chart-caption">
+                  Customers enrolled by the end of each year. Deleted customers
+                  are not counted.
+                </p>
+                <app-time-series-chart
+                  [points]="cumulativeGrowthPoints()"
+                  variant="line"
+                  color="var(--chartColor3)"
+                  ariaLabel="Customer base growth by year"
+                  emptyMessage="No customers yet."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Customer status</h3>
+                <p class="chart-caption">
+                  Active, test and deactivated accounts.
+                </p>
+                <app-donut-chart
+                  [slices]="statusSlices()"
+                  centerCaption="customers"
+                  ariaLabel="Customer status"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Gender</h3>
+                <p class="chart-caption">As declared by the customer.</p>
+                <app-donut-chart
+                  [slices]="genderSlices()"
+                  centerCaption="customers"
+                  ariaLabel="Customers by gender"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Age groups</h3>
+                <p class="chart-caption">
+                  Current age of customers with a birth date on file.
+                </p>
+                <app-time-series-chart
+                  [viewWidth]="480"
+                  [points]="ageDistribution()"
+                  variant="bar"
+                  color="var(--chartColor6)"
+                  ariaLabel="Customers by age group"
+                  emptyMessage="No birth dates yet."
+                />
+                @if (largestAgeGroup(); as group) {
+                  <p class="chart-insight">
+                    Largest group: <strong>{{ group.label }}</strong
+                    >.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Customer loyalty</h3>
+                <p class="chart-caption">
+                  How long customers have been with us.
+                </p>
+                <app-time-series-chart
+                  [viewWidth]="480"
+                  [points]="tenureDistribution()"
+                  variant="bar"
+                  color="var(--chartColor5)"
+                  ariaLabel="Customers by years since enrollment"
+                />
+                @if (loyalShare() !== null) {
+                  <p class="chart-insight">
+                    <strong>{{ loyalShare() }}%</strong> have been customers for
+                    6 years or more.
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Where customers live</h3>
+                <p class="chart-caption">
+                  The counties with the most customers.
+                </p>
+                <app-ranked-bar-chart
+                  [items]="topCounties()"
+                  color="var(--chartColor3)"
+                  ariaLabel="Customers by county"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Purchases per customer</h3>
+                <p class="chart-caption">
+                  How many purchases each customer has made.
+                </p>
+                <app-time-series-chart
+                  [viewWidth]="480"
+                  [points]="purchasesPerCustomer()"
+                  variant="bar"
+                  color="var(--chartColor2)"
+                  ariaLabel="Customers by number of purchases"
+                />
+                @if (repeatBuyerShare() !== null) {
+                  <p class="chart-insight">
+                    <strong>{{ repeatBuyerShare() }}%</strong> are repeat buyers
+                    (2 or more purchases).
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
     <section>
-      <h2 class="section-title">Catalogue</h2>
+      <h2 class="section-title">Sales and catalogue</h2>
 
       @if (productsLoading() && products().length === 0) {
         <div class="app-card loading-state" role="status">
@@ -24,8 +272,73 @@
         <div class="app-card empty-state">No products yet.</div>
       } @else {
         <div class="row g-4">
+          @if (!insightsError()) {
+            <div class="col-12">
+              <div class="card app-card chart-card">
+                <div class="card-body">
+                  <div class="chart-card-header">
+                    <div>
+                      <h3 class="card-title">Revenue over time</h3>
+                      <p class="chart-caption">
+                        Purchases valued at each product's current price.
+                      </p>
+                    </div>
+                    <div
+                      class="range-toggle"
+                      role="group"
+                      aria-label="Time range"
+                    >
+                      <button
+                        type="button"
+                        [class.active]="salesRange() === 'monthly'"
+                        [attr.aria-pressed]="salesRange() === 'monthly'"
+                        (click)="setSalesRange('monthly')"
+                      >
+                        Monthly
+                      </button>
+                      <button
+                        type="button"
+                        [class.active]="salesRange() === 'yearly'"
+                        [attr.aria-pressed]="salesRange() === 'yearly'"
+                        (click)="setSalesRange('yearly')"
+                      >
+                        Yearly
+                      </button>
+                    </div>
+                  </div>
+                  <app-time-series-chart
+                    [points]="revenuePoints()"
+                    variant="line"
+                    color="var(--chartColor2)"
+                    [valueFormatter]="formatRon"
+                    ariaLabel="Revenue over time"
+                    emptyMessage="No purchases yet."
+                  />
+                </div>
+              </div>
+            </div>
+          }
+
           <div class="col-12 col-lg-6">
-            <div class="card app-card h-100">
+            <div class="card app-card chart-card h-100">
+              <div class="card-body">
+                <h3 class="card-title">Revenue by category</h3>
+                <p class="chart-caption">
+                  Current price × units sold, summed per category.
+                </p>
+                <app-ranked-bar-chart
+                  [items]="revenueByCategory()"
+                  [valueFormatter]="formatRon"
+                  color="var(--chartColor2)"
+                  ariaLabel="Revenue by category"
+                  emptyMessage="No sales yet."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="card app-card chart-card h-100">
               <div class="card-body">
                 <h3 class="card-title">Units sold by category</h3>
                 <p class="chart-caption">
@@ -41,7 +354,7 @@
           </div>
 
           <div class="col-12 col-lg-6">
-            <div class="card app-card h-100">
+            <div class="card app-card chart-card h-100">
               <div class="card-body">
                 <h3 class="card-title">Best-selling products</h3>
                 <p class="chart-caption">
@@ -49,6 +362,7 @@
                 </p>
                 <app-ranked-bar-chart
                   [items]="bestSellers()"
+                  color="var(--chartColor3)"
                   ariaLabel="Best-selling products"
                   emptyMessage="No sales yet."
                 />
@@ -57,7 +371,7 @@
           </div>
 
           <div class="col-12 col-lg-6">
-            <div class="card app-card h-100">
+            <div class="card app-card chart-card h-100">
               <div class="card-body">
                 <h3 class="card-title">Stock health by category</h3>
                 <p class="chart-caption">
@@ -67,141 +381,6 @@
                 <app-stock-health-chart
                   [rows]="stockHealth()"
                   emptyMessage="No products yet."
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 col-lg-6">
-            <div class="card app-card h-100">
-              <div class="card-body">
-                <h3 class="card-title">Revenue by category</h3>
-                <p class="chart-caption">
-                  Current price × units sold, summed per category.
-                </p>
-                <app-ranked-bar-chart
-                  [items]="revenueByCategory()"
-                  [valueFormatter]="formatRon"
-                  ariaLabel="Revenue by category"
-                  emptyMessage="No sales yet."
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-    </section>
-
-    <section>
-      <h2 class="section-title">Growth over time</h2>
-
-      @if (
-        activityLoading() &&
-        activity().customerCreations.length === 0 &&
-        activity().productPurchases.length === 0
-      ) {
-        <div class="app-card loading-state" role="status">
-          <span
-            class="spinner-border spinner-border-sm me-2"
-            aria-hidden="true"
-          ></span
-          >Loading activity data…
-        </div>
-      } @else if (activityError(); as error) {
-        <div class="alert alert-danger" role="alert">{{ error }}</div>
-      } @else {
-        <div class="row g-4">
-          <div class="col-12">
-            <div class="card app-card">
-              <div class="card-body">
-                <div class="chart-card-header">
-                  <div>
-                    <h3 class="card-title">Customers joined</h3>
-                    <p class="chart-caption">
-                      New customer registrations over time.
-                    </p>
-                  </div>
-                  <div
-                    class="range-toggle"
-                    role="group"
-                    aria-label="Time range"
-                  >
-                    <button
-                      type="button"
-                      [class.active]="customerGrowthRange() === 'monthly'"
-                      (click)="setCustomerGrowthRange('monthly')"
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      type="button"
-                      [class.active]="customerGrowthRange() === 'yearly'"
-                      (click)="setCustomerGrowthRange('yearly')"
-                    >
-                      Yearly
-                    </button>
-                  </div>
-                </div>
-                <app-time-series-chart
-                  [points]="customerGrowthPoints()"
-                  variant="bar"
-                  emptyMessage="No registrations yet."
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12">
-            <div class="card app-card">
-              <div class="card-body">
-                <h3 class="card-title">Cumulative customer growth</h3>
-                <p class="chart-caption">
-                  Running total of registrations — the growth curve at a glance.
-                </p>
-                <app-time-series-chart
-                  [points]="cumulativeGrowthPoints()"
-                  variant="line"
-                  emptyMessage="No registrations yet."
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12">
-            <div class="card app-card">
-              <div class="card-body">
-                <div class="chart-card-header">
-                  <div>
-                    <h3 class="card-title">Products sold</h3>
-                    <p class="chart-caption">
-                      Purchases over time, across every customer.
-                    </p>
-                  </div>
-                  <div
-                    class="range-toggle"
-                    role="group"
-                    aria-label="Time range"
-                  >
-                    <button
-                      type="button"
-                      [class.active]="productsSoldRange() === 'monthly'"
-                      (click)="setProductsSoldRange('monthly')"
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      type="button"
-                      [class.active]="productsSoldRange() === 'yearly'"
-                      (click)="setProductsSoldRange('yearly')"
-                    >
-                      Yearly
-                    </button>
-                  </div>
-                </div>
-                <app-time-series-chart
-                  [points]="productsSoldPoints()"
-                  variant="bar"
-                  emptyMessage="No purchases yet."
                 />
               </div>
             </div>

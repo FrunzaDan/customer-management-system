@@ -18,7 +18,8 @@ public class CustomerGettingTests
         PhoneNumber = "123456789",
         Gender = Gender.Male,
         Status = CustomerStatus.Active,
-        CreatedAt = DateTime.UtcNow,
+        EnrollmentDate = new DateOnly(2015, 3, 1),
+        AccountCreatedAt = DateTime.UtcNow,
         LastInteractionAt = DateTime.UtcNow,
         Address = new AddressModel
         {
@@ -362,15 +363,15 @@ public class CustomerGettingTests
     }
 
     [Fact]
-    public async Task GetMonthlyActivityAsync_ReturnsWhateverTheDbLayerReturns()
+    public async Task GetCustomerInsightsAsync_ReturnsWhateverTheDbLayerReturns()
     {
         var dbUtils = new Mock<IDbUtils>();
-        var expected = new ResponseModel<MonthlyActivityModel>(200, "Monthly activity retrieved.",
-            new MonthlyActivityModel { CustomerCreations = [], ProductPurchases = [] });
-        dbUtils.Setup(d => d.GetMonthlyActivityAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var expected = new ResponseModel<CustomerInsightsModel>(200, "Customer insights retrieved.",
+            new CustomerInsightsModel { Customers = [], MonthlySales = [] });
+        dbUtils.Setup(d => d.GetCustomerInsightsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
         var getting = new CustomerGetting(dbUtils.Object);
 
-        var result = await getting.GetMonthlyActivityAsync(TestContext.Current.CancellationToken);
+        var result = await getting.GetCustomerInsightsAsync(TestContext.Current.CancellationToken);
 
         Assert.Same(expected, result);
     }

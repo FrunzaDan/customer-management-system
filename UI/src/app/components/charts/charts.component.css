@@ -5,9 +5,123 @@
   font-weight: 600;
 }
 
+.insights-hero {
+  position: relative;
+  isolation: isolate;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(
+    135deg,
+    var(--spectrumColor1) 0%,
+    var(--spectrumColor2) 62%,
+    var(--spectrumColor3) 100%
+  );
+  box-shadow: 0 22px 44px -22px rgba(19, 59, 54, 0.7);
+  overflow: hidden;
+  animation: hero-in 0.6s var(--ease-out) backwards;
+}
+
+.insights-hero::before,
+.insights-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 26rem;
+  height: 26rem;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.55;
+  animation: aurora 16s ease-in-out infinite alternate;
+}
+
+.insights-hero::before {
+  top: -14rem;
+  left: -6rem;
+  background: radial-gradient(circle, var(--spectrumColor4), transparent 65%);
+}
+
+.insights-hero::after {
+  right: -8rem;
+  bottom: -16rem;
+  background: radial-gradient(circle, var(--chartColor2), transparent 65%);
+  animation-direction: alternate-reverse;
+}
+
+.hero-title {
+  margin: 0 0 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.9rem;
+}
+
+.kpi-grid > * {
+  animation: tile-in 0.6s var(--ease-out) backwards;
+}
+
+.kpi-grid > :nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.kpi-grid > :nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.kpi-grid > :nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.kpi-grid > :nth-child(n + 5) {
+  animation-delay: 320ms;
+}
+
+.chart-card {
+  overflow: hidden;
+  transition:
+    box-shadow var(--duration-base) ease,
+    transform var(--duration-base) var(--ease-out);
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--chartColor1),
+    var(--chartColor5),
+    var(--chartColor2)
+  );
+}
+
+@media (hover: hover) {
+  .chart-card:hover {
+    box-shadow: 0 14px 30px -12px rgba(19, 59, 54, 0.25);
+    transform: translateY(-2px);
+  }
+}
+
 .chart-caption {
   margin: 0 0 1rem;
   color: var(--mutedText);
+  font-size: 0.85rem;
+}
+
+.chart-insight {
+  display: inline-block;
+  margin: 0.75rem 0 0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background-color: rgba(3, 120, 116, 0.08);
+  color: var(--spectrumColor1);
   font-size: 0.85rem;
 }
 
@@ -36,9 +150,35 @@
   font-size: 0.78rem;
   color: var(--mutedText);
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) ease,
+    color var(--duration-fast) ease;
 }
 
 .range-toggle button.active {
   background-color: var(--spectrumColor2);
   color: #fff;
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+}
+
+@keyframes tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes aurora {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(6rem, 2rem) scale(1.2);
+  }
 }

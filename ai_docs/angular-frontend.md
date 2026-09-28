@@ -13,7 +13,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - the shared helpers (`notification`, `confirm-dialog`, `api-logger`, `health`, `unsaved-changes.guard`).
 - `src/app/components/` — one folder per page or widget.
 - `src/app/interfaces/` — mirrors of the API's JSON.
-- `src/app/utils/extract-error-message.ts`, `audit-action-label.ts`, `random-purchases.ts`, `chart-scale.ts` (chart axis math, shared with the Imalo app).
+- `src/app/utils/extract-error-message.ts`, `audit-action-label.ts`, `random-purchases.ts`, `chart-scale.ts` (chart axis math, shared with the Imalo and employee apps), `chart-stats.ts` and `chart-geometry.ts` (chart data and curve helpers, shared with the employee and Imalo apps).
 - `src/app/pipes/ron.pipe.ts`, `src/styles.css`.
 
 ## How it works
@@ -46,7 +46,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 | `/products`, `/products/:productId`, `/create-product` | `products`, `product-details`, `create-product` |
 | `/charts` | `charts` |
 | `/audit-log` | `global-audit-log` |
-| `/about` | `about` (API-logging toggle, test-customer generator) |
+| `/about` | `about` (API-logging toggle, test-customer generator; `enrollmentDate` is random between 2005-01-01 and 2025-12-01) |
 | `**` | `page-not-found` |
 
 - Route params bind to signal inputs (`customerId = input<string>()`).
@@ -59,7 +59,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
   - **While loading:** a `linkedSignal` keeps the last page on screen during a load and after a failed one.
   - **One customer:** `getCustomer(id)` returns an Observable. `customer-details` and `update-customer` each key an `rxResource` on the route id; the details page reloads it after a deactivate or reactivate.
   - **After a change:** an update, status change or delete is written straight into the loaded list, with no refetch.
-- `GlobalAuditLogService`, `AuditLogService`, `PurchaseService` and `MonthlyActivityService` follow the same pattern.
+- `GlobalAuditLogService`, `AuditLogService`, `PurchaseService` and `CustomerInsightsService` follow the same pattern.
 - **`ProductService`** is shaped like the employee app's `OfficeService`: `loadProducts()` feeds an `httpResource`, while `fetchProducts()` and `getProductDetails(id)` are one-off Observables. `product-details` keys an `rxResource` on the route id.
 - **Retries:** deactivate and reactivate retry only on status 0 or ≥500, with backoff. After a reactivate, the list re-reads that row from the server, because the restored status may be Test rather than Active.
 - **Customer list:**
@@ -71,12 +71,16 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 ### Charts (`/charts`)
 
-- The charts are hand-built inline SVG/HTML, with no chart library. The pure transforms live in `charts/charts-data.ts`, which has a spec.
-- **Catalogue charts** use `ProductService.products`. They show the top 7 categories plus "Other"; stock health shows every category and flags those ≥85% sold.
-- **Time-series charts** use `GET /monthly-activity`. The monthly/yearly toggle is computed client-side.
-- **Cumulative growth** counts registrations and doesn't subtract deleted customers, so it isn't a count of current customers.
+- The charts are hand-built inline SVG/HTML, with no chart library. The pure transforms live in `charts/charts-data.ts` and the shared `utils/chart-stats.ts`, both with specs.
+- **Data:** `CustomerInsightsService` loads `GET /insights` (one anonymous row per customer plus monthly sales) and the page does all grouping client-side. `loadInsights()` reloads on every visit, so newly generated test data shows up.
+- **Layout:** a gradient "At a glance" band of `kpi-tile`s (numbers count up; the customers and revenue tiles have sparklines), then "Customer base" and "Sales and catalogue". Several cards end in a `.chart-insight` pill that states the takeaway (busiest year, largest age group, share of 6+ year customers, share of repeat buyers).
+- **Customer base:** customers enrolled (monthly/yearly toggle, defaults to yearly), base growth (cumulative, doesn't subtract deleted customers), status and gender donuts, age groups, loyalty (years since `enrollmentDate`), top 8 counties, purchases per customer.
+- **Sales and catalogue:** revenue over time (valued at each product's **current** price, since the price paid isn't stored), then the catalogue charts from `ProductService.products`: top 7 categories plus "Other"; stock health flags categories ≥85% sold.
+- **Series:** monthly and yearly series fill empty periods with 0, so the axis keeps real spacing. Whole-number data gets whole-number gridlines.
+- **Components** (`charts/`): `time-series-chart` (bars or a smooth area line; hover or arrow keys show a tooltip, announced through an `aria-live` region; `viewWidth` is 900 by default and 480 in half-width cards so text stays readable), `donut-chart` (hover a slice or legend row to read it in the centre), `kpi-tile`, `ranked-bar-chart` (`color` input), `stock-health-chart`.
 - **Axis and labels:** the axis math comes from the shared `utils/chart-scale.ts`. Money labels are whole RON through the `ron` pipe (`ron.transform(value, '1.0-0')`), as in the Imalo charts.
-- Each chart uses one color (`--spectrumColor2`), plus `--dangerColor1` for flags. The palette has no colorblind-safe pair.
+- **Colour:** series use `--chartColor1..8` from `styles.css`; `--dangerColor1` marks flags. Donut legends always print the label, value and percentage, so colour is never the only cue. Don't give Bootstrap class names (`.tooltip`, `.popover`) to SVG parts: Bootstrap styles them globally (its `.tooltip` is `opacity: 0`), which is why the chart tooltip is `.chart-tooltip`.
+- **Motion:** bars rise, lines draw, arcs sweep and numbers count up once on load; the hero background drifts slowly. All of it is CSS or `requestAnimationFrame`, and it is switched off under `prefers-reduced-motion`.
 
 ### Forms (Signal Forms)
 
@@ -133,4 +137,4 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 - `linkedSignal` is lazy: it only remembers a page that something has read.
 - `value()` throws while a resource is in error. Guard reads with `hasValue()`.
 - SSR runs HTTP through Node's `fetch`, which has its own TLS trust. See [build-and-run](build-and-run.md).
-- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together. `utils/chart-scale.ts` (axis math: `niceMax`, `formatTick`) is identical in the customer and Imalo apps; the employee app has no charts.
+- The shared files (`notification`, `confirm-dialog`, `api-logger`, `extract-error-message`, `ron.pipe`, `audit-action-label`) are identical in all three apps. Change them together. `utils/chart-scale.ts` (axis math: `niceMax`, `formatTick`) is identical in all three apps. All three apps also share, file for file, `utils/chart-stats.ts` (banding, month/year series, histogram, ranking), `utils/chart-geometry.ts` (monotone smooth curves), the chart components `time-series-chart`, `donut-chart`, `kpi-tile`, `ranked-bar-chart` and the `.ranked-*` rules in `styles.css`; the customer and employee apps also share `charts.component.css` and the `--chartColor1..8` values. Change them together.

@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  --series-color: var(--chartColor1);
+}
+
 .chart-scroll {
   width: 100%;
   overflow-x: auto;
@@ -5,50 +10,187 @@
 
 .time-series-chart {
   display: block;
+  width: 100%;
+  min-width: 420px;
+  height: auto;
+  overflow: visible;
+  border-radius: 0.5rem;
+}
+
+.time-series-chart:focus-visible {
+  outline-offset: 4px;
+}
+
+.stop-strong {
+  stop-color: var(--series-color);
+}
+
+.stop-soft {
+  stop-color: var(--series-color);
+  stop-opacity: 0.45;
+}
+
+.stop-area-top {
+  stop-color: var(--series-color);
+  stop-opacity: 0.38;
+}
+
+.stop-area-bottom {
+  stop-color: var(--series-color);
+  stop-opacity: 0;
 }
 
 .gridline {
-  stroke: rgba(19, 59, 54, 0.12);
+  stroke: rgba(19, 59, 54, 0.1);
   stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.gridline.baseline {
+  stroke: rgba(19, 59, 54, 0.25);
+  stroke-dasharray: none;
 }
 
 .tick-label,
 .axis-label {
-  font-size: 10.5px;
+  font-size: 11px;
   fill: var(--mutedText);
 }
 
 .value-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   fill: var(--spectrumColor1);
+  animation: label-in 0.4s var(--ease-out) 0.8s backwards;
 }
 
-.mark {
-  fill: var(--spectrumColor2);
+.bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bar-rise 0.9s var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i), 40) * 18ms);
+  transition:
+    opacity var(--duration-fast) ease,
+    filter var(--duration-fast) ease;
 }
 
-.mark:hover {
-  fill: var(--spectrumColor1);
+.has-active .bar {
+  opacity: 0.4;
+}
+
+.has-active .bar.active {
+  opacity: 1;
+  filter: drop-shadow(0 4px 8px rgba(19, 59, 54, 0.3)) saturate(1.2);
+}
+
+.area-path {
+  animation: fade-in 1.2s var(--ease-out) 0.35s backwards;
 }
 
 .line-path {
   fill: none;
-  stroke: var(--spectrumColor2);
-  stroke-width: 2;
+  stroke: var(--series-color);
+  stroke-width: 2.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  animation: line-draw 1.6s var(--ease-out) backwards;
 }
 
-.area-path {
-  fill: var(--spectrumColor2);
+.line-glow {
+  fill: none;
+  stroke: var(--series-color);
+  stroke-width: 10;
+  stroke-linecap: round;
   opacity: 0.12;
+  stroke-dasharray: 1;
+  animation: line-draw 1.6s var(--ease-out) backwards;
 }
 
-.point {
+.end-dot,
+.active-dot {
   fill: #fff;
-  stroke: var(--spectrumColor2);
-  stroke-width: 2;
+  stroke: var(--series-color);
+  stroke-width: 3;
 }
 
-.point:hover {
-  fill: var(--spectrumColor2);
+.end-dot {
+  animation: label-in 0.4s var(--ease-spring) 1.4s backwards;
+}
+
+.pulse {
+  fill: var(--series-color);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 2.2s ease-out 1.6s infinite backwards;
+}
+
+.crosshair {
+  stroke: var(--series-color);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.6;
+}
+
+.hit-area {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.chart-tooltip {
+  pointer-events: none;
+  animation: fade-in var(--duration-fast) ease;
+}
+
+.chart-tooltip rect {
+  fill: var(--spectrumColor1);
+  filter: drop-shadow(0 6px 12px rgba(19, 59, 54, 0.3));
+}
+
+.chart-tooltip-label {
+  font-size: 10.5px;
+  fill: rgba(255, 255, 255, 0.72);
+}
+
+.chart-tooltip-value {
+  font-size: 13px;
+  font-weight: 600;
+  fill: #fff;
+}
+
+@keyframes bar-rise {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes line-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes label-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
 }

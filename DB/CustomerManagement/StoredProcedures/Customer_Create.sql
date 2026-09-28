@@ -5,6 +5,7 @@ CREATE PROCEDURE [dbo].[Customer_Create]
     @PhoneNumber VARCHAR(15),
     @Gender TINYINT = 0,
     @BirthDate DATE = NULL,
+    @EnrollmentDate DATE = NULL,
     @Country NVARCHAR(100),
     @County NVARCHAR(100),
     @City NVARCHAR(100),
@@ -39,13 +40,15 @@ BEGIN
 
             INSERT INTO dbo.Customer
             (
-                FirstName, LastName, Email, PhoneNumber, Gender, BirthDate, StatusCode
+                FirstName, LastName, Email, PhoneNumber, Gender, BirthDate,
+                EnrollmentDate, StatusCode
             )
             OUTPUT inserted.CustomerId INTO @Inserted
             VALUES
             (
                 @FirstName, @LastName, @Email, @PhoneNumber,
-                @Gender, @BirthDate, @StatusCode
+                @Gender, @BirthDate,
+                ISNULL(@EnrollmentDate, CAST(SYSUTCDATETIME() AS DATE)), @StatusCode
             );
 
             SELECT @CustomerId = CustomerId FROM @Inserted;

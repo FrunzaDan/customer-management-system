@@ -14,7 +14,9 @@ public sealed record CustomerModel
 
     public required CustomerStatus Status { get; init; }
 
-    public required DateTime CreatedAt { get; init; }
+    public required DateOnly EnrollmentDate { get; init; }
+
+    public required DateTime AccountCreatedAt { get; init; }
 
     public required DateTime LastInteractionAt { get; init; }
 
@@ -39,6 +41,8 @@ public sealed class CreateCustomerRequest
 
     public DateOnly? BirthDate { get; set; }
 
+    public DateOnly? EnrollmentDate { get; set; }
+
     public CustomerStatus? Status { get; set; }
 
     public AddressRequest? Address { get; set; }
@@ -59,6 +63,8 @@ public sealed class UpdateCustomerRequest
     public Gender? Gender { get; set; }
 
     public DateOnly? BirthDate { get; set; }
+
+    public DateOnly? EnrollmentDate { get; set; }
 
     public AddressRequest? Address { get; set; }
 }

@@ -13,6 +13,7 @@ export interface CustomerFormModel {
   phoneNumber: string;
   gender: string;
   birthDate: string;
+  enrollmentDate: string;
   country: string;
   county: string;
   city: string;
@@ -28,6 +29,7 @@ export const emptyCustomerForm = (): CustomerFormModel => ({
   phoneNumber: '',
   gender: '',
   birthDate: '',
+  enrollmentDate: todayDateOnly(),
   country: '',
   county: '',
   city: '',
@@ -65,6 +67,15 @@ export const customerFormSchema = schema<CustomerFormModel>((p) => {
       ? { kind: 'futureDate', message: 'Birth date cannot be in the future' }
       : undefined,
   );
+  required(p.enrollmentDate, { message: 'Customer since is required' });
+  validate(p.enrollmentDate, ({ value }) =>
+    value() > todayDateOnly()
+      ? {
+          kind: 'futureDate',
+          message: 'Customer since cannot be in the future',
+        }
+      : undefined,
+  );
   required(p.country, { message: 'Country is required' });
   pattern(p.country, NOT_BLANK, { message: 'Country is required' });
   required(p.county, { message: 'County is required' });
@@ -87,6 +98,7 @@ export function toFormModel(customer: Customer): CustomerFormModel {
     phoneNumber: customer.phoneNumber,
     gender: customer.gender.toString(),
     birthDate: customer.birthDate ?? '',
+    enrollmentDate: customer.enrollmentDate,
     country: customer.address.country,
     county: customer.address.county,
     city: customer.address.city,
@@ -106,6 +118,7 @@ export function toCreateCustomerRequest(
     phoneNumber: model.phoneNumber,
     gender: Number(model.gender) as Gender,
     birthDate: model.birthDate || undefined,
+    enrollmentDate: model.enrollmentDate || undefined,
     address: {
       country: model.country,
       county: model.county,

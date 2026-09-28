@@ -34,6 +34,9 @@ public class CustomerCreation(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
         if (request.BirthDate > DateOnly.FromDateTime(DateTime.UtcNow))
             return new ResponseModel<Guid?>(400, "Birth date cannot be in the future.");
 
+        if (request.EnrollmentDate > DateOnly.FromDateTime(DateTime.UtcNow))
+            return new ResponseModel<Guid?>(400, "Enrollment date cannot be in the future.");
+
         if (request.Address is null)
             return new ResponseModel<Guid?>(400, "Address is required.");
 

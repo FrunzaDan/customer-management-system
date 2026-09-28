@@ -1,0 +1,28 @@
+<div class="kpi">
+  <span class="kpi-label">{{ label() }}</span>
+  <span class="kpi-value" aria-hidden="true">{{ displayValue() }}</span>
+  <span class="visually-hidden">{{ finalValue() }}</span>
+  @if (caption(); as caption) {
+    <span class="kpi-caption">{{ caption }}</span>
+  }
+  @if (sparkLine()) {
+    <svg
+      class="kpi-spark"
+      [attr.viewBox]="'0 0 ' + sparkWidth + ' ' + sparkHeight"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient [attr.id]="id + '-spark'" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0.35" />
+          <stop offset="100%" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        class="spark-area"
+        [attr.d]="sparkArea()"
+        [attr.fill]="'url(#' + id + '-spark)'"
+      />
+      <path class="spark-line" [attr.d]="sparkLine()" pathLength="1" />
+    </svg>
+  }
+</div>

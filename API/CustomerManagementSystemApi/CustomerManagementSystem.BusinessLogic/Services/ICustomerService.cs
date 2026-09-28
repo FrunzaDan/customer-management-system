@@ -30,5 +30,5 @@ public interface ICustomerService
 
     Task<ResponseModel<object>> DeleteAllCustomerAuditLogAsync(CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(CancellationToken cancellationToken = default);
+    Task<ResponseModel<CustomerInsightsModel>> GetCustomerInsightsAsync(CancellationToken cancellationToken = default);
 }

@@ -12,8 +12,10 @@ CREATE TABLE [dbo].[Customer]
     [StatusCode] SMALLINT NOT NULL
         CONSTRAINT [DF_Customer_StatusCode] DEFAULT 1901,
     [StatusCodeBeforeDeactivation] SMALLINT NULL,
-    [CreatedAt] DATETIME2 (3) NOT NULL
-        CONSTRAINT [DF_Customer_CreatedAt] DEFAULT SYSUTCDATETIME(),
+    [EnrollmentDate] DATE NOT NULL
+        CONSTRAINT [DF_Customer_EnrollmentDate] DEFAULT CAST(SYSUTCDATETIME() AS DATE),
+    [AccountCreatedAt] DATETIME2 (3) NOT NULL
+        CONSTRAINT [DF_Customer_AccountCreatedAt] DEFAULT SYSUTCDATETIME(),
     [LastInteractionAt] DATETIME2 (3) NOT NULL
         CONSTRAINT [DF_Customer_LastInteractionAt] DEFAULT SYSUTCDATETIME(),
     CONSTRAINT [PK_Customer] PRIMARY KEY CLUSTERED ([CustomerId]),

@@ -13,6 +13,7 @@ public static class DbHelper
     {
         AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber,
             customer.Gender ?? Gender.NotDeclared, customer.BirthDate);
+        command.Parameters.AddDate("@EnrollmentDate", customer.EnrollmentDate);
         command.Parameters.AddSmallInt("@StatusCode",
             (short)(customer.Status ?? CustomerStatus.Active));
         AddAddressParameters(command, customer.Address);
@@ -23,6 +24,7 @@ public static class DbHelper
         command.Parameters.AddGuid("@CustomerId", customer.CustomerId);
         AddCustomerCoreParameters(command, customer.FirstName, customer.LastName, customer.Email, customer.PhoneNumber,
             customer.Gender, customer.BirthDate);
+        command.Parameters.AddDate("@EnrollmentDate", customer.EnrollmentDate);
         AddAddressParameters(command, customer.Address);
     }
 
@@ -185,20 +187,20 @@ public static class DbHelper
         return new ResponseModel<IReadOnlyList<PurchaseModel>>(200, $"{items.Count} purchases found.", items);
     }
 
-    public static async Task<ResponseModel<MonthlyActivityModel>> HandleResponseWithMonthlyActivityAsync(
+    public static async Task<ResponseModel<CustomerInsightsModel>> HandleResponseWithCustomerInsightsAsync(
         SqlDataReader reader)
     {
-        var registrations = new List<MonthlyCountModel>();
+        var customers = new List<CustomerProfileModel>();
         while (await reader.ReadAsync().ConfigureAwait(false))
-            registrations.Add(MapMonthlyCountFromReader(reader, "CustomerCount"));
+            customers.Add(MapCustomerProfileFromReader(reader));
 
-        var purchases = new List<MonthlyCountModel>();
+        var monthlySales = new List<MonthlySalesModel>();
         await reader.NextResultAsync().ConfigureAwait(false);
         while (await reader.ReadAsync().ConfigureAwait(false))
-            purchases.Add(MapMonthlyCountFromReader(reader, "PurchaseCount"));
+            monthlySales.Add(MapMonthlySalesFromReader(reader));
 
-        return new ResponseModel<MonthlyActivityModel>(200, "Monthly activity retrieved.",
-            new MonthlyActivityModel { CustomerCreations = registrations, ProductPurchases = purchases });
+        return new ResponseModel<CustomerInsightsModel>(200, "Customer insights retrieved.",
+            new CustomerInsightsModel { Customers = customers, MonthlySales = monthlySales });
     }
 
     public static async Task<MerchantAuthData?> HandleMerchantAuthDataResponseAsync(SqlDataReader reader)
@@ -222,7 +224,8 @@ public static class DbHelper
         Gender = (Gender)reader.GetByte("Gender"),
         BirthDate = reader.GetNullableDateOnly("BirthDate"),
         Status = (CustomerStatus)reader.GetInt16("StatusCode"),
-        CreatedAt = reader.GetUtcDateTime("CreatedAt"),
+        EnrollmentDate = reader.GetDateOnly("EnrollmentDate"),
+        AccountCreatedAt = reader.GetUtcDateTime("AccountCreatedAt"),
         LastInteractionAt = reader.GetUtcDateTime("LastInteractionAt"),
         Address = new AddressModel
         {
@@ -270,10 +273,21 @@ public static class DbHelper
         Warehouse = reader.GetString("Warehouse")
     };
 
-    private static MonthlyCountModel MapMonthlyCountFromReader(SqlDataReader reader, string countColumn) => new()
+    private static CustomerProfileModel MapCustomerProfileFromReader(SqlDataReader reader) => new()
+    {
+        Status = (CustomerStatus)reader.GetInt16("StatusCode"),
+        Gender = (Gender)reader.GetByte("Gender"),
+        BirthDate = reader.GetNullableDateOnly("BirthDate"),
+        EnrollmentDate = reader.GetDateOnly("EnrollmentDate"),
+        County = reader.GetString("County"),
+        PurchaseCount = reader.GetInt32("PurchaseCount")
+    };
+
+    private static MonthlySalesModel MapMonthlySalesFromReader(SqlDataReader reader) => new()
     {
         YearMonth = reader.GetDateOnly("MonthStart").ToString("yyyy-MM", CultureInfo.InvariantCulture),
-        Count = reader.GetInt32(countColumn)
+        PurchaseCount = reader.GetInt32("PurchaseCount"),
+        Revenue = reader.GetDecimal("Revenue")
     };
 
     private static ProductBuyerModel MapProductBuyerFromReader(SqlDataReader reader) => new()

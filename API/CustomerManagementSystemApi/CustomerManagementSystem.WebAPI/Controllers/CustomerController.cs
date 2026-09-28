@@ -50,10 +50,10 @@ public class CustomerController(ICustomerService customerService) : ApiControlle
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default) =>
         Reply(await customerService.GetAllCustomerAuditLogAsync(pageNumber, pageSize, cancellationToken));
 
-    [HttpGet("monthly-activity")]
-    public async Task<ActionResult<ResponseModel<MonthlyActivityModel>>> GetMonthlyActivity(
+    [HttpGet("insights")]
+    public async Task<ActionResult<ResponseModel<CustomerInsightsModel>>> GetCustomerInsights(
         CancellationToken cancellationToken) =>
-        Reply(await customerService.GetMonthlyActivityAsync(cancellationToken));
+        Reply(await customerService.GetCustomerInsightsAsync(cancellationToken));
 
     [HttpGet("purchases")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<PurchaseModel>>>> GetCustomerPurchases(

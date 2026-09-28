@@ -1,50 +1,57 @@
 import { Product } from '../../interfaces/product';
-import { MonthlyCount } from '../../interfaces/monthly-activity';
-import { RankedItem } from './ranked-bar-chart/ranked-bar-chart.component';
+import { CustomerStatus, Gender } from '../../interfaces/customer';
+import {
+  CustomerProfile,
+  MonthlySales,
+} from '../../interfaces/customer-insights';
+import { customerStatusLabel } from '../../utils/customer-status-label';
+import {
+  AGE_BANDS,
+  Band,
+  ChartPoint,
+  countByMonth,
+  countIntoBands,
+  fractionalYearsBetween,
+  LabelValue,
+  MonthlyCount,
+  rankTotals,
+  TENURE_BANDS,
+  totalsByLabel,
+  wholeYearsBetween,
+} from '../../utils/chart-stats';
 import { StockHealthRow } from './stock-health-chart/stock-health-chart.component';
-import { TimeSeriesPoint } from './time-series-chart/time-series-chart.component';
 
-const MONTH_ABBREVIATIONS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-] as const;
+const STATUS_ORDER = [
+  CustomerStatus.Active,
+  CustomerStatus.Test,
+  CustomerStatus.Deactivated,
+];
+
+const GENDER_LABELS: ReadonlyArray<[Gender, string]> = [
+  [Gender.Female, 'Female'],
+  [Gender.Male, 'Male'],
+  [Gender.NotDeclared, 'Not declared'],
+];
+
+const PURCHASE_COUNT_BANDS: readonly Band[] = [
+  { label: 'None', min: 0, max: 1 },
+  { label: '1', min: 1, max: 2 },
+  { label: '2', min: 2, max: 3 },
+  { label: '3', min: 3, max: 4 },
+  { label: '4', min: 4, max: 5 },
+  { label: '5+', min: 5 },
+];
 
 export function rankByCategory(
   products: Product[],
   valueFn: (product: Product) => number,
   limit: number,
-): RankedItem[] {
-  const totals = new Map<string, number>();
-  for (const product of products) {
-    totals.set(
-      product.category,
-      (totals.get(product.category) ?? 0) + valueFn(product),
-    );
-  }
-
-  const sorted = [...totals.entries()]
-    .map(([label, value]) => ({ label, value }))
-    .sort((a, b) => b.value - a.value);
-
-  if (sorted.length <= limit) return sorted;
-
-  const top = sorted.slice(0, limit);
-  const rest = sorted.slice(limit);
-  const otherValue = rest.reduce((sum, item) => sum + item.value, 0);
-  return [
-    ...top,
-    { label: `Other (${rest.length} categories)`, value: otherValue },
-  ];
+): LabelValue[] {
+  return rankTotals(
+    totalsByLabel(products, (p) => p.category, valueFn),
+    limit,
+    'categories',
+  );
 }
 
 export function stockHealthByCategory(products: Product[]): StockHealthRow[] {
@@ -65,41 +72,77 @@ function percentSold(row: { sold: number; inventory: number }): number {
   return row.inventory > 0 ? row.sold / row.inventory : 0;
 }
 
-function formatMonthLabel(yearMonth: string): string {
-  const [year, month] = yearMonth.split('-');
-  const index = Number(month) - 1;
-  const abbreviation = MONTH_ABBREVIATIONS[index] ?? month;
-  return `${abbreviation} '${year.slice(2)}`;
-}
-
-export function monthlyToPoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
-  return counts.map((count) => ({
-    key: count.yearMonth,
-    label: formatMonthLabel(count.yearMonth),
-    value: count.count,
+export function statusSlices(customers: CustomerProfile[]): LabelValue[] {
+  return STATUS_ORDER.map((status) => ({
+    label: customerStatusLabel(status),
+    value: customers.filter((c) => c.status === status).length,
   }));
 }
 
-export function yearlyToPoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
-  const totals = new Map<string, number>();
-  for (const count of counts) {
-    const year = count.yearMonth.slice(0, 4);
-    totals.set(year, (totals.get(year) ?? 0) + count.count);
-  }
-
-  return [...totals.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([year, value]) => ({ key: year, label: year, value }));
+export function genderSlices(customers: CustomerProfile[]): LabelValue[] {
+  return GENDER_LABELS.map(([gender, label]) => ({
+    label,
+    value: customers.filter((c) => c.gender === gender).length,
+  }));
 }
 
-export function cumulativePoints(counts: MonthlyCount[]): TimeSeriesPoint[] {
-  let running = 0;
-  return counts.map((count) => {
-    running += count.count;
-    return {
-      key: count.yearMonth,
-      label: formatMonthLabel(count.yearMonth),
-      value: running,
-    };
-  });
+export function ageDistribution(
+  customers: CustomerProfile[],
+  today: Date,
+): ChartPoint[] {
+  const ages = customers
+    .filter((c) => c.birthDate !== null)
+    .map((c) => wholeYearsBetween(c.birthDate!, today));
+  return countIntoBands(ages, AGE_BANDS);
+}
+
+export function tenureYears(
+  customers: CustomerProfile[],
+  today: Date,
+): number[] {
+  return customers.map((c) => fractionalYearsBetween(c.enrollmentDate, today));
+}
+
+export function tenureDistribution(
+  customers: CustomerProfile[],
+  today: Date,
+): ChartPoint[] {
+  const years = customers.map((c) =>
+    wholeYearsBetween(c.enrollmentDate, today),
+  );
+  return countIntoBands(years, TENURE_BANDS);
+}
+
+export function purchasesPerCustomer(
+  customers: CustomerProfile[],
+): ChartPoint[] {
+  return countIntoBands(
+    customers.map((c) => c.purchaseCount),
+    PURCHASE_COUNT_BANDS,
+  );
+}
+
+export function topCounties(
+  customers: CustomerProfile[],
+  limit: number,
+): LabelValue[] {
+  return rankTotals(
+    totalsByLabel(customers, (c) => c.county),
+    limit,
+    'counties',
+  );
+}
+
+export function enrollmentCounts(customers: CustomerProfile[]): MonthlyCount[] {
+  return countByMonth(customers.map((c) => c.enrollmentDate));
+}
+
+export function salesCounts(
+  sales: MonthlySales[],
+  valueFn: (month: MonthlySales) => number,
+): MonthlyCount[] {
+  return sales.map((month) => ({
+    yearMonth: month.yearMonth,
+    count: valueFn(month),
+  }));
 }

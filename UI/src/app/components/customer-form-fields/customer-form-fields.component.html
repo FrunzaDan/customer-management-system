@@ -73,6 +73,35 @@
             </div>
           }
         </div>
+
+        @let enrollmentDate = form().enrollmentDate();
+        @let enrollmentDateError =
+          enrollmentDate.touched() && enrollmentDate.invalid();
+        <div class="mb-3">
+          <label class="form-label" for="enrollmentDate">Customer since</label>
+          <input
+            id="enrollmentDate"
+            type="date"
+            class="form-control"
+            [formField]="form().enrollmentDate"
+            [class.is-invalid]="enrollmentDateError"
+            [attr.aria-invalid]="enrollmentDateError"
+            [attr.aria-describedby]="
+              enrollmentDateError
+                ? 'enrollmentDate-hint enrollmentDate-error'
+                : 'enrollmentDate-hint'
+            "
+          />
+          <div class="form-text" id="enrollmentDate-hint">
+            When they first became a customer, even if that was in an older
+            registry.
+          </div>
+          @if (enrollmentDateError) {
+            <div class="invalid-feedback" id="enrollmentDate-error">
+              {{ enrollmentDate.errors()[0].message }}
+            </div>
+          }
+        </div>
       </fieldset>
     </div>
   </div>

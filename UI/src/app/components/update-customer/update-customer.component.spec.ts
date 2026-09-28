@@ -28,7 +28,8 @@ describe('UpdateCustomerComponent', () => {
     email: 'dan@example.com',
     gender: 1,
     status: 1901,
-    createdAt: '2026-01-01',
+    enrollmentDate: '2015-06-01',
+    accountCreatedAt: '2026-01-01',
     lastInteractionAt: '2026-01-01',
     birthDate: '1990-01-01',
     address: {
@@ -146,7 +147,10 @@ describe('UpdateCustomerComponent', () => {
     it('merges the form values onto the loaded customer and saves', async () => {
       const component = createComponent();
       await loadCustomer(
-        buildCustomer({ customerId: 'customer-1', createdAt: '2026-01-01' }),
+        buildCustomer({
+          customerId: 'customer-1',
+          accountCreatedAt: '2026-01-01',
+        }),
       );
       component.model.update((m) => ({ ...m, firstName: 'Updated' }));
 
@@ -155,7 +159,8 @@ describe('UpdateCustomerComponent', () => {
       expect(updateCustomer).toHaveBeenCalledWith(
         expect.objectContaining({
           customerId: 'customer-1',
-          createdAt: '2026-01-01',
+          enrollmentDate: '2015-06-01',
+          accountCreatedAt: '2026-01-01',
           firstName: 'Updated',
           gender: 1,
         }),
@@ -272,6 +277,7 @@ describe('UpdateCustomerComponent', () => {
       phoneNumber: customer.phoneNumber,
       gender: String(customer.gender),
       birthDate: customer.birthDate ?? '',
+      enrollmentDate: customer.enrollmentDate,
       country: customer.address.country,
       county: customer.address.county,
       city: customer.address.city,

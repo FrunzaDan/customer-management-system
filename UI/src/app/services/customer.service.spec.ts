@@ -31,7 +31,8 @@ describe('CustomerService', () => {
     email: 'dan@example.com',
     gender: Gender.Male,
     status: CustomerStatus.Active,
-    createdAt: '2026-01-01',
+    enrollmentDate: '2015-06-01',
+    accountCreatedAt: '2026-01-01',
     lastInteractionAt: '2026-01-01',
     birthDate: '1990-01-01',
     address: {
@@ -324,7 +325,8 @@ describe('CustomerService', () => {
 
       const req = httpMock.expectOne(`${API_URL}/update`);
       expect(req.request.method).toBe('PATCH');
-      const { status, createdAt, lastInteractionAt, ...editable } = customer;
+      const { status, accountCreatedAt, lastInteractionAt, ...editable } =
+        customer;
       expect(req.request.body).toEqual(editable);
 
       req.flush({

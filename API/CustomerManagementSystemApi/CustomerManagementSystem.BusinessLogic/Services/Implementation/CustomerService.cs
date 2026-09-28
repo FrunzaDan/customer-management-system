@@ -63,6 +63,6 @@ public class CustomerService(
         CancellationToken cancellationToken = default) =>
         customerCreation.CreateCustomerAsync(request, performedBy, cancellationToken);
 
-    public Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(CancellationToken cancellationToken = default) =>
-        customerGetting.GetMonthlyActivityAsync(cancellationToken);
+    public Task<ResponseModel<CustomerInsightsModel>> GetCustomerInsightsAsync(CancellationToken cancellationToken = default) =>
+        customerGetting.GetCustomerInsightsAsync(cancellationToken);
 }

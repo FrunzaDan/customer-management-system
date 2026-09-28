@@ -13,12 +13,14 @@ interface RankedBar extends RankedItem {
 @Component({
   selector: 'app-ranked-bar-chart',
   templateUrl: './ranked-bar-chart.component.html',
+  host: { '[style.--ranked-color]': 'color()' },
 })
 export class RankedBarChartComponent {
   readonly items = input.required<RankedItem[]>();
   readonly valueFormatter = input<(value: number) => string>((value) =>
     value.toLocaleString(),
   );
+  readonly color = input('var(--spectrumColor2)');
   readonly ariaLabel = input('Ranked bar chart');
   readonly emptyMessage = input('No data yet.');
 

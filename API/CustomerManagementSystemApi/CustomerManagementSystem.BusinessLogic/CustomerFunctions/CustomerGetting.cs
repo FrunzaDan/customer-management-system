@@ -117,9 +117,9 @@ public class CustomerGetting(IDbUtils dbUtils)
         return await dbUtils.GetAllCustomerAuditLogAsync(pageNumber, pageSize, cancellationToken);
     }
 
-    public async Task<ResponseModel<MonthlyActivityModel>> GetMonthlyActivityAsync(
+    public async Task<ResponseModel<CustomerInsightsModel>> GetCustomerInsightsAsync(
         CancellationToken cancellationToken = default) =>
-        await dbUtils.GetMonthlyActivityAsync(cancellationToken);
+        await dbUtils.GetCustomerInsightsAsync(cancellationToken);
 
     private static CustomerLookup? DetermineLookup(string searchTerm)
     {

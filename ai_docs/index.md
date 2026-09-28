@@ -29,7 +29,7 @@ A learning full-stack CRUD app: a merchant logs in and manages customer records,
   - bulk actions and CSV export;
   - per-customer and global audit logs;
   - products and purchases;
-  - charts;
+  - a charts dashboard (KPIs, customer base, sales and catalogue);
   - a test-data generator.
 
 ## Documented Concepts

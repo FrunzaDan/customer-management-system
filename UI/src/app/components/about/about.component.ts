@@ -17,6 +17,9 @@ const TEST_CUSTOMER_COUNT = 50;
 
 const MAX_PURCHASE_ROUNDS = 3;
 
+const ENROLLMENT_DATE_RANGE_START = new Date(2005, 0, 1);
+const ENROLLMENT_DATE_RANGE_END = new Date(2025, 11, 1);
+
 const FIRST_NAMES = [
   'Andrei',
   'Maria',
@@ -171,13 +174,24 @@ function randomDigits(length: number): string {
   return digits;
 }
 
-function randomBirthDate(): string {
-  const start = new Date(1950, 0, 1).getTime();
-  const end = new Date(2005, 11, 31).getTime();
-  const date = new Date(start + Math.random() * (end - start));
+function randomDateBetween(start: Date, end: Date): string {
+  const date = new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime()),
+  );
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function randomBirthDate(): string {
+  return randomDateBetween(new Date(1950, 0, 1), new Date(2005, 11, 31));
+}
+
+function randomEnrollmentDate(): string {
+  return randomDateBetween(
+    ENROLLMENT_DATE_RANGE_START,
+    ENROLLMENT_DATE_RANGE_END,
+  );
 }
 
 @Component({
@@ -308,6 +322,7 @@ export class AboutComponent {
       phoneNumber: `07${randomDigits(6)}${suffix}`,
       gender: pick([Gender.NotDeclared, Gender.Male, Gender.Female]),
       birthDate: randomBirthDate(),
+      enrollmentDate: randomEnrollmentDate(),
       status: CustomerStatus.Test,
       address: {
         country: 'Romania',

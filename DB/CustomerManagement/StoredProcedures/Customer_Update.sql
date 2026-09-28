@@ -6,6 +6,7 @@ CREATE PROCEDURE [dbo].[Customer_Update]
     @PhoneNumber VARCHAR(15) = NULL,
     @Gender TINYINT = NULL,
     @BirthDate DATE = NULL,
+    @EnrollmentDate DATE = NULL,
     @Country NVARCHAR(100) = NULL,
     @County NVARCHAR(100) = NULL,
     @City NVARCHAR(100) = NULL,
@@ -25,6 +26,18 @@ BEGIN
     BEGIN
         SET @Result = 404;
         SET @Message = 'Customer not found.';
+
+        SELECT @Result AS Result, @Message AS Message;
+        RETURN;
+    END
+
+    IF @EnrollmentDate IS NOT NULL AND EXISTS (
+        SELECT 1 FROM dbo.Customer
+        WHERE CustomerId = @CustomerId AND @EnrollmentDate > CAST(AccountCreatedAt AS DATE)
+    )
+    BEGIN
+        SET @Result = 400;
+        SET @Message = 'Enrollment date cannot be after the account was created.';
 
         SELECT @Result AS Result, @Message AS Message;
         RETURN;
@@ -63,7 +76,8 @@ BEGIN
             Email = ISNULL(@Email, Email),
             PhoneNumber = ISNULL(@PhoneNumber, PhoneNumber),
             Gender = ISNULL(@Gender, Gender),
-            BirthDate = ISNULL(@BirthDate, BirthDate)
+            BirthDate = ISNULL(@BirthDate, BirthDate),
+            EnrollmentDate = ISNULL(@EnrollmentDate, EnrollmentDate)
         WHERE CustomerId = @CustomerId;
 
         IF @Country IS NOT NULL OR @County IS NOT NULL OR @City IS NOT NULL

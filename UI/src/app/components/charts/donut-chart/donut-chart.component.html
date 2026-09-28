@@ -1,0 +1,58 @@
+@if (total() === 0) {
+  <p class="ranked-empty">{{ emptyMessage() }}</p>
+} @else {
+  <div class="donut" [class.has-active]="activeIndex() !== null">
+    <div class="donut-figure">
+      <svg viewBox="0 0 120 120" role="img" [attr.aria-label]="summary()">
+        <circle class="track" cx="60" cy="60" r="46" />
+        @for (arc of arcs(); track arc.label) {
+          @if (arc.value > 0) {
+            <circle
+              class="arc"
+              [class.active]="activeIndex() === $index"
+              [style.--i]="$index"
+              cx="60"
+              cy="60"
+              r="46"
+              pathLength="100"
+              [attr.stroke]="arc.color"
+              [attr.stroke-dasharray]="arc.dashArray"
+              [attr.stroke-dashoffset]="arc.dashOffset"
+              (pointerenter)="setActive($index)"
+              (pointerleave)="setActive(null)"
+            />
+          }
+        }
+      </svg>
+      <div class="donut-center" aria-hidden="true">
+        <span class="donut-value" [class.long]="center().value.length > 7">{{
+          center().value
+        }}</span>
+        <span class="donut-caption">{{ center().caption }}</span>
+      </div>
+    </div>
+
+    <ul class="donut-legend">
+      @for (arc of arcs(); track arc.label) {
+        <li>
+          <button
+            type="button"
+            class="legend-item"
+            [class.active]="activeIndex() === $index"
+            (pointerenter)="setActive($index)"
+            (pointerleave)="setActive(null)"
+            (focus)="setActive($index)"
+            (blur)="setActive(null)"
+          >
+            <span class="swatch" [style.background]="arc.color"></span>
+            <span class="legend-label" [attr.title]="arc.label">{{
+              arc.label
+            }}</span>
+            <span class="legend-value">{{ arc.valueText }}</span>
+            <span class="legend-percent">{{ arc.percentText }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+}

@@ -39,6 +39,9 @@ public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
         if (request.BirthDate > DateOnly.FromDateTime(DateTime.UtcNow))
             return new ResponseModel<object>(400, "Birth date cannot be in the future.");
 
+        if (request.EnrollmentDate > DateOnly.FromDateTime(DateTime.UtcNow))
+            return new ResponseModel<object>(400, "Enrollment date cannot be in the future.");
+
         if (request.Address is not null)
         {
             var addressError = AddressValidation.ValidateNotBlank(request.Address)
@@ -65,6 +68,7 @@ public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
         if (request.PhoneNumber is not null) changedFields.Add("phone number");
         if (request.Gender is not null) changedFields.Add("gender");
         if (request.BirthDate is not null) changedFields.Add("birth date");
+        if (request.EnrollmentDate is not null) changedFields.Add("enrollment date");
         if (request.Address is not null) changedFields.Add("address");
 
         return changedFields.Count > 0 ? $"Updated: {string.Join(", ", changedFields)}" : "No fields changed";
