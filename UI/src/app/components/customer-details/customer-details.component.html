@@ -160,6 +160,40 @@
               </dl>
             </div>
           </div>
+
+          <div class="card app-card">
+            <div class="card-body">
+              <h2 class="card-title">Audit trail</h2>
+              @if (auditLogLoading()) {
+                <p class="text-muted mb-0" role="status">
+                  Loading audit trail…
+                </p>
+              } @else if (auditLogError()) {
+                <p class="text-danger mb-0" role="alert">
+                  {{ auditLogError() }}
+                </p>
+              } @else if (auditLog().length === 0) {
+                <p class="text-muted mb-0">No recorded actions yet.</p>
+              } @else {
+                <ul class="audit-list">
+                  @for (entry of auditLog(); track entry.customerAuditLogId) {
+                    <li class="audit-item">
+                      <div class="audit-action">
+                        {{ auditActionLabel(entry.actionType) }}
+                      </div>
+                      <div class="audit-meta">
+                        by {{ entry.performedBy }} ·
+                        {{ entry.occurredAt | date: 'medium' }}
+                      </div>
+                      @if (entry.details) {
+                        <div class="audit-details">{{ entry.details }}</div>
+                      }
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
         </div>
 
         <div class="col-12 col-lg-6 d-flex flex-column gap-4">
@@ -355,40 +389,6 @@
                       <div class="purchase-price">
                         {{ purchase.price | ron }}
                       </div>
-                    </li>
-                  }
-                </ul>
-              }
-            </div>
-          </div>
-
-          <div class="card app-card">
-            <div class="card-body">
-              <h2 class="card-title">Audit trail</h2>
-              @if (auditLogLoading()) {
-                <p class="text-muted mb-0" role="status">
-                  Loading audit trail…
-                </p>
-              } @else if (auditLogError()) {
-                <p class="text-danger mb-0" role="alert">
-                  {{ auditLogError() }}
-                </p>
-              } @else if (auditLog().length === 0) {
-                <p class="text-muted mb-0">No recorded actions yet.</p>
-              } @else {
-                <ul class="audit-list">
-                  @for (entry of auditLog(); track entry.customerAuditLogId) {
-                    <li class="audit-item">
-                      <div class="audit-action">
-                        {{ auditActionLabel(entry.actionType) }}
-                      </div>
-                      <div class="audit-meta">
-                        by {{ entry.performedBy }} ·
-                        {{ entry.occurredAt | date: 'medium' }}
-                      </div>
-                      @if (entry.details) {
-                        <div class="audit-details">{{ entry.details }}</div>
-                      }
                     </li>
                   }
                 </ul>
