@@ -111,6 +111,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 - Bootstrap plus `styles.css` tokens (`--spectrumColor1..4`, `--dangerColor1`), and the Jost font.
 - Shared classes: `.page`, `.page-header`, `.app-card`, `.table-themed`, `.sort-button`, `.loading-state`, `.empty-state`.
+- Table alignment (all three apps): text columns left, counts and money right (`text-end`), actions right; only checkbox and status-badge columns are centered. Names, phone numbers and dates get `text-nowrap`, so rows stay one line when the table scrolls sideways.
 - Motion (same in all three apps; tokens `--duration-*` and `--ease-*`, rules in the Motion section of `styles.css`):
   - cards (`.app-card`) rise in on appearance; sibling cards follow a beat apart;
   - table body rows carry `animate.enter="row-enter"` and `[style.--row-index]="$index"`, so added rows fade in staggered and re-sorted rows keep still;

@@ -269,13 +269,15 @@ app-footer {
 .table-themed > thead > tr > th {
   padding: 0.85rem 0.75rem;
   border-bottom: 0;
+  vertical-align: middle;
   background-color: var(--spectrumColor1);
   color: #fff;
   font-weight: 500;
   white-space: nowrap;
 }
 
-.table-themed > tbody > tr > td {
+/* Row headers (<th scope="row">) too, or they keep Bootstrap's smaller padding. */
+.table-themed > tbody > tr > * {
   padding: 0.75rem;
   transition: box-shadow var(--duration-fast) ease;
 }

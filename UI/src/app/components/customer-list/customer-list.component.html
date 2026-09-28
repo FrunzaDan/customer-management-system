@@ -104,11 +104,7 @@
                 (change)="toggleSelectAll(selectAll.checked)"
               />
             </th>
-            <th
-              scope="col"
-              class="text-center"
-              [attr.aria-sort]="ariaSort('name')"
-            >
+            <th scope="col" [attr.aria-sort]="ariaSort('name')">
               <button
                 type="button"
                 class="sort-button"
@@ -125,11 +121,7 @@
                 }
               </button>
             </th>
-            <th
-              scope="col"
-              class="text-center"
-              [attr.aria-sort]="ariaSort('email')"
-            >
+            <th scope="col" [attr.aria-sort]="ariaSort('email')">
               <button
                 type="button"
                 class="sort-button"
@@ -146,11 +138,7 @@
                 }
               </button>
             </th>
-            <th
-              scope="col"
-              class="text-center"
-              [attr.aria-sort]="ariaSort('phoneNumber')"
-            >
+            <th scope="col" [attr.aria-sort]="ariaSort('phoneNumber')">
               <button
                 type="button"
                 class="sort-button"
@@ -168,7 +156,7 @@
               </button>
             </th>
             <th scope="col" class="text-center">Status</th>
-            <th scope="col" class="w-25 text-center">Actions</th>
+            <th scope="col" class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -190,7 +178,7 @@
                   "
                 />
               </td>
-              <td class="align-middle text-center">
+              <td class="align-middle text-nowrap">
                 <a
                   class="plain-Links hoverItem"
                   [routerLink]="['/customers', customer.customerId]"
@@ -198,8 +186,8 @@
                   {{ fullName }}
                 </a>
               </td>
-              <td class="align-middle text-center">{{ customer.email }}</td>
-              <td class="align-middle text-center">
+              <td class="align-middle">{{ customer.email }}</td>
+              <td class="align-middle text-nowrap">
                 {{ customer.phoneNumber }}
               </td>
               <td class="align-middle text-center">
@@ -215,7 +203,7 @@
                   {{ customerStatusLabel(customer.status) }}
                 </span>
               </td>
-              <td class="align-middle text-center">
+              <td class="align-middle text-end">
                 <div
                   class="btn-group"
                   role="group"

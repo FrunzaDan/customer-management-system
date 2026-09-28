@@ -5,6 +5,7 @@
 
 .kpi {
   box-sizing: border-box;
+  container-type: inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -41,7 +42,8 @@
 
 .kpi-value {
   color: #fff;
-  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  /* Sized by the tile, not the viewport, so long values like "369.858 RON" fit. */
+  font-size: clamp(1.25rem, 14cqi, 2.1rem);
   font-weight: 600;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;

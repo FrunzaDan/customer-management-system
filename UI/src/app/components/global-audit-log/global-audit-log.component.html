@@ -51,20 +51,20 @@
           </caption>
           <thead>
             <tr>
-              <th scope="col" class="text-center">Date</th>
-              <th scope="col" class="text-center">Customer</th>
-              <th scope="col" class="text-center">Performed by</th>
-              <th scope="col" class="text-center">Action</th>
-              <th scope="col" class="text-center">Details</th>
+              <th scope="col">Date</th>
+              <th scope="col">Customer</th>
+              <th scope="col">Performed by</th>
+              <th scope="col">Action</th>
+              <th scope="col">Details</th>
             </tr>
           </thead>
           <tbody>
             @for (entry of entries(); track entry.customerAuditLogId) {
               <tr animate.enter="row-enter" [style.--row-index]="$index">
-                <td class="align-middle text-center">
+                <td class="align-middle text-nowrap">
                   {{ entry.occurredAt | date: 'medium' }}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle">
                   @if (entry.customerFirstName || entry.customerLastName) {
                     <a
                       class="plain-Links hoverItem"
@@ -76,13 +76,13 @@
                     <span class="text-muted">{{ customerLabel(entry) }}</span>
                   }
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle">
                   {{ entry.performedBy }}
                 </td>
-                <td class="align-middle text-center">
+                <td class="align-middle">
                   {{ auditActionLabel(entry.actionType) }}
                 </td>
-                <td class="align-middle text-center">{{ entry.details }}</td>
+                <td class="align-middle">{{ entry.details }}</td>
               </tr>
             }
           </tbody>
