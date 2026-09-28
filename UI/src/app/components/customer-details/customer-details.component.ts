@@ -23,6 +23,8 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 import { auditActionLabel } from '../../utils/audit-action-label';
 import { customerStatusLabel } from '../../utils/customer-status-label';
 
+const AUDIT_LOG_PREVIEW_SIZE = 10;
+
 const GENDER_LABELS = new Map<Gender, string>([
   [Gender.NotDeclared, 'not declared'],
   [Gender.Male, 'male'],
@@ -78,6 +80,15 @@ export class CustomerDetailsComponent {
   readonly auditLog = this.auditLogService.entries;
   readonly auditLogLoading = this.auditLogService.loading;
   readonly auditLogError = this.auditLogService.error;
+  readonly showAllAuditLog = signal(false);
+  readonly visibleAuditLog = computed(() =>
+    this.showAllAuditLog()
+      ? this.auditLog()
+      : this.auditLog().slice(0, AUDIT_LOG_PREVIEW_SIZE),
+  );
+  readonly hiddenAuditLogCount = computed(
+    () => this.auditLog().length - this.visibleAuditLog().length,
+  );
   private wasActivationLoading = false;
 
   readonly purchases = this.purchaseService.entries;
@@ -153,6 +164,7 @@ export class CustomerDetailsComponent {
       const id = this.customerId();
       untracked(() => {
         if (id) {
+          this.showAllAuditLog.set(false);
           this.auditLogService.loadAuditLog(id);
           this.purchaseService.loadPurchases(id);
         } else {

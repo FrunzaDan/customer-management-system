@@ -41,7 +41,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 |---|---|
 | `/login` | `user-login` |
 | `/customers` (`/` redirects here) | `home` → `customer-list` |
-| `/customers/:customerId` | `customer-details` (record, purchases, audit trail) |
+| `/customers/:customerId` | `customer-details` (record, purchases, audit trail — latest 10, then "…" to show the rest) |
 | `/create-customer`, `/customers/update/:customerId` | `create-customer`, `update-customer` |
 | `/products`, `/products/:productId`, `/create-product` | `products`, `product-details`, `create-product` |
 | `/charts` | `charts` |

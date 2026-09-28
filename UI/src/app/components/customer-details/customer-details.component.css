@@ -198,6 +198,26 @@
   background-color: var(--spectrumColor2);
 }
 
+.audit-more::before {
+  background-color: var(--spectrumColor4);
+}
+
+.audit-more-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--spectrumColor2);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.1em;
+}
+
+.audit-more-button:hover,
+.audit-more-button:focus-visible {
+  color: var(--spectrumColor1);
+}
+
 .audit-action {
   color: var(--spectrumColor1);
   font-weight: 600;
