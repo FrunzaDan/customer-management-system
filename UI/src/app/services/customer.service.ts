@@ -11,7 +11,15 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { Observable, map, retry, tap, throwError, timer } from 'rxjs';
+import {
+  Observable,
+  firstValueFrom,
+  map,
+  retry,
+  tap,
+  throwError,
+  timer,
+} from 'rxjs';
 import {
   CreateCustomerRequest,
   Customer,
@@ -57,14 +65,14 @@ export class CustomerService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly listParams = signal<LoadCustomersParams | undefined>(
-    undefined,
+  private readonly listParams = signal<() => LoadCustomersParams | undefined>(
+    () => undefined,
   );
 
   private readonly customersResource = httpResource<
     GenericResponse<PagedResponse<Customer>>
   >(() => {
-    const params = this.listParams();
+    const params = this.listParams()();
     if (!params) return undefined;
     return {
       url: `${this.apiUrl}/all`,
@@ -91,11 +99,13 @@ export class CustomerService {
 
   readonly customers = computed(() => this.page()?.items ?? []);
   readonly pageNumber = computed(
-    () => this.page()?.pageNumber ?? this.listParams()?.pageNumber ?? 1,
+    () => this.page()?.pageNumber ?? this.listParams()()?.pageNumber ?? 1,
   );
   readonly pageSize = computed(
     () =>
-      this.page()?.pageSize ?? this.listParams()?.pageSize ?? DEFAULT_PAGE_SIZE,
+      this.page()?.pageSize ??
+      this.listParams()()?.pageSize ??
+      DEFAULT_PAGE_SIZE,
   );
   readonly totalItems = computed(() => this.page()?.totalItems ?? 0);
   readonly loading = this.customersResource.isLoading;
@@ -120,8 +130,14 @@ export class CustomerService {
   readonly exportLoading = signal(false);
   readonly exportError = signal<string | null>(null);
 
-  loadCustomers(params: LoadCustomersParams): void {
-    this.listParams.set({ ...params });
+  // The list follows the given params: it loads as soon as they're bound and
+  // again whenever they change.
+  bindCustomers(params: () => LoadCustomersParams | undefined): void {
+    this.listParams.set(params);
+  }
+
+  reloadCustomers(): void {
+    this.customersResource.reload();
   }
 
   getCustomer(customerId: string): Observable<Customer> {
@@ -186,12 +202,12 @@ export class CustomerService {
       .pipe(tap(() => this.removeCustomerLocally(customerId)));
   }
 
-  deactivateCustomer(customerId: string): void {
-    this.changeStatus(customerId, 'deactivate');
+  deactivateCustomer(customerId: string): Promise<boolean> {
+    return this.changeStatus(customerId, 'deactivate');
   }
 
-  reactivateCustomer(customerId: string): void {
-    this.changeStatus(customerId, 'reactivate');
+  reactivateCustomer(customerId: string): Promise<boolean> {
+    return this.changeStatus(customerId, 'reactivate');
   }
 
   deactivateCustomerSilently(
@@ -239,30 +255,34 @@ export class CustomerService {
       });
   }
 
-  private changeStatus(
+  private async changeStatus(
     customerId: string,
     action: 'deactivate' | 'reactivate',
-  ): void {
+  ): Promise<boolean> {
     this.activationState.set({ loading: true, error: null });
     const params = new HttpParams().set('customerId', customerId);
 
-    this.http
-      .patch<GenericResponse<object>>(`${this.apiUrl}/${action}`, null, {
-        params,
-      })
-      .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG))
-      .subscribe({
-        next: () => {
-          if (action === 'deactivate') {
-            this.setStatusLocally(customerId, CustomerStatus.Deactivated);
-          } else {
-            this.refreshCustomerLocally(customerId);
-          }
-          this.activationState.set({ loading: false, error: null });
-          this.notificationService.show(`Customer ${action}d successfully.`);
-        },
-        error: (error: HttpErrorResponse) => this.handleActivationError(error),
-      });
+    try {
+      await firstValueFrom(
+        this.http
+          .patch<GenericResponse<object>>(`${this.apiUrl}/${action}`, null, {
+            params,
+          })
+          .pipe(retry(TRANSIENT_ERROR_RETRY_CONFIG)),
+      );
+    } catch (error) {
+      this.handleActivationError(error as HttpErrorResponse);
+      return false;
+    }
+
+    if (action === 'deactivate') {
+      this.setStatusLocally(customerId, CustomerStatus.Deactivated);
+    } else {
+      this.refreshCustomerLocally(customerId);
+    }
+    this.activationState.set({ loading: false, error: null });
+    this.notificationService.show(`Customer ${action}d successfully.`);
+    return true;
   }
 
   private setStatusLocally(customerId: string, status: CustomerStatus): void {

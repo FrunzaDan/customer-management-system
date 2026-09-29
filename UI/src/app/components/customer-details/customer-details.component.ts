@@ -1,14 +1,14 @@
 import {
   Component,
   computed,
-  effect,
   inject,
   input,
+  linkedSignal,
   signal,
-  untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { FormField, disabled, form } from '@angular/forms/signals';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CustomerService } from '../../services/customer.service';
@@ -35,7 +35,7 @@ const GENDER_LABELS = new Map<Gender, string>([
   selector: 'app-customer-details',
   templateUrl: './customer-details.component.html',
   styleUrl: './customer-details.component.css',
-  imports: [DatePipe, RonPipe, RouterLink],
+  imports: [DatePipe, FormField, RonPipe, RouterLink],
 })
 export class CustomerDetailsComponent {
   private readonly customerService = inject(CustomerService);
@@ -80,7 +80,11 @@ export class CustomerDetailsComponent {
   readonly auditLog = this.auditLogService.entries;
   readonly auditLogLoading = this.auditLogService.loading;
   readonly auditLogError = this.auditLogService.error;
-  readonly showAllAuditLog = signal(false);
+  // Collapsed again whenever another customer is shown.
+  readonly showAllAuditLog = linkedSignal({
+    source: this.customerId,
+    computation: () => false,
+  });
   readonly visibleAuditLog = computed(() =>
     this.showAllAuditLog()
       ? this.auditLog()
@@ -89,7 +93,6 @@ export class CustomerDetailsComponent {
   readonly hiddenAuditLogCount = computed(
     () => this.auditLog().length - this.visibleAuditLog().length,
   );
-  private wasActivationLoading = false;
 
   readonly purchases = this.purchaseService.entries;
   readonly purchasesLoading = this.purchaseService.loading;
@@ -107,7 +110,8 @@ export class CustomerDetailsComponent {
   readonly productsLoading = this.productService.loading;
   readonly productsError = this.productService.error;
 
-  readonly selectedProductId = signal('');
+  private readonly purchaseModel = signal({ productId: '' });
+  readonly selectedProductId = computed(() => this.purchaseModel().productId);
   readonly purchasing = signal(false);
   readonly purchaseError = signal<string | null>(null);
 
@@ -157,33 +161,21 @@ export class CustomerDetailsComponent {
     );
   });
 
+  readonly purchaseForm = form(this.purchaseModel, (p) => {
+    disabled(
+      p.productId,
+      () =>
+        !this.canPurchase() ||
+        this.purchasing() ||
+        this.productsLoading() ||
+        !!this.productsError(),
+    );
+  });
+
   constructor() {
     this.productService.loadProducts();
-
-    effect(() => {
-      const id = this.customerId();
-      untracked(() => {
-        if (id) {
-          this.showAllAuditLog.set(false);
-          this.auditLogService.loadAuditLog(id);
-          this.purchaseService.loadPurchases(id);
-        } else {
-          this.router.navigate(['/customers']);
-        }
-      });
-    });
-
-    effect(() => {
-      const loading = this.activationLoading();
-      if (this.wasActivationLoading && !loading) {
-        const customerId = this.customer()?.customerId;
-        if (customerId) {
-          this.customerResource.reload();
-          this.auditLogService.loadAuditLog(customerId);
-        }
-      }
-      this.wasActivationLoading = loading;
-    });
+    this.auditLogService.bindAuditLog(this.customerId);
+    this.purchaseService.bindPurchases(this.customerId);
   }
 
   async deactivateCustomer(): Promise<void> {
@@ -194,17 +186,20 @@ export class CustomerDetailsComponent {
       { title: 'Deactivate customer?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.customerService.deactivateCustomer(customerId);
+    if (await this.customerService.deactivateCustomer(customerId))
+      this.refreshAfterStatusChange();
   }
 
-  reactivateCustomer(): void {
+  async reactivateCustomer(): Promise<void> {
     const customerId = this.customer()?.customerId;
     if (!customerId) return;
-    this.customerService.reactivateCustomer(customerId);
+    if (await this.customerService.reactivateCustomer(customerId))
+      this.refreshAfterStatusChange();
   }
 
-  selectProduct(event: Event): void {
-    this.selectedProductId.set((event.target as HTMLSelectElement).value);
+  private refreshAfterStatusChange(): void {
+    this.customerResource.reload();
+    this.auditLogService.reloadAuditLog();
   }
 
   recordPurchase(): void {
@@ -218,10 +213,10 @@ export class CustomerDetailsComponent {
     this.purchaseService.purchaseProduct(customerId, productId).subscribe({
       next: () => {
         this.purchasing.set(false);
-        this.selectedProductId.set('');
-        this.purchaseService.loadPurchases(customerId);
+        this.purchaseForm.productId().value.set('');
+        this.purchaseService.reloadPurchases();
         this.productService.loadProducts();
-        this.auditLogService.loadAuditLog(customerId);
+        this.auditLogService.reloadAuditLog();
       },
       error: (error: HttpErrorResponse) => {
         this.purchasing.set(false);

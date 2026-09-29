@@ -16,8 +16,10 @@ import { CustomerDetailsComponent } from './customer-details.component';
 
 describe('CustomerDetailsComponent', () => {
   let getCustomer: ReturnType<typeof vi.fn>;
-  let loadAuditLog: ReturnType<typeof vi.fn>;
-  let loadPurchases: ReturnType<typeof vi.fn>;
+  let bindAuditLog: ReturnType<typeof vi.fn>;
+  let reloadAuditLog: ReturnType<typeof vi.fn>;
+  let bindPurchases: ReturnType<typeof vi.fn>;
+  let reloadPurchases: ReturnType<typeof vi.fn>;
   let loadProducts: ReturnType<typeof vi.fn>;
   let purchaseProduct: ReturnType<typeof vi.fn>;
   let products: ReturnType<typeof signal<Product[]>>;
@@ -77,16 +79,18 @@ describe('CustomerDetailsComponent', () => {
   const createComponent = (): CustomerDetailsComponent => {
     customer$ = new ReplaySubject<Customer>(1);
     getCustomer = vi.fn(() => customer$);
-    loadAuditLog = vi.fn();
-    loadPurchases = vi.fn();
+    bindAuditLog = vi.fn();
+    reloadAuditLog = vi.fn();
+    bindPurchases = vi.fn();
+    reloadPurchases = vi.fn();
     loadProducts = vi.fn();
     purchaseProduct = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
     products = signal<Product[]>([]);
     purchases = signal<Purchase[]>([]);
-    deactivateCustomer = vi.fn();
-    reactivateCustomer = vi.fn();
+    deactivateCustomer = vi.fn().mockResolvedValue(true);
+    reactivateCustomer = vi.fn().mockResolvedValue(true);
     deleteCustomer = vi
       .fn()
       .mockReturnValue(of({ status: 200, responseMessage: 'ok' }));
@@ -114,7 +118,8 @@ describe('CustomerDetailsComponent', () => {
             entries: signal([]),
             loading: signal(false),
             error: signal<string | null>(null),
-            loadAuditLog,
+            bindAuditLog,
+            reloadAuditLog,
           },
         },
         {
@@ -123,7 +128,8 @@ describe('CustomerDetailsComponent', () => {
             entries: purchases,
             loading: signal(false),
             error: signal<string | null>(null),
-            loadPurchases,
+            bindPurchases,
+            reloadPurchases,
             purchaseProduct,
           },
         },
@@ -157,28 +163,18 @@ describe('CustomerDetailsComponent', () => {
   });
 
   describe('loading by id', () => {
-    it('fetches the customer, its audit log and its purchases using the id input', () => {
-      createComponent();
+    it('fetches the customer, and binds its audit log and purchases to the id input', () => {
+      const component = createComponent();
 
       expect(getCustomer).toHaveBeenCalledWith('customer-1');
-      expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
-      expect(loadPurchases).toHaveBeenCalledWith('customer-1');
+      expect(bindAuditLog).toHaveBeenCalledWith(component.customerId);
+      expect(bindPurchases).toHaveBeenCalledWith(component.customerId);
     });
 
     it('loads the product catalogue for the purchase picker', () => {
       createComponent();
 
       expect(loadProducts).toHaveBeenCalled();
-    });
-
-    it('navigates to the customer list instead of fetching when there is no id', () => {
-      routeParamId = null;
-      createComponent();
-
-      expect(getCustomer).not.toHaveBeenCalled();
-      expect(loadAuditLog).not.toHaveBeenCalled();
-      expect(loadPurchases).not.toHaveBeenCalled();
-      expect(navigate).toHaveBeenCalledWith(['/customers']);
     });
   });
 
@@ -253,7 +249,7 @@ describe('CustomerDetailsComponent', () => {
       const component = createComponent();
       await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
 
-      component.reactivateCustomer();
+      await component.reactivateCustomer();
 
       expect(confirm).not.toHaveBeenCalled();
       expect(reactivateCustomer).toHaveBeenCalledWith('customer-1');
@@ -306,33 +302,31 @@ describe('CustomerDetailsComponent', () => {
     });
   });
 
-  describe('audit log reload on activation-loading transition', () => {
-    it('reloads the customer and its audit log once a deactivate/reactivate call resolves (true -> false)', async () => {
+  describe('refresh after a status change', () => {
+    it('reloads the customer and its audit log once the status change succeeds', async () => {
       const component = createComponent();
       await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
-      loadAuditLog.mockClear();
 
-      activationLoading.set(true);
-      TestBed.flushEffects();
-      expect(loadAuditLog).not.toHaveBeenCalled();
+      await component.deactivateCustomer();
+      TestBed.tick();
 
-      activationLoading.set(false);
-      TestBed.flushEffects();
-
-      expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
+      expect(reloadAuditLog).toHaveBeenCalledTimes(1);
       expect(getCustomer).toHaveBeenCalledTimes(2);
     });
 
-    it('does not reload on the initial false state (no prior true)', async () => {
+    it('does not reload when the status change fails', async () => {
       const component = createComponent();
       await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
-      loadAuditLog.mockClear();
+      reactivateCustomer.mockResolvedValue(false);
 
-      TestBed.flushEffects();
+      await component.reactivateCustomer();
+      TestBed.tick();
 
-      expect(loadAuditLog).not.toHaveBeenCalled();
+      expect(reloadAuditLog).not.toHaveBeenCalled();
+      expect(getCustomer).toHaveBeenCalledTimes(1);
     });
   });
+
   describe('purchases', () => {
     it('canPurchase is true for Active and Test customers, false for Deactivated', async () => {
       const component = createComponent();
@@ -396,10 +390,10 @@ describe('CustomerDetailsComponent', () => {
 
       expect(component.canSubmitPurchase()).toBe(false);
 
-      component.selectedProductId.set('sold-out');
+      component.purchaseForm.productId().value.set('sold-out');
       expect(component.canSubmitPurchase()).toBe(false);
 
-      component.selectedProductId.set('in-stock');
+      component.purchaseForm.productId().value.set('in-stock');
       expect(component.canSubmitPurchase()).toBe(true);
 
       await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
@@ -410,19 +404,17 @@ describe('CustomerDetailsComponent', () => {
       const component = createComponent();
       await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       products.set([buildProduct({ productId: 'product-1' })]);
-      component.selectedProductId.set('product-1');
-      loadPurchases.mockClear();
+      component.purchaseForm.productId().value.set('product-1');
       loadProducts.mockClear();
-      loadAuditLog.mockClear();
 
       component.recordPurchase();
 
       expect(purchaseProduct).toHaveBeenCalledWith('customer-1', 'product-1');
       expect(component.selectedProductId()).toBe('');
       expect(component.purchasing()).toBe(false);
-      expect(loadPurchases).toHaveBeenCalledWith('customer-1');
+      expect(reloadPurchases).toHaveBeenCalled();
       expect(loadProducts).toHaveBeenCalled();
-      expect(loadAuditLog).toHaveBeenCalledWith('customer-1');
+      expect(reloadAuditLog).toHaveBeenCalled();
     });
 
     it('recordPurchase does nothing when no product is picked', async () => {
@@ -440,7 +432,7 @@ describe('CustomerDetailsComponent', () => {
       products.set([
         buildProduct({ productId: 'sold-out', quantityOnHand: 0 }),
       ]);
-      component.selectedProductId.set('sold-out');
+      component.purchaseForm.productId().value.set('sold-out');
 
       component.recordPurchase();
 
@@ -451,9 +443,8 @@ describe('CustomerDetailsComponent', () => {
       const component = createComponent();
       await loadCustomer(buildCustomer({ customerId: 'customer-1' }));
       products.set([buildProduct({ productId: 'product-1' })]);
-      component.selectedProductId.set('product-1');
+      component.purchaseForm.productId().value.set('product-1');
       loadProducts.mockClear();
-      loadPurchases.mockClear();
       purchaseProduct.mockReturnValue(
         throwError(
           () =>
@@ -470,7 +461,7 @@ describe('CustomerDetailsComponent', () => {
       expect(component.purchaseError()).toBe('Product is out of stock.');
       expect(component.selectedProductId()).toBe('product-1');
       expect(loadProducts).toHaveBeenCalled();
-      expect(loadPurchases).not.toHaveBeenCalled();
+      expect(reloadPurchases).not.toHaveBeenCalled();
     });
   });
   describe('audit trail preview', () => {

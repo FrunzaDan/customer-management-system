@@ -1,16 +1,9 @@
-import {
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  untracked,
-} from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RonPipe } from '../../pipes/ron.pipe';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
 
@@ -22,7 +15,6 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
 })
 export class ProductDetailsComponent {
   private readonly productService = inject(ProductService);
-  private readonly router = inject(Router);
 
   readonly productId = input<string>();
 
@@ -51,13 +43,6 @@ export class ProductDetailsComponent {
   readonly unlistedSales = computed(() =>
     Math.max(0, (this.product()?.soldQuantity ?? 0) - this.buyers().length),
   );
-
-  constructor() {
-    effect(() => {
-      if (!this.productId())
-        untracked(() => this.router.navigate(['/products']));
-    });
-  }
 
   buyerName(buyer: {
     customerFirstName: string;

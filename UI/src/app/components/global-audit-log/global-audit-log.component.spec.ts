@@ -9,7 +9,7 @@ import { GlobalAuditLogComponent } from './global-audit-log.component';
 
 describe('GlobalAuditLogComponent', () => {
   let component: GlobalAuditLogComponent;
-  let loadAllAuditLog: ReturnType<typeof vi.fn>;
+  let bindAllAuditLog: ReturnType<typeof vi.fn>;
   let deleteAllAuditLog: ReturnType<typeof vi.fn>;
   let confirm: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
@@ -29,7 +29,7 @@ describe('GlobalAuditLogComponent', () => {
   });
 
   beforeEach(() => {
-    loadAllAuditLog = vi.fn();
+    bindAllAuditLog = vi.fn();
     deleteAllAuditLog = vi.fn();
     confirm = vi.fn();
     totalItems = signal(0);
@@ -43,7 +43,7 @@ describe('GlobalAuditLogComponent', () => {
             loading: signal(false),
             error: signal<string | null>(null),
             totalItems: totalItems,
-            loadAllAuditLog,
+            bindAllAuditLog,
             deleteAllAuditLog,
           },
         },
@@ -56,45 +56,36 @@ describe('GlobalAuditLogComponent', () => {
     );
   });
 
-  it('fetches page 1 on init', () => {
-    component.ngOnInit();
-
-    expect(loadAllAuditLog).toHaveBeenCalledWith({
-      pageNumber: 1,
-      pageSize: 50,
-    });
+  it('binds the log to its page params, starting on page 1', () => {
+    expect(bindAllAuditLog).toHaveBeenCalledWith(component.pageParams);
+    expect(component.pageParams()).toEqual({ pageNumber: 1, pageSize: 50 });
   });
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
       totalItems.set(120);
-      loadAllAuditLog.mockClear();
 
       component.goToPage(10);
 
       expect(component.currentPage()).toBe(3);
-      expect(loadAllAuditLog).toHaveBeenCalledWith({
-        pageNumber: 3,
-        pageSize: 50,
-      });
+      expect(component.pageParams()).toEqual({ pageNumber: 3, pageSize: 50 });
     });
 
     it('clamps below page 1 up to 1', () => {
       totalItems.set(120);
       component.currentPage.set(3);
-      loadAllAuditLog.mockClear();
 
       component.goToPage(0);
 
       expect(component.currentPage()).toBe(1);
     });
 
-    it('does nothing when the target page equals the current page', () => {
-      loadAllAuditLog.mockClear();
+    it('keeps the same params when the target page equals the current page', () => {
+      const before = component.pageParams();
 
       component.goToPage(1);
 
-      expect(loadAllAuditLog).not.toHaveBeenCalled();
+      expect(component.pageParams()).toBe(before);
     });
   });
 

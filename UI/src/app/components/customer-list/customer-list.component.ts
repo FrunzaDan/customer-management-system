@@ -1,12 +1,11 @@
 import {
   Component,
-  OnInit,
   computed,
-  effect,
-  signal,
   inject,
-  untracked,
+  linkedSignal,
+  signal,
 } from '@angular/core';
+import { FormField, debounce, form } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
@@ -19,6 +18,8 @@ import { customerStatusLabel } from '../../utils/customer-status-label';
 
 type CustomerSortColumn = 'name' | 'email' | 'phoneNumber';
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const SORT_LABELS: Record<CustomerSortColumn, string> = {
   name: 'name',
   email: 'email',
@@ -29,9 +30,9 @@ const SORT_LABELS: Record<CustomerSortColumn, string> = {
   selector: 'app-customer-list',
   templateUrl: './customer-list.component.html',
   styleUrl: './customer-list.component.css',
-  imports: [RouterLink],
+  imports: [FormField, RouterLink],
 })
-export class CustomerListComponent implements OnInit {
+export class CustomerListComponent {
   private readonly customerService = inject(CustomerService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly notificationService = inject(NotificationService);
@@ -45,7 +46,6 @@ export class CustomerListComponent implements OnInit {
   readonly deleting = signal(false);
   readonly deleteError = signal<string | null>(null);
 
-  readonly selectedCustomerIds = signal<ReadonlySet<string>>(new Set());
   readonly bulkActionInProgress = signal(false);
 
   readonly allSelected = computed(
@@ -63,12 +63,33 @@ export class CustomerListComponent implements OnInit {
 
   readonly customerStatusLabel = customerStatusLabel;
 
-  readonly searchTerm = signal('');
+  readonly searchForm = form(signal({ term: '' }), (p) => {
+    debounce(p.term, SEARCH_DEBOUNCE_MS);
+  });
+  readonly searchTerm = computed(() => this.searchForm.term().value().trim());
   readonly sortColumn = signal<CustomerSortColumn>('name');
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
   readonly pageSize = 50;
-  readonly currentPage = signal(1);
+  // Back to page 1 whenever the search or the sort changes.
+  readonly currentPage = linkedSignal({
+    source: () => [this.searchTerm(), this.sortColumn(), this.sortDirection()],
+    computation: () => 1,
+  });
+
+  readonly listParams = computed(() => ({
+    pageNumber: this.currentPage(),
+    pageSize: this.pageSize,
+    searchTerm: this.searchTerm() || undefined,
+    sortColumn: this.sortColumn(),
+    sortDirection: this.sortDirection(),
+  }));
+
+  // A new page, search or sort starts with nothing selected.
+  readonly selectedCustomerIds = linkedSignal<unknown, ReadonlySet<string>>({
+    source: this.listParams,
+    computation: () => new Set(),
+  });
 
   readonly totalItems = this.customerService.totalItems;
   readonly totalPages = computed(() =>
@@ -87,35 +108,13 @@ export class CustomerListComponent implements OnInit {
   );
 
   constructor() {
-    effect(() => {
-      if (this.loading() || this.loadError()) return;
-      const lastPage = this.totalPages();
-      if (this.currentPage() <= lastPage) return;
-      untracked(() => {
-        this.currentPage.set(lastPage);
-        this.fetchCustomers();
-      });
-    });
-  }
-
-  private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
-  private static readonly SEARCH_DEBOUNCE_MS = 300;
-
-  onSearchInput(value: string): void {
-    this.searchTerm.set(value);
-
-    clearTimeout(this.searchDebounceTimer);
-    this.searchDebounceTimer = setTimeout(() => {
-      this.currentPage.set(1);
-      this.fetchCustomers();
-    }, CustomerListComponent.SEARCH_DEBOUNCE_MS);
+    this.customerService.bindCustomers(this.listParams);
   }
 
   goToPage(page: number): void {
     const target = Math.min(Math.max(page, 1), this.totalPages());
     if (target === this.currentPage()) return;
     this.currentPage.set(target);
-    this.fetchCustomers();
   }
 
   ariaSort(column: CustomerSortColumn): 'ascending' | 'descending' | 'none' {
@@ -130,31 +129,25 @@ export class CustomerListComponent implements OnInit {
       this.sortColumn.set(column);
       this.sortDirection.set('asc');
     }
-    this.currentPage.set(1);
-    this.fetchCustomers();
-  }
-
-  ngOnInit(): void {
-    this.fetchCustomers();
   }
 
   exportCsv(): void {
     this.customerService.exportCustomers({
-      searchTerm: this.searchTerm().trim() || undefined,
+      searchTerm: this.searchTerm() || undefined,
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
     });
   }
 
-  private fetchCustomers(): void {
-    this.selectedCustomerIds.set(new Set());
-    this.customerService.loadCustomers({
-      pageNumber: this.currentPage(),
-      pageSize: this.pageSize,
-      searchTerm: this.searchTerm().trim() || undefined,
-      sortColumn: this.sortColumn(),
-      sortDirection: this.sortDirection(),
-    });
+  // After rows are removed, step back a page if this one is now empty;
+  // otherwise reload it so it fills up again from the next page.
+  private refreshAfterRemoval(): void {
+    if (this.customers().length === 0 && this.currentPage() > 1) {
+      this.currentPage.update((page) => page - 1);
+    } else {
+      this.selectedCustomerIds.set(new Set());
+      this.customerService.reloadCustomers();
+    }
   }
 
   async deactivateCustomer(customerId: string): Promise<void> {
@@ -163,11 +156,11 @@ export class CustomerListComponent implements OnInit {
       { title: 'Deactivate customer?', confirmLabel: 'Deactivate' },
     );
     if (!confirmed) return;
-    this.customerService.deactivateCustomer(customerId);
+    await this.customerService.deactivateCustomer(customerId);
   }
 
-  reactivateCustomer(customerId: string): void {
-    this.customerService.reactivateCustomer(customerId);
+  async reactivateCustomer(customerId: string): Promise<void> {
+    await this.customerService.reactivateCustomer(customerId);
   }
 
   async deleteCustomer(customerId: string): Promise<void> {
@@ -183,7 +176,7 @@ export class CustomerListComponent implements OnInit {
     this.customerService.deleteCustomer(customerId).subscribe({
       next: () => {
         this.deleting.set(false);
-        this.fetchCustomers();
+        this.refreshAfterRemoval();
       },
       error: (error: HttpErrorResponse) => {
         this.deleting.set(false);
@@ -285,7 +278,7 @@ export class CustomerListComponent implements OnInit {
             : `Bulk action completed with ${failed} failure(s) (${succeeded} succeeded).`,
           failed === 0 ? 'success' : 'error',
         );
-        this.fetchCustomers();
+        this.refreshAfterRemoval();
       });
   }
 }

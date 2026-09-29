@@ -16,13 +16,11 @@
 <div class="list-toolbar">
   <div role="search" class="list-search">
     <input
-      #search
       type="search"
       class="form-control"
       placeholder="Search by name, email, or phone..."
       autocomplete="off"
-      [value]="searchTerm()"
-      (input)="onSearchInput(search.value)"
+      [formField]="searchForm.term"
       aria-label="Search customers by name, email, or phone"
     />
   </div>

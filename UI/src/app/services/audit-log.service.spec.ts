@@ -40,13 +40,13 @@ describe('AuditLogService', () => {
   });
 
   const load = (customerId: string) => {
-    service.loadAuditLog(customerId);
+    service.bindAuditLog(() => customerId);
     TestBed.tick();
   };
 
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  it('makes no request until a customer is loaded', async () => {
+  it('makes no request until a customer id is bound', async () => {
     TestBed.tick();
 
     httpMock.expectNone((r) => r.url === API_URL);

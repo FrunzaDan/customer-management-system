@@ -7,7 +7,8 @@
         showcase a realistic, end-to-end CRUD workflow: an Angular single-page
         frontend talking to an ASP.NET Core Web API, which persists data in SQL
         Server through raw ADO.NET calls to stored procedures — no ORM in
-        between.
+        between. A merchant signs in and manages customers, the product
+        catalogue and customer purchases.
       </p>
     </div>
   </div>
@@ -30,20 +31,29 @@
 
 docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1433 --name sqlserver --platform linux/arm64 -d mcr.microsoft.com/azure-sql-edge</code></pre>
           <p class="card-text">
+            On macOS and Linux the API always uses that container. On Windows it
+            uses the container if it answers within 3 seconds, and otherwise
+            falls back to a locally installed SQL Server (Windows
+            authentication); the choice is logged at startup.
+          </p>
+          <p class="card-text">
             Once the container is up and the schema is deployed (see
             <em>Database</em> below), the two remaining pieces both need to be
             started:
           </p>
           <ul>
             <li>
-              <strong>API</strong> — the ASP.NET Core Web API project, run with
+              <strong>API</strong> — the ASP.NET Core Web API project at
+              <code>https://localhost:7145</code>, run with
               <code>dotnet run</code> (or from your IDE). It serves the REST
               endpoints and talks to SQL Server over ADO.NET.
             </li>
             <li>
-              <strong>Angular frontend</strong> — the SPA, run with
+              <strong>Angular frontend</strong> — the SPA at
+              <code>http://localhost:4203</code>, run with
               <code>ng serve</code> / <code>npm start</code>. It calls the API
-              over HTTPS for authentication and every customer operation.
+              over HTTPS for authentication and every customer and product
+              operation.
             </li>
           </ul>
           <p class="card-text mb-0">
@@ -69,9 +79,9 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <li>
               <code>./build.sh</code> — a CI-style, one-shot build: restores and
               builds the .NET solution, runs its test suite, builds the SQL
-              database project, then installs and builds the Angular app. It
-              doesn't start anything; it just proves everything compiles and the
-              tests pass.
+              database project, then installs, format-checks, builds and tests
+              the Angular app. It doesn't start anything; it just proves
+              everything compiles and the tests pass.
             </li>
             <li>
               <code>./run.sh</code> — the actual local dev environment. It makes
@@ -102,23 +112,25 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <code>run.sh</code> builds that project into a
             <code>.dacpac</code> and deploys it with <code>sqlpackage</code>,
             retrying automatically until the freshly-started container starts
-            accepting connections. This deploy is a diff against the container's
-            current state, so it's idempotent — running it again against an
-            already-initialized database changes nothing — and it's allowed to
-            rebuild already-populated tables when a schema change requires it
-            (e.g. adding a constraint), since this is disposable local dev data,
-            not a production database that needs that guardrail.
+            accepting connections. On a fresh server that one publish creates
+            the database and everything in it. This deploy is a diff against the
+            container's current state, so it's idempotent — running it again
+            against an already-initialized database changes nothing — and it's
+            allowed to rebuild already-populated tables when a schema change
+            requires it (e.g. adding a constraint), since this is disposable
+            local dev data, not a production database that needs that guardrail.
           </p>
-          <p class="card-text">The schema has three tables:</p>
+          <p class="card-text">The schema has six tables:</p>
           <ul>
             <li>
               <code>Customer</code> — one row per customer: name, email, phone
               number, gender, birth date, a numeric
-              <code>StatusCode</code> (active / deactivated), and
-              creation/last-interaction timestamps, keyed by a
-              <code>CustomerId</code> (GUID) primary key. Email and phone number
-              each carry a unique constraint, so duplicates are rejected by the
-              database itself, not just application logic.
+              <code>StatusCode</code> (active / deactivated / test), an
+              enrollment date (when they first became a customer, which can
+              predate this system), and creation/last-interaction timestamps,
+              keyed by a <code>CustomerId</code> (GUID) primary key. Email and
+              phone number each carry a unique constraint, so duplicates are
+              rejected by the database itself, not just application logic.
             </li>
             <li>
               <code>CustomerAddress</code> — one row per customer's address,
@@ -128,13 +140,29 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             <li>
               <code>Merchant</code> — login accounts for the API, keyed by
               <code>Username</code> (primary key): a PBKDF2 password hash and
-              its salt (never the plaintext password), a role, and a
-              last-interaction timestamp.
+              its salt (never the plaintext password), a role, and the time of
+              the last successful login.
+            </li>
+            <li>
+              <code>Product</code> — the catalogue: name, category, description,
+              price, the depot it's stored in, and both its initial quantity and
+              the quantity still on hand (so "sold" is the difference).
+            </li>
+            <li>
+              <code>CustomerPurchase</code> — one row per purchase, linking a
+              customer to a product with the time it was bought.
+            </li>
+            <li>
+              <code>CustomerAuditLog</code> — one row per change to a customer
+              (created, edited, deactivated, reactivated, deleted, purchased).
+              It deliberately has no foreign key to <code>Customer</code>, so a
+              customer's history survives its deletion.
             </li>
           </ul>
           <p class="card-text">
-            All customer/merchant reads and writes go through stored procedures
-            rather than ad-hoc SQL from the API:
+            All reads and writes go through stored procedures, named
+            <code>&lt;Entity&gt;_&lt;Verb&gt;</code>, rather than ad-hoc SQL
+            from the API:
           </p>
           <ul>
             <li>
@@ -148,9 +176,9 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               <code>Customer_List</code> — returns one page of customers joined
-              with their addresses, filtered by an optional search term and
-              sorted by name/email/phone number, plus a total count for
-              pagination.
+              with their addresses, filtered by an optional search term (name,
+              email, or phone number) and sorted by name/email/phone number,
+              plus a total count for pagination.
             </li>
             <li>
               <code>Customer_Update</code> — updates only the fields that were
@@ -158,25 +186,55 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               <code>Customer_Deactivate</code> /
-              <code>Customer_Reactivate</code> — flip <code>StatusCode</code>,
-              refusing to "change" it to the state it's already in.
+              <code>Customer_Reactivate</code> — deactivating remembers the
+              status the customer had, and reactivating restores it (so a test
+              customer comes back as a test customer); both refuse to "change" a
+              customer to the state it's already in.
             </li>
             <li>
-              <code>Customer_Delete</code> — hard-deletes a customer and its
-              address, but only once it's already deactivated.
+              <code>Customer_Delete</code> — hard-deletes a customer with its
+              purchases and address, but only once it's deactivated (or is a
+              test customer).
             </li>
             <li>
-              <code>Merchant_GetAuthData</code> — returns a merchant's password
-              hash, salt, and role for the login flow, and stamps their
-              last-interaction time.
+              <code>CustomerPurchase_Create</code> /
+              <code>CustomerPurchase_ListByCustomer</code> — record and list
+              purchases. Recording one checks that the customer exists and isn't
+              deactivated and that the product is in stock, then decrements the
+              stock and inserts the purchase in one transaction.
+            </li>
+            <li>
+              <code>Product_List</code> / <code>Product_GetDetails</code> /
+              <code>Product_Create</code> — the catalogue, one product with its
+              buyers, and adding a product.
+            </li>
+            <li>
+              <code>CustomerAuditLog_Create</code> /
+              <code>CustomerAuditLog_ListByCustomer</code> /
+              <code>CustomerAuditLog_List</code> /
+              <code>CustomerAuditLog_DeleteAll</code> — write, read (one
+              customer's trail, or the global one, paged) and clear the audit
+              log.
+            </li>
+            <li>
+              <code>Report_GetCustomerInsights</code> — feeds the charts page:
+              one anonymous row per customer (no names or contact details) plus
+              purchases and revenue per month.
+            </li>
+            <li>
+              <code>Merchant_GetAuthData</code> /
+              <code>Merchant_RecordLogin</code> — return a merchant's password
+              hash, salt, and role for the login flow, and stamp the time of a
+              successful login.
             </li>
           </ul>
           <p class="card-text mb-0">
-            A post-deployment script seeds one demo login the first time the
-            schema is deployed (it's skipped if that merchant already exists),
-            so there's something to sign in with immediately after
-            initialization: username <code>TestMerchantID</code>, password
-            <code>Merchant123</code>.
+            A post-deployment script seeds one demo login (it's skipped if that
+            merchant already exists), so there's something to sign in with
+            immediately after initialization: username
+            <code>TestMerchantID</code>, password <code>Merchant123</code>. It
+            also seeds a catalogue of 50 products, inserting only the ones that
+            are missing, so a redeploy never resets their stock.
           </p>
         </div>
       </div>
@@ -209,7 +267,9 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               The submitted password is re-hashed with PBKDF2-SHA256 (100,000
               iterations, per-user salt) and compared to the stored hash using a
               constant-time comparison — the plaintext password is never stored
-              anywhere.
+              anywhere. An unknown username is hashed against a dummy salt, so
+              it takes as long as a wrong password and doesn't reveal which
+              usernames exist.
             </li>
             <li>
               On success, the API mints a JWT signed with HMAC-SHA256 (the same
@@ -223,14 +283,15 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               The Angular app stores that token in
               <code>sessionStorage</code> (cleared automatically when the tab
               closes) and attaches it as an
-              <code>Authorization: Bearer</code> header on every subsequent API
-              call.
+              <code>Authorization: Bearer</code> header on every subsequent call
+              to the API — and only to the API, never to any other host.
             </li>
             <li>
               Every protected endpoint is decorated with
               <code>[Authorize]</code>; ASP.NET's JWT bearer middleware verifies
               the signature, issuer, audience, and expiry on each request —
-              independent of anything the browser claims.
+              independent of anything the browser claims. Clearing the global
+              audit log additionally requires the merchant role.
             </li>
             <li>
               On navigation, an Angular route guard double-checks the token
@@ -252,17 +313,27 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
 
       <div class="card app-card mb-4">
         <div class="card-body">
-          <h2 class="card-title">Data access &amp; CRUD operations</h2>
+          <h2 class="card-title">Data access &amp; errors</h2>
+          <p class="card-text">
+            All data access goes through ADO.NET <code>SqlCommand</code> objects
+            calling the stored procedures listed under <em>Database</em> above,
+            with every input passed as a typed, bound parameter — nothing is
+            built by string-concatenating SQL. That gives the API the standard
+            CRUD set (create, read one or all, update) plus the
+            deactivate/reactivate/delete lifecycle, purchases, products, the
+            audit log and the charts data, all exposed through the
+            <code>[Authorize]</code>-protected
+            <code>CustomerController</code> and
+            <code>ProductController</code> endpoints the Angular app calls.
+          </p>
           <p class="card-text mb-0">
-            All customer data access goes through ADO.NET
-            <code>SqlCommand</code> objects calling the stored procedures listed
-            under <em>Database</em> above, with every input passed as a bound
-            parameter — nothing is built by string-concatenating SQL. That gives
-            the API the standard CRUD set (create, read one or all, update) plus
-            the deactivate/reactivate/delete lifecycle described below, all
-            exposed through the <code>[Authorize]</code>-protected
-            <code>CustomerController</code>
-            endpoints the Angular app calls.
+            Every write procedure reports its outcome as a result row: success,
+            or the HTTP status that fits (<code>400</code> for a bad reference,
+            <code>404</code> for not found, <code>409</code> for a duplicate or
+            a state conflict). Every error the API returns is an RFC 9457
+            Problem Details response, which the UI reads to show a specific
+            message next to the control that failed; anything unexpected is
+            logged once and returned as a <code>500</code>.
           </p>
         </div>
       </div>
@@ -324,14 +395,15 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             fictitious customers through the same
             <code>POST /api/customer/create</code> endpoint the
             <em>Add customer</em> form uses — each with a randomly generated
-            name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), and
-            a home address. Every one of them is created with the
-            <code>Test</code> status (<code>1904</code>) rather than
-            <code>Active</code>, so they're clearly distinguishable from real
-            customers everywhere the status is shown. It exists purely so
-            there's enough data to try out search, sorting, and pagination
-            locally; like an active customer, a test customer can still be
-            deactivated and deleted afterwards.
+            name, email, a Romanian mobile number (<code>07xxxxxxxx</code>), a
+            home address, and an enrollment date between 2005 and 2025. Every
+            one of them is created with the <code>Test</code> status
+            (<code>1904</code>) rather than <code>Active</code>, so they're
+            clearly distinguishable from real customers everywhere the status is
+            shown. It exists purely so there's enough data to try out search,
+            sorting, pagination, and the charts locally; like an active
+            customer, a test customer can still be deactivated, and it can be
+            deleted straight away.
           </p>
           <p class="card-text">
             Each test customer also buys
@@ -374,20 +446,26 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
             </li>
             <li>
               Add a new customer through a validated form (name, contact
-              details, address, birth date via a native date picker, etc.).
+              details, address, birth and enrollment dates via a native date
+              picker, etc.); leaving a form with unsaved changes asks first.
             </li>
             <li>
               Open a customer's details page for a full read-only view, with a
-              plain-language account status instead of a raw code.
+              plain-language account status instead of a raw code, their
+              purchases, and their audit trail.
             </li>
             <li>Edit an existing customer's information.</li>
+            <li>
+              Record a purchase for a customer from their details page, which
+              takes one unit out of that product's stock.
+            </li>
             <li>
               Deactivate an active customer (with a confirmation prompt), or
               reactivate one that was deactivated.
             </li>
             <li>
-              Permanently delete a customer once it has been deactivated (also
-              confirmation-guarded).
+              Permanently delete a customer once it has been deactivated, or a
+              test customer at any time (also confirmation-guarded).
             </li>
             <li>
               Select several customers at once with row checkboxes and run a
@@ -400,9 +478,20 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" -p 1433:1
               Export the currently filtered/sorted customer list to a CSV file.
             </li>
             <li>
+              Browse the product catalogue (sortable by name, category, depot,
+              price, and sold / inventory / left), add a product, and open one
+              to see its stock and who bought it.
+            </li>
+            <li>
+              Explore the charts dashboard: key figures at a glance, the
+              customer base (enrollments, growth, status, gender, age, loyalty,
+              counties, purchases per customer), and sales and catalogue
+              (revenue over time, categories, stock health).
+            </li>
+            <li>
               Browse a global, paginated audit trail of every customer change
-              (create/edit/deactivate/reactivate/delete) across the whole
-              system, newest first.
+              (create/edit/deactivate/reactivate/delete/purchase) across the
+              whole system, newest first, and clear it.
             </li>
             <li>
               Get redirected to login automatically if your session expires or

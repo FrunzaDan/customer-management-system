@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CustomerService } from '../../services/customer.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
@@ -11,7 +11,8 @@ import { CustomerListComponent } from './customer-list.component';
 
 describe('CustomerListComponent', () => {
   let component: CustomerListComponent;
-  let loadCustomers: ReturnType<typeof vi.fn>;
+  let bindCustomers: ReturnType<typeof vi.fn>;
+  let reloadCustomers: ReturnType<typeof vi.fn>;
   let exportCustomers: ReturnType<typeof vi.fn>;
   let totalItems: ReturnType<typeof signal<number>>;
   let customers: ReturnType<typeof signal<Customer[]>>;
@@ -45,7 +46,8 @@ describe('CustomerListComponent', () => {
   });
 
   beforeEach(() => {
-    loadCustomers = vi.fn();
+    bindCustomers = vi.fn();
+    reloadCustomers = vi.fn();
     exportCustomers = vi.fn();
     totalItems = signal(0);
     customers = signal<Customer[]>([]);
@@ -68,7 +70,8 @@ describe('CustomerListComponent', () => {
       totalItems: totalItems,
       pageNumber: signal(1),
       pageSize: signal(10),
-      loadCustomers,
+      bindCustomers,
+      reloadCustomers,
       activationLoading: signal(false),
       activationError: signal<string | null>(null),
       deactivateCustomerSilently,
@@ -84,7 +87,7 @@ describe('CustomerListComponent', () => {
         { provide: CustomerService, useValue: customerServiceStub },
         { provide: ConfirmDialogService, useValue: { confirm } },
         { provide: NotificationService, useValue: { show: notificationShow } },
-        { provide: Router, useValue: { navigate: vi.fn() } },
+        provideRouter([]),
       ],
     });
 
@@ -97,19 +100,27 @@ describe('CustomerListComponent', () => {
     vi.useRealTimers();
   });
 
+  it('binds the list to its params, starting on page 1 sorted by name', () => {
+    expect(bindCustomers).toHaveBeenCalledWith(component.listParams);
+    expect(component.listParams()).toEqual({
+      pageNumber: 1,
+      pageSize: 50,
+      searchTerm: undefined,
+      sortColumn: 'name',
+      sortDirection: 'asc',
+    });
+  });
+
   describe('setSort', () => {
     it('toggles direction when clicking the already-active column, and resets to page 1', () => {
       totalItems.set(75);
-      component.currentPage.set(3);
-      loadCustomers.mockClear();
+      component.currentPage.set(2);
 
       component.setSort('name');
 
       expect(component.sortColumn()).toBe('name');
       expect(component.sortDirection()).toBe('desc');
-      expect(component.currentPage()).toBe(1);
-      expect(loadCustomers).toHaveBeenCalledTimes(1);
-      expect(loadCustomers).toHaveBeenCalledWith({
+      expect(component.listParams()).toEqual({
         pageNumber: 1,
         pageSize: 50,
         searchTerm: undefined,
@@ -119,114 +130,94 @@ describe('CustomerListComponent', () => {
     });
 
     it('switches column and resets direction to asc when clicking a different column', () => {
+      component.setSort('name');
+
       component.setSort('email');
 
       expect(component.sortColumn()).toBe('email');
       expect(component.sortDirection()).toBe('asc');
-      expect(loadCustomers).toHaveBeenLastCalledWith({
-        pageNumber: 1,
-        pageSize: 50,
-        searchTerm: undefined,
-        sortColumn: 'email',
-        sortDirection: 'asc',
-      });
+      expect(component.listParams()).toEqual(
+        expect.objectContaining({ sortColumn: 'email', sortDirection: 'asc' }),
+      );
     });
   });
 
   describe('goToPage', () => {
     it('clamps above the last page down to totalPages', () => {
       totalItems.set(120);
-      loadCustomers.mockClear();
 
       component.goToPage(10);
 
       expect(component.currentPage()).toBe(3);
-      expect(loadCustomers).toHaveBeenLastCalledWith(
-        expect.objectContaining({ pageNumber: 3 }),
-      );
+      expect(component.listParams().pageNumber).toBe(3);
     });
 
     it('clamps below page 1 up to 1', () => {
       totalItems.set(75);
-      component.currentPage.set(3);
-      loadCustomers.mockClear();
+      component.currentPage.set(2);
 
       component.goToPage(0);
 
       expect(component.currentPage()).toBe(1);
-      expect(loadCustomers).toHaveBeenLastCalledWith(
-        expect.objectContaining({ pageNumber: 1 }),
-      );
+      expect(component.listParams().pageNumber).toBe(1);
     });
 
-    it('does nothing when the target page equals the current page', () => {
-      loadCustomers.mockClear();
+    it('keeps the same params when the target page equals the current page', () => {
+      const before = component.listParams();
 
       component.goToPage(1);
 
-      expect(loadCustomers).not.toHaveBeenCalled();
+      expect(component.listParams()).toBe(before);
     });
   });
 
-  describe('page clamping after a reload', () => {
-    it('steps back to the last page when the current page no longer exists', () => {
-      totalItems.set(120);
-      component.currentPage.set(3);
-      TestBed.tick();
-      loadCustomers.mockClear();
-
-      totalItems.set(100);
-      TestBed.tick();
-
-      expect(component.currentPage()).toBe(2);
-      expect(loadCustomers).toHaveBeenCalledWith(
-        expect.objectContaining({ pageNumber: 2 }),
-      );
-    });
-  });
-
-  describe('onSearchInput', () => {
-    it('debounces so only the last call within the window triggers a fetch', () => {
-      vi.useFakeTimers();
-
-      component.onSearchInput('d');
-      vi.advanceTimersByTime(100);
-      component.onSearchInput('da');
-      vi.advanceTimersByTime(100);
-      component.onSearchInput('dan');
-
-      expect(loadCustomers).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(299);
-      expect(loadCustomers).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(1);
-      expect(loadCustomers).toHaveBeenCalledTimes(1);
-      expect(loadCustomers).toHaveBeenCalledWith({
-        pageNumber: 1,
-        pageSize: 50,
-        searchTerm: 'dan',
-        sortColumn: 'name',
-        sortDirection: 'asc',
-      });
-    });
-
-    it('resets to page 1 once the debounced fetch fires', () => {
-      vi.useFakeTimers();
+  describe('search', () => {
+    it('searches by the trimmed term and goes back to page 1', () => {
       totalItems.set(75);
       component.currentPage.set(2);
-      loadCustomers.mockClear();
 
-      component.onSearchInput('dan');
-      vi.advanceTimersByTime(300);
+      component.searchForm.term().value.set('  dan  ');
 
-      expect(component.currentPage()).toBe(1);
+      expect(component.listParams()).toEqual(
+        expect.objectContaining({ pageNumber: 1, searchTerm: 'dan' }),
+      );
+    });
+
+    it('leaves searchTerm out of the params when the box is blank', () => {
+      component.searchForm.term().value.set('   ');
+
+      expect(component.listParams().searchTerm).toBeUndefined();
+    });
+
+    it('waits for typing to pause before searching', async () => {
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(CustomerListComponent);
+      fixture.detectChanges();
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        'input[type="search"]',
+      );
+
+      input.value = 'dan';
+      input.dispatchEvent(new Event('input'));
+      await vi.advanceTimersByTimeAsync(299);
+      expect(fixture.componentInstance.listParams().searchTerm).toBeUndefined();
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(fixture.componentInstance.listParams().searchTerm).toBe('dan');
+    });
+
+    it('clears the selection when the search changes', () => {
+      component.toggleSelection('customer-1', true);
+
+      component.searchForm.term().value.set('dan');
+
+      expect(component.isSelected('customer-1')).toBe(false);
     });
   });
 
   describe('exportCsv', () => {
     it('exports with the current search term (trimmed) and sort state', () => {
-      component.searchTerm.set('  dan  ');
+      component.searchForm.term().value.set('  dan  ');
       component.setSort('email');
 
       component.exportCsv();
@@ -300,15 +291,26 @@ describe('CustomerListComponent', () => {
       expect(deleteCustomer).not.toHaveBeenCalled();
     });
 
-    it('deletes the customer and refetches the current page on success', async () => {
-      loadCustomers.mockClear();
+    it('deletes the customer and reloads the current page on success', async () => {
+      customers.set([buildCustomer()]);
 
       await component.deleteCustomer('customer-1');
 
       expect(deleteCustomer).toHaveBeenCalledWith('customer-1');
       expect(component.deleting()).toBe(false);
       expect(component.deleteError()).toBeNull();
-      expect(loadCustomers).toHaveBeenCalledTimes(1);
+      expect(reloadCustomers).toHaveBeenCalledTimes(1);
+    });
+
+    it('steps back a page instead when the delete empties the current one', async () => {
+      totalItems.set(51);
+      component.currentPage.set(2);
+      customers.set([]);
+
+      await component.deleteCustomer('customer-1');
+
+      expect(component.currentPage()).toBe(1);
+      expect(reloadCustomers).not.toHaveBeenCalled();
     });
 
     it('surfaces the error and stops loading when the delete request fails', async () => {
@@ -352,7 +354,7 @@ describe('CustomerListComponent', () => {
       expect(deleteCustomerSilently).not.toHaveBeenCalled();
     });
 
-    it('deactivates Active customers and deletes non-Active ones, then shows a success summary and refetches', async () => {
+    it('deactivates Active customers and deletes non-Active ones, then shows a success summary and reloads', async () => {
       customers.set([
         buildCustomer({
           customerId: 'active-1',
@@ -365,7 +367,6 @@ describe('CustomerListComponent', () => {
         buildCustomer({ customerId: 'test-1', status: CustomerStatus.Test }),
       ]);
       component.toggleSelectAll(true);
-      loadCustomers.mockClear();
 
       await component.bulkDeleteSelected();
 
@@ -381,7 +382,8 @@ describe('CustomerListComponent', () => {
         'success',
       );
       expect(component.bulkActionInProgress()).toBe(false);
-      expect(loadCustomers).toHaveBeenCalledTimes(1);
+      expect(reloadCustomers).toHaveBeenCalledTimes(1);
+      expect(component.selectedCustomerIds().size).toBe(0);
     });
 
     it('reports a failure count and does not stop the batch when one operation fails', async () => {

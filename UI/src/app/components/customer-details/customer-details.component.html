@@ -298,19 +298,13 @@
                   <select
                     id="purchase-product"
                     class="form-select"
-                    [disabled]="
-                      !canPurchase() ||
-                      purchasing() ||
-                      productsLoading() ||
-                      !!productsError()
-                    "
+                    [formField]="purchaseForm.productId"
                     [attr.aria-describedby]="
                       'purchase-hint' +
                       (purchaseError() ? ' purchase-error' : '')
                     "
-                    (change)="selectProduct($event)"
                   >
-                    <option value="" [selected]="!selectedProductId()">
+                    <option value="">
                       @if (productsLoading() && products().length === 0) {
                         Loading products…
                       } @else {
@@ -325,9 +319,6 @@
                         ) {
                           <option
                             [value]="product.productId"
-                            [selected]="
-                              product.productId === selectedProductId()
-                            "
                             [disabled]="product.quantityOnHand === 0"
                           >
                             {{ product.name }} —

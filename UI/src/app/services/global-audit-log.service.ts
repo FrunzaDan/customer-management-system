@@ -34,14 +34,14 @@ export class GlobalAuditLogService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly params = signal<LoadAllAuditLogParams | undefined>(
-    undefined,
+  private readonly params = signal<() => LoadAllAuditLogParams | undefined>(
+    () => undefined,
   );
 
   private readonly entriesResource = httpResource<
     GenericResponse<PagedResponse<GlobalAuditLogEntry>>
   >(() => {
-    const params = this.params();
+    const params = this.params()();
     if (!params) return undefined;
     return {
       url: this.apiUrl,
@@ -62,10 +62,11 @@ export class GlobalAuditLogService {
 
   readonly entries = computed(() => this.page()?.items ?? []);
   readonly pageNumber = computed(
-    () => this.page()?.pageNumber ?? this.params()?.pageNumber ?? 1,
+    () => this.page()?.pageNumber ?? this.params()()?.pageNumber ?? 1,
   );
   readonly pageSize = computed(
-    () => this.page()?.pageSize ?? this.params()?.pageSize ?? DEFAULT_PAGE_SIZE,
+    () =>
+      this.page()?.pageSize ?? this.params()()?.pageSize ?? DEFAULT_PAGE_SIZE,
   );
   readonly totalItems = computed(() => this.page()?.totalItems ?? 0);
   readonly loading = this.entriesResource.isLoading;
@@ -79,8 +80,10 @@ export class GlobalAuditLogService {
       : null;
   });
 
-  loadAllAuditLog(params: LoadAllAuditLogParams): void {
-    this.params.set({ ...params });
+  // The log follows the given params: it loads as soon as they're bound and
+  // again whenever they change.
+  bindAllAuditLog(params: () => LoadAllAuditLogParams | undefined): void {
+    this.params.set(params);
   }
 
   deleteAllAuditLog(): Observable<GenericResponse<object>> {

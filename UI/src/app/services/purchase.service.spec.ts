@@ -44,14 +44,14 @@ describe('PurchaseService', () => {
   });
 
   const load = (customerId: string) => {
-    service.loadPurchases(customerId);
+    service.bindPurchases(() => customerId);
     TestBed.tick();
   };
 
   const settle = () => TestBed.inject(ApplicationRef).whenStable();
 
-  describe('loadPurchases', () => {
-    it('makes no request until a customer is loaded', () => {
+  describe('bindPurchases', () => {
+    it('makes no request until a customer id is bound', () => {
       TestBed.tick();
 
       httpMock.expectNone((r) => r.url === LIST_URL);
@@ -72,14 +72,15 @@ describe('PurchaseService', () => {
       expect(service.error()).toBeNull();
     });
 
-    it('re-requests when asked to load the same customer again (e.g. after a purchase)', async () => {
+    it('re-requests the same customer on reloadPurchases() (e.g. after a purchase)', async () => {
       load('customer-1');
       httpMock
         .expectOne((r) => r.url === LIST_URL)
         .flush({ status: 200, responseMessage: 'ok', data: [] });
       await settle();
 
-      load('customer-1');
+      service.reloadPurchases();
+      TestBed.tick();
 
       httpMock
         .expectOne((r) => r.url === LIST_URL)

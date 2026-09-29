@@ -100,14 +100,6 @@ describe('ProductDetailsComponent', () => {
     expect(getProductDetails).toHaveBeenCalledWith('product-1');
   });
 
-  it('goes back to the products list when there is no id', () => {
-    routeParamId = null;
-    render();
-
-    expect(getProductDetails).not.toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith(['/products']);
-  });
-
   it('always renders exactly one <h1>, so focus and page structure survive every state', async () => {
     const loading = render();
     expect(el(loading).querySelectorAll('h1')).toHaveLength(1);

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -14,7 +14,7 @@ import { extractErrorMessage } from '../../utils/extract-error-message';
   styleUrl: './global-audit-log.component.css',
   imports: [DatePipe, RouterLink],
 })
-export class GlobalAuditLogComponent implements OnInit {
+export class GlobalAuditLogComponent {
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly globalAuditLogService = inject(GlobalAuditLogService);
 
@@ -35,15 +35,19 @@ export class GlobalAuditLogComponent implements OnInit {
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize)),
   );
 
-  ngOnInit(): void {
-    this.fetchAuditLog();
+  readonly pageParams = computed(() => ({
+    pageNumber: this.currentPage(),
+    pageSize: this.pageSize,
+  }));
+
+  constructor() {
+    this.globalAuditLogService.bindAllAuditLog(this.pageParams);
   }
 
   goToPage(page: number): void {
     const target = Math.min(Math.max(page, 1), this.totalPages());
     if (target === this.currentPage()) return;
     this.currentPage.set(target);
-    this.fetchAuditLog();
   }
 
   customerLabel(entry: GlobalAuditLogEntry): string {
@@ -74,13 +78,6 @@ export class GlobalAuditLogComponent implements OnInit {
           extractErrorMessage(error, 'Failed to clear the audit log'),
         );
       },
-    });
-  }
-
-  private fetchAuditLog(): void {
-    this.globalAuditLogService.loadAllAuditLog({
-      pageNumber: this.currentPage(),
-      pageSize: this.pageSize,
     });
   }
 }

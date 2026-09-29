@@ -20,12 +20,14 @@ export class PurchaseService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
 
-  private readonly customerId = signal<string | undefined>(undefined);
+  private readonly customerId = signal<() => string | undefined>(
+    () => undefined,
+  );
 
   private readonly purchasesResource = httpResource<
     GenericResponse<Purchase[]>
   >(() => {
-    const customerId = this.customerId();
+    const customerId = this.customerId()();
     if (!customerId) return undefined;
     return {
       url: `${this.apiUrl}/purchases`,
@@ -44,12 +46,14 @@ export class PurchaseService {
     return error ? extractErrorMessage(error as HttpErrorResponse) : null;
   });
 
-  loadPurchases(customerId: string): void {
-    if (this.customerId() === customerId) {
-      this.purchasesResource.reload();
-    } else {
-      this.customerId.set(customerId);
-    }
+  // Follows the given customer id: loads as soon as it's bound and again
+  // whenever the id changes.
+  bindPurchases(customerId: () => string | undefined): void {
+    this.customerId.set(customerId);
+  }
+
+  reloadPurchases(): void {
+    this.purchasesResource.reload();
   }
 
   purchaseProduct(
