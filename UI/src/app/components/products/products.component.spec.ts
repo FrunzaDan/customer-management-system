@@ -1,12 +1,16 @@
 import { signal } from '@angular/core';
+import { of, throwError } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Product } from '../../interfaces/product';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { ProductService } from '../../services/product.service';
 import { ProductsComponent } from './products.component';
 
 describe('ProductsComponent', () => {
   let loadProducts: ReturnType<typeof vi.fn>;
+  let resetProductStock: ReturnType<typeof vi.fn>;
+  let confirm: ReturnType<typeof vi.fn>;
   let products: ReturnType<typeof signal<Product[]>>;
   let loading: ReturnType<typeof signal<boolean>>;
   let error: ReturnType<typeof signal<string | null>>;
@@ -26,6 +30,12 @@ describe('ProductsComponent', () => {
 
   const render = () => {
     loadProducts = vi.fn();
+    resetProductStock = vi
+      .fn()
+      .mockReturnValue(
+        of({ status: 200, responseMessage: 'Stock reset for 1 products.' }),
+      );
+    confirm = vi.fn().mockResolvedValue(true);
     products = signal<Product[]>([]);
     loading = signal(false);
     error = signal<string | null>(null);
@@ -38,8 +48,10 @@ describe('ProductsComponent', () => {
             loading: loading,
             error: error,
             loadProducts,
+            resetProductStock,
           },
         },
+        { provide: ConfirmDialogService, useValue: { confirm } },
         provideRouter([]),
       ],
     });
@@ -55,6 +67,63 @@ describe('ProductsComponent', () => {
     render();
 
     expect(loadProducts).toHaveBeenCalled();
+  });
+
+  describe('Reset products (demo)', () => {
+    const resetButton = (fixture: ReturnType<typeof render>) =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+      ).find((b) => b.textContent?.includes('Reset products (demo)'))!;
+
+    it('sits to the left of "Add product"', () => {
+      const fixture = render();
+      products.set([buildProduct()]);
+      fixture.detectChanges();
+
+      const button = resetButton(fixture);
+      expect(button.nextElementSibling?.textContent?.trim()).toBe(
+        'Add product',
+      );
+    });
+
+    it('resets the stock once the merchant confirms', async () => {
+      const fixture = render();
+      products.set([buildProduct()]);
+      fixture.detectChanges();
+
+      await fixture.componentInstance.resetProductStock();
+
+      expect(confirm).toHaveBeenCalled();
+      expect(resetProductStock).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance.resetting()).toBe(false);
+    });
+
+    it('does nothing when the merchant cancels', async () => {
+      const fixture = render();
+      confirm.mockResolvedValue(false);
+
+      await fixture.componentInstance.resetProductStock();
+
+      expect(resetProductStock).not.toHaveBeenCalled();
+    });
+
+    it('shows the error when the reset fails', async () => {
+      const fixture = render();
+      products.set([buildProduct()]);
+      resetProductStock.mockReturnValue(throwError(() => new Error('boom')));
+
+      await fixture.componentInstance.resetProductStock();
+      fixture.detectChanges();
+
+      expect(text(fixture)).toContain('Failed to reset the products');
+      expect(fixture.componentInstance.resetting()).toBe(false);
+    });
+
+    it('is disabled while there are no products', () => {
+      const fixture = render();
+
+      expect(resetButton(fixture).disabled).toBe(true);
+    });
   });
 
   it('shows a spinner while loading with nothing to show yet', () => {

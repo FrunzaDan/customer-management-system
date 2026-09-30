@@ -26,6 +26,13 @@ internal static class SqlParameterExtensions
     public static void AddDate(this SqlParameterCollection parameters, string name, DateOnly? value) =>
         parameters.Add(name, SqlDbType.Date).Value = (object?)value ?? DBNull.Value;
 
+    public static void AddDateTime2(this SqlParameterCollection parameters, string name, DateTime? value)
+    {
+        var parameter = parameters.Add(name, SqlDbType.DateTime2);
+        parameter.Scale = 3;
+        parameter.Value = (object?)value ?? DBNull.Value;
+    }
+
     public static void AddDecimal(this SqlParameterCollection parameters, string name, byte precision, byte scale,
         decimal value)
     {
@@ -54,6 +61,18 @@ internal static class SqlDataReaderExtensions
     {
         var ordinal = reader.GetOrdinal(column);
         return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+    }
+
+    /// <summary>Like <see cref="GetNullableString"/>, but also null when the result has no such column.</summary>
+    public static string? GetOptionalString(this SqlDataReader reader, string column)
+    {
+        for (var ordinal = 0; ordinal < reader.FieldCount; ordinal++)
+        {
+            if (string.Equals(reader.GetName(ordinal), column, StringComparison.OrdinalIgnoreCase))
+                return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+
+        return null;
     }
 
     public static int GetInt32(this SqlDataReader reader, string column) =>

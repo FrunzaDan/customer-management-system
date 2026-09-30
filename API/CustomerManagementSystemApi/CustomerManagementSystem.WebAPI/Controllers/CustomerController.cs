@@ -62,8 +62,9 @@ public class CustomerController(ICustomerService customerService) : ApiControlle
 
     [HttpPost("purchase")]
     public async Task<ActionResult<ResponseModel<object>>> PurchaseProduct([FromQuery] Guid customerId,
-        [FromQuery] Guid productId, CancellationToken cancellationToken) =>
-        Reply(await customerService.PurchaseProductAsync(customerId, productId, Username, cancellationToken));
+        [FromQuery] Guid productId, [FromQuery] DateTimeOffset? purchasedAt, CancellationToken cancellationToken) =>
+        Reply(await customerService.PurchaseProductAsync(customerId, productId, purchasedAt?.UtcDateTime, Username,
+            cancellationToken));
 
     [HttpPatch("update")]
     public async Task<ActionResult<ResponseModel<object>>> UpdateCustomer([FromBody] UpdateCustomerRequest request,

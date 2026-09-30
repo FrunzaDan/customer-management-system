@@ -16,4 +16,7 @@ public class ProductService(ProductFunctions productFunctions) : IProductService
     public Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProductsAsync(
         CancellationToken cancellationToken = default) =>
         productFunctions.GetProductsAsync(cancellationToken);
+
+    public Task<ResponseModel<object>> ResetProductStockAsync(CancellationToken cancellationToken = default) =>
+        productFunctions.ResetProductStockAsync(cancellationToken);
 }

@@ -206,4 +206,29 @@ describe('ProductService', () => {
       );
     });
   });
+
+  describe('resetProductStock', () => {
+    it('POSTs to the reset endpoint, shows the server message and reloads the products', async () => {
+      service.loadProducts();
+      TestBed.inject(ApplicationRef).tick();
+      httpMock
+        .expectOne(`${API_URL}/all`)
+        .flush({ status: 200, responseMessage: 'ok', data: [] });
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      service.resetProductStock().subscribe();
+      const req = httpMock.expectOne(`${API_URL}/reset-stock`);
+      expect(req.request.method).toBe('POST');
+      req.flush({
+        status: 200,
+        responseMessage: 'Stock reset for 3 products.',
+      });
+
+      expect(notificationShow).toHaveBeenCalledWith(
+        'Stock reset for 3 products.',
+      );
+      TestBed.inject(ApplicationRef).tick();
+      httpMock.expectOne(`${API_URL}/all`);
+    });
+  });
 });

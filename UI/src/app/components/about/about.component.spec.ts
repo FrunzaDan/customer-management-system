@@ -23,7 +23,12 @@ describe('AboutComponent — createTestCustomers', () => {
     Array.from({ length: size }, (_, i) => buildProduct(i, stock));
 
   let registered: string[];
-  let purchases: { customerId: string; productId: string }[];
+  let enrolledOn: Map<string, string>;
+  let purchases: {
+    customerId: string;
+    productId: string;
+    purchasedAt?: string;
+  }[];
   let fetchProducts: ReturnType<typeof vi.fn>;
   let createCustomerSilently: ReturnType<typeof vi.fn>;
   let purchaseProductSilently: ReturnType<typeof vi.fn>;
@@ -31,20 +36,29 @@ describe('AboutComponent — createTestCustomers', () => {
 
   const createComponent = (products: Product[] = catalogue()) => {
     registered = [];
+    enrolledOn = new Map();
     purchases = [];
     fetchProducts = vi.fn().mockReturnValue(of(products));
-    createCustomerSilently = vi.fn((customer: { email: string }) => {
-      registered.push(customer.email);
-      return of({
-        status: 200,
-        responseMessage: 'ok',
-        data: `customer-for-${customer.email}`,
-      });
-    });
-    purchaseProductSilently = vi.fn((customerId: string, productId: string) => {
-      purchases.push({ customerId, productId });
-      return of({ status: 200, responseMessage: 'ok' });
-    });
+    createCustomerSilently = vi.fn(
+      (customer: { email: string; enrollmentDate: string }) => {
+        registered.push(customer.email);
+        enrolledOn.set(
+          `customer-for-${customer.email}`,
+          customer.enrollmentDate,
+        );
+        return of({
+          status: 200,
+          responseMessage: 'ok',
+          data: `customer-for-${customer.email}`,
+        });
+      },
+    );
+    purchaseProductSilently = vi.fn(
+      (customerId: string, productId: string, purchasedAt?: string) => {
+        purchases.push({ customerId, productId, purchasedAt });
+        return of({ status: 200, responseMessage: 'ok' });
+      },
+    );
     show = vi.fn();
 
     TestBed.configureTestingModule({
@@ -104,6 +118,22 @@ describe('AboutComponent — createTestCustomers', () => {
       [...purchasesByCustomer().values()].map((p) => p.length),
     );
     expect(counts.size).toBeGreaterThan(1);
+  });
+
+  it('dates each purchase between the customer enrolling and now, not all at once', async () => {
+    const component = createComponent();
+
+    await component.createTestCustomers();
+
+    for (const p of purchases) {
+      expect(p.purchasedAt).toBeDefined();
+      expect(p.purchasedAt!.slice(0, 10) >= enrolledOn.get(p.customerId)!).toBe(
+        true,
+      );
+      expect(Date.parse(p.purchasedAt!)).toBeLessThanOrEqual(Date.now());
+    }
+    const years = new Set(purchases.map((p) => p.purchasedAt!.slice(0, 4)));
+    expect(years.size).toBeGreaterThan(5);
   });
 
   it('buys for each new customer by the GUID its registration returned', async () => {

@@ -19,7 +19,8 @@ public interface IDbUtils
     Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProductsAsync(CancellationToken cancellationToken = default);
     Task<ResponseModel<ProductDetailsModel>> GetProductDetailsAsync(Guid productId, CancellationToken cancellationToken = default);
     Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesAsync(Guid customerId, CancellationToken cancellationToken = default);
-    Task<ResponseModel<string>> PurchaseProductAsync(Guid customerId, Guid productId, CancellationToken cancellationToken = default);
+    Task<ResponseModel<string>> PurchaseProductAsync(Guid customerId, Guid productId, DateTime? purchasedAt, CancellationToken cancellationToken = default);
     Task<ResponseModel<Guid?>> CreateProductAsync(CreateProductRequest product, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> ResetProductStockAsync(CancellationToken cancellationToken = default);
     Task<ResponseModel<CustomerInsightsModel>> GetCustomerInsightsAsync(CancellationToken cancellationToken = default);
 }

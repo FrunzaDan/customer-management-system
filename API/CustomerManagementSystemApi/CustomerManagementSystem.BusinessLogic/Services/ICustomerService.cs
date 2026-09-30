@@ -16,7 +16,7 @@ public interface ICustomerService
 
     Task<ResponseModel<IReadOnlyList<PurchaseModel>>> GetCustomerPurchasesAsync(Guid customerId, CancellationToken cancellationToken = default);
 
-    Task<ResponseModel<object>> PurchaseProductAsync(Guid customerId, Guid productId, string performedBy, CancellationToken cancellationToken = default);
+    Task<ResponseModel<object>> PurchaseProductAsync(Guid customerId, Guid productId, DateTime? purchasedAt, string performedBy, CancellationToken cancellationToken = default);
 
     Task<ResponseModel<Guid?>> CreateCustomerAsync(CreateCustomerRequest request, string performedBy, CancellationToken cancellationToken = default);
 

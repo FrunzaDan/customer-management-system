@@ -3,6 +3,7 @@ import {
   MAX_TEST_PURCHASES,
   MIN_TEST_PURCHASES,
   chooseProductsToBuy,
+  randomPurchaseTime,
 } from './random-purchases';
 
 const buildProduct = (n: number, quantityOnHand = 10): Product => ({
@@ -81,5 +82,49 @@ describe('chooseProductsToBuy', () => {
     chooseProductsToBuy(products);
 
     expect(products.map((p) => p.productId)).toEqual(snapshot);
+  });
+});
+
+describe('randomPurchaseTime', () => {
+  const now = new Date('2026-09-29T15:00:00.000Z');
+
+  it('dates every purchase between the enrollment day and now, in shop hours', () => {
+    for (let i = 0; i < 500; i++) {
+      const time = new Date(randomPurchaseTime('2020-06-15', now));
+      expect(time.getTime()).toBeGreaterThanOrEqual(
+        Date.parse('2020-06-15T07:00:00.000Z'),
+      );
+      expect(time.getTime()).toBeLessThanOrEqual(now.getTime());
+      if (time.getTime() !== now.getTime()) {
+        expect(time.getUTCHours()).toBeGreaterThanOrEqual(7);
+        expect(time.getUTCHours()).toBeLessThan(19);
+      }
+    }
+  });
+
+  it('spreads purchases over the years instead of bunching them together', () => {
+    const years = new Set(
+      Array.from({ length: 200 }, () =>
+        new Date(randomPurchaseTime('2010-01-01', now)).getUTCFullYear(),
+      ),
+    );
+    expect(years.size).toBeGreaterThan(10);
+  });
+
+  it('opens on the enrollment day at random() = 0', () => {
+    expect(randomPurchaseTime('2020-06-15', now, () => 0)).toBe(
+      '2020-06-15T07:00:00.000Z',
+    );
+  });
+
+  it('never dates a purchase after now, even on the last day', () => {
+    expect(randomPurchaseTime('2020-06-15', now, () => 0.999999)).toBe(
+      now.toISOString(),
+    );
+  });
+
+  it('dates a purchase today for a customer who enrolled today', () => {
+    const time = randomPurchaseTime('2026-09-29', now, () => 0.25);
+    expect(time.startsWith('2026-09-29')).toBe(true);
   });
 });

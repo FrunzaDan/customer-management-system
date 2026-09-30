@@ -1,6 +1,9 @@
 CREATE PROCEDURE [dbo].[CustomerPurchase_Create]
     @CustomerId UNIQUEIDENTIFIER,
-    @ProductId UNIQUEIDENTIFIER
+    @ProductId UNIQUEIDENTIFIER,
+    -- Only test customers can have a purchase dated in the past, so the
+    -- generator can spread their purchases out; real ones are dated now.
+    @PurchasedAt DATETIME2 (3) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -27,6 +30,24 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'A deactivated customer cannot make purchases.';
+    END
+    ELSE IF @PurchasedAt IS NOT NULL AND NOT EXISTS (
+        SELECT 1
+        FROM dbo.Customer
+        WHERE CustomerId = @CustomerId AND StatusCode = 1904
+    )
+    BEGIN
+        SET @Result = 400;
+        SET @Message = 'Only test customers can have a purchase dated in the past.';
+    END
+    ELSE IF @PurchasedAt IS NOT NULL AND EXISTS (
+        SELECT 1
+        FROM dbo.Customer
+        WHERE CustomerId = @CustomerId AND CAST(@PurchasedAt AS DATE) < EnrollmentDate
+    )
+    BEGIN
+        SET @Result = 400;
+        SET @Message = 'A purchase cannot be dated before the customer enrolled.';
     END
     ELSE IF NOT EXISTS (
         SELECT 1
@@ -60,7 +81,7 @@ BEGIN
             ELSE
             BEGIN
                 INSERT INTO dbo.CustomerPurchase (CustomerId, ProductId, PurchasedAt)
-                VALUES (@CustomerId, @ProductId, SYSUTCDATETIME());
+                VALUES (@CustomerId, @ProductId, COALESCE(@PurchasedAt, SYSUTCDATETIME()));
 
                 COMMIT TRANSACTION;
 

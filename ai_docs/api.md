@@ -88,9 +88,9 @@ Other settings:
 - **`/api/customer`** (every endpoint requires `[Authorize]`):
   - Customers: `POST /create`, `GET /get?searchTerm=`, `GET /all` (paged, search, sort), `GET /export` (CSV), `PATCH /update`, `PATCH /deactivate`, `PATCH /reactivate`, `DELETE /delete`.
   - Audit log: `GET /audit-log?customerId=`, `GET /audit-log/all`, `DELETE /audit-log/all` (role `1801`).
-  - Purchases: `GET /purchases`, `POST /purchase`.
+  - Purchases: `GET /purchases`, `POST /purchase` (optional `purchasedAt` backdates a test customer's purchase; a future date is `400`).
   - Charts: `GET /insights` (one anonymous row per customer: status, gender, birth date, enrollment date, county, purchase count; plus purchases and revenue per month).
-- **`/api/product`** (every endpoint requires `[Authorize]`): `GET /all`, `GET /get?productId=` (the product and its buyers), `POST /create`.
+- **`/api/product`** (every endpoint requires `[Authorize]`): `GET /all`, `GET /get?productId=` (the product and its buyers), `POST /create`, `POST /reset-stock` (demo: every product back to its initial stock).
 - **`GET /health`:** liveness only, no auth.
 - **Creates:** `POST /api/customer/create` and `POST /api/product/create` return the new GUID as `data`. Other mutations return no `data`.
 

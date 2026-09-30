@@ -1,10 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormRoot, form } from '@angular/forms/signals';
+import { FormRoot, form, TreeValidationResult } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ProductService } from '../../services/product.service';
-import { extractErrorMessage } from '../../utils/extract-error-message';
+import { toServerErrors } from '../../utils/server-errors';
 import {
   ProductFormModel,
   emptyProductForm,
@@ -47,7 +47,7 @@ export class CreateProductComponent {
     },
   });
 
-  private async save(): Promise<void> {
+  private async save(): Promise<TreeValidationResult> {
     this.saveError.set(null);
     this.invalidSummary.set(null);
 
@@ -58,12 +58,14 @@ export class CreateProductComponent {
       this.saved.set(true);
       await this.router.navigate(['/products']);
     } catch (error) {
-      this.saveError.set(
-        extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to add product',
-        ),
+      const { fieldErrors, message } = toServerErrors(
+        error as HttpErrorResponse,
+        this.productForm,
+        'Failed to add product',
       );
+      this.saveError.set(message);
+      fieldErrors[0]?.fieldTree().focusBoundControl();
+      return fieldErrors;
     }
   }
 

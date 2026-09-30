@@ -150,6 +150,35 @@ describe('CreateCustomerComponent', () => {
     expect(component.saveError()).toBe('Email already registered.');
   });
 
+  it('shows a duplicate the server reports under its field, not above the form', async () => {
+    createCustomer.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              detail: 'Email already exists.',
+              errors: { email: ['Email already exists.'] },
+            },
+          }),
+      ),
+    );
+    component.model.set(validModel);
+
+    await submit(component.customerForm);
+
+    expect(component.saveError()).toBeNull();
+    expect(component.customerForm.email().errors()).toEqual([
+      expect.objectContaining({
+        kind: 'server',
+        message: 'Email already exists.',
+      }),
+    ]);
+
+    component.customerForm.email().value.set('other@example.com');
+    expect(component.customerForm.email().errors()).toEqual([]);
+  });
+
   describe('unsaved changes', () => {
     it('has none on a fresh form', () => {
       expect(component.hasUnsavedChanges()).toBe(false);

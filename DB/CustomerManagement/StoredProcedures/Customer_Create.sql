@@ -20,6 +20,7 @@ BEGIN
 
     DECLARE @Result INT;
     DECLARE @Message NVARCHAR(255);
+    DECLARE @Field VARCHAR(50) = NULL;
     DECLARE @CustomerId UNIQUEIDENTIFIER = NULL;
     DECLARE @Inserted TABLE (CustomerId UNIQUEIDENTIFIER);
 
@@ -27,11 +28,13 @@ BEGIN
     BEGIN
         SET @Result = 409;
         SET @Message = 'Phone number already exists.';
+        SET @Field = 'PhoneNumber';
     END
     ELSE IF EXISTS (SELECT 1 FROM dbo.Customer WHERE Email = @Email)
     BEGIN
         SET @Result = 409;
         SET @Message = 'Email already exists.';
+        SET @Field = 'Email';
     END
     ELSE
     BEGIN
@@ -79,5 +82,5 @@ BEGIN
         END CATCH
     END
 
-    SELECT @Result AS Result, @Message AS Message, @CustomerId AS CustomerId;
+    SELECT @Result AS Result, @Message AS Message, @CustomerId AS CustomerId, @Field AS Field;
 END

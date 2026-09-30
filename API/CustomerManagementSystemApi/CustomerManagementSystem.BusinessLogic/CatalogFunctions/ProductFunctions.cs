@@ -45,6 +45,10 @@ public class ProductFunctions(IDbUtils dbUtils)
         CancellationToken cancellationToken = default) =>
         await dbUtils.GetProductsAsync(cancellationToken);
 
+    // Demo helper: every product back to its initial stock.
+    public async Task<ResponseModel<object>> ResetProductStockAsync(CancellationToken cancellationToken = default) =>
+        await dbUtils.ResetProductStockAsync(cancellationToken);
+
     public async Task<ResponseModel<ProductDetailsModel>> GetProductDetailsAsync(Guid productId,
         CancellationToken cancellationToken = default)
     {

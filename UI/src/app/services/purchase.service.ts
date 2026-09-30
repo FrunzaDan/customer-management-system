@@ -8,6 +8,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { GenericResponse } from '../interfaces/generic-response';
+import { IsoDateTime } from '../interfaces/iso-date';
 import { Purchase } from '../interfaces/purchase';
 import { extractErrorMessage } from '../utils/extract-error-message';
 import { NotificationService } from './notification.service';
@@ -65,13 +66,17 @@ export class PurchaseService {
     );
   }
 
+  // purchasedAt backdates the purchase; the API only accepts it for test
+  // customers. Without it the purchase is dated now.
   purchaseProductSilently(
     customerId: string,
     productId: string,
+    purchasedAt?: IsoDateTime,
   ): Observable<GenericResponse<object>> {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('customerId', customerId)
       .set('productId', productId);
+    if (purchasedAt) params = params.set('purchasedAt', purchasedAt);
 
     return this.http.post<GenericResponse<object>>(
       `${this.apiUrl}/purchase`,

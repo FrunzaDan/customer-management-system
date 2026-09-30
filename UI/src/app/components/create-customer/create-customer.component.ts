@@ -1,10 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FormRoot, form } from '@angular/forms/signals';
+import { FormRoot, form, TreeValidationResult } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CustomerService } from '../../services/customer.service';
-import { extractErrorMessage } from '../../utils/extract-error-message';
+import { toServerErrors } from '../../utils/server-errors';
 import {
   CustomerFormModel,
   customerFormSchema,
@@ -48,7 +48,7 @@ export class CreateCustomerComponent {
     },
   });
 
-  private async save(): Promise<void> {
+  private async save(): Promise<TreeValidationResult> {
     this.saveError.set(null);
     this.invalidSummary.set(null);
 
@@ -61,12 +61,14 @@ export class CreateCustomerComponent {
       this.saved.set(true);
       await this.router.navigate(['/customers']);
     } catch (error) {
-      this.saveError.set(
-        extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to add customer',
-        ),
+      const { fieldErrors, message } = toServerErrors(
+        error as HttpErrorResponse,
+        this.customerForm,
+        'Failed to add customer',
       );
+      this.saveError.set(message);
+      fieldErrors[0]?.fieldTree().focusBoundControl();
+      return fieldErrors;
     }
   }
 

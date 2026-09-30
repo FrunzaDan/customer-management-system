@@ -138,9 +138,25 @@ describe('PurchaseService', () => {
       expect(req.request.method).toBe('POST');
       expect(req.request.params.get('customerId')).toBe('customer-1');
       expect(req.request.params.get('productId')).toBe('product-1');
+      expect(req.request.params.has('purchasedAt')).toBe(false);
       req.flush({ status: 200, responseMessage: 'ok' });
 
       expect(show).not.toHaveBeenCalled();
+    });
+
+    it('purchaseProductSilently sends the purchase date when one is given', () => {
+      service
+        .purchaseProductSilently(
+          'customer-1',
+          'product-1',
+          '2019-03-14T10:30:00.000Z',
+        )
+        .subscribe();
+      const req = httpMock.expectOne((r) => r.url === PURCHASE_URL);
+      expect(req.request.params.get('purchasedAt')).toBe(
+        '2019-03-14T10:30:00.000Z',
+      );
+      req.flush({ status: 200, responseMessage: 'ok' });
     });
 
     it('propagates a failure to the caller without a success notification', () => {

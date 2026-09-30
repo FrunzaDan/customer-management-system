@@ -17,8 +17,8 @@ public class CustomerService(
         customerGetting.GetCustomerPurchasesAsync(customerId, cancellationToken);
 
     public Task<ResponseModel<object>> PurchaseProductAsync(Guid customerId, Guid productId,
-        string performedBy, CancellationToken cancellationToken = default) =>
-        customerPurchasing.PurchaseProductAsync(customerId, productId, performedBy, cancellationToken);
+        DateTime? purchasedAt, string performedBy, CancellationToken cancellationToken = default) =>
+        customerPurchasing.PurchaseProductAsync(customerId, productId, purchasedAt, performedBy, cancellationToken);
 
     public Task<ResponseModel<object>> DeactivateCustomerAsync(Guid customerId, string performedBy,
         CancellationToken cancellationToken = default) =>

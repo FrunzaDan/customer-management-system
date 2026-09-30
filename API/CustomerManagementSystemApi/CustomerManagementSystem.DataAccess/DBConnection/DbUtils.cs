@@ -176,7 +176,7 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             DbHelper.HandleResponseWithPurchaseListAsync,
             cancellationToken);
 
-    public Task<ResponseModel<string>> PurchaseProductAsync(Guid customerId, Guid productId,
+    public Task<ResponseModel<string>> PurchaseProductAsync(Guid customerId, Guid productId, DateTime? purchasedAt,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
             "dbo.CustomerPurchase_Create",
@@ -184,6 +184,7 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             {
                 command.Parameters.AddGuid("@CustomerId", customerId);
                 command.Parameters.AddGuid("@ProductId", productId);
+                command.Parameters.AddDateTime2("@PurchasedAt", purchasedAt);
             },
             DbHelper.HandleResponseWithPurchaseResultAsync,
             cancellationToken);
@@ -194,6 +195,13 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             "dbo.Product_Create",
             command => DbHelper.AddProductParametersForCreate(command, product),
             reader => DbHelper.HandleResponseWithCreatedGuidAsync(reader, "ProductId"),
+            cancellationToken);
+
+    public Task<ResponseModel<object>> ResetProductStockAsync(CancellationToken cancellationToken = default) =>
+        ExecuteStoredProcedureAsync(
+            "dbo.Product_ResetStock",
+            null,
+            DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
     public Task<ResponseModel<CustomerInsightsModel>> GetCustomerInsightsAsync(CancellationToken cancellationToken = default) =>

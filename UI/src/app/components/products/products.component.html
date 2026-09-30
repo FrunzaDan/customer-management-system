@@ -7,10 +7,23 @@
         bought it.
       </p>
     </div>
-    <a routerLink="/create-product" class="btn btn-primary shadow-none"
-      >Add product</a
-    >
+    <div class="d-flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="btn btn-secondary shadow-none"
+        (click)="resetProductStock()"
+        [disabled]="resetting() || products().length === 0"
+      >
+        {{ resetting() ? 'Resetting…' : 'Reset products (demo)' }}
+      </button>
+      <a routerLink="/create-product" class="btn btn-primary shadow-none"
+        >Add product</a
+      >
+    </div>
   </div>
+  @if (resetError(); as error) {
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  }
 
   @if (loading() && products().length === 0) {
     <div class="app-card loading-state" role="status">

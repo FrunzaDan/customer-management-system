@@ -198,4 +198,18 @@ public class ProductFunctionsTests
 
         Assert.Same(expected, result);
     }
+
+    [Fact]
+    public async Task ResetProductStockAsync_ReturnsWhateverTheDbLayerReturns()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        var expected = new ResponseModel<object>(200, "Stock reset for 3 products.");
+        dbUtils.Setup(d => d.ResetProductStockAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        var products = new ProductFunctions(dbUtils.Object);
+
+        var result = await products.ResetProductStockAsync(TestContext.Current.CancellationToken);
+
+        Assert.Same(expected, result);
+        dbUtils.Verify(d => d.ResetProductStockAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

@@ -92,7 +92,7 @@ public static class DbHelper
         var message = reader.GetNullableString("Message");
         return result == 0
             ? new ResponseModel<object>(200, message ?? "Operation successful!")
-            : new ResponseModel<object>(result, message ?? "Operation failed.");
+            : new ResponseModel<object>(result, message ?? "Operation failed.", field: reader.GetOptionalString("Field"));
     }
 
     public static async Task<ResponseModel<Guid?>> HandleResponseWithCreatedGuidAsync(SqlDataReader reader,
@@ -105,7 +105,7 @@ public static class DbHelper
         var message = reader.GetNullableString("Message");
         return result == 0
             ? new ResponseModel<Guid?>(200, message ?? "Operation successful!", reader.GetNullableGuid(guidColumn))
-            : new ResponseModel<Guid?>(result, message ?? "Operation failed.");
+            : new ResponseModel<Guid?>(result, message ?? "Operation failed.", field: reader.GetOptionalString("Field"));
     }
 
     public static async Task<ResponseModel<string>> HandleResponseWithPurchaseResultAsync(SqlDataReader reader)

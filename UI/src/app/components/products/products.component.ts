@@ -1,8 +1,11 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RonPipe } from '../../pipes/ron.pipe';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../interfaces/product';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { ProductService } from '../../services/product.service';
+import { extractErrorMessage } from '../../utils/extract-error-message';
 
 export type ProductSortColumn =
   'name' | 'category' | 'warehouse' | 'price' | 'sold' | 'inventory' | 'left';
@@ -37,10 +40,13 @@ const SORT_LABELS: Record<ProductSortColumn, string> = {
 })
 export class ProductsComponent {
   private readonly productService = inject(ProductService);
+  private readonly confirmDialogService = inject(ConfirmDialogService);
 
   readonly products = this.productService.products;
   readonly loading = this.productService.loading;
   readonly loadError = this.productService.error;
+  readonly resetting = signal(false);
+  readonly resetError = signal<string | null>(null);
 
   readonly sortColumn = signal<ProductSortColumn | null>(null);
   readonly sortDirection = signal<'asc' | 'desc'>('asc');
@@ -74,6 +80,27 @@ export class ProductsComponent {
 
   constructor() {
     this.productService.loadProducts();
+  }
+
+  async resetProductStock(): Promise<void> {
+    const confirmed = await this.confirmDialogService.confirm(
+      'Put every product back to its initial stock? Purchase history is kept, but units sold go back to zero.',
+      { title: 'Reset products?', confirmLabel: 'Reset' },
+    );
+    if (!confirmed) return;
+
+    this.resetting.set(true);
+    this.resetError.set(null);
+
+    this.productService.resetProductStock().subscribe({
+      next: () => this.resetting.set(false),
+      error: (error: HttpErrorResponse) => {
+        this.resetting.set(false);
+        this.resetError.set(
+          extractErrorMessage(error, 'Failed to reset the products'),
+        );
+      },
+    });
   }
 
   ariaSort(column: ProductSortColumn): 'ascending' | 'descending' | 'none' {

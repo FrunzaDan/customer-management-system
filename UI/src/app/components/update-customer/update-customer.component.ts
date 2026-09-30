@@ -8,11 +8,12 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { FormRoot, form } from '@angular/forms/signals';
+import { FormRoot, form, TreeValidationResult } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { CustomerService } from '../../services/customer.service';
 import { extractErrorMessage } from '../../utils/extract-error-message';
+import { toServerErrors } from '../../utils/server-errors';
 import {
   customerFormSchema,
   emptyCustomerForm,
@@ -82,7 +83,7 @@ export class UpdateCustomerComponent {
     },
   });
 
-  private async save(): Promise<void> {
+  private async save(): Promise<TreeValidationResult> {
     const current = this.customer();
     if (!current) return;
 
@@ -98,12 +99,14 @@ export class UpdateCustomerComponent {
       this.saved.set(true);
       await this.router.navigate(['/customers']);
     } catch (error) {
-      this.saveError.set(
-        extractErrorMessage(
-          error as HttpErrorResponse,
-          'Failed to save changes',
-        ),
+      const { fieldErrors, message } = toServerErrors(
+        error as HttpErrorResponse,
+        this.customerForm,
+        'Failed to save changes',
       );
+      this.saveError.set(message);
+      fieldErrors[0]?.fieldTree().focusBoundControl();
+      return fieldErrors;
     }
   }
 

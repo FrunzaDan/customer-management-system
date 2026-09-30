@@ -24,4 +24,8 @@ public class ProductController(IProductService productService) : ApiControllerBa
     public async Task<ActionResult<ResponseModel<Guid?>>> CreateProduct([FromBody] CreateProductRequest request,
         CancellationToken cancellationToken) =>
         Reply(await productService.CreateProductAsync(request, cancellationToken));
+
+    [HttpPost("reset-stock")]
+    public async Task<ActionResult<ResponseModel<object>>> ResetProductStock(CancellationToken cancellationToken) =>
+        Reply(await productService.ResetProductStockAsync(cancellationToken));
 }

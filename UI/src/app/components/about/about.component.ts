@@ -5,12 +5,16 @@ import { NotificationService } from '../../services/notification.service';
 import { CustomerService } from '../../services/customer.service';
 import { ProductService } from '../../services/product.service';
 import { PurchaseService } from '../../services/purchase.service';
+import { IsoDate } from '../../interfaces/iso-date';
 import { Product } from '../../interfaces/product';
-import { chooseProductsToBuy } from '../../utils/random-purchases';
+import {
+  chooseProductsToBuy,
+  randomPurchaseTime,
+} from '../../utils/random-purchases';
+import { buildRandomCustomer } from '../../utils/random-customer';
 import {
   CreateCustomerRequest,
   CustomerStatus,
-  Gender,
 } from '../../interfaces/customer';
 
 const TEST_CUSTOMER_COUNT = 50;
@@ -19,180 +23,6 @@ const MAX_PURCHASE_ROUNDS = 3;
 
 const ENROLLMENT_DATE_RANGE_START = new Date(2005, 0, 1);
 const ENROLLMENT_DATE_RANGE_END = new Date(2025, 11, 1);
-
-const FIRST_NAMES = [
-  'Andrei',
-  'Maria',
-  'Ion',
-  'Elena',
-  'Mihai',
-  'Ioana',
-  'Cristian',
-  'Ana',
-  'Alexandru',
-  'Gabriela',
-  'Florin',
-  'Andreea',
-  'Radu',
-  'Simona',
-  'George',
-  'Cristina',
-  'Dan',
-  'Diana',
-  'Vasile',
-  'Larisa',
-  'Adrian',
-  'Mihaela',
-  'Bogdan',
-  'Roxana',
-  'Cătălin',
-  'Monica',
-  'Ștefan',
-  'Alina',
-  'Vlad',
-  'Nicoleta',
-  'Gabriel',
-  'Laura',
-  'Razvan',
-  'Aurelia',
-  'Dorin',
-  'Camelia',
-  'Eugen',
-  'Loredana',
-  'Sorin',
-  'Rodica',
-];
-
-const LAST_NAMES = [
-  'Popescu',
-  'Ionescu',
-  'Popa',
-  'Radu',
-  'Dumitru',
-  'Stan',
-  'Gheorghe',
-  'Constantin',
-  'Marin',
-  'Stoica',
-  'Matei',
-  'Ciobanu',
-  'Munteanu',
-  'Rusu',
-  'Barbu',
-  'Florea',
-  'Nistor',
-  'Toma',
-  'Oprea',
-  'Cristea',
-  'Preda',
-  'Dobre',
-  'Dima',
-  'Sârbu',
-  'Neagu',
-  'Enache',
-  'Bălan',
-  'Diaconu',
-  'Ilie',
-  'Lupu',
-  'Moldovan',
-  'Dragomir',
-  'Micu',
-  'Nica',
-  'Suciu',
-  'Voinea',
-  'Burlacu',
-  'Manole',
-  'Pavel',
-  'Ungureanu',
-];
-
-const COUNTIES_CITIES: ReadonlyArray<{ county: string; city: string }> = [
-  { county: 'Cluj', city: 'Cluj-Napoca' },
-  { county: 'Iasi', city: 'Iasi' },
-  { county: 'Timis', city: 'Timisoara' },
-  { county: 'Brasov', city: 'Brasov' },
-  { county: 'Constanta', city: 'Constanta' },
-  { county: 'Bihor', city: 'Oradea' },
-  { county: 'Sibiu', city: 'Sibiu' },
-  { county: 'Dolj', city: 'Craiova' },
-  { county: 'Ilfov', city: 'Otopeni' },
-  { county: 'Bucuresti', city: 'Bucuresti' },
-  { county: 'Arad', city: 'Arad' },
-  { county: 'Arges', city: 'Pitesti' },
-  { county: 'Bacău', city: 'Bacău' },
-  { county: 'Bistrița-Năsăud', city: 'Bistrița' },
-  { county: 'Botoșani', city: 'Botoșani' },
-  { county: 'Brăila', city: 'Brăila' },
-  { county: 'Buzău', city: 'Buzău' },
-  { county: 'Caraș-Severin', city: 'Reșița' },
-  { county: 'Călărași', city: 'Călărași' },
-  { county: 'Covasna', city: 'Sfântu Gheorghe' },
-  { county: 'Dâmbovița', city: 'Târgoviște' },
-  { county: 'Galați', city: 'Galați' },
-  { county: 'Gorj', city: 'Târgu Jiu' },
-  { county: 'Hunedoara', city: 'Deva' },
-  { county: 'Maramureș', city: 'Baia Mare' },
-  { county: 'Mureș', city: 'Târgu Mureș' },
-  { county: 'Neamț', city: 'Piatra Neamț' },
-  { county: 'Prahova', city: 'Ploiești' },
-  { county: 'Suceava', city: 'Suceava' },
-  { county: 'Vâlcea', city: 'Râmnicu Vâlcea' },
-];
-
-const STREETS = [
-  'Strada Avram Iancu',
-  'Strada Nicolae Bălcescu',
-  'Strada 1 Decembrie 1918',
-  'Strada Stefan cel Mare',
-  'Strada George Coșbuc',
-  'Strada Tudor Vladimirescu',
-  'Strada Ion Creangă',
-  'Strada George Enescu',
-  'Strada Horea',
-  'Strada Primăverii',
-  'Strada Castanilor',
-  'Strada Teilor',
-  'Strada Stejarului',
-  'Strada Livezii',
-  'Strada Şcolii',
-  'Strada Bisericii',
-  'Strada Păcii',
-  'Strada Field',
-  'Strada Carpați',
-  'Strada Crișan',
-];
-
-function pick<T>(values: ReadonlyArray<T>): T {
-  return values[Math.floor(Math.random() * values.length)];
-}
-
-function randomDigits(length: number): string {
-  let digits = '';
-  for (let i = 0; i < length; i++) {
-    digits += Math.floor(Math.random() * 10).toString();
-  }
-  return digits;
-}
-
-function randomDateBetween(start: Date, end: Date): string {
-  const date = new Date(
-    start.getTime() + Math.random() * (end.getTime() - start.getTime()),
-  );
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-function randomBirthDate(): string {
-  return randomDateBetween(new Date(1950, 0, 1), new Date(2005, 11, 31));
-}
-
-function randomEnrollmentDate(): string {
-  return randomDateBetween(
-    ENROLLMENT_DATE_RANGE_START,
-    ENROLLMENT_DATE_RANGE_END,
-  );
-}
 
 @Component({
   selector: 'app-about',
@@ -237,9 +67,9 @@ export class AboutComponent {
         return;
       }
 
-      const customers = Array.from(
-        { length: TEST_CUSTOMER_COUNT },
-        (_, index) => this.buildRandomCustomer(index),
+      const taken = new Set<string>();
+      const customers = Array.from({ length: TEST_CUSTOMER_COUNT }, () =>
+        this.buildRandomCustomer(taken),
       );
 
       let added = 0;
@@ -260,7 +90,11 @@ export class AboutComponent {
         added++;
 
         const bought = customerId
-          ? await this.buyRandomProducts(customerId, stock)
+          ? await this.buyRandomProducts(
+              customerId,
+              customer.enrollmentDate!,
+              stock,
+            )
           : 0;
         purchases += bought;
         if (bought === 0) withoutPurchases++;
@@ -284,6 +118,7 @@ export class AboutComponent {
 
   private async buyRandomProducts(
     customerId: string,
+    enrolledOn: IsoDate,
     stock: Product[],
   ): Promise<number> {
     let bought = 0;
@@ -297,6 +132,7 @@ export class AboutComponent {
             this.purchaseService.purchaseProductSilently(
               customerId,
               product.productId,
+              randomPurchaseTime(enrolledOn),
             ),
           );
           product.quantityOnHand--;
@@ -309,29 +145,14 @@ export class AboutComponent {
     return bought;
   }
 
-  private buildRandomCustomer(index: number): CreateCustomerRequest {
-    const firstName = pick(FIRST_NAMES);
-    const lastName = pick(LAST_NAMES);
-    const { county, city } = pick(COUNTIES_CITIES);
-    const suffix = index.toString().padStart(2, '0');
-
+  private buildRandomCustomer(taken: Set<string>): CreateCustomerRequest {
     return {
-      firstName,
-      lastName,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${suffix}@example.com`,
-      phoneNumber: `07${randomDigits(6)}${suffix}`,
-      gender: pick([Gender.NotDeclared, Gender.Male, Gender.Female]),
-      birthDate: randomBirthDate(),
-      enrollmentDate: randomEnrollmentDate(),
+      ...buildRandomCustomer(
+        ENROLLMENT_DATE_RANGE_START,
+        ENROLLMENT_DATE_RANGE_END,
+        taken,
+      ),
       status: CustomerStatus.Test,
-      address: {
-        country: 'Romania',
-        county,
-        city,
-        street: pick(STREETS),
-        streetNumber: (Math.floor(Math.random() * 150) + 1).toString(),
-        postalCode: randomDigits(6),
-      },
     };
   }
 }

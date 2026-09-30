@@ -88,6 +88,23 @@ public class ErrorResponseTests
     }
 
     [Fact]
+    public async Task FailedResult_AboutOneField_ReturnsValidationProblem_KeyedByTheFieldsJsonName()
+    {
+        var authService = new Mock<IAuthService>();
+        SetupAccessToken(authService,
+            new ResponseModel<AccessTokenResponse>(409, "Phone number already exists.", field: "PhoneNumber"));
+        await using var factory = CreateFactory(authService);
+
+        var response = await factory.CreateClient().PostAsync(AccessTokenUrl,
+            Json("""{"username":"u","password":"p"}"""), TestContext.Current.CancellationToken);
+
+        var problem = await ReadProblemAsync(response, HttpStatusCode.Conflict);
+        Assert.Equal("Phone number already exists.", problem.GetProperty("detail").GetString());
+        var fieldErrors = problem.GetProperty("errors").GetProperty("phoneNumber");
+        Assert.Equal("Phone number already exists.", Assert.Single(fieldErrors.EnumerateArray()).GetString());
+    }
+
+    [Fact]
     public async Task SuccessfulResult_IsStillTheResponseModelEnvelope()
     {
         var authService = new Mock<IAuthService>();

@@ -73,4 +73,19 @@ export class ProductService {
         tap(() => this.notificationService.show('Product added successfully.')),
       );
   }
+
+  // Demo helper: every product back to its initial stock, then the list
+  // reloads to show it.
+  resetProductStock(): Observable<GenericResponse<object>> {
+    return this.http
+      .post<GenericResponse<object>>(`${this.apiUrl}/reset-stock`, null)
+      .pipe(
+        tap((response) => {
+          this.notificationService.show(
+            response.responseMessage ?? 'Products reset.',
+          );
+          this.loadProducts();
+        }),
+      );
+  }
 }

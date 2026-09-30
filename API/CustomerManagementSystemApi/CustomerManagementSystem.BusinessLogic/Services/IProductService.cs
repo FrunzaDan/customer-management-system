@@ -9,4 +9,6 @@ public interface IProductService
     Task<ResponseModel<ProductDetailsModel>> GetProductDetailsAsync(Guid productId, CancellationToken cancellationToken = default);
 
     Task<ResponseModel<IReadOnlyList<ProductModel>>> GetProductsAsync(CancellationToken cancellationToken = default);
+
+    Task<ResponseModel<object>> ResetProductStockAsync(CancellationToken cancellationToken = default);
 }

@@ -62,9 +62,11 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `DB/Custo
 - The 50 seeded products have fixed GUIDs and are inserted only `WHERE NOT EXISTS`, so a redeploy never resets stock.
 - **`CustomerPurchase_Create` checks, in order:**
   - the customer exists (`404`) and isn't deactivated (`409`);
+  - an optional `@PurchasedAt` is only for a test customer and not before their `EnrollmentDate` (`400`);
   - the product exists (`404`) and is in stock (`409`).
-- **Recording the purchase:** it decrements stock with `WHERE QuantityOnHand > 0` and inserts the purchase row in the same transaction.
+- **Recording the purchase:** it decrements stock with `WHERE QuantityOnHand > 0` and inserts the purchase row in the same transaction. `PurchasedAt` is `@PurchasedAt`, or now when it's null. The generator uses it to spread test purchases between enrollment and today.
 - **Sold** is `InitialQuantity - QuantityOnHand`. Deleting a customer does not restore stock.
+- **`Product_ResetStock`** (the "Reset products (demo)" button) sets every `QuantityOnHand` back to `InitialQuantity`. It keeps purchase rows, so sold goes back to zero while purchase history stays.
 
 ### Error handling (all procs)
 
