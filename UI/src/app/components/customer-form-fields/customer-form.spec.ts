@@ -1,4 +1,12 @@
-import { emptyCustomerForm, isCustomerFormDirty } from './customer-form';
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { form } from '@angular/forms/signals';
+import {
+  emptyCustomerForm,
+  customerFormSchema,
+  isCustomerFormDirty,
+  toCreateCustomerRequest,
+} from './customer-form';
 import { environment } from '../../../environments/environment';
 
 describe('isCustomerFormDirty', () => {
@@ -37,4 +45,40 @@ describe('environment.emailRegex', () => {
       expect(emailRegex.test(email)).toBe(false);
     },
   );
+});
+
+describe('toCreateCustomerRequest', () => {
+  it('sends gender as a number, nests the address and leaves blank optional values out', () => {
+    const request = toCreateCustomerRequest({
+      ...emptyCustomerForm(),
+      enrollmentDate: '',
+      gender: '2',
+      city: 'Cluj-Napoca',
+    });
+
+    expect(request.gender).toBe(2);
+    expect(request.address.city).toBe('Cluj-Napoca');
+    expect(request.birthDate).toBeUndefined();
+    expect(request.enrollmentDate).toBeUndefined();
+  });
+});
+
+describe('customerFormSchema', () => {
+  const birthDateErrors = (birthDate: string) =>
+    TestBed.runInInjectionContext(() =>
+      form(signal({ ...emptyCustomerForm(), birthDate }), customerFormSchema),
+    )
+      .birthDate()
+      .errors()
+      .map((error) => error.message);
+
+  it('rejects a birth date in the future', () => {
+    expect(birthDateErrors('2999-01-01')).toContain(
+      'Birth date cannot be in the future',
+    );
+  });
+
+  it('accepts a birth date in the past', () => {
+    expect(birthDateErrors('1990-01-01')).toEqual([]);
+  });
 });

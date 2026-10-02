@@ -224,6 +224,51 @@ describe('CustomerDetailsComponent', () => {
     });
   });
 
+  describe('action buttons', () => {
+    const buttonByText = (text: string): HTMLButtonElement | undefined =>
+      Array.from<HTMLButtonElement>(
+        fixture.nativeElement.querySelectorAll('.page-header button'),
+      ).find((b) => b.textContent?.trim() === text);
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+    it('offers Deactivate for an Active customer, with Delete disabled until then', async () => {
+      createComponent();
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Active }));
+
+      expect(buttonByText('Reactivate')).toBeUndefined();
+      expect(buttonByText('Delete')!.disabled).toBe(true);
+
+      buttonByText('Deactivate')!.click();
+      await settle();
+
+      expect(deactivateCustomer).toHaveBeenCalledWith('customer-1');
+      expect(deleteCustomer).not.toHaveBeenCalled();
+    });
+
+    it('offers Reactivate for a Deactivated customer', async () => {
+      createComponent();
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
+
+      expect(buttonByText('Deactivate')).toBeUndefined();
+
+      buttonByText('Reactivate')!.click();
+      await settle();
+
+      expect(reactivateCustomer).toHaveBeenCalledWith('customer-1');
+    });
+
+    it('deletes a Deactivated customer from the Delete button', async () => {
+      createComponent();
+      await loadCustomer(buildCustomer({ status: CustomerStatus.Deactivated }));
+
+      buttonByText('Delete')!.click();
+      await settle();
+
+      expect(deleteCustomer).toHaveBeenCalledWith('customer-1');
+      expect(reactivateCustomer).not.toHaveBeenCalled();
+    });
+  });
+
   describe('deactivateCustomer / reactivateCustomer', () => {
     it('deactivateCustomer asks for confirmation before delegating to the service', async () => {
       const component = createComponent();

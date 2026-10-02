@@ -74,6 +74,15 @@ describe('rankTotals', () => {
     ]);
   });
 
+  it('adds no "Other" when there are exactly as many labels as the limit', () => {
+    const totals = totalsByLabel(['a', 'b', 'b'], (v) => v);
+
+    expect(rankTotals(totals, 2, 'letters')).toEqual([
+      { label: 'b', value: 2 },
+      { label: 'a', value: 1 },
+    ]);
+  });
+
   it('adds up a custom value per label', () => {
     const totals = totalsByLabel(
       [

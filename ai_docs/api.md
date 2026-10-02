@@ -130,7 +130,8 @@ Other settings:
   - `ErrorResponseTests`;
   - `StartupValidationTests`;
   - `Security/EndpointAuthorizationTests`: every `api/` route in the live route table must answer 401 without a token (only the login is allow-listed), and `DELETE audit-log/all` needs role `1801`. Tokens are minted in the test with the same signing key. Use an `https://localhost` client, because following the HTTPS redirect drops the `Authorization` header.
-- No test needs a database.
+  - `Endpoints/CustomerEndpointTests`, `ProductEndpointTests` and `AuthenticationEndpointTests`: every endpoint called the way the UI calls it (URL, method, query/body), through the real controller, service and business logic, with only `IDbUtils` replaced by a Moq (`Endpoints/ApiHost`). Each test checks the call that reaches `IDbUtils`, the response (the `ResponseModel` envelope or a Problem Details error) and the audit entry with the signed-in user.
+- No test needs a database, so the stored procedures and `DbUtils`/`DbHelper` (parameters and reader mapping) are not covered by any test.
 
 ## Gotchas / conventions
 

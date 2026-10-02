@@ -130,7 +130,7 @@ The Angular 22 app under `UI/`. It is zoneless, uses standalone components and s
 
 - Vitest through `@angular/build:unit-test`, using the default `ng new` setup.
 - **HTTP:** `HttpTestingController`. Resource specs call `TestBed.tick()` to send the request, then `await ApplicationRef.whenStable()` after `flush()`.
-- **Components:** use `fixture.componentRef.setInput(...)`. Logic-only specs use `TestBed.runInInjectionContext`.
+- **Components:** use `fixture.componentRef.setInput(...)`. Logic-only specs use `TestBed.runInInjectionContext`; list and details pages also render rows and click the real buttons (sort, paging, row actions), so a miswired template fails a test.
 
 ## Gotchas / conventions
 
