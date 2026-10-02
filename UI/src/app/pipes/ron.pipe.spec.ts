@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { RonPipe } from './ron.pipe';
 
 describe('RonPipe', () => {

@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { areaUnder, smoothPath } from './chart-geometry';
 
 describe('smoothPath', () => {

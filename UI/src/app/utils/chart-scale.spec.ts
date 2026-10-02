@@ -1,4 +1,3 @@
-import { describe, expect, it } from 'vitest';
 import { formatTick, niceMax } from './chart-scale';
 
 describe('niceMax', () => {
