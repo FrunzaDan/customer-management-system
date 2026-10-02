@@ -1,23 +1,24 @@
 # Customer Management System
 
-A full-stack CRUD app for a merchant to manage customer records, products and purchases, behind a JWT login. I built it to learn an Angular + ASP.NET Core + SQL Server stack end to end, and I keep using it as the place to try out new patterns.
+Customer Management System is a full-stack web app that lets a merchant manage customer records, a product catalogue and the purchases that connect them. The merchant signs in with a username and password, and every request after that is authorized with a short-lived JWT. The app is split into three parts that only talk over the network: an Angular UI, an ASP.NET Core Web API, and a SQL Server database that is accessed only through stored procedures. I built it to learn a complete Angular + .NET + SQL Server stack end to end instead of following a tutorial. It has since become my testbed for new patterns, and it has moved from NgModules and zone.js to signals and zoneless change detection, and from an unsalted password hash to salted PBKDF2.
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-- **JWT login:** Merchant sign-in issues a 15-minute HMAC-SHA256 token; passwords are hashed with salted PBKDF2 and the login endpoint is rate-limited per IP.
-- **Customer lifecycle:** Create, view, edit, deactivate, reactivate and delete customers. An active customer must be deactivated before it can be deleted.
-- **Server-side list handling:** Search, sort and pagination happen in SQL, not in the browser. Bulk actions deactivate or delete a selection in one go.
-- **Products and purchases:** A seeded catalogue of 50 products, new products from the UI, per-customer purchases, and a product page showing stock and buyers.
-- **Audit log:** Per-customer and global history of who created, edited, deactivated, reactivated or deleted what, and when.
-- **Charts and CSV export:** An insights page for the customer base and sales, plus CSV export of the current filtered/sorted list.
-- **Test data generator:** The About page can add a batch of demo customers with random purchases. Test customers skip the deactivate-before-delete rule.
-- **API health banner:** The UI polls `/health` and shows an "API is not running" message when the backend is down.
+- **Secure login:** The merchant exchanges a username and password for an HMAC-SHA256 JWT that expires after 15 minutes. Passwords are stored as salted PBKDF2 hashes (100k iterations) and compared in constant time, and the login endpoint is rate-limited per IP to slow down guessing.
+- **Customer lifecycle:** Customers can be created, viewed, edited, deactivated, reactivated and deleted. An active customer must be deactivated before it can be deleted, so a record can't disappear by accident in one click.
+- **Server-side list handling:** Search, sort and pagination run in SQL, so the browser only receives the rows on the current page. Bulk actions split a selection by status, deactivating the active customers and deleting the inactive ones after a single confirmation.
+- **Products and purchases:** The database is seeded with 50 products (laptops, monitors and more), each with a price, stock level and warehouse. You can add products, record purchases for a customer, see each product's sold / in stock / left counts and who bought it, and reset stock to its starting level.
+- **Audit log:** Every create, edit, deactivate, reactivate and delete is logged with who did it and when. Each customer has their own history, and a global log shows everything; clearing the global log needs the Merchant role.
+- **Charts and CSV export:** A charts page shows who the customers are, how the customer base has grown and what sells. The customer list can be exported to CSV with the current filters and sort order applied.
+- **Test data generator:** The About page adds a batch of demo customers with random purchases, so the lists and charts have something to show. Test customers skip the deactivate-before-delete rule, so they're easy to clean up.
+- **API health banner:** The UI polls the API's `/health` endpoint and shows an "API is not running" message when the backend is down, instead of failing silently.
+- **One-command scripts:** `run.sh` brings up the whole stack: the SQL Server container in Docker, the schema deployment, the API and the Angular dev server. `build.sh` builds and tests every layer (API, database project, UI) without starting any services, as a check before committing.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - **Frontend:** Angular 22.2 (standalone components, signals, zoneless), SSR via `@angular/ssr` + Express, Bootstrap 5, TypeScript
 - **Backend:** ASP.NET Core Web API on .NET 10 (controllers), layered as WebAPI → BusinessLogic → DataAccess → Domain
@@ -26,7 +27,7 @@ A full-stack CRUD app for a merchant to manage customer records, products and pu
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running this project, ensure you have the following installed:
 
@@ -40,7 +41,7 @@ Before running this project, ensure you have the following installed:
 
 ---
 
-## ⚙️ Local Setup & Running
+## Local Setup & Running
 
 ### 1. Clone the repository
 
@@ -84,7 +85,7 @@ That restores and builds the .NET solution, runs the xUnit tests, builds the SQL
 
 ---
 
-## 🗄 Database & Migrations
+## Database & Migrations
 
 There are no EF migrations. The schema is an SSDT project in `DB/CustomerManagement` (tables, stored procedures and post-deployment seed scripts). `run.sh` builds it into a `.dacpac` and publishes it with `sqlpackage`, which diffs the target database and applies only the changes.
 
@@ -99,7 +100,7 @@ Azure SQL Edge is used because it has an arm64 image that runs on Apple Silicon.
 
 ---
 
-## 🔌 API / App Usage
+## API / App Usage
 
 Swagger UI is available at `https://localhost:7145/swagger` in Development. Use the bearer-token scheme there to paste in a token from the login call. There is also a Postman collection in `API/Postman/`.
 
@@ -116,7 +117,7 @@ Every route except login and health requires a bearer token. Errors come back as
 
 ---
 
-## 📝 License & Notes
+## License & Notes
 
 Personal learning project with no license file. Ask before reusing any of it.
 
