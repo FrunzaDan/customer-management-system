@@ -6,7 +6,6 @@ import {
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
-  provideZonelessChangeDetection,
 } from '@angular/core';
 import {
   provideClientHydration,
@@ -50,6 +49,5 @@ export const appConfig: ApplicationConfig = {
         authErrorInterceptor,
       ]),
     ),
-    provideZonelessChangeDetection(),
   ],
 };
