@@ -5,4 +5,18 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningsAsErrors>nullable</WarningsAsErrors>
     </PropertyGroup>
+
+    <!-- The SDK's .NET analyzers at the recommended set, plus the .editorconfig code style on build. -->
+    <PropertyGroup>
+        <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <!-- Warnings fail the build in CI (CI=true on GitHub Actions, TF_BUILD=True on Azure Pipelines). -->
+        <TreatWarningsAsErrors Condition="'$(CI)' == 'true' Or '$(TF_BUILD)' == 'true'">true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <!-- Tests are named Method_Scenario_Result, pass inline arrays, log directly and name xUnit collections *Collection. -->
+    <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
+        <NoWarn>$(NoWarn);CA1707;CA1711;CA1848;CA1861</NoWarn>
+    </PropertyGroup>
 </Project>

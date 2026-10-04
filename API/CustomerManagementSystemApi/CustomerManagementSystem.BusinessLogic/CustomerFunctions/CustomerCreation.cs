@@ -52,7 +52,7 @@ public class CustomerCreation(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
 
         if (response is { Status: 200, Data: { } customerId })
             await auditLogger.LogAsync(customerId, performedBy, AuditAction.Created,
-                $"Email: {request.Email}, Phone number: {request.PhoneNumber}");
+                $"Email: {request.Email}, Phone number: {request.PhoneNumber}", cancellationToken: CancellationToken.None);
 
         return response;
     }

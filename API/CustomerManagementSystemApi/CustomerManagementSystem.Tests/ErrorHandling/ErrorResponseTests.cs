@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -172,6 +173,6 @@ public class ErrorResponseTests
         Assert.Equal(LogLevel.Information, accessLog.Level);
         Assert.Equal("GET", accessLog.GetStructuredStateValue("Method"));
         Assert.Equal("/api/no-such-route", accessLog.GetStructuredStateValue("Path"));
-        Assert.Equal(((int)response.StatusCode).ToString(), accessLog.GetStructuredStateValue("StatusCode"));
+        Assert.Equal(((int)response.StatusCode).ToString(CultureInfo.InvariantCulture), accessLog.GetStructuredStateValue("StatusCode"));
     }
 }

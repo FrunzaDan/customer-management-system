@@ -14,7 +14,7 @@ public class CustomerDeletion(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
         var response = await dbUtils.DeleteCustomerAsync(customerId, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(customerId, performedBy, AuditAction.Deleted);
+            await auditLogger.LogAsync(customerId, performedBy, AuditAction.Deleted, cancellationToken: CancellationToken.None);
 
         return response;
     }

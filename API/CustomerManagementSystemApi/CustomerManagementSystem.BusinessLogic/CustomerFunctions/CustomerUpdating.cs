@@ -53,7 +53,7 @@ public class CustomerUpdating(IDbUtils dbUtils, ICustomerAuditLogger auditLogger
         var response = await dbUtils.UpdateCustomerAsync(request, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(request.CustomerId, performedBy, AuditAction.Edited, DescribeChangedFields(request));
+            await auditLogger.LogAsync(request.CustomerId, performedBy, AuditAction.Edited, DescribeChangedFields(request), cancellationToken: CancellationToken.None);
 
         return response;
     }

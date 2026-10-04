@@ -37,8 +37,9 @@ fi
 echo "==> [2/7] Restoring .NET solution"
 dotnet restore "$API_SLN"
 
-echo "==> [3/7] Building .NET solution"
+echo "==> [3/7] Building and format-checking .NET solution"
 dotnet build "$API_SLN" --no-restore --configuration Debug
+dotnet format "$API_SLN" --verify-no-changes --no-restore
 
 echo "==> [4/7] Running .NET tests"
 if [[ "$SKIP_TESTS" -eq 1 ]]; then

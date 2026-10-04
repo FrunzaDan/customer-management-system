@@ -14,7 +14,7 @@ public class CustomerActivation(IDbUtils dbUtils, ICustomerAuditLogger auditLogg
         var response = await dbUtils.DeactivateCustomerAsync(customerId, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(customerId, performedBy, AuditAction.Deactivated);
+            await auditLogger.LogAsync(customerId, performedBy, AuditAction.Deactivated, cancellationToken: CancellationToken.None);
 
         return response;
     }
@@ -28,7 +28,7 @@ public class CustomerActivation(IDbUtils dbUtils, ICustomerAuditLogger auditLogg
         var response = await dbUtils.ReactivateCustomerAsync(customerId, cancellationToken);
 
         if (response.Status == 200)
-            await auditLogger.LogAsync(customerId, performedBy, AuditAction.Reactivated);
+            await auditLogger.LogAsync(customerId, performedBy, AuditAction.Reactivated, cancellationToken: CancellationToken.None);
 
         return response;
     }

@@ -23,7 +23,12 @@ public class CustomerGettingTests
         LastInteractionAt = DateTime.UtcNow,
         Address = new AddressModel
         {
-            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main", StreetNumber = "1"
+            Country = "Romania",
+            County = "Cluj",
+            City = "Cluj-Napoca",
+            PostalCode = "400001",
+            Street = "Main",
+            StreetNumber = "1"
         }
     };
 
@@ -221,7 +226,9 @@ public class CustomerGettingTests
         var getting = new CustomerGetting(dbUtils.Object);
         var request = new ExportCustomersRequest
         {
-            SearchTerm = " dan ", SortColumn = CustomerSortColumn.Email, SortDirection = SortDirection.Desc
+            SearchTerm = " dan ",
+            SortColumn = CustomerSortColumn.Email,
+            SortDirection = SortDirection.Desc
         };
 
         await getting.GetCustomersForExportAsync(request, TestContext.Current.CancellationToken);

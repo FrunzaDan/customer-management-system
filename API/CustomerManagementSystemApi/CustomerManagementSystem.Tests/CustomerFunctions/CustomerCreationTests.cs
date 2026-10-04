@@ -17,7 +17,12 @@ public class CustomerCreationTests
         PhoneNumber = "123456789",
         Address = new AddressRequest
         {
-            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main", StreetNumber = "1"
+            Country = "Romania",
+            County = "Cluj",
+            City = "Cluj-Napoca",
+            PostalCode = "400001",
+            Street = "Main",
+            StreetNumber = "1"
         },
     };
 

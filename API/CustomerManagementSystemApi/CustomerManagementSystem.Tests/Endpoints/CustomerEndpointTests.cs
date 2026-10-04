@@ -29,7 +29,11 @@ public class CustomerEndpointTests
         BirthDate = new DateOnly(1990, 5, 6),
         Address = new AddressModel
         {
-            Country = "Romania", County = "Cluj", City = "Cluj-Napoca", PostalCode = "400001", Street = "Main",
+            Country = "Romania",
+            County = "Cluj",
+            City = "Cluj-Napoca",
+            PostalCode = "400001",
+            Street = "Main",
             StreetNumber = "1"
         },
     };
@@ -52,7 +56,11 @@ public class CustomerEndpointTests
             gender = 2,
             address = new
             {
-                country = "Romania", county = "Cluj", city = "Cluj-Napoca", postalCode = "400001", street = "Main",
+                country = "Romania",
+                county = "Cluj",
+                city = "Cluj-Napoca",
+                postalCode = "400001",
+                street = "Main",
                 streetNumber = "1"
             },
         });

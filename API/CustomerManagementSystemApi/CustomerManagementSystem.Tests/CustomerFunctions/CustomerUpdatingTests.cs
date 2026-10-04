@@ -97,7 +97,10 @@ public class CustomerUpdatingTests
         var editing = new CustomerUpdating(dbUtils.Object, auditLogger.Object);
         var request = new UpdateCustomerRequest
         {
-            CustomerId = ValidCustomerId, Email = "dan@example.com", PhoneNumber = "123456789", BirthDate = new DateOnly(1990, 1, 2),
+            CustomerId = ValidCustomerId,
+            Email = "dan@example.com",
+            PhoneNumber = "123456789",
+            BirthDate = new DateOnly(1990, 1, 2),
             EnrollmentDate = new DateOnly(2010, 6, 15)
         };
 

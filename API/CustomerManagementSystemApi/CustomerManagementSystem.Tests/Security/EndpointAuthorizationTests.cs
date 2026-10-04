@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Security.Claims;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
@@ -126,7 +127,7 @@ public class EndpointAuthorizationTests
         await using var factory = CreateFactory(customerService);
 
         var response = await CreateClient(factory).SendAsync(
-            Request($"DELETE {DeleteAllAuditLogUrl}", CreateToken(((short)MerchantRole.Merchant).ToString())),
+            Request($"DELETE {DeleteAllAuditLogUrl}", CreateToken(((short)MerchantRole.Merchant).ToString(CultureInfo.InvariantCulture))),
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

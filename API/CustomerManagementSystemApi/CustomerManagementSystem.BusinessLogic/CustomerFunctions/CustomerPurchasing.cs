@@ -25,7 +25,7 @@ public class CustomerPurchasing(IDbUtils dbUtils, ICustomerAuditLogger auditLogg
             return new ResponseModel<object>(response.Status, response.ResponseMessage);
 
         await auditLogger.LogAsync(customerId, performedBy, AuditAction.Purchased,
-            response.Data is { } productName ? $"Product: {productName}" : $"Product ID: {productId}");
+            response.Data is { } productName ? $"Product: {productName}" : $"Product ID: {productId}", cancellationToken: CancellationToken.None);
 
         return new ResponseModel<object>(response.Status, response.ResponseMessage);
     }
