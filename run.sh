@@ -5,14 +5,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-API_PROJ_DIR="$ROOT_DIR/API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI"
+API_PROJ_DIR="$ROOT_DIR/src/API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI"
 API_PROJ="$API_PROJ_DIR/CustomerManagementSystem.WebAPI.csproj"
 API_LAUNCH_PROFILE="https"
 API_LAUNCH_SETTINGS="$API_PROJ_DIR/Properties/launchSettings.json"
-DB_DIR="$ROOT_DIR/DB/CustomerManagement"
+DB_DIR="$ROOT_DIR/src/DB/CustomerManagement"
 DB_PROJ="CustomerManagement.sqlproj"
 DB_DACPAC="$DB_DIR/bin/Debug/CustomerManagement.dacpac"
-UI_DIR="$ROOT_DIR/UI"
+UI_DIR="$ROOT_DIR/src/UI"
 RUN_DIR="$ROOT_DIR/.run"
 
 SQL_IMAGE="${SQL_IMAGE:-mcr.microsoft.com/azure-sql-edge}"

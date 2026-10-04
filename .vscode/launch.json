@@ -7,7 +7,7 @@
       "name": "API",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI/CustomerManagementSystem.WebAPI.csproj"
+      "projectPath": "${workspaceFolder}/src/API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI/CustomerManagementSystem.WebAPI.csproj"
     },
     {
       "name": "ng serve",
@@ -15,14 +15,14 @@
       "request": "launch",
       "preLaunchTask": "ng serve",
       "url": "http://localhost:4203/",
-      "webRoot": "${workspaceFolder}/UI"
+      "webRoot": "${workspaceFolder}/src/UI"
     },
     {
       // Vitest runs in Node, so debug it as a Node process (not Karma's browser page).
       "name": "ng test",
       "type": "node",
       "request": "launch",
-      "cwd": "${workspaceFolder}/UI",
+      "cwd": "${workspaceFolder}/src/UI",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["test", "--", "--watch=false"],
       "console": "integratedTerminal"

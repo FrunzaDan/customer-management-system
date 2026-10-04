@@ -2,7 +2,7 @@
 
 ## What it is
 
-The ASP.NET Core Web API (.NET 10) under `API/CustomerManagementSystemApi/`.
+The ASP.NET Core Web API (.NET 10) under `src/API/CustomerManagementSystemApi/`.
 
 ## Key files / paths
 
@@ -136,7 +136,7 @@ Other settings:
 ## Gotchas / conventions
 
 - Run `dotnet test` from inside the repo, so the root `global.json` is found.
-- `DB/CustomerManagement/global.json` pins the SQL project to the .NET 8 SDK. Don't remove it.
+- `src/DB/CustomerManagement/global.json` pins the SQL project to the .NET 8 SDK. Don't remove it.
 - A regex exists twice, in C# `Validations/` and in Angular `environment.ts`. Change both.
 - When changing a column, also change the proc parameter, `FieldLengthConstants` and the typed `SqlParameter`.
 - Every new timestamp read goes through `GetUtcDateTime`.

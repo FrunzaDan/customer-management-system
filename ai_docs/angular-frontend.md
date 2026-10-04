@@ -2,7 +2,7 @@
 
 ## What it is
 
-The Angular 22 app under `UI/`. It is zoneless, uses standalone components and signals, and renders with SSR.
+The Angular 22 app under `src/UI/`. It is zoneless, uses standalone components and signals, and renders with SSR.
 
 ## Key files / paths
 

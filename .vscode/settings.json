@@ -5,9 +5,9 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
   },
-  // Only format where a Prettier config exists (UI/), so root JSON keeps its own style.
+  // Only format where a Prettier config exists (src/UI/), so root JSON keeps its own style.
   "prettier.requireConfig": true,
-  "dotnet.defaultSolution": "API/CustomerManagementSystemApi/CustomerManagementSystem.slnx",
+  "dotnet.defaultSolution": "src/API/CustomerManagementSystemApi/CustomerManagementSystem.slnx",
   "files.watcherExclude": {
     "**/node_modules/**": true,
     "**/.angular/**": true,

@@ -9,8 +9,8 @@ How to build, test and run the database, API and UI locally.
 - `build.sh` — restores, builds and tests the API, builds the DB project, then runs `npm ci`, `npm run format:check`, `npm run build` and `ng test` for the UI. Starts nothing.
 - `run.sh` — the full dev environment. Safe to re-run.
 - `.run/` — logs and the exported dev certificate (gitignored).
-- `.vscode/` — shared VS Code tasks (`run.sh`, `build.sh`, `ng serve`, `ng test`), launch configs (API, `ng serve`, `ng test` in Node, "API + UI") and recommended extensions. Same in all three sibling apps. Open the repo root, not `UI/`.
-- `DB/CustomerManagement/Scripts/PostDeployment/Seed_Merchant.sql` — the test login.
+- `.vscode/` — shared VS Code tasks (`run.sh`, `build.sh`, `ng serve`, `ng test`), launch configs (API, `ng serve`, `ng test` in Node, "API + UI") and recommended extensions. Same in all three sibling apps. Open the repo root, not `src/UI/`.
+- `src/DB/CustomerManagement/Scripts/PostDeployment/Seed_Merchant.sql` — the test login.
 
 ## How it works
 
@@ -48,6 +48,6 @@ docker run -e "ACCEPT_EULA=1" -e "MSSQL_SA_PASSWORD=MyStrongPassw0rd?" \
 - **Node SSR `AbortError`s:** Node doesn't read the keychain. That's why `run.sh` step 4 exists.
 - **Pinned versions:**
   - `sqlpackage` is pinned; don't bump it without checking the installed .NET runtime.
-  - `DB/CustomerManagement/global.json` pins .NET 8. Keep it.
+  - `src/DB/CustomerManagement/global.json` pins .NET 8. Keep it.
 - **Formatting:** Prettier (`npm run format`, `npm run format:check`), configured the same in all three apps.
 - The `sa` password is a local-dev credential only.

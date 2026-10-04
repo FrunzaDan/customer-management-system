@@ -2,7 +2,7 @@
 
 ## What it is
 
-The `CustomerManagement` SQL Server database, as an SSDT project under `DB/CustomerManagement/`. All access goes through stored procedures.
+The `CustomerManagement` SQL Server database, as an SSDT project under `src/DB/CustomerManagement/`. All access goes through stored procedures.
 
 ## Key files / paths
 

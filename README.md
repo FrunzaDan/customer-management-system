@@ -32,7 +32,7 @@ Customer Management System is a full-stack web app that lets a merchant manage c
 Before running this project, ensure you have the following installed:
 
 - .NET 10 SDK (10.0.401 or newer, pinned in `global.json`)
-- .NET 8 SDK (the database project's `DB/CustomerManagement/global.json` pins it for the SQL build tooling)
+- .NET 8 SDK (the database project's `src/DB/CustomerManagement/global.json` pins it for the SQL build tooling)
 - Node.js `^22.22.3`, `^24.15.0` or `>=26` with npm
 - Docker Desktop (runs the SQL Server container)
 - A trusted ASP.NET Core dev certificate: `dotnet dev-certs https --trust` (once per machine)
@@ -52,7 +52,7 @@ cd customer-management-system
 
 ### 2. Configuration
 
-Everything works out of the box for local development. The relevant settings live in `API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI/appsettings.json`:
+Everything works out of the box for local development. The relevant settings live in `src/API/CustomerManagementSystemApi/CustomerManagementSystem.WebAPI/appsettings.json`:
 
 - `ConnectionStrings:Docker` points at the container on `localhost,1433`. On Windows, the API falls back to `ConnectionStrings:LocalSqlServer` (Windows auth) if Docker doesn't answer within 3 seconds.
 - `Auth` holds the JWT key, issuer, audience and token lifetime. The key is a placeholder for local use only.
@@ -87,7 +87,7 @@ That restores and builds the .NET solution, runs the xUnit tests, builds the SQL
 
 ## Database & Migrations
 
-There are no EF migrations. The schema is an SSDT project in `DB/CustomerManagement` (tables, stored procedures and post-deployment seed scripts). `run.sh` builds it into a `.dacpac` and publishes it with `sqlpackage`, which diffs the target database and applies only the changes.
+There are no EF migrations. The schema is an SSDT project in `src/DB/CustomerManagement` (tables, stored procedures and post-deployment seed scripts). `run.sh` builds it into a `.dacpac` and publishes it with `sqlpackage`, which diffs the target database and applies only the changes.
 
 The post-deployment scripts seed the test merchant and the 50-product catalogue. To start the container by hand instead of through `run.sh`:
 
@@ -102,7 +102,7 @@ Azure SQL Edge is used because it has an arm64 image that runs on Apple Silicon.
 
 ## API / App Usage
 
-Swagger UI is available at `https://localhost:7145/swagger` in Development. Use the bearer-token scheme there to paste in a token from the login call. There is also a Postman collection in `API/Postman/`.
+Swagger UI is available at `https://localhost:7145/swagger` in Development. Use the bearer-token scheme there to paste in a token from the login call. There is also a Postman collection in `src/API/Postman/`.
 
 | Area | Routes |
 |---|---|

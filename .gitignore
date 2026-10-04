@@ -26,12 +26,12 @@
 *.cobertura.xml
 
 # --- Angular UI ---
-/UI/node_modules/
-/UI/dist/
-/UI/tmp/
-/UI/out-tsc/
-/UI/.angular/
-/UI/coverage/
+/src/UI/node_modules/
+/src/UI/dist/
+/src/UI/tmp/
+/src/UI/out-tsc/
+/src/UI/.angular/
+/src/UI/coverage/
 npm-debug.log*
 yarn-error.log*
 

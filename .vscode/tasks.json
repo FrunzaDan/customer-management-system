@@ -21,7 +21,7 @@
       "label": "ng serve",
       "type": "npm",
       "script": "start",
-      "path": "UI",
+      "path": "src/UI",
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
@@ -37,7 +37,7 @@
       "label": "ng test",
       "type": "npm",
       "script": "test",
-      "path": "UI",
+      "path": "src/UI",
       "group": { "kind": "test", "isDefault": true },
       "problemMatcher": []
     }

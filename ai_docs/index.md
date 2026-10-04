@@ -8,13 +8,13 @@ A learning full-stack CRUD app: a merchant logs in and manages customer records,
 
 | Layer | Folder | Tech |
 |---|---|---|
-| UI | `UI/` | Angular 22 (zoneless, signals, SSR) |
-| API | `API/CustomerManagementSystemApi/` | .NET 10 ASP.NET Core Web API |
-| DB | `DB/CustomerManagement/` | SQL Server, SSDT `.sqlproj` deployed with `sqlpackage` |
+| UI | `src/UI/` | Angular 22 (zoneless, signals, SSR) |
+| API | `src/API/CustomerManagementSystemApi/` | .NET 10 ASP.NET Core Web API |
+| DB | `src/DB/CustomerManagement/` | SQL Server, SSDT `.sqlproj` deployed with `sqlpackage` |
 
 - `build.sh` — build and test everything; starts nothing.
 - `run.sh` — start the Docker database, deploy the schema, then start the API and UI.
-- `API/Postman/` — Postman collection for manual API calls.
+- `src/API/Postman/` — Postman collection for manual API calls.
 - `Documentation/Diagrams/` — early sketches; the docs below win where they disagree.
 
 ## How it works
