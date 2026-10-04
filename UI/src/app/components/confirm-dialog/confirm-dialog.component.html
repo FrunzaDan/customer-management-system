@@ -1,6 +1,7 @@
 @if (state(); as dialogState) {
   <div
     class="confirm-overlay"
+    role="presentation"
     [class.closing]="closing()"
     (click)="respond(false)"
   >

@@ -2,7 +2,6 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CustomerService } from '../../services/customer.service';
-import { CustomerListComponent } from '../customer-list/customer-list.component';
 import { HomeComponent } from './home.component';
 
 describe('HomeComponent', () => {

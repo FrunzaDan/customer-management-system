@@ -1,5 +1,5 @@
 import { HttpErrorResponse, httpResource } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { AuditLogEntry } from '../interfaces/audit-log-entry';
 import { GenericResponse } from '../interfaces/generic-response';

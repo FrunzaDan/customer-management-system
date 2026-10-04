@@ -126,11 +126,11 @@ const LAST_NAMES = [
 ];
 
 // Every county, and not only its seat: smaller towns and villages as well.
-const PLACES: ReadonlyArray<{
+const PLACES: readonly {
   county: string;
   city: string;
   postalPrefix: string;
-}> = [
+}[] = [
   { county: 'Alba', city: 'Blaj', postalPrefix: '515' },
   { county: 'Arad', city: 'Lipova', postalPrefix: '315' },
   { county: 'Argeș', city: 'Curtea de Argeș', postalPrefix: '115' },
@@ -224,20 +224,17 @@ const NICKNAMES = [
   'rocky',
 ];
 
-export const GENDER_WEIGHTS: ReadonlyArray<{ gender: Gender; weight: number }> =
-  [
-    { gender: Gender.Male, weight: 46 },
-    { gender: Gender.Female, weight: 46 },
-    { gender: Gender.NotDeclared, weight: 8 },
-  ];
+export const GENDER_WEIGHTS: readonly { gender: Gender; weight: number }[] = [
+  { gender: Gender.Male, weight: 46 },
+  { gender: Gender.Female, weight: 46 },
+  { gender: Gender.NotDeclared, weight: 8 },
+];
 
-function pick<T>(values: ReadonlyArray<T>): T {
+function pick<T>(values: readonly T[]): T {
   return values[Math.floor(Math.random() * values.length)];
 }
 
-function pickWeighted<T extends { weight: number }>(
-  values: ReadonlyArray<T>,
-): T {
+function pickWeighted<T extends { weight: number }>(values: readonly T[]): T {
   const total = values.reduce((sum, value) => sum + value.weight, 0);
   let roll = Math.random() * total;
   for (const value of values) {

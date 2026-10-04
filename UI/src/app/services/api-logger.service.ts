@@ -19,7 +19,9 @@ export class ApiLoggerService {
     }
     try {
       localStorage.setItem(STORAGE_KEY, String(value));
-    } catch {}
+    } catch {
+      // Storage can be unavailable (private mode, quota); the toggle still works for this session.
+    }
   }
 
   private readInitialValue(): boolean {
