@@ -24,7 +24,7 @@ The `CustomerManagement` SQL Server database, as an SSDT project under `src/DB/C
   - `Email` (unique) and `PhoneNumber` (`VARCHAR(15)`, unique);
   - `Gender` (`TINYINT`, 0/1/2);
   - `BirthDate` (`DATE`, nullable);
-  - `StatusCode` (`SMALLINT`, default 1901);
+  - `StatusCode` (`SMALLINT`, default 1901) and `StatusCodeBeforeDeactivation` (nullable, `1901` or `1904`; see the lifecycle below);
   - `EnrollmentDate` (`DATE`, default today): when they first became a customer, which can predate this system for customers carried over from older registries. `Customer_Update` rejects a date after `AccountCreatedAt` (`400`);
   - `AccountCreatedAt` (when the row was created here), `LastInteractionAt`.
 - **`CustomerAddress`:** one row per customer. `CustomerId` is both the primary key and the foreign key. Every column is `NOT NULL`.

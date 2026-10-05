@@ -78,7 +78,8 @@ Other settings:
 - App logs are `[LoggerMessage]` methods with shared event ids across the three APIs:
   - 1 = unhandled exception;
   - 2 = audit write failed;
-  - 3/4 = which database was chosen.
+  - 3/4 = which database was chosen;
+  - 5 = the client aborted the request (Debug).
 
 ### Endpoints
 
@@ -116,7 +117,7 @@ Other settings:
 ### Auth
 
 - **Login:** `DbUtils` reads the hash, salt and role (`Merchant_GetAuthData`) and verifies PBKDF2-SHA256 in C#: 100k iterations, a 16-byte salt, and `FixedTimeEquals`. An unknown username is hashed against a dummy salt, so it takes as long as a wrong password. Only a successful login updates `LastInteractionAt` (`Merchant_RecordLogin`).
-- **Token:** `JwtCreation` signs an HMAC-SHA256 JWT with these claims: `sid`, `sub`, `name`, `role`, `amr`, `jti`, `iat`. The expiry comes from `AccessTokenTimeoutMinutes`.
+- **Token:** `JwtCreation` signs an HMAC-SHA256 JWT with these claims: `sub` and `unique_name` (both the username), `role`, `amr` (`pwd`), `jti` and `iat`. The expiry comes from `AccessTokenTimeoutMinutes`.
 - **Validation:** only `AddJwtBearer`, which checks the signature, issuer, audience and lifetime with `ClockSkew = 0`.
 
 ### Tests
@@ -127,7 +128,7 @@ Other settings:
   - `dotnet test --coverage` for coverage.
 - **Covered:** validations, the business-logic classes, `JwtCreation`, `PasswordHasher` and `SqlConnectionFactory` (with a faked probe).
 - **In-memory pipeline tests** (`WebApplicationFactory`):
-  - `ErrorResponseTests`;
+  - `ErrorResponseTests` and `GlobalExceptionHandlerTests`;
   - `StartupValidationTests`;
   - `Security/EndpointAuthorizationTests`: every `api/` route in the live route table must answer 401 without a token (only the login is allow-listed), and `DELETE audit-log/all` needs role `1801`. Tokens are minted in the test with the same signing key. Use an `https://localhost` client, because following the HTTPS redirect drops the `Authorization` header.
   - `Endpoints/CustomerEndpointTests`, `ProductEndpointTests` and `AuthenticationEndpointTests`: every endpoint called the way the UI calls it (URL, method, query/body), through the real controller, service and business logic, with only `IDbUtils` replaced by a Moq (`Endpoints/ApiHost`). Each test checks the call that reaches `IDbUtils`, the response (the `ResponseModel` envelope or a Problem Details error) and the audit entry with the signed-in user.

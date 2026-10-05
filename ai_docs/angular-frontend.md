@@ -20,18 +20,21 @@ The Angular 22 app under `src/UI/`. It is zoneless, uses standalone components a
 
 ### Config
 
+- **Zoneless:** there's no `zone.js` and no zoneless provider; zoneless change detection is the Angular default.
 - `app.config.ts` sets up:
-  - `provideZonelessChangeDetection()`;
-  - the router, with component input binding, view transitions and `canceledNavigationResolution: 'computed'`;
-  - hydration with event replay;
+  - `provideBrowserGlobalErrorListeners()`;
+  - the router, with component input binding, in-memory scrolling (scroll to top, anchors), `canceledNavigationResolution: 'computed'` and view transitions (initial one skipped);
+  - `AppTitleStrategy` as the `TitleStrategy`;
+  - hydration with event replay and no incremental hydration;
   - `provideHttpClient(withFetch(), withInterceptors([apiLoggerInterceptor, authTokenInterceptor, authErrorInterceptor]))`.
+- **Render modes** (`app.routes.server.ts`): the routes with an id (`customers/:customerId`, `customers/update/:customerId`, `products/:productId`) render on the server per request; every other route is prerendered.
 - Every route is lazy (`loadComponent`) and has a `title`. `AppTitleStrategy` appends " · Customer Management System".
 
 ### Auth
 
 - **Login:** `POST /access-token`. The token goes into `sessionStorage`, and the app navigates to `/customers`.
 - **Adding the token:** `authTokenInterceptor` adds the bearer token only to requests whose URL starts with `apiUrl`.
-- **Route guard:** `authGuardFn` calls `GET /verify-token` before every protected route. On failure it clears the session and goes to `/login?sessionExpired=true`.
+- **Route guard:** `authGuard` calls `GET /verify-token` before every protected route. On failure it clears the session and goes to `/login?sessionExpired=true`.
 - **Mid-page 401s:** `authErrorInterceptor` handles a `401` from any other call the same way. The guard and the interceptor are kept separate on purpose.
 - **Logout:** clears the session explicitly before navigating.
 
