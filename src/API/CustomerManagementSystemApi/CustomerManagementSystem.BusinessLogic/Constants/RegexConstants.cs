@@ -1,4 +1,4 @@
-﻿namespace CustomerManagementSystem.BusinessLogic.Constants;
+namespace CustomerManagementSystem.BusinessLogic.Constants;
 
 public static class RegexConstants
 {

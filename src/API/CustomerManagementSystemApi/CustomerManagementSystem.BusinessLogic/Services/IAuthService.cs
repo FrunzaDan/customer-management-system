@@ -1,4 +1,4 @@
-﻿using CustomerManagementSystem.Domain.Models;
+using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.BusinessLogic.Services;
 

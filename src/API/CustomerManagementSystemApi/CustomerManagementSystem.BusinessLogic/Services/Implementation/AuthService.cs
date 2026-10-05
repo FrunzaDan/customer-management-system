@@ -1,4 +1,4 @@
-﻿using CustomerManagementSystem.BusinessLogic.AuthFunctions;
+using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.BusinessLogic.Services.Implementation;

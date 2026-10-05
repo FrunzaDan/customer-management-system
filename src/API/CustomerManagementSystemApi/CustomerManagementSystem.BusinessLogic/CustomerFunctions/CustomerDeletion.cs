@@ -1,4 +1,4 @@
-﻿using CustomerManagementSystem.DataAccess.DBConnection;
+using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.BusinessLogic.CustomerFunctions;

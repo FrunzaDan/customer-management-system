@@ -1,4 +1,4 @@
-﻿namespace CustomerManagementSystem.Domain.Models;
+namespace CustomerManagementSystem.Domain.Models;
 
 public sealed class MerchantCredentials
 {

@@ -1,4 +1,4 @@
-﻿using CustomerManagementSystem.BusinessLogic.AuthFunctions;
+using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using CustomerManagementSystem.BusinessLogic.CatalogFunctions;
 using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 using CustomerManagementSystem.BusinessLogic.Services;

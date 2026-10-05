@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using CustomerManagementSystem.BusinessLogic.Constants;
 
 namespace CustomerManagementSystem.BusinessLogic.Validations;

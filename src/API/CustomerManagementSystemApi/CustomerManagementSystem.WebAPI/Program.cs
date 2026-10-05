@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
