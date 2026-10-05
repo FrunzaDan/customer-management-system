@@ -36,7 +36,7 @@ The ASP.NET Core Web API (.NET 10) under `src/API/CustomerManagementSystemApi/`.
 11. controllers
 
 Other settings:
-- **CORS:** only `Cors:AllowedOrigins`, which is the UI on port 4203.
+- **CORS:** only `Cors:AllowedOrigins`, which is the UI on port 4204.
 - **OpenAPI and Swagger UI:** at `/openapi/v1.json` and `/swagger`, Development only.
 - **Rate limit:** the `"login"` policy allows 5 requests per minute per IP, and is applied only to `POST /access-token`.
 

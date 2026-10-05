@@ -56,7 +56,7 @@ Everything works out of the box for local development. The relevant settings liv
 
 - `ConnectionStrings:Docker` points at the container on `localhost,1433`. On Windows, the API falls back to `ConnectionStrings:LocalSqlServer` (Windows auth) if Docker doesn't answer within 3 seconds.
 - `Auth` holds the JWT key, issuer, audience and token lifetime. The key is a placeholder for local use only.
-- `Cors:AllowedOrigins` allows the Angular dev server on port 4203.
+- `Cors:AllowedOrigins` allows the Angular dev server on port 4204.
 
 `run.sh` reads these environment variables if you need to override the defaults: `SQL_SA_PASSWORD`, `SQL_PORT`, `SQL_CONTAINER_NAME`, `SQL_IMAGE` and `SQL_PLATFORM`.
 
@@ -66,7 +66,7 @@ Everything works out of the box for local development. The relevant settings liv
 ./run.sh
 ```
 
-This starts Docker if needed, creates or starts the `sqlserver` container, builds and publishes the database schema, starts the API in the background on `https://localhost:7145`, and then runs the Angular dev server in the foreground on `http://localhost:4203`. `Ctrl+C` stops the API and Angular; the database container keeps running.
+This starts Docker if needed, creates or starts the `sqlserver` container, builds and publishes the database schema, starts the API in the background on `https://localhost:7145`, and then runs the Angular dev server in the foreground on `http://localhost:4204`. `Ctrl+C` stops the API and Angular; the database container keeps running.
 
 Log in with the seeded test account:
 
