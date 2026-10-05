@@ -258,9 +258,9 @@ else
   rm -f "$DEV_CERT_PEM"
 fi
 
-echo "==> [7/7] Starting Angular dev server (Ctrl+C stops both)..."
+echo "==> [7/7] Starting Angular dev server and opening the browser (Ctrl+C stops both)..."
 cd "$UI_DIR"
 if [[ ! -d node_modules ]]; then
   npm ci
 fi
-npm start
+npm start -- --open

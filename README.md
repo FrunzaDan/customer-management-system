@@ -66,7 +66,7 @@ Everything works out of the box for local development. The relevant settings liv
 ./run.sh
 ```
 
-This starts Docker if needed, creates or starts the `sqlserver` container, builds and publishes the database schema, starts the API in the background on `https://localhost:7145`, and then runs the Angular dev server in the foreground on `http://localhost:4204`. `Ctrl+C` stops the API and Angular; the database container keeps running.
+This starts Docker if needed, creates or starts the `sqlserver` container, builds and publishes the database schema, starts the API in the background on `https://localhost:7145`, and then runs the Angular dev server in the foreground on `http://localhost:4204` and opens it in your browser. `Ctrl+C` stops the API and Angular; the database container keeps running.
 
 Log in with the seeded test account:
 

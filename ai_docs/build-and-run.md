@@ -20,7 +20,7 @@ How to build, test and run the database, API and UI locally.
 2. Installs `sqlpackage` 170.3.93 if it's missing, builds the `.sqlproj`, and publishes it, retrying for up to 180 s until SQL Server answers.
 3. Starts the API at `https://localhost:7145` with `ConnectionStrings__Docker` pointing at that container, and waits up to 60 s for it. If the API doesn't come up, the script fails.
 4. Exports the API's TLS certificate to `.run/dev-cert.pem` and sets `NODE_EXTRA_CA_CERTS`, so Node (SSR) trusts it.
-5. Starts `npm start` at `http://localhost:4204`. `Ctrl+C` stops both.
+5. Starts `npm start -- --open` at `http://localhost:4204`, which opens it in the browser. `Ctrl+C` stops both.
 
 You can override these environment variables: `SQL_PORT`, `SQL_SA_PASSWORD`, `SQL_DATABASE`, `SQL_CONTAINER_NAME`, `SQL_IMAGE`, `SQL_PLATFORM` and `API_URL`.
 
