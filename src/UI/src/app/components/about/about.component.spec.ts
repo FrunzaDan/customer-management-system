@@ -174,10 +174,13 @@ describe('AboutComponent — createTestCustomers', () => {
 
   it('draws again when every product it picked is rejected, so the customer still ends up with one', async () => {
     const component = createComponent(catalogue(50));
+    // Reject one fewer purchase than the component has draws (3). Every draw picks at
+    // least one product, so the first customer always has a draw left to succeed with;
+    // rejecting 3 failed whenever all three draws happened to pick a single product.
     let attempts = 0;
     purchaseProductSilently.mockImplementation(
       (customerId: string, productId: string) => {
-        if (attempts++ < 3) return throwError(() => new Error('409'));
+        if (attempts++ < 2) return throwError(() => new Error('409'));
         purchases.push({ customerId, productId });
         return of({ status: 200, responseMessage: 'ok' });
       },

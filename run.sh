@@ -59,7 +59,7 @@ port_in_use() {
   return 1
 }
 
-echo "==> [1/6] Checking prerequisites"
+echo "==> [1/7] Checking prerequisites"
 missing=()
 for cmd in dotnet node npm docker curl; do
   command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
@@ -73,7 +73,15 @@ if [[ ${#missing[@]} -gt 0 ]]; then
   exit 1
 fi
 
-echo "==> [2/6] Checking Docker"
+# The API only listens on HTTPS; without a trusted dev certificate the browser refuses
+# its calls before they ever reach it.
+if ! dotnet dev-certs https --check --trust >/dev/null 2>&1; then
+  echo "The ASP.NET Core HTTPS development certificate is missing or not trusted." >&2
+  echo "Run 'dotnet dev-certs https --trust' once, then re-run this script." >&2
+  exit 1
+fi
+
+echo "==> [2/7] Checking Docker"
 if ! docker info >/dev/null 2>&1; then
   echo "    Docker daemon is not running."
   if [[ "$(uname -s)" == "Darwin" ]]; then
@@ -101,7 +109,7 @@ if ! docker info >/dev/null 2>&1; then
 fi
 echo "    Docker is running."
 
-echo "==> [3/6] Checking SQL Server container ('$SQL_CONTAINER_NAME')"
+echo "==> [3/7] Checking SQL Server container ('$SQL_CONTAINER_NAME')"
 if container_state=$(docker inspect -f '{{.State.Running}}' "$SQL_CONTAINER_NAME" 2>/dev/null); then
   if [[ "$container_state" == "true" ]]; then
     echo "    Container already running."
@@ -128,7 +136,7 @@ fi
 
 mkdir -p "$RUN_DIR"
 
-echo "==> [4/6] Preparing database tooling"
+echo "==> [4/7] Preparing database tooling"
 # Pinned to a version known to run against .NET runtimes commonly installed on this
 # machine; the latest sqlpackage release can require a newer runtime patch than what's
 # available, which fails at launch (not something a "wait longer" fix helps with).
@@ -150,7 +158,7 @@ fi
   dotnet build "$DB_PROJ" --configuration Debug
 )
 
-echo "==> [5/6] Deploying database schema (retrying until SQL Server accepts connections)"
+echo "==> [5/7] Deploying database schema (retrying until SQL Server accepts connections)"
 # Azure SQL Edge doesn't ship sqlcmd/mssql-tools inside the container, so instead of
 # probing readiness separately, we retry the real publish (the actual connection the
 # API will use) until it succeeds.
@@ -189,7 +197,7 @@ if [[ "$published" -ne 1 ]]; then
 fi
 echo "    Database schema is up to date."
 
-echo "==> [6/6] Starting API and Angular client"
+echo "==> [6/7] Starting API"
 API_PORT="${API_URL##*:}"
 API_PORT="${API_PORT%%/*}"
 if port_in_use "$API_PORT"; then
@@ -209,7 +217,7 @@ echo "    API starting in background (pid $API_PID), logs: $API_LOG"
 echo -n "    Waiting for API to come up"
 api_ready=0
 for _ in $(seq 1 30); do
-  if curl -sk "$API_URL/swagger/index.html" >/dev/null 2>&1; then
+  if curl -sk "$API_URL/health" >/dev/null 2>&1; then
     echo
     api_ready=1
     break
@@ -229,7 +237,7 @@ if [[ "$api_ready" -ne 1 ]]; then
   exit 1
 fi
 
-echo "    API is up at $API_URL"
+echo "    API is up at $API_URL (Swagger UI: $API_URL/swagger)"
 
 # The Angular app runs server-side rendering, and guarded routes make a real fetch()
 # call to the API from Node during SSR. Node's fetch validates TLS certs against its
@@ -250,7 +258,7 @@ else
   rm -f "$DEV_CERT_PEM"
 fi
 
-echo "    Starting Angular dev server (Ctrl+C stops both)..."
+echo "==> [7/7] Starting Angular dev server (Ctrl+C stops both)..."
 cd "$UI_DIR"
 if [[ ! -d node_modules ]]; then
   npm ci
