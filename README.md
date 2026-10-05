@@ -6,13 +6,13 @@ Customer Management System is a full-stack web app that lets a merchant manage c
 
 ## Key Features
 
-- **Secure login:** The merchant exchanges a username and password for an HMAC-SHA256 JWT that expires after 15 minutes. Passwords are stored as salted PBKDF2 hashes (100k iterations) and compared in constant time, and the login endpoint is rate-limited per IP to slow down guessing.
+- **Secure login:** The merchant exchanges a username and password for an HMAC-SHA256 JWT that expires after 15 minutes. Passwords are stored as salted PBKDF2 hashes (100k iterations) and compared in constant time, and the login endpoint is rate-limited to 5 attempts per minute per IP to slow down guessing.
 - **Customer lifecycle:** Customers can be created, viewed, edited, deactivated, reactivated and deleted. An active customer must be deactivated before it can be deleted, so a record can't disappear by accident in one click.
 - **Server-side list handling:** Search, sort and pagination run in SQL, so the browser only receives the rows on the current page. Bulk actions split a selection by status, deactivating the active customers and deleting the inactive ones after a single confirmation.
 - **Products and purchases:** The database is seeded with 50 products (laptops, monitors and more), each with a price, stock level and warehouse. You can add products, record purchases for a customer, see each product's sold / in stock / left counts and who bought it, and reset stock to its starting level.
 - **Audit log:** Every create, edit, deactivate, reactivate and delete is logged with who did it and when. Each customer has their own history, and a global log shows everything; clearing the global log needs the Merchant role.
-- **Charts and CSV export:** A charts page shows who the customers are, how the customer base has grown and what sells. The customer list can be exported to CSV with the current filters and sort order applied.
-- **Test data generator:** The About page adds a batch of demo customers with random purchases, so the lists and charts have something to show. Test customers skip the deactivate-before-delete rule, so they're easy to clean up.
+- **Charts and CSV export:** A charts page shows who the customers are, how the customer base has grown and what sells. The charts are the app's own SVG components, with no chart library. The customer list can be exported to CSV with the current filters and sort order applied.
+- **Test data generator:** The About page adds 50 demo customers with random purchases, so the lists and charts have something to show. Test customers skip the deactivate-before-delete rule, so they're easy to clean up.
 - **API health banner:** The UI polls the API's `/health` endpoint and shows an "API is not running" message when the backend is down, instead of failing silently.
 - **One-command scripts:** `run.sh` brings up the whole stack: the SQL Server container in Docker, the schema deployment, the API and the Angular dev server. `build.sh` builds and tests every layer (API, database project, UI) without starting any services, as a check before committing.
 
@@ -23,7 +23,7 @@ Customer Management System is a full-stack web app that lets a merchant manage c
 - **Frontend:** Angular 22.2 (standalone components, signals, zoneless), SSR via `@angular/ssr` + Express, Bootstrap 5, TypeScript
 - **Backend:** ASP.NET Core Web API on .NET 10 (controllers), layered as WebAPI → BusinessLogic → DataAccess → Domain
 - **Database / Storage:** SQL Server (Azure SQL Edge in Docker), ADO.NET with stored procedures only (no ORM), SSDT project deployed with `sqlpackage`
-- **Tooling & Other:** OpenAPI + Swagger UI, xUnit v3 + Moq (Microsoft Testing Platform), Vitest + jsdom, Prettier, .NET analyzers (latest-recommended) + dotnet format, Postman collection
+- **Tooling & Other:** OpenAPI + Swagger UI, xUnit v3 + Moq (Microsoft Testing Platform), Vitest + jsdom, ESLint (angular-eslint), Prettier, .NET analyzers (latest-recommended) + dotnet format, Postman collection
 
 ---
 
@@ -58,7 +58,7 @@ Everything works out of the box for local development. The relevant settings liv
 - `Auth` holds the JWT key, issuer, audience and token lifetime. The key is a placeholder for local use only.
 - `Cors:AllowedOrigins` allows the Angular dev server on port 4204.
 
-`run.sh` reads these environment variables if you need to override the defaults: `SQL_SA_PASSWORD`, `SQL_PORT`, `SQL_CONTAINER_NAME`, `SQL_IMAGE` and `SQL_PLATFORM`.
+`run.sh` reads these environment variables if you need to override the defaults: `SQL_SA_PASSWORD`, `SQL_PORT`, `SQL_CONTAINER_NAME`, `SQL_IMAGE`, `SQL_PLATFORM` (defaults to `linux/arm64` on Apple Silicon and `linux/amd64` elsewhere), `SQL_DATABASE` and `API_URL`. It passes the resulting connection string to the API, so a changed port or password doesn't need an `appsettings.json` edit. Its logs (API output, `sqlpackage` output) go to `.run/`.
 
 ### 3. Installation & Run
 
@@ -81,7 +81,7 @@ To build and test everything without starting any services:
 ./build.sh
 ```
 
-That restores and builds the .NET solution, runs the xUnit tests, builds the SQL project, then runs `npm ci`, the production build and the Vitest suite for the UI.
+That restores and builds the .NET solution with warnings treated as errors, checks it with `dotnet format --verify-no-changes`, runs the xUnit tests, and builds the SQL project. For the UI it runs `npm ci`, the Prettier check, ESLint, the production build and the Vitest suite. Pass `--skip-tests` to skip both test steps.
 
 ---
 

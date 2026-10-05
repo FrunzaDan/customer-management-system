@@ -6,7 +6,7 @@ This isn't usually run standalone in dev — use `./run.sh` from the repo root, 
 
 ## Development server
 
-`npm start` (equivalent to `ng serve`) runs this app alone against whatever `CustomerManagementSystemAPI` URL is set in `src/environments/environment.ts` — the API must already be running separately. Navigate to `http://localhost:4204/`.
+`npm start` (equivalent to `ng serve`) runs this app alone against the `apiUrl` set in `src/environments/environment.ts` (`https://localhost:7145` by default) — the API must already be running separately. Navigate to `http://localhost:4204/`.
 
 ## Code scaffolding
 
@@ -14,7 +14,11 @@ This isn't usually run standalone in dev — use `./run.sh` from the repo root, 
 
 ## Build
 
-`ng build` (or `npm run build`, used by the repo root `build.sh`). Output goes to `dist/`.
+`ng build` (or `npm run build`, used by the repo root `build.sh`). Output goes to `dist/` (browser bundle plus the Express SSR server, which `npm run serve:ssr:customer-management-system` starts).
+
+## Formatting and linting
+
+`npm run format:check` (Prettier) and `npm run lint` (angular-eslint); `npm run format` rewrites files in place. The repo root `build.sh` runs the format check and lint before building.
 
 ## Running unit tests
 
