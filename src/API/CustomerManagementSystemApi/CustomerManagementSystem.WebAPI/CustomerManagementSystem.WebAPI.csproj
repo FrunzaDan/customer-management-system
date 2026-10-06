@@ -12,6 +12,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\CustomerManagementSystem.BusinessLogic\CustomerManagementSystem.BusinessLogic.csproj" />
+        <!-- Composition root only: Program.cs calls AddDataAccess() to plug the SQL implementations in. -->
+        <ProjectReference Include="..\CustomerManagementSystem.DataAccess\CustomerManagementSystem.DataAccess.csproj" />
     </ItemGroup>
 
 </Project>

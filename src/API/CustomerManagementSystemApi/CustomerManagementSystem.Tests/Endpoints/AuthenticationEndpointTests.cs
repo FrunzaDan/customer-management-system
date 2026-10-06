@@ -1,6 +1,5 @@
 using System.Net;
-using CustomerManagementSystem.Domain.Models;
-using Moq;
+using CustomerManagementSystem.Tests.AuthFunctions;
 
 namespace CustomerManagementSystem.Tests.Endpoints;
 
@@ -10,10 +9,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_IssuesATokenThatTheApiThenAccepts()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.Setup(d => d.CheckMerchantCredentialsFromDbAsync(
-                It.Is<MerchantCredentials>(c => c.Username == "merchant" && c.Password == "secret"),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "", MerchantRole.Merchant));
+        api.Db.SetupMerchant("secret");
 
         var login = await api.PostAsync("/api/authentication/access-token",
             new { username = "merchant", password = "secret" });
@@ -27,9 +23,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_WrongCredentials_IsA401Problem()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
+        api.Db.SetupMerchant("secret");
 
         var response = await api.PostAsync("/api/authentication/access-token",
             new { username = "merchant", password = "wrong" });

@@ -1,7 +1,11 @@
 using CustomerManagementSystem.Domain.Models;
 
-namespace CustomerManagementSystem.DataAccess.DBConnection;
+namespace CustomerManagementSystem.BusinessLogic.Abstractions;
 
+/// <summary>A merchant's stored login data; the password check itself happens in BusinessLogic.</summary>
+public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, MerchantRole MerchantRole);
+
+/// <summary>The persistence operations BusinessLogic needs. Implemented by DataAccess (stored procedures).</summary>
 public interface IDbUtils
 {
     Task<ResponseModel<Guid?>> CreateCustomerAsync(CreateCustomerRequest customer, CancellationToken cancellationToken = default);
@@ -11,7 +15,8 @@ public interface IDbUtils
     Task<ResponseModel<object>> DeactivateCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> ReactivateCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> DeleteCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
-    Task<ResponseModel<MerchantRole?>> CheckMerchantCredentialsFromDbAsync(MerchantCredentials merchantCredentials, CancellationToken cancellationToken = default);
+    Task<MerchantAuthData?> GetMerchantAuthDataAsync(string username, CancellationToken cancellationToken = default);
+    Task RecordMerchantLoginAsync(string username, CancellationToken cancellationToken = default);
     Task<ResponseModel<object>> LogCustomerAuditAsync(Guid customerId, string performedBy, AuditAction action, string? details, CancellationToken cancellationToken = default);
     Task<ResponseModel<IReadOnlyList<AuditLogEntry>>> GetCustomerAuditLogAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<ResponseModel<PagedResponse<GlobalAuditLogEntry>>> GetAllCustomerAuditLogAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);

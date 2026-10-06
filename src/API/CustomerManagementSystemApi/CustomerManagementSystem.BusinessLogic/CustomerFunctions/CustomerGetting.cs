@@ -1,5 +1,5 @@
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.BusinessLogic.Validations;
-using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 

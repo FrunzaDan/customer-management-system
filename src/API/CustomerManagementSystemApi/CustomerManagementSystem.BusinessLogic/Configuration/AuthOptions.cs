@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CustomerManagementSystem.Domain.Configuration;
+namespace CustomerManagementSystem.BusinessLogic.Configuration;
 
 public sealed class AuthOptions
 {

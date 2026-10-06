@@ -2,7 +2,9 @@ using System.Globalization;
 using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
-using CustomerManagementSystem.Domain.Configuration;
+using CustomerManagementSystem.BusinessLogic.Configuration;
+using CustomerManagementSystem.DataAccess;
+using CustomerManagementSystem.DataAccess.Configuration;
 using CustomerManagementSystem.WebAPI.ErrorHandling;
 using CustomerManagementSystem.WebAPI.OpenApi;
 using CustomerManagementSystem.WebAPI.Routing;
@@ -26,6 +28,7 @@ builder.Services.AddOptions<DatabaseOptions>()
     .ValidateOnStart();
 
 builder.Services.AddBusinessLogic();
+builder.Services.AddDataAccess();
 
 builder.Services.AddControllers(options =>
     options.Conventions.Add(new RouteTokenTransformerConvention(new KebabCaseParameterTransformer())));

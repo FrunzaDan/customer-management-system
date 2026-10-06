@@ -1,6 +1,6 @@
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
-using CustomerManagementSystem.DataAccess.DBConnection;
-using CustomerManagementSystem.Domain.Configuration;
+using CustomerManagementSystem.BusinessLogic.Configuration;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -28,8 +28,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwtAsync_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
+        dbUtils.SetupMerchant("Merchant123");
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
@@ -45,8 +44,7 @@ public class JwtCreationTests
     public async Task GenerateBearerJwtAsync_WritesIatAsANumericDate_AndTheRoleAsItsNumericCode()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
+        dbUtils.SetupMerchant("Merchant123");
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
@@ -57,11 +55,10 @@ public class JwtCreationTests
     }
 
     [Fact]
-    public async Task GenerateBearerJwtAsync_PassesOnTheDbRejection_WhenCredentialsAreWrong()
+    public async Task GenerateBearerJwtAsync_ReturnsUnauthorized_WhenThePasswordIsWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
+        dbUtils.SetupMerchant("SomeOtherPassword");
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
@@ -83,7 +80,7 @@ public class JwtCreationTests
         var result = await jwtCreation.GenerateBearerJwtAsync(credentials, TestContext.Current.CancellationToken);
 
         Assert.Equal(400, result.Status);
-        dbUtils.Verify(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()), Times.Never);
+        dbUtils.Verify(d => d.GetMerchantAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -91,12 +88,53 @@ public class JwtCreationTests
     {
         var dbUtils = new Mock<IDbUtils>();
         var failure = new InvalidOperationException("The database is unreachable.");
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
+        dbUtils.Setup(d => d.GetMerchantAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(failure);
         var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken));
         Assert.Same(failure, exception);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwtAsync_ReturnsUnauthorized_WhenTheUsernameIsUnknown()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.Setup(d => d.GetMerchantAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MerchantAuthData?)null);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
+
+        Assert.Equal(401, result.Status);
+        Assert.Equal("Invalid username or password.", result.ResponseMessage);
+        dbUtils.Verify(d => d.RecordMerchantLoginAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwtAsync_ReturnsForbidden_WhenTheRoleIsNotMerchant()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.SetupMerchant("Merchant123", role: (MerchantRole)1802);
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
+
+        var result = await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
+
+        Assert.Equal(403, result.Status);
+        Assert.Equal("The provided merchant role (1802) is not valid.", result.ResponseMessage);
+        dbUtils.Verify(d => d.RecordMerchantLoginAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GenerateBearerJwtAsync_RecordsTheLogin_OnlyWhenItSucceeds()
+    {
+        var dbUtils = new Mock<IDbUtils>();
+        dbUtils.SetupMerchant("Merchant123");
+        var jwtCreation = new JwtCreation(CreateOptions(), dbUtils.Object);
+
+        await jwtCreation.GenerateBearerJwtAsync(Credentials, TestContext.Current.CancellationToken);
+
+        dbUtils.Verify(d => d.RecordMerchantLoginAsync("TestMerchant", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

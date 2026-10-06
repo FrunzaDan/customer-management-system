@@ -1,9 +1,9 @@
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using CustomerManagementSystem.BusinessLogic.CatalogFunctions;
 using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
 using CustomerManagementSystem.BusinessLogic.Services;
 using CustomerManagementSystem.BusinessLogic.Services.Implementation;
-using CustomerManagementSystem.DataAccess.DBConnection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CustomerManagementSystem.BusinessLogic;
@@ -15,8 +15,6 @@ public static class BusinessLogicDependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IProductService, ProductService>();
-        services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-        services.AddSingleton<IDbUtils, DbUtils>();
         services.AddSingleton<JwtCreation>();
 
         services.AddScoped<ICustomerAuditLogger, CustomerAuditLogger>();

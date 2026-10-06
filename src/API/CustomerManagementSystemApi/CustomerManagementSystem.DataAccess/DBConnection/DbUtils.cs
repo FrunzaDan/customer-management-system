@@ -1,4 +1,5 @@
 using System.Data;
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
@@ -7,9 +8,6 @@ namespace CustomerManagementSystem.DataAccess.DBConnection;
 
 public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
 {
-    private static readonly byte[] UnknownUserHash = new byte[32];
-    private static readonly byte[] UnknownUserSalt = new byte[16];
-
     public Task<ResponseModel<Guid?>> CreateCustomerAsync(CreateCustomerRequest customer,
         CancellationToken cancellationToken = default) =>
         ExecuteStoredProcedureAsync(
@@ -80,37 +78,20 @@ public class DbUtils(ISqlConnectionFactory connectionFactory) : IDbUtils
             DbHelper.HandleResponseWithMessageAsync,
             cancellationToken);
 
-    public async Task<ResponseModel<MerchantRole?>> CheckMerchantCredentialsFromDbAsync(
-        MerchantCredentials merchantCredentials, CancellationToken cancellationToken = default)
-    {
-        var authData = await ExecuteStoredProcedureAsync(
+    public Task<MerchantAuthData?> GetMerchantAuthDataAsync(string username,
+        CancellationToken cancellationToken = default) =>
+        ExecuteStoredProcedureAsync(
             "dbo.Merchant_GetAuthData",
-            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username,
-                merchantCredentials.Username),
+            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username, username),
             DbHelper.HandleMerchantAuthDataResponseAsync,
-            cancellationToken
-        );
-
-        var passwordMatches = PasswordHasher.VerifyPassword(merchantCredentials.Password ?? string.Empty,
-            authData?.PasswordHash ?? UnknownUserHash, authData?.PasswordSalt ?? UnknownUserSalt);
-
-        if (authData is null || !passwordMatches)
-            return new ResponseModel<MerchantRole?>(401, "Invalid username or password.");
-
-        var roleCode = (short)authData.MerchantRole;
-        if (authData.MerchantRole != MerchantRole.Merchant)
-            return new ResponseModel<MerchantRole?>(403, $"The provided merchant role ({roleCode}) is not valid.");
-
-        await ExecuteStoredProcedureAsync(
-            "dbo.Merchant_RecordLogin",
-            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username,
-                merchantCredentials.Username),
-            _ => Task.FromResult(true),
             cancellationToken);
 
-        return new ResponseModel<MerchantRole?>(200, $"Credentials validated successfully. Role: {roleCode}.",
-            authData.MerchantRole);
-    }
+    public Task RecordMerchantLoginAsync(string username, CancellationToken cancellationToken = default) =>
+        ExecuteStoredProcedureAsync(
+            "dbo.Merchant_RecordLogin",
+            command => command.Parameters.AddNVarChar("@Username", FieldLengthConstants.Username, username),
+            _ => Task.FromResult(true),
+            cancellationToken);
 
     public Task<ResponseModel<object>> LogCustomerAuditAsync(Guid customerId, string performedBy, AuditAction action,
         string? details, CancellationToken cancellationToken = default) =>

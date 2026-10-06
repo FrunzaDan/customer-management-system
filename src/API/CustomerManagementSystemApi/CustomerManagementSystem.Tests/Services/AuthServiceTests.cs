@@ -1,8 +1,9 @@
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.BusinessLogic.AuthFunctions;
+using CustomerManagementSystem.BusinessLogic.Configuration;
 using CustomerManagementSystem.BusinessLogic.Services.Implementation;
-using CustomerManagementSystem.DataAccess.DBConnection;
-using CustomerManagementSystem.Domain.Configuration;
 using CustomerManagementSystem.Domain.Models;
+using CustomerManagementSystem.Tests.AuthFunctions;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -25,8 +26,7 @@ public class AuthServiceTests
     public async Task GetAccessTokenAsync_ReturnsAToken_WhenCredentialsAreValid()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(200, "Success!", MerchantRole.Merchant));
+        dbUtils.SetupMerchant("Merchant123");
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessTokenAsync(new MerchantCredentials
@@ -56,7 +56,7 @@ public class AuthServiceTests
 
         Assert.Equal(400, result.Status);
         dbUtils.Verify(
-            d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()),
+            d => d.GetMerchantAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -78,16 +78,15 @@ public class AuthServiceTests
         Assert.Equal(400, result.Status);
         Assert.Equal("Username and password are required.", result.ResponseMessage);
         dbUtils.Verify(
-            d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()),
+            d => d.GetMerchantAuthDataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task GetAccessTokenAsync_PropagatesTheDbRejection_WhenCredentialsAreWrong()
+    public async Task GetAccessTokenAsync_ReturnsUnauthorized_WhenThePasswordIsWrong()
     {
         var dbUtils = new Mock<IDbUtils>();
-        dbUtils.Setup(d => d.CheckMerchantCredentialsFromDbAsync(It.IsAny<MerchantCredentials>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ResponseModel<MerchantRole?>(401, "Invalid username or password."));
+        dbUtils.SetupMerchant("Merchant123");
         var sut = CreateSut(dbUtils);
 
         var result = await sut.GetAccessTokenAsync(new MerchantCredentials

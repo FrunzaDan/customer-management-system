@@ -28,7 +28,7 @@ Browser ──► Angular dev server :4204 (SSR via Express in Node)
            ASP.NET Core API :7145
              WebAPI (controllers, ApiControllerBase.Reply, GlobalExceptionHandler)
                → BusinessLogic (services → one logic class per action, validation, JWT)
-               → DataAccess (DbUtils/DbHelper, ADO.NET, typed SqlParameters)
+               → IDbUtils (declared in BusinessLogic, implemented by DataAccess: DbUtils/DbHelper, ADO.NET, typed SqlParameters)
              Domain (models, options, constants) is shared by all three
               │  stored procedures only
               ▼

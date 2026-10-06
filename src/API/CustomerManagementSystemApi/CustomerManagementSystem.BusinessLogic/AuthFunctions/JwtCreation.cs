@@ -1,9 +1,8 @@
 using System.Globalization;
 using System.Security.Claims;
-using CustomerManagementSystem.DataAccess.DBConnection;
-using CustomerManagementSystem.Domain.Configuration;
+using CustomerManagementSystem.BusinessLogic.Abstractions;
+using CustomerManagementSystem.BusinessLogic.Configuration;
 using CustomerManagementSystem.Domain.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +11,10 @@ namespace CustomerManagementSystem.BusinessLogic.AuthFunctions;
 
 public class JwtCreation
 {
+    // Verified against when the username is unknown, so a miss takes as long as a wrong password.
+    private static readonly byte[] UnknownUserHash = new byte[32];
+    private static readonly byte[] UnknownUserSalt = new byte[16];
+
     private readonly AuthOptions _authOptions;
     private readonly IDbUtils _dbUtils;
     private readonly SymmetricSecurityKey _signingKey;
@@ -29,16 +32,38 @@ public class JwtCreation
         if (string.IsNullOrWhiteSpace(merchantCredentials.Username))
             return new ResponseModel<AccessTokenResponse>(400, "Username and password are required.");
 
-        var credentialsCheck = await _dbUtils.CheckMerchantCredentialsFromDbAsync(merchantCredentials, cancellationToken);
+        var credentialsCheck = await CheckCredentialsAsync(merchantCredentials.Username,
+            merchantCredentials.Password, cancellationToken);
 
-        if (credentialsCheck.Status != StatusCodes.Status200OK)
+        if (credentialsCheck.Status != 200)
             return new ResponseModel<AccessTokenResponse>(credentialsCheck.Status, credentialsCheck.ResponseMessage);
 
         var expires = DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenTimeoutMinutes);
         var token = GenerateJwtToken(merchantCredentials.Username, credentialsCheck.Data, expires);
 
-        return new ResponseModel<AccessTokenResponse>(StatusCodes.Status200OK, "Success!",
+        return new ResponseModel<AccessTokenResponse>(200, "Success!",
             new AccessTokenResponse { AccessToken = token, ExpiresAt = expires });
+    }
+
+    private async Task<ResponseModel<MerchantRole?>> CheckCredentialsAsync(string username, string? password,
+        CancellationToken cancellationToken)
+    {
+        var authData = await _dbUtils.GetMerchantAuthDataAsync(username, cancellationToken);
+
+        var passwordMatches = PasswordHasher.VerifyPassword(password ?? string.Empty,
+            authData?.PasswordHash ?? UnknownUserHash, authData?.PasswordSalt ?? UnknownUserSalt);
+
+        if (authData is null || !passwordMatches)
+            return new ResponseModel<MerchantRole?>(401, "Invalid username or password.");
+
+        var roleCode = (short)authData.MerchantRole;
+        if (authData.MerchantRole != MerchantRole.Merchant)
+            return new ResponseModel<MerchantRole?>(403, $"The provided merchant role ({roleCode}) is not valid.");
+
+        await _dbUtils.RecordMerchantLoginAsync(username, cancellationToken);
+
+        return new ResponseModel<MerchantRole?>(200, $"Credentials validated successfully. Role: {roleCode}.",
+            authData.MerchantRole);
     }
 
     private string GenerateJwtToken(string username, MerchantRole? merchantRole, DateTime expires)

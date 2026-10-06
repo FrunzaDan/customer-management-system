@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace CustomerManagementSystem.DataAccess.DBConnection;
+namespace CustomerManagementSystem.BusinessLogic.AuthFunctions;
 
 public static class PasswordHasher
 {

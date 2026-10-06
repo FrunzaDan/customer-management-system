@@ -1,5 +1,5 @@
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.BusinessLogic.CustomerFunctions;
-using CustomerManagementSystem.DataAccess.DBConnection;
 using CustomerManagementSystem.Domain.Models;
 using Moq;
 

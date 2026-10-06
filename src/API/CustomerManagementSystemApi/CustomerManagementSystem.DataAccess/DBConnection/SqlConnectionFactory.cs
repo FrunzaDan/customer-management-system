@@ -1,4 +1,4 @@
-using CustomerManagementSystem.Domain.Configuration;
+using CustomerManagementSystem.DataAccess.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

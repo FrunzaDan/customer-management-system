@@ -1,11 +1,10 @@
 using System.Globalization;
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.Data.SqlClient;
 
 namespace CustomerManagementSystem.DataAccess.DBConnection;
-
-public sealed record MerchantAuthData(byte[] PasswordHash, byte[] PasswordSalt, MerchantRole MerchantRole);
 
 public static class DbHelper
 {

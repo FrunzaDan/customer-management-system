@@ -11,10 +11,13 @@ The ASP.NET Core Web API (.NET 10) under `src/API/CustomerManagementSystemApi/`.
 - `WebAPI/ErrorHandling/GlobalExceptionHandler.cs` — the one place unhandled exceptions are logged.
 - `BusinessLogic/CustomerFunctions/` — `CustomerCreation`, `CustomerUpdating`, `CustomerGetting`, `CustomerActivation`, `CustomerDeletion`, `CustomerPurchasing`, `CustomerAuditLogger`.
 - `BusinessLogic/CatalogFunctions/` — `ProductFunctions`.
-- `BusinessLogic/AuthFunctions/` — `JwtCreation`, `JwtSigningKey`.
+- `BusinessLogic/AuthFunctions/` — `JwtCreation` (also the password and role check), `JwtSigningKey`, `PasswordHasher`.
+- `BusinessLogic/Abstractions/IDbUtils.cs` — the persistence interface BusinessLogic needs (plus `MerchantAuthData`); `DataAccess` implements it.
+- `BusinessLogic/Configuration/` — `AuthOptions`.
 - `BusinessLogic/Validations/` — email, phone number and address rules.
-- `DataAccess/DBConnection/` — `SqlConnectionFactory`, `DbUtils`, `DbHelper`, `SqlExtensions`, `PasswordHasher`.
-- `Domain/Configuration/` — `AuthOptions`, `DatabaseOptions`.
+- `DataAccess/DBConnection/` — `SqlConnectionFactory`, `DbUtils`, `DbHelper`, `SqlExtensions`.
+- `DataAccess/Configuration/` — `DatabaseOptions`. `DataAccess/DataAccessDependencyInjection.cs` — `AddDataAccess()`.
+- Project references (Clean Architecture): `Domain` ← `BusinessLogic` ← `DataAccess`; `WebAPI` → `BusinessLogic` + `DataAccess` (composition root only). BusinessLogic references no ASP.NET or SQL package.
 - `Domain/Models/`, `Domain/Constants/FieldLengthConstants.cs`.
 - `Directory.Build.props`, `Directory.Packages.props` — shared settings and central package versions.
 - `CustomerManagementSystem.Tests/` — xUnit v3 tests.
@@ -116,7 +119,7 @@ Other settings:
 
 ### Auth
 
-- **Login:** `DbUtils` reads the hash, salt and role (`Merchant_GetAuthData`) and verifies PBKDF2-SHA256 in C#: 100k iterations, a 16-byte salt, and `FixedTimeEquals`. An unknown username is hashed against a dummy salt, so it takes as long as a wrong password. Only a successful login updates `LastInteractionAt` (`Merchant_RecordLogin`).
+- **Login:** `DbUtils.GetMerchantAuthDataAsync` reads the hash, salt and role (`Merchant_GetAuthData`); `JwtCreation` verifies PBKDF2-SHA256 with `PasswordHasher`: 100k iterations, a 16-byte salt, and `FixedTimeEquals`. An unknown username is hashed against a dummy salt, so it takes as long as a wrong password. Only a successful login updates `LastInteractionAt` (`Merchant_RecordLogin`).
 - **Token:** `JwtCreation` signs an HMAC-SHA256 JWT with these claims: `sub` and `unique_name` (both the username), `role`, `amr` (`pwd`), `jti` and `iat`. The expiry comes from `AccessTokenTimeoutMinutes`.
 - **Validation:** only `AddJwtBearer`, which checks the signature, issuer, audience and lifetime with `ClockSkew = 0`.
 

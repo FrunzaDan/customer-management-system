@@ -1,5 +1,5 @@
+using CustomerManagementSystem.DataAccess.Configuration;
 using CustomerManagementSystem.DataAccess.DBConnection;
-using CustomerManagementSystem.Domain.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 

@@ -1,6 +1,6 @@
-using CustomerManagementSystem.DataAccess.DBConnection;
+using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 
-namespace CustomerManagementSystem.Tests.DataAccess;
+namespace CustomerManagementSystem.Tests.AuthFunctions;
 
 public class PasswordHasherTests
 {

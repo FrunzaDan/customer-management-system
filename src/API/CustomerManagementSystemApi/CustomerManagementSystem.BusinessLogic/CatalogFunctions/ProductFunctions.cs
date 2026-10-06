@@ -1,4 +1,4 @@
-using CustomerManagementSystem.DataAccess.DBConnection;
+using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.Domain.Constants;
 using CustomerManagementSystem.Domain.Models;
 
