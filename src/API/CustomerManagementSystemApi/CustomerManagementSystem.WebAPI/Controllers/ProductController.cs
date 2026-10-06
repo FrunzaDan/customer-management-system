@@ -1,4 +1,5 @@
-using CustomerManagementSystem.BusinessLogic.Services;
+using CustomerManagementSystem.BusinessLogic.Contracts;
+using CustomerManagementSystem.BusinessLogic.Features.Products;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,24 +9,25 @@ namespace CustomerManagementSystem.WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class ProductController(IProductService productService) : ApiControllerBase
+public class ProductController : ApiControllerBase
 {
     [HttpGet("all")]
     public async Task<ActionResult<ResponseModel<IReadOnlyList<ProductModel>>>> GetProducts(
-        CancellationToken cancellationToken) =>
-        Reply(await productService.GetProductsAsync(cancellationToken));
+        [FromServices] GetProductsHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(cancellationToken));
 
     [HttpGet("get")]
     public async Task<ActionResult<ResponseModel<ProductDetailsModel>>> GetProduct([FromQuery] Guid productId,
-        CancellationToken cancellationToken) =>
-        Reply(await productService.GetProductDetailsAsync(productId, cancellationToken));
+        [FromServices] GetProductDetailsHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(productId, cancellationToken));
 
     [HttpPost("create")]
     public async Task<ActionResult<ResponseModel<Guid?>>> CreateProduct([FromBody] CreateProductRequest request,
-        CancellationToken cancellationToken) =>
-        Reply(await productService.CreateProductAsync(request, cancellationToken));
+        [FromServices] CreateProductHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(request, cancellationToken));
 
     [HttpPost("reset-stock")]
-    public async Task<ActionResult<ResponseModel<object>>> ResetProductStock(CancellationToken cancellationToken) =>
-        Reply(await productService.ResetProductStockAsync(cancellationToken));
+    public async Task<ActionResult<ResponseModel<object>>> ResetProductStock(
+        [FromServices] ResetProductStockHandler handler, CancellationToken cancellationToken) =>
+        Reply(await handler.HandleAsync(cancellationToken));
 }

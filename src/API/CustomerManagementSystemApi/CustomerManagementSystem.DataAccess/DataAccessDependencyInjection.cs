@@ -1,5 +1,6 @@
 using CustomerManagementSystem.BusinessLogic.Abstractions;
 using CustomerManagementSystem.DataAccess.DBConnection;
+using CustomerManagementSystem.DataAccess.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CustomerManagementSystem.DataAccess;
@@ -10,6 +11,11 @@ public static class DataAccessDependencyInjection
     public static void AddDataAccess(this IServiceCollection services)
     {
         services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-        services.AddSingleton<IDbUtils, DbUtils>();
+        services.AddSingleton<StoredProcedureExecutor>();
+        services.AddSingleton<ICustomerRepository, CustomerRepository>();
+        services.AddSingleton<IPurchaseRepository, PurchaseRepository>();
+        services.AddSingleton<IProductRepository, ProductRepository>();
+        services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
+        services.AddSingleton<IMerchantRepository, MerchantRepository>();
     }
 }

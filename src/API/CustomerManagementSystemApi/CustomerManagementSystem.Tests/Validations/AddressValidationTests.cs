@@ -1,6 +1,6 @@
+using CustomerManagementSystem.BusinessLogic.Contracts;
 using CustomerManagementSystem.BusinessLogic.Validations;
 using CustomerManagementSystem.Domain.Constants;
-using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.Tests.Validations;
 

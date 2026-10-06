@@ -428,7 +428,7 @@
 								}
 							]
 						},
-						"description": "`GetCustomer` auto-detects the search type \u2014 GUID shape, then phone number shape, then email shape (`CustomerGetting.DetermineLookup`) \u2014 so searching by the email from step 1 is enough to find the customer and read back its server-generated GUID."
+						"description": "`GetCustomer` auto-detects the search type \u2014 GUID shape, then phone number shape, then email shape (`GetCustomerHandler.DetermineLookup`) \u2014 so searching by the email from step 1 is enough to find the customer and read back its server-generated GUID."
 					},
 					"response": [],
 					"event": [
@@ -1738,7 +1738,7 @@
 								}
 							]
 						},
-						"description": "`CustomerGetting.GetCustomerFunction` rejects a missing/blank search variable before touching the DB, with the usual `{ status, responseMessage }` envelope. Enable the `searchTerm` param (currently disabled, empty) to send this."
+						"description": "`GetCustomerHandler` rejects a missing/blank search variable before touching the DB, with the usual `{ status, responseMessage }` envelope. Enable the `searchTerm` param (currently disabled, empty) to send this."
 					},
 					"response": [],
 					"event": [

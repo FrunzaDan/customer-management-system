@@ -1,5 +1,5 @@
 using System.Text.Json;
-using CustomerManagementSystem.Domain.Models;
+using CustomerManagementSystem.BusinessLogic.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 

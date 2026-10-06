@@ -4,7 +4,8 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using CustomerManagementSystem.BusinessLogic.Abstractions;
-using CustomerManagementSystem.BusinessLogic.AuthFunctions;
+using CustomerManagementSystem.BusinessLogic.Contracts;
+using CustomerManagementSystem.BusinessLogic.Features.Auth;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -16,8 +17,8 @@ using Moq;
 
 namespace CustomerManagementSystem.Tests.Endpoints;
 
-// The real API with only the SQL layer (IDbUtils) faked: a request runs through the route, model binding,
-// controller, service and business logic exactly as one from the UI does.
+// The real API with only the SQL layer (the repositories) faked: a request runs through the route, model binding,
+// controller, handler and business logic exactly as one from the UI does.
 internal sealed class ApiHost : IAsyncDisposable
 {
     public const string Username = "TestMerchant";
@@ -34,7 +35,14 @@ internal sealed class ApiHost : IAsyncDisposable
             builder.UseSetting("Auth:SecureJwtKey", SigningKey);
             builder.UseSetting("Auth:JwtIssuer", Issuer);
             builder.UseSetting("Auth:JwtAudience", Audience);
-            builder.ConfigureTestServices(services => services.AddSingleton(Db.Object));
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(Customers.Object);
+                services.AddSingleton(Purchases.Object);
+                services.AddSingleton(Products.Object);
+                services.AddSingleton(AuditLog.Object);
+                services.AddSingleton(Merchants.Object);
+            });
         });
         // HTTPS from the start: following the HTTP-to-HTTPS redirect would drop the Authorization header.
         Client = _factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
@@ -42,7 +50,15 @@ internal sealed class ApiHost : IAsyncDisposable
             Client.DefaultRequestHeaders.Authorization = new("Bearer", CreateToken());
     }
 
-    public Mock<IDbUtils> Db { get; } = new();
+    public Mock<ICustomerRepository> Customers { get; } = new();
+
+    public Mock<IPurchaseRepository> Purchases { get; } = new();
+
+    public Mock<IProductRepository> Products { get; } = new();
+
+    public Mock<IAuditLogRepository> AuditLog { get; } = new();
+
+    public Mock<IMerchantRepository> Merchants { get; } = new();
 
     public HttpClient Client { get; }
 
@@ -77,14 +93,15 @@ internal sealed class ApiHost : IAsyncDisposable
 
     // The audit entry is written once, by the signed-in user.
     public void VerifyAudit(Guid customerId, AuditAction action, string details) =>
-        Db.Verify(d => d.LogCustomerAuditAsync(customerId, Username, action, details, It.IsAny<CancellationToken>()),
+        AuditLog.Verify(d => d.LogCustomerAuditAsync(customerId, Username, action, details, It.IsAny<CancellationToken>()),
             Times.Once);
 
     public void VerifyAudit(Guid customerId, AuditAction action) =>
-        Db.Verify(d => d.LogCustomerAuditAsync(customerId, Username, action, It.IsAny<string?>(),
+        AuditLog.Verify(d => d.LogCustomerAuditAsync(customerId, Username, action, It.IsAny<string?>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
-    private static string CreateToken() =>
+    // A valid token for the signed-in merchant, signed with the settings this host uses.
+    public static string CreateToken() =>
         new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity([

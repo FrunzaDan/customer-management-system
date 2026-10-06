@@ -1,5 +1,5 @@
 using System.Net;
-using CustomerManagementSystem.Tests.AuthFunctions;
+using CustomerManagementSystem.Tests.Features.Auth;
 
 namespace CustomerManagementSystem.Tests.Endpoints;
 
@@ -9,7 +9,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_IssuesATokenThatTheApiThenAccepts()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.SetupMerchant("secret");
+        api.Merchants.SetupMerchant("secret");
 
         var login = await api.PostAsync("/api/authentication/access-token",
             new { username = "merchant", password = "secret" });
@@ -23,7 +23,7 @@ public class AuthenticationEndpointTests
     public async Task PostAccessToken_WrongCredentials_IsA401Problem()
     {
         await using var api = new ApiHost(signedIn: false);
-        api.Db.SetupMerchant("secret");
+        api.Merchants.SetupMerchant("secret");
 
         var response = await api.PostAsync("/api/authentication/access-token",
             new { username = "merchant", password = "wrong" });

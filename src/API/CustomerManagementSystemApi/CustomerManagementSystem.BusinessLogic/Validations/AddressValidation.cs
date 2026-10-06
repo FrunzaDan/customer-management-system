@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using CustomerManagementSystem.BusinessLogic.Constants;
+using CustomerManagementSystem.BusinessLogic.Contracts;
 using CustomerManagementSystem.Domain.Constants;
-using CustomerManagementSystem.Domain.Models;
 
 namespace CustomerManagementSystem.BusinessLogic.Validations;
 

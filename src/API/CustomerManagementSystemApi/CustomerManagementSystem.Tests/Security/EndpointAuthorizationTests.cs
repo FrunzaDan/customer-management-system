@@ -1,8 +1,9 @@
 using System.Globalization;
 using System.Net;
 using System.Security.Claims;
-using CustomerManagementSystem.BusinessLogic.AuthFunctions;
-using CustomerManagementSystem.BusinessLogic.Services;
+using CustomerManagementSystem.BusinessLogic.Abstractions;
+using CustomerManagementSystem.BusinessLogic.Contracts;
+using CustomerManagementSystem.BusinessLogic.Features.Auth;
 using CustomerManagementSystem.Domain.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -25,14 +26,18 @@ public class EndpointAuthorizationTests
     // The only API endpoints a caller may reach without a token.
     private static readonly HashSet<string> AnonymousEndpoints = ["POST /api/authentication/access-token"];
 
-    private static WebApplicationFactory<Program> CreateFactory(Mock<ICustomerService>? customerService = null) =>
+    private static WebApplicationFactory<Program> CreateFactory(Mock<ICustomerRepository>? customers = null,
+        Mock<IAuditLogRepository>? auditLog = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Auth:SecureJwtKey", SigningKey);
             builder.UseSetting("Auth:JwtIssuer", Issuer);
             builder.UseSetting("Auth:JwtAudience", Audience);
-            if (customerService is not null)
-                builder.ConfigureTestServices(services => services.AddScoped(_ => customerService.Object));
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton((customers ?? new Mock<ICustomerRepository>()).Object);
+                services.AddSingleton((auditLog ?? new Mock<IAuditLogRepository>()).Object);
+            });
         });
 
     private static string CreateToken(string role, string issuer = Issuer) =>
@@ -108,47 +113,47 @@ public class EndpointAuthorizationTests
     [InlineData("1802")]
     public async Task DeletingTheWholeAuditLog_IsForbidden_WithoutTheMerchantRole(string role)
     {
-        var customerService = new Mock<ICustomerService>();
-        await using var factory = CreateFactory(customerService);
+        var auditLog = new Mock<IAuditLogRepository>();
+        await using var factory = CreateFactory(auditLog: auditLog);
 
         var response = await CreateClient(factory).SendAsync(
             Request($"DELETE {DeleteAllAuditLogUrl}", CreateToken(role)), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        customerService.Verify(s => s.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()), Times.Never);
+        auditLog.Verify(a => a.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeletingTheWholeAuditLog_IsAllowed_WithTheMerchantRole()
     {
-        var customerService = new Mock<ICustomerService>();
-        customerService.Setup(s => s.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()))
+        var auditLog = new Mock<IAuditLogRepository>();
+        auditLog.Setup(a => a.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Audit log cleared."));
-        await using var factory = CreateFactory(customerService);
+        await using var factory = CreateFactory(auditLog: auditLog);
 
         var response = await CreateClient(factory).SendAsync(
             Request($"DELETE {DeleteAllAuditLogUrl}", CreateToken(((short)MerchantRole.Merchant).ToString(CultureInfo.InvariantCulture))),
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        customerService.Verify(s => s.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
+        auditLog.Verify(a => a.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task TheSignedInUsername_IsRecordedAsWhoMadeTheChange()
     {
-        var customerService = new Mock<ICustomerService>();
-        customerService.Setup(s => s.DeleteCustomerAsync(It.IsAny<Guid>(), It.IsAny<string>(),
-                It.IsAny<CancellationToken>()))
+        var customers = new Mock<ICustomerRepository>();
+        customers.Setup(c => c.DeleteCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Customer deleted successfully."));
-        await using var factory = CreateFactory(customerService);
+        var auditLog = new Mock<IAuditLogRepository>();
+        await using var factory = CreateFactory(customers, auditLog);
         var customerId = Guid.NewGuid();
 
         await CreateClient(factory).SendAsync(
             Request($"DELETE /api/customer/delete?customerId={customerId}", CreateToken("1801")),
             TestContext.Current.CancellationToken);
 
-        customerService.Verify(s => s.DeleteCustomerAsync(customerId, "TestMerchant", It.IsAny<CancellationToken>()),
-            Times.Once);
+        auditLog.Verify(a => a.LogCustomerAuditAsync(customerId, "TestMerchant", AuditAction.Deleted, It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }

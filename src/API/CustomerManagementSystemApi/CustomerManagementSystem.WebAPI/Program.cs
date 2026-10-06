@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Threading.RateLimiting;
 using CustomerManagementSystem.BusinessLogic;
-using CustomerManagementSystem.BusinessLogic.AuthFunctions;
 using CustomerManagementSystem.BusinessLogic.Configuration;
+using CustomerManagementSystem.BusinessLogic.Features.Auth;
 using CustomerManagementSystem.DataAccess;
 using CustomerManagementSystem.DataAccess.Configuration;
 using CustomerManagementSystem.WebAPI.ErrorHandling;

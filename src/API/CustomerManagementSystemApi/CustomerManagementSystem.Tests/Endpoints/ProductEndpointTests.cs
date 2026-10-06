@@ -1,4 +1,5 @@
 using System.Net;
+using CustomerManagementSystem.BusinessLogic.Contracts;
 using CustomerManagementSystem.Domain.Models;
 using Moq;
 
@@ -24,7 +25,7 @@ public class ProductEndpointTests
     public async Task GetAll_ReturnsTheCatalogue()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetProductsAsync(It.IsAny<CancellationToken>()))
+        api.Products.Setup(d => d.GetProductsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<ProductModel>>(200, "", [Latte()]));
 
         var response = await api.GetAsync("/api/product/all");
@@ -39,7 +40,7 @@ public class ProductEndpointTests
     public async Task GetGet_ReturnsTheProductWithItsBuyers()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetProductDetailsAsync(ProductId, It.IsAny<CancellationToken>()))
+        api.Products.Setup(d => d.GetProductDetailsAsync(ProductId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<ProductDetailsModel>(200, "",
                 new ProductDetailsModel { Product = Latte(), Buyers = [] }));
 
@@ -55,7 +56,7 @@ public class ProductEndpointTests
     {
         await using var api = new ApiHost();
         CreateProductRequest? sent = null;
-        api.Db.Setup(d => d.CreateProductAsync(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()))
+        api.Products.Setup(d => d.CreateProductAsync(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()))
             .Callback<CreateProductRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Product created.", ProductId));
 
@@ -80,7 +81,7 @@ public class ProductEndpointTests
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal("Price must be greater than zero.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.CreateProductAsync(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()),
+        api.Products.Verify(d => d.CreateProductAsync(It.IsAny<CreateProductRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -88,12 +89,12 @@ public class ProductEndpointTests
     public async Task PostResetStock_ResetsEveryProduct()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.ResetProductStockAsync(It.IsAny<CancellationToken>()))
+        api.Products.Setup(d => d.ResetProductStockAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(200, "Stock reset."));
 
         var response = await api.PostAsync("/api/product/reset-stock");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.ResetProductStockAsync(It.IsAny<CancellationToken>()), Times.Once);
+        api.Products.Verify(d => d.ResetProductStockAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

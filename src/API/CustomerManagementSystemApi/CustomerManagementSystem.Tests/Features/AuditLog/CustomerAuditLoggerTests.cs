@@ -1,0 +1,80 @@
+using CustomerManagementSystem.BusinessLogic.Abstractions;
+using CustomerManagementSystem.BusinessLogic.Contracts;
+using CustomerManagementSystem.BusinessLogic.Features.AuditLog;
+using CustomerManagementSystem.Domain.Models;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
+using Moq;
+
+namespace CustomerManagementSystem.Tests.Features.AuditLog;
+
+public class CustomerAuditLoggerTests
+{
+    private static readonly Guid CustomerId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    private const string PerformedBy = "TestMerchant";
+
+    [Fact]
+    public async Task LogAsync_PassesTheGivenArgumentsThroughToTheDbLayer()
+    {
+        var auditLog = new Mock<IAuditLogRepository>();
+        auditLog.Setup(d => d.LogCustomerAuditAsync(CustomerId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
+        var logger = new FakeLogger<CustomerAuditLogger>();
+        var auditLogger = new CustomerAuditLogger(auditLog.Object, logger);
+
+        await auditLogger.LogAsync(CustomerId, PerformedBy, AuditAction.Edited, "Updated: email", TestContext.Current.CancellationToken);
+
+        auditLog.Verify(
+            d => d.LogCustomerAuditAsync(CustomerId, PerformedBy, AuditAction.Edited, "Updated: email", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task LogAsync_DefaultsDetailsToNull_WhenNotProvided()
+    {
+        var auditLog = new Mock<IAuditLogRepository>();
+        auditLog.Setup(d => d.LogCustomerAuditAsync(CustomerId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResponseModel<object>(200, "Success!"));
+        var logger = new FakeLogger<CustomerAuditLogger>();
+        var auditLogger = new CustomerAuditLogger(auditLog.Object, logger);
+
+        await auditLogger.LogAsync(CustomerId, PerformedBy, AuditAction.Deactivated, cancellationToken: TestContext.Current.CancellationToken);
+
+        auditLog.Verify(
+            d => d.LogCustomerAuditAsync(CustomerId, PerformedBy, AuditAction.Deactivated, null, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task LogAsync_SwallowsAnyExceptionFromTheDbLayer_InsteadOfPropagatingIt()
+    {
+        var auditLog = new Mock<IAuditLogRepository>();
+        auditLog.Setup(d => d.LogCustomerAuditAsync(CustomerId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
+        var logger = new FakeLogger<CustomerAuditLogger>();
+        var auditLogger = new CustomerAuditLogger(auditLog.Object, logger);
+
+        var exception = await Record.ExceptionAsync(() => auditLogger.LogAsync(CustomerId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task LogAsync_LogsAnError_WhenTheDbLayerThrows()
+    {
+        var auditLog = new Mock<IAuditLogRepository>();
+        auditLog.Setup(d => d.LogCustomerAuditAsync(CustomerId, PerformedBy, AuditAction.Created, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Connection string is unreachable."));
+        var logger = new FakeLogger<CustomerAuditLogger>();
+        var auditLogger = new CustomerAuditLogger(auditLog.Object, logger);
+
+        await auditLogger.LogAsync(CustomerId, PerformedBy, AuditAction.Created, cancellationToken: TestContext.Current.CancellationToken);
+
+        var entry = Assert.Single(logger.Collector.GetSnapshot());
+        Assert.Equal(LogLevel.Error, entry.Level);
+        Assert.Equal(2, entry.Id.Id);
+        Assert.IsType<InvalidOperationException>(entry.Exception);
+        Assert.Equal(CustomerId.ToString(), entry.GetStructuredStateValue("CustomerId"));
+        Assert.Equal(nameof(AuditAction.Created), entry.GetStructuredStateValue("Action"));
+    }
+}

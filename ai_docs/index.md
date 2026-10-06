@@ -27,9 +27,10 @@ Browser ──► Angular dev server :4204 (SSR via Express in Node)
               ▼
            ASP.NET Core API :7145
              WebAPI (controllers, ApiControllerBase.Reply, GlobalExceptionHandler)
-               → BusinessLogic (services → one logic class per action, validation, JWT)
-               → IDbUtils (declared in BusinessLogic, implemented by DataAccess: DbUtils/DbHelper, ADO.NET, typed SqlParameters)
-             Domain (models, options, constants) is shared by all three
+               → BusinessLogic (Features/*: one handler per action; Contracts; validation; JWT)
+               → I*Repository (declared in BusinessLogic, implemented by DataAccess/Repositories:
+                 StoredProcedureExecutor, ADO.NET, typed SqlParameters)
+             Domain (read models, enums, field lengths) is shared by all three
               │  stored procedures only
               ▼
            SQL Server (Azure SQL Edge container "sqlserver" :1433, database CustomerManagement)
@@ -41,7 +42,7 @@ Browser ──► Angular dev server :4204 (SSR via Express in Node)
 ### A request end to end (editing a customer)
 
 1. `update-customer` submits its Signal Form → `CustomerService.updateCustomer()` → `PATCH api/customer/update`.
-2. `CustomerController` → `ICustomerService` → `CustomerUpdating` validates the fields (400 per field) → `IDbUtils` calls `Customer_Update`.
+2. `CustomerController` → `UpdateCustomerHandler` validates the fields (400 per field) → `ICustomerRepository` calls `Customer_Update`.
 3. The proc's `(Result, Message)` row becomes a `ResponseModel`; `Reply()` returns it, or Problem Details for a non-success.
 4. `CustomerAuditLogger` writes an `Edited` row (best-effort). The UI toasts, and the edit is written straight into the loaded list.
 

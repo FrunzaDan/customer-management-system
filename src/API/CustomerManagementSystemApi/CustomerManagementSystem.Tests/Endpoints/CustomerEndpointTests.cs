@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using CustomerManagementSystem.BusinessLogic.Abstractions;
+using CustomerManagementSystem.BusinessLogic.Contracts;
 using CustomerManagementSystem.Domain.Models;
 using Moq;
 
@@ -43,7 +45,7 @@ public class CustomerEndpointTests
     {
         await using var api = new ApiHost();
         CreateCustomerRequest? sent = null;
-        api.Db.Setup(d => d.CreateCustomerAsync(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.CreateCustomerAsync(It.IsAny<CreateCustomerRequest>(), It.IsAny<CancellationToken>()))
             .Callback<CreateCustomerRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(new ResponseModel<Guid?>(200, "Customer created successfully.", CustomerId));
 
@@ -78,7 +80,7 @@ public class CustomerEndpointTests
     public async Task GetGet_LooksTheCustomerUpById_AndReturnsItInTheWireFormat()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCustomerAsync(new CustomerLookup(CustomerId, null, null), It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.GetCustomerAsync(new CustomerLookup(CustomerId, null, null), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<CustomerModel>(200, "Customer found.", SampleCustomer()));
 
         var response = await api.GetAsync($"/api/customer/get?searchTerm={CustomerId}");
@@ -97,14 +99,14 @@ public class CustomerEndpointTests
     public async Task GetGet_AnUnknownCustomer_IsA404Problem()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCustomerAsync(It.IsAny<CustomerLookup>(), It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.GetCustomerAsync(It.IsAny<CustomerLookup>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<CustomerModel>(404, "Customer not found."));
 
         var response = await api.GetAsync("/api/customer/get?searchTerm=ana@example.com");
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.NotFound);
         Assert.Equal("Customer not found.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.GetCustomerAsync(new CustomerLookup(null, null, "ana@example.com"),
+        api.Customers.Verify(d => d.GetCustomerAsync(new CustomerLookup(null, null, "ana@example.com"),
             It.IsAny<CancellationToken>()));
     }
 
@@ -113,7 +115,7 @@ public class CustomerEndpointTests
     {
         await using var api = new ApiHost();
         GetCustomersRequest? sent = null;
-        api.Db.Setup(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
             .Callback<GetCustomersRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(new ResponseModel<PagedResponse<CustomerModel>>(200, "1 customers found (page 2).",
                 new PagedResponse<CustomerModel>([SampleCustomer()], 51, 2, 50)));
@@ -143,7 +145,7 @@ public class CustomerEndpointTests
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal("Page size must be between 1 and 100.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()),
+        api.Customers.Verify(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -151,7 +153,7 @@ public class CustomerEndpointTests
     public async Task GetExport_ReturnsACsvFile()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.GetCustomersAsync(It.IsAny<GetCustomersRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<PagedResponse<CustomerModel>>(200, "",
                 new PagedResponse<CustomerModel>([SampleCustomer()], 1, 1, 5000)));
 
@@ -170,7 +172,7 @@ public class CustomerEndpointTests
     {
         await using var api = new ApiHost();
         UpdateCustomerRequest? sent = null;
-        api.Db.Setup(d => d.UpdateCustomerAsync(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.UpdateCustomerAsync(It.IsAny<UpdateCustomerRequest>(), It.IsAny<CancellationToken>()))
             .Callback<UpdateCustomerRequest, CancellationToken>((request, _) => sent = request)
             .ReturnsAsync(Ok());
 
@@ -189,12 +191,12 @@ public class CustomerEndpointTests
     public async Task PatchDeactivate_DeactivatesThatCustomer_AndAuditsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeactivateCustomerAsync(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Customers.Setup(d => d.DeactivateCustomerAsync(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.PatchAsync($"/api/customer/deactivate?customerId={CustomerId}");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.ReactivateCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Customers.Verify(d => d.ReactivateCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         api.VerifyAudit(CustomerId, AuditAction.Deactivated);
     }
 
@@ -202,12 +204,12 @@ public class CustomerEndpointTests
     public async Task PatchReactivate_ReactivatesThatCustomer_AndAuditsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.ReactivateCustomerAsync(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Customers.Setup(d => d.ReactivateCustomerAsync(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.PatchAsync($"/api/customer/reactivate?customerId={CustomerId}");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.DeactivateCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Customers.Verify(d => d.DeactivateCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         api.VerifyAudit(CustomerId, AuditAction.Reactivated);
     }
 
@@ -220,14 +222,14 @@ public class CustomerEndpointTests
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.BadRequest);
         Assert.Equal("Invalid or empty customer ID.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.DeactivateCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        api.Customers.Verify(d => d.DeactivateCustomerAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task DeleteDelete_DeletesThatCustomer_AndAuditsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteCustomerAsync(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.Customers.Setup(d => d.DeleteCustomerAsync(CustomerId, It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.DeleteAsync($"/api/customer/delete?customerId={CustomerId}");
 
@@ -239,14 +241,14 @@ public class CustomerEndpointTests
     public async Task DeleteDelete_AStateConflictFromTheDb_IsA409Problem_AndNotAudited()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteCustomerAsync(CustomerId, It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.DeleteCustomerAsync(CustomerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<object>(409, "Only a deactivated customer can be deleted."));
 
         var response = await api.DeleteAsync($"/api/customer/delete?customerId={CustomerId}");
 
         var problem = await ApiHost.ReadProblemAsync(response, HttpStatusCode.Conflict);
         Assert.Equal("Only a deactivated customer can be deleted.", problem.GetProperty("detail").GetString());
-        api.Db.Verify(d => d.LogCustomerAuditAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(),
+        api.AuditLog.Verify(d => d.LogCustomerAuditAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<AuditAction>(),
             It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -254,7 +256,7 @@ public class CustomerEndpointTests
     public async Task GetAuditLog_ReturnsTheCustomersEntries_WithTheActionAsText()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCustomerAuditLogAsync(CustomerId, It.IsAny<CancellationToken>()))
+        api.AuditLog.Setup(d => d.GetCustomerAuditLogAsync(CustomerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<AuditLogEntry>>(200, "", [
                 new AuditLogEntry
                 {
@@ -275,7 +277,7 @@ public class CustomerEndpointTests
     public async Task GetAllAuditLog_PassesThePage_AndReturnsIt()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetAllCustomerAuditLogAsync(3, 20, It.IsAny<CancellationToken>()))
+        api.AuditLog.Setup(d => d.GetAllCustomerAuditLogAsync(3, 20, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<PagedResponse<GlobalAuditLogEntry>>(200, "",
                 new PagedResponse<GlobalAuditLogEntry>([], 41, 3, 20)));
 
@@ -290,19 +292,19 @@ public class CustomerEndpointTests
     public async Task DeleteAllAuditLog_ClearsTheLog()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
+        api.AuditLog.Setup(d => d.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>())).ReturnsAsync(Ok());
 
         var response = await api.DeleteAsync("/api/customer/audit-log/all");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
+        api.AuditLog.Verify(d => d.DeleteAllCustomerAuditLogAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task GetInsights_ReturnsTheProfilesAndMonthlySales()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCustomerInsightsAsync(It.IsAny<CancellationToken>()))
+        api.Customers.Setup(d => d.GetCustomerInsightsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<CustomerInsightsModel>(200, "", new CustomerInsightsModel
             {
                 Customers = [],
@@ -320,7 +322,7 @@ public class CustomerEndpointTests
     public async Task GetPurchases_ReturnsTheCustomersPurchases()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.GetCustomerPurchasesAsync(CustomerId, It.IsAny<CancellationToken>()))
+        api.Purchases.Setup(d => d.GetCustomerPurchasesAsync(CustomerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<IReadOnlyList<PurchaseModel>>(200, "", [
                 new PurchaseModel
                 {
@@ -340,7 +342,7 @@ public class CustomerEndpointTests
     public async Task PostPurchase_SendsThePurchaseTimeInUtc_AndAuditsTheProductName()
     {
         await using var api = new ApiHost();
-        api.Db.Setup(d => d.PurchaseProductAsync(CustomerId, ProductId, It.IsAny<DateTime?>(),
+        api.Purchases.Setup(d => d.PurchaseProductAsync(CustomerId, ProductId, It.IsAny<DateTime?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ResponseModel<string>(200, "Purchase completed.", "Latte"));
 
@@ -348,7 +350,7 @@ public class CustomerEndpointTests
             $"/api/customer/purchase?customerId={CustomerId}&productId={ProductId}&purchasedAt=2026-01-01T10:00:00%2B02:00");
 
         await ApiHost.ReadEnvelopeAsync(response);
-        api.Db.Verify(d => d.PurchaseProductAsync(CustomerId, ProductId,
+        api.Purchases.Verify(d => d.PurchaseProductAsync(CustomerId, ProductId,
             new DateTime(2026, 1, 1, 8, 0, 0, DateTimeKind.Utc), It.IsAny<CancellationToken>()));
         api.VerifyAudit(CustomerId, AuditAction.Purchased, "Product: Latte");
     }
